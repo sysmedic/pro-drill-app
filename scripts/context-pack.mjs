@@ -74,6 +74,7 @@ const sourceModes = {
     'src/components/ui/Button.jsx',
     'src/components/ui/Card.jsx',
     'src/components/ui/DisclosureSection.jsx',
+    'src/components/ui/Dialogs.jsx',
     'src/components/ui/Field.jsx',
     'src/components/ui/Icon.jsx',
     'src/components/ui/KeypadField.jsx',

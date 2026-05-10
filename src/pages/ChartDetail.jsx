@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import PageShell from '../components/layout/PageShell.jsx';
 import Card from '../components/ui/Card.jsx';
 import Button from '../components/ui/Button.jsx';
+import { ConfirmModal, FeedbackToast, TextInputModal } from '../components/ui/Dialogs.jsx';
 import BowlerSpecCard from './chartDetail/BowlerSpecCard.jsx';
 import ChartBlueprintView from './chartDetail/ChartBlueprintView.jsx';
 import ChartInputForm from './chartDetail/ChartInputForm.jsx';
@@ -46,6 +47,9 @@ export default function ChartDetail({ customer, onBack }) {
   const [isTaskOpen, setIsTaskOpen] = useState(false);
   const [utilityState, setUtilityState] = useState('hidden');
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [historyConfirm, setHistoryConfirm] = useState(null);
+  const [renameRequest, setRenameRequest] = useState(null);
+  const [feedback, setFeedback] = useState(null);
   const [, setSaveDate] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const markDirty = useCallback(() => setHasUnsavedChanges(true), []);
@@ -155,10 +159,20 @@ export default function ChartDetail({ customer, onBack }) {
       data: { chartData, customerInfo, ballName, layoutInfo, intent, memos },
     };
 
-    saveRecord(newRecord);
+    const result = saveRecord(newRecord);
+    if (!result.ok) {
+      setFeedback({
+        message: '브라우저 저장공간에 차트 기록을 쓰지 못했습니다. 저장 상태를 유지하고 다시 시도해주세요.',
+        title: '저장 실패',
+        tone: 'danger',
+      });
+      return false;
+    }
+
     setSaveDate(now);
     setHasUnsavedChanges(false);
-    alert(`${customer.name} 고객님의 기록이 안전하게 저장되었습니다.`);
+    setFeedback({ message: `${customer.name} 고객님의 기록이 안전하게 저장되었습니다.`, tone: 'success' });
+    return true;
   };
 
   const loadRecord = (record) => {
@@ -186,6 +200,37 @@ export default function ChartDetail({ customer, onBack }) {
     setMemos(loadedMemos || []);
     setSaveDate(record.timestamp);
     setHasUnsavedChanges(true);
+  };
+
+  const handleDeleteRecord = (id) => {
+    const result = deleteRecord(id);
+    if (!result.ok) {
+      setFeedback({
+        message: '저장 기록 삭제를 브라우저 저장공간에 반영하지 못했습니다.',
+        title: '삭제 실패',
+        tone: 'danger',
+      });
+      return;
+    }
+
+    setFeedback({ message: '저장 기록을 삭제했습니다.', tone: 'success' });
+  };
+
+  const handleRenameRecord = (nextName) => {
+    if (!renameRequest) return;
+
+    const result = renameRecord(renameRequest.id, nextName);
+    if (!result.ok) {
+      setFeedback({
+        message: '저장 기록 이름 변경을 브라우저 저장공간에 반영하지 못했습니다.',
+        title: '이름 변경 실패',
+        tone: 'danger',
+      });
+      return;
+    }
+
+    setRenameRequest(null);
+    setFeedback({ message: '저장 기록 이름을 변경했습니다.', tone: 'success' });
   };
 
   const handleBackClick = () => {
@@ -290,13 +335,37 @@ export default function ChartDetail({ customer, onBack }) {
       {showHistoryModal && (
         <HistoryModal
           history={history}
-          onSelect={(record) => { if (window.confirm(`${record.timestamp} 기록을 불러오시겠습니까?`)) loadRecord(record); }}
+          onSelect={(record) => setHistoryConfirm(record)}
           onClose={() => setShowHistoryModal(false)}
-          onDelete={deleteRecord}
-          onRename={(id, currentName) => {
-            const newName = window.prompt('새로운 이름을 입력하세요:', currentName);
-            renameRecord(id, newName);
+          onDelete={handleDeleteRecord}
+          onRename={(id, currentName) => setRenameRequest({ id, currentName })}
+        />
+      )}
+
+      {historyConfirm && (
+        <ConfirmModal
+          confirmLabel="불러오기"
+          message={`${historyConfirm.timestamp} 기록을 불러오시겠습니까?`}
+          onCancel={() => setHistoryConfirm(null)}
+          onConfirm={() => {
+            loadRecord(historyConfirm);
+            setHistoryConfirm(null);
           }}
+          title="기록 불러오기"
+          titleId="history-load-confirm-title"
+        />
+      )}
+
+      {renameRequest && (
+        <TextInputModal
+          confirmLabel="변경"
+          initialValue={renameRequest.currentName || ''}
+          label="새 기록 이름"
+          onCancel={() => setRenameRequest(null)}
+          onConfirm={handleRenameRecord}
+          placeholder="새로운 이름을 입력하세요"
+          title="기록 이름 변경"
+          titleId="history-rename-input-title"
         />
       )}
 
@@ -304,9 +373,10 @@ export default function ChartDetail({ customer, onBack }) {
         <ExitConfirmModal
           onClose={() => setShowExitConfirm(false)}
           onSaveAndExit={() => {
-            handleSave();
-            setShowExitConfirm(false);
-            onBack();
+            if (handleSave()) {
+              setShowExitConfirm(false);
+              onBack();
+            }
           }}
           onExitWithoutSave={() => {
             setShowExitConfirm(false);
@@ -314,6 +384,13 @@ export default function ChartDetail({ customer, onBack }) {
           }}
         />
       )}
+
+      <FeedbackToast
+        message={feedback?.message}
+        onDismiss={() => setFeedback(null)}
+        title={feedback?.title}
+        tone={feedback?.tone}
+      />
     </PageShell>
   );
 }

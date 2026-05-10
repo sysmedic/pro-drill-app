@@ -60,6 +60,21 @@ test('saveChartHistory writes to the id-based v8 key', () => {
   assert.equal(storage.getItem(savedKey), JSON.stringify(history));
 });
 
+test('saveChartHistory reports write failures without changing history state', () => {
+  class FailingStorage extends MockStorage {
+    setItem() {
+      throw new Error('quota exceeded');
+    }
+  }
+
+  const customer = { id: 'cus_fail_save', name: '저장실패' };
+  const history = [{ id: 'record_fail', name: '실패 기록' }];
+  const storage = new FailingStorage();
+
+  assert.equal(saveChartHistory(customer, history, storage), null);
+  assert.equal(storage.has(chartHistoryKey(customer.id)), false);
+});
+
 test('renameChartHistory preserves migrated history and removes legacy name keys', () => {
   const history = [{ id: 4, name: '개명 전 기록' }];
   const storage = new MockStorage({

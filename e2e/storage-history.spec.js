@@ -34,14 +34,8 @@ const openTaskDetails = async (page) => {
 };
 
 const saveChart = async (page) => {
-  let saveMessage = '';
-  page.once('dialog', async (dialog) => {
-    saveMessage = dialog.message();
-    await dialog.accept();
-  });
-
   await page.getByRole('button', { name: '저장', exact: true }).click();
-  expect(saveMessage).toContain('안전하게 저장');
+  await expect(page.getByRole('status')).toContainText('안전하게 저장');
 };
 
 test.beforeEach(async ({ page }) => {
@@ -91,15 +85,13 @@ test('saved chart creates the expected localStorage history key and reloads thro
 
   const historyDialog = page.getByRole('dialog', { name: /저장 기록/ });
   await expect(historyDialog).toBeVisible();
-  let confirmMessage = '';
-  page.once('dialog', async (dialog) => {
-    confirmMessage = dialog.message();
-    await dialog.accept();
-  });
 
   await historyDialog.getByText(ballName, { exact: true }).click();
-  expect(confirmMessage).toContain('기록을 불러오시겠습니까');
   await expect(historyDialog).toBeHidden();
+  const loadDialog = page.getByRole('dialog', { name: /기록 불러오기/ });
+  await expect(loadDialog).toContainText('기록을 불러오시겠습니까');
+  await loadDialog.getByRole('button', { name: '불러오기', exact: true }).click();
+  await expect(loadDialog).toBeHidden();
   await expect(page.getByLabel(/볼링공 모델명/)).toHaveValue(ballName);
 });
 

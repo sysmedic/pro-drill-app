@@ -95,6 +95,7 @@ test('shared frontend primitives exist before page-specific styling grows', () =
     'src/components/ui/Button.jsx',
     'src/components/ui/Card.jsx',
     'src/components/ui/DisclosureSection.jsx',
+    'src/components/ui/Dialogs.jsx',
     'src/components/ui/Field.jsx',
     'src/components/ui/Icon.jsx',
     'src/components/ui/KeypadField.jsx',
@@ -127,42 +128,21 @@ test('storage key constants remain backward compatible', () => {
   assert.equal(PRE_V7_CHART_HISTORY_PREFIX, 'chart_history_');
 });
 
-test('native browser dialogs stay quarantined to known legacy call sites', () => {
-  const allowedDialogLines = {
-    'src/components/ui/SelectField.jsx': [
-      'const customValue = window.prompt(customPrompt || `${label || \'항목\'} 수치를 직접 입력하세요:`);',
-    ],
-    'src/pages/ChartDetail.jsx': [
-      'alert(`${customer.name} 고객님의 기록이 안전하게 저장되었습니다.`);',
-      'onSelect={(record) => { if (window.confirm(`${record.timestamp} 기록을 불러오시겠습니까?`)) loadRecord(record); }}',
-      'const newName = window.prompt(\'새로운 이름을 입력하세요:\', currentName);',
-    ],
-    'src/pages/CustomerManager.jsx': [
-      'alert(\'디바이스 화면 높이가 최적화되었습니다.\');',
-      'if (!customerData.name.trim()) return alert("이름을 입력해주세요!");',
-      'if (window.confirm(`1차 경고\\n${customerName} 고객 정보를 삭제하시겠습니까?`)) {',
-      'if (window.confirm(`2차 경고\\n정말로 영구 삭제하시겠습니까?\\n삭제 후에는 고객의 모든 지공 기록이 함께 영구히 삭제되며 절대 복원할 수 없습니다.`)) {',
-    ],
-  };
+test('source UI does not call native browser dialogs', () => {
   const sourceFiles = listFiles('src').filter((file) => /\.(jsx|js)$/.test(file));
-  const unapproved = [];
+  const matches = [];
 
   for (const file of sourceFiles) {
     const source = readFileSync(file, 'utf8');
     const sourceLines = source.split('\n').map((line) => line.trim());
-    const allowedLines = allowedDialogLines[file] || [];
 
     for (const line of sourceLines) {
       if (!/\b(?:window\.)?(?:alert|confirm|prompt)\s*\(/.test(line)) continue;
-      if (!allowedLines.includes(line)) unapproved.push(`${file}: ${line}`);
-    }
-
-    for (const allowedLine of allowedLines) {
-      assert.equal(sourceLines.includes(allowedLine), true, `${file} should keep legacy native dialog allowlist explicit`);
+      matches.push(`${file}: ${line}`);
     }
   }
 
-  assert.deepEqual(unapproved, []);
+  assert.deepEqual(matches, []);
 });
 
 test('package scripts expose lightweight Gemini harness commands', () => {

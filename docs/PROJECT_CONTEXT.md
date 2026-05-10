@@ -16,7 +16,7 @@
 
 - `src/App.jsx`: 고객 목록 화면과 차트 상세 화면 전환을 담당한다.
 - `src/components/layout/`: 페이지 폭/패딩과 고정 상단바 같은 레이아웃 primitive를 담당한다.
-- `src/components/ui/`: 버튼, 아이콘, 카드, 배지, 필드, 모달, disclosure/select/keypad field 같은 공용 UI primitive를 담당한다.
+- `src/components/ui/`: 버튼, 아이콘, 카드, 배지, 필드, 모달, 확인/입력/토스트 dialog, disclosure/select/keypad field 같은 공용 UI primitive를 담당한다.
 - `src/pages/CustomerManager.jsx`: 고객 목록 화면의 상태와 저장/삭제 흐름을 조율한다.
 - `src/pages/customerManager/`: 고객 헤더, 고객 리스트, 고객 폼 모달을 분리해 둔 폴더다.
 - `src/pages/ChartDetail.jsx`: 차트 상세 화면의 데이터 로드, 저장 트리거, 화면 조립을 조율한다.
@@ -30,6 +30,7 @@
 - `eslint.config.js`: CI에서 사용하는 lint 기준이다.
 - `e2e/visual-layout.spec.js`: 390px, 540px, desktop에서 상단바/본문/하단 시트의 좌우 기준선이 어긋나지 않는지 확인하고 QA screenshot을 첨부한다.
 - `e2e/korean-ime.spec.js`: 모달 한글 조합 입력이 조각나지 않는지 확인한다.
+- `e2e/storage-failure.spec.js`: `localStorage` 쓰기 실패 시 성공처럼 보이거나 dirty 상태가 풀리지 않는지 확인한다.
 - `docs/UI_GUIDE.md`: UI 색상, 카드, 버튼, 모달 기준을 고정한다.
 - `docs/GEMINI_TASK_TEMPLATE.md`: Gemini에게 작업을 줄 때 쓰는 요청 템플릿이다.
 - `test/siteSmoke.test.js`: Vite SSR 로딩으로 앱 쉘과 차트 상세 초기 렌더가 깨지지 않는지 확인한다.
@@ -81,7 +82,7 @@ localStorage[`chart_history_v8_${customer.id}`]
 - Playwright E2E 범위를 히스토리와 나가기 경고까지 확장한다.
 - 차트 입력 primitive를 다른 입력 화면까지 무리하게 확장하기 전 모바일 회귀를 확인한다.
 - 주요 화면 Playwright screenshot smoke를 추가해 디자인 회귀를 잡는다.
-- native `alert`/`confirm`/`prompt` 기존 call site를 `ModalShell` 기반 UI로 교체한다.
+- 저장 payload schema validation과 versioned migrator를 추가한다.
 - 모달 접근성과 키보드 조작성을 보강한다.
 
 ## 품질 기준

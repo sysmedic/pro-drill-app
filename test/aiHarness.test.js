@@ -30,6 +30,7 @@ test('context-pack modes include canonical docs plus related source and test bod
       args: ['scripts/context-pack.mjs', '--mode', 'ui'],
       expectedFiles: [
         'src/components/ui/Button.jsx',
+        'src/components/ui/Dialogs.jsx',
         'src/components/ui/DisclosureSection.jsx',
         'src/components/ui/SelectField.jsx',
         'src/components/ui/KeypadField.jsx',

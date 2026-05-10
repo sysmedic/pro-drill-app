@@ -21,11 +21,8 @@ test('customer creation and chart save flow works', async ({ page }) => {
   await page.getByRole('button', { name: '차트' }).click();
   await expect(page.getByText('작업내용')).toBeVisible();
 
-  page.once('dialog', async (dialog) => {
-    expect(dialog.message()).toContain('안전하게 저장');
-    await dialog.accept();
-  });
   await page.getByRole('button', { name: '저장', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('안전하게 저장');
 
   await page.getByRole('button', { name: '뒤로', exact: true }).click();
   await expect(page.getByRole('heading', { name: /고객 관리/ })).toBeVisible();

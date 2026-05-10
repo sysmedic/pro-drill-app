@@ -4,8 +4,8 @@
 
 ## 현재 우선순위
 
-1. native `alert`/`confirm`/`prompt` 기존 call site를 `ModalShell` 기반 UI로 교체한다.
-2. 저장 실패를 성공처럼 처리하지 않도록 storage write 결과를 UI 상태와 연결한다.
+1. 저장 payload schema validation과 versioned migrator를 추가한다.
+2. `Date.now()` 기반 고객/기록/메모 ID를 `crypto.randomUUID()` 기반 localId로 전환한다.
 3. 차트 입력 primitive를 다른 입력 화면까지 확장하기 전 모바일 회귀를 확인한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
@@ -52,12 +52,17 @@
 - `TopBarShell` fixed spacer가 실제 상단바 높이를 측정해 본문 겹침 회귀를 줄이게 했다.
 - Playwright에 540px 모바일 프로젝트와 `visual-layout` smoke를 추가해 상단바/본문/하단 시트 폭 어긋남을 잡게 했다.
 - Playwright에 한글 IME 조합 입력 smoke를 추가해 모달 입력이 조각나는 회귀를 잡게 했다.
-- storage key 상수값과 기존 native dialog call site quarantine을 `projectContracts` 테스트로 고정했다.
+- storage key 상수값을 `projectContracts` 테스트로 고정했다.
+- `ConfirmModal`, `TextInputModal`, `FeedbackToast`를 추가하고 기존 native `alert`/`confirm`/`prompt` call site를 제거했다.
+- `SelectField`의 직접 입력 흐름을 native prompt 대신 `TextInputModal`로 교체했다.
+- 고객 생성/수정/삭제와 차트 저장/삭제/이름변경이 저장 성공 여부를 확인한 뒤에만 화면 state를 확정하도록 바꿨다.
+- Playwright에 `storage-failure` smoke를 추가해 고객 저장/차트 저장 실패가 성공처럼 보이지 않도록 검증한다.
+- `projectContracts` 테스트가 이제 `src` 전체의 native `alert`/`confirm`/`prompt` 사용을 금지한다.
 
 ## 다음 할 일
 
-- 기존 native `alert`/`confirm`/`prompt`를 `ModalShell` 기반 confirm/input/toast 흐름으로 교체한다.
-- `saveCustomers`/`saveChartHistory` 결과를 UI에서 확인하고 실패 시 state/dirty/알림을 되돌리는 저장 실패 처리를 추가한다.
+- 저장 payload schema validation과 versioned migrator를 추가한다.
+- `Date.now()` 기반 고객/기록/메모 ID를 `crypto.randomUUID()` 기반 localId로 전환한다.
 - 차트 입력 primitive를 다른 화면에 확장하기 전 모바일 390px/540px 회귀를 확인한다.
 - GitHub Actions/Pages 첫 실행을 확인한다.
 

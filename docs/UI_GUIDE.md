@@ -68,9 +68,10 @@
 모달/시트:
 
 - 새 모달은 `src/components/ui/ModalShell.jsx`를 먼저 사용한다.
+- 확인/입력/알림 흐름은 `src/components/ui/Dialogs.jsx`의 `ConfirmModal`, `TextInputModal`, `FeedbackToast`를 먼저 사용한다.
 - 모든 모달은 `role="dialog"`와 `aria-modal="true"`를 가진다.
 - Esc 닫기, focus trap, 닫힌 뒤 포커스 복귀를 목표 기준으로 한다.
-- 새 모달을 만들 때 native `alert`, `confirm`, `prompt`를 늘리지 않는다.
+- native `alert`, `confirm`, `prompt`를 사용하지 않는다.
 - 바텀시트는 현장 모바일 조작을 고려해 터치 영역을 44px 이상으로 유지한다.
 
 ## 변경 전 체크리스트
@@ -94,4 +95,5 @@
 
 - 레이아웃 기준선을 건드리면 `e2e/visual-layout.spec.js`가 390px, 540px, desktop에서 통과해야 한다.
 - 한글 입력이나 모달 focus trap을 건드리면 `e2e/korean-ime.spec.js`가 통과해야 한다.
-- 새 native `alert`, `confirm`, `prompt`를 추가하지 않는다. 기존 call site는 `test/projectContracts.test.js`의 quarantine 목록에 남아 있으며 새 UI는 `ModalShell` 기반으로 만든다.
+- 저장 성공/실패 흐름을 건드리면 `e2e/storage-failure.spec.js`가 통과해야 한다.
+- 새 native `alert`, `confirm`, `prompt`를 추가하지 않는다. `test/projectContracts.test.js`가 `src` 전체에서 이를 막는다.

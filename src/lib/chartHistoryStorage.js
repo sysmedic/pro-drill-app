@@ -134,8 +134,7 @@ export const saveChartHistory = (customer, history, storage = getDefaultStorage(
   if (!storage || !customer) return null;
 
   const key = customer.id ? chartHistoryKey(customer.id) : legacyChartHistoryKey(customer.name);
-  writeHistory(storage, key, history);
-  return key;
+  return writeHistory(storage, key, history) ? key : null;
 };
 
 export const renameChartHistory = ({ id, oldName, newName }, storage = getDefaultStorage()) => {
