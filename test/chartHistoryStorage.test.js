@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   deleteChartHistory,
   loadChartHistory,
+  normalizeChartHistory,
   renameChartHistory,
   saveChartHistory,
 } from '../src/lib/chartHistoryStorage.js';
@@ -23,6 +24,32 @@ test('loadChartHistory migrates v7 name history into v8 id history', () => {
 
   assert.deepEqual(loadChartHistory(customer, storage), legacyHistory);
   assert.equal(storage.getItem(chartHistoryKey(customer.id)), JSON.stringify(legacyHistory));
+});
+
+test('normalizeChartHistory keeps only object records with usable identity', () => {
+  const validRecord = { id: 'record_valid', name: '정상 기록' };
+  const dataOnlyRecord = { data: { ballName: '데이터 기록' } };
+
+  assert.deepEqual(normalizeChartHistory([
+    validRecord,
+    null,
+    'broken',
+    {},
+    { name: '' },
+    dataOnlyRecord,
+  ]), [validRecord, dataOnlyRecord]);
+});
+
+test('loadChartHistory filters invalid records without overwriting malformed keys', () => {
+  const customer = { id: 'cus_filter_history', name: '기록필터' };
+  const validRecord = { id: 'record_valid', name: '정상 기록' };
+  const rawHistory = [validRecord, null, {}, 'broken'];
+  const storage = new MockStorage({
+    [chartHistoryKey(customer.id)]: JSON.stringify(rawHistory),
+  });
+
+  assert.deepEqual(loadChartHistory(customer, storage), [validRecord]);
+  assert.equal(storage.getItem(chartHistoryKey(customer.id)), JSON.stringify(rawHistory));
 });
 
 test('loadChartHistory uses non-empty legacy history when v8 history is empty', () => {
@@ -73,6 +100,27 @@ test('saveChartHistory reports write failures without changing history state', (
 
   assert.equal(saveChartHistory(customer, history, storage), null);
   assert.equal(storage.has(chartHistoryKey(customer.id)), false);
+});
+
+test('saveChartHistory writes only valid history records', () => {
+  const customer = { id: 'cus_filter_save', name: '저장필터' };
+  const validRecord = { id: 'record_valid', name: '정상 기록' };
+  const storage = new MockStorage();
+
+  const savedKey = saveChartHistory(customer, [validRecord, null, 'broken', {}], storage);
+
+  assert.equal(savedKey, chartHistoryKey(customer.id));
+  assert.equal(storage.getItem(savedKey), JSON.stringify([validRecord]));
+});
+
+test('saveChartHistory rejects non-array history payloads', () => {
+  const customer = { id: 'cus_reject_non_array', name: '배열아님' };
+  const storage = new MockStorage({
+    [chartHistoryKey(customer.id)]: JSON.stringify([{ id: 'existing', name: '기존' }]),
+  });
+
+  assert.equal(saveChartHistory(customer, { id: 'not_array' }, storage), null);
+  assert.equal(storage.getItem(chartHistoryKey(customer.id)), JSON.stringify([{ id: 'existing', name: '기존' }]));
 });
 
 test('renameChartHistory preserves migrated history and removes legacy name keys', () => {

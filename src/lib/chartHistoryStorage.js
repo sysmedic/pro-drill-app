@@ -10,23 +10,57 @@ const getDefaultStorage = () => {
   return globalThis.localStorage;
 };
 
+const isObjectRecord = (value) => (
+  value !== null && typeof value === 'object' && !Array.isArray(value)
+);
+
+const isNonEmptyValue = (value) => (
+  typeof value === 'number' ||
+  (typeof value === 'string' && value.trim().length > 0)
+);
+
+const normalizeHistoryRecord = (record) => {
+  if (!isObjectRecord(record)) return null;
+
+  const hasRecordIdentity = (
+    isNonEmptyValue(record.id) ||
+    isNonEmptyValue(record.name) ||
+    isNonEmptyValue(record.timestamp) ||
+    isObjectRecord(record.data)
+  );
+
+  if (!hasRecordIdentity) return null;
+
+  return {
+    ...record,
+    ...(typeof record.name === 'string' ? { name: record.name.trim() } : {}),
+    ...(typeof record.timestamp === 'string' ? { timestamp: record.timestamp.trim() } : {}),
+  };
+};
+
+export const normalizeChartHistory = (history) => (
+  Array.isArray(history)
+    ? history.map(normalizeHistoryRecord).filter(Boolean)
+    : []
+);
+
 const readJsonArray = (storage, key) => {
   const raw = storage?.getItem(key);
   if (raw === null || raw === undefined) return null;
 
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : null;
+    return Array.isArray(parsed) ? normalizeChartHistory(parsed) : null;
   } catch {
     return null;
   }
 };
 
 const writeHistory = (storage, key, history) => {
-  if (!storage) return false;
+  if (!storage || !Array.isArray(history)) return false;
 
   try {
-    storage.setItem(key, JSON.stringify(Array.isArray(history) ? history : []));
+    storage.setItem(key, JSON.stringify(normalizeChartHistory(history)));
     return true;
   } catch {
     return false;

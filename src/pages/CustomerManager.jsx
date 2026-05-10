@@ -3,6 +3,7 @@ import PageShell from '../components/layout/PageShell.jsx';
 import { ConfirmModal, FeedbackToast } from '../components/ui/Dialogs.jsx';
 import { deleteChartHistory, renameChartHistory } from '../lib/chartHistoryStorage.js';
 import { loadCustomers, saveCustomers } from '../lib/customerStorage.js';
+import { createLocalId } from '../lib/ids.js';
 import CustomerFormModal from './customerManager/CustomerFormModal.jsx';
 import CustomerHeader from './customerManager/CustomerHeader.jsx';
 import CustomerList from './customerManager/CustomerList.jsx';
@@ -87,7 +88,7 @@ export default function CustomerManagement({ onSelectCustomer }) {
     } else {
       const newCustomer = {
         ...customerData,
-        id: `cus_${Date.now()}`,
+        id: createLocalId('cus'),
         name: customerData.name.trim(),
         createdAt: new Date().toLocaleDateString(),
       };

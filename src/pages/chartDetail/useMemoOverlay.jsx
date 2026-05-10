@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import Icon from '../../components/ui/Icon.jsx';
+import { createLocalId } from '../../lib/ids.js';
 
 export default function useMemoOverlay({ onDirty }) {
   const [memos, setMemos] = useState([]);
@@ -15,7 +16,7 @@ export default function useMemoOverlay({ onDirty }) {
     const rect = ref.current.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
-    const newMemo = { id: Date.now().toString(), x, y, text: '', section };
+    const newMemo = { id: createLocalId('memo'), x, y, text: '', section };
 
     setMemos(prev => [...prev, newMemo]);
     setIsPlacingMemo(false);

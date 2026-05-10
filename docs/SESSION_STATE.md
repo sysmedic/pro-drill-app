@@ -4,9 +4,9 @@
 
 ## 현재 우선순위
 
-1. 저장 payload schema validation과 versioned migrator를 추가한다.
-2. `Date.now()` 기반 고객/기록/메모 ID를 `crypto.randomUUID()` 기반 localId로 전환한다.
-3. 차트 입력 primitive를 다른 입력 화면까지 확장하기 전 모바일 회귀를 확인한다.
+1. 차트 입력폼을 `FingerPitchSection`, `ThumbSection`, `SpanSection`, `HandConditionSection` 단위로 분리한다.
+2. 고객 목록 화면의 검색/정렬/row UI를 공용 primitive 기준으로 정리한다.
+3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
 ## 최근 변경
@@ -64,12 +64,16 @@
 - 유틸 바텀시트의 미구현 `사진첨부` placeholder 버튼을 제거하고, 히스토리 목록 선택 영역을 native `button`으로 바꿨다.
 - 차트 상단 모드 전환 버튼의 접근성 라벨을 보강하고, 메모 배치 안내가 화면을 덜 가리도록 위치/애니메이션을 낮췄다.
 - `projectContracts`에 compact 입력 primitive와 미구현 future-action placeholder 금지 계약을 추가했다.
+- 고객 저장값과 차트 히스토리 저장값을 읽을 때 객체 schema를 검증해 깨진 레코드는 화면 state에서 제외하되 원본 localStorage는 덮어쓰지 않도록 보강했다.
+- 고객 저장은 유효하지 않은 고객 레코드가 섞인 배열을 거부하고, 차트 히스토리 저장은 유효한 기록 레코드만 직렬화하도록 정리했다.
+- 고객/차트 기록/메모 ID 생성을 `src/lib/ids.js`의 `createLocalId()`로 모으고 `Date.now()` 직접 ID 생성을 제거했다.
+- 저장 schema 방어와 shared ID helper를 검증하는 Node 테스트와 `Date.now()` ID 회귀 방지 계약 테스트를 추가했다.
 
 ## 다음 할 일
 
-- 저장 payload schema validation과 versioned migrator를 추가한다.
-- `Date.now()` 기반 고객/기록/메모 ID를 `crypto.randomUUID()` 기반 localId로 전환한다.
-- 차트 입력 primitive를 다른 화면에 확장하기 전 모바일 390px/540px 회귀를 확인한다.
+- 차트 입력폼을 섹션 단위 컴포넌트로 분리한다.
+- 고객 목록 화면의 검색/정렬/row UI를 공용 primitive 기준으로 정리한다.
+- 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 - GitHub Actions/Pages 첫 실행을 확인한다.
 
 ## 세션 시작 프롬프트

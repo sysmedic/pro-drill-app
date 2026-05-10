@@ -13,6 +13,7 @@ import UtilitySheet from './chartDetail/UtilitySheet.jsx';
 import useHistoryRecords from './chartDetail/useHistoryRecords.js';
 import useMemoOverlay from './chartDetail/useMemoOverlay.jsx';
 import { getCustomerChartProfile } from '../lib/customerSchema.js';
+import { createLocalId } from '../lib/ids.js';
 
 const createDefaultChartData = ({ handedness = 'right', isThumbless = false } = {}) => ({
   isThumbless,
@@ -153,7 +154,7 @@ export default function ChartDetail({ customer, onBack }) {
     const now = new Date().toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
     const recordName = ballName ? ballName : `기록 ${history.length + 1}`;
     const newRecord = {
-      id: Date.now(),
+      id: createLocalId('record'),
       timestamp: now,
       name: recordName,
       data: { chartData, customerInfo, ballName, layoutInfo, intent, memos },

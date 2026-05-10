@@ -1,4 +1,5 @@
 import { CUSTOMERS_KEY } from './storageKeys.js';
+import { normalizeCustomers } from './customerSchema.js';
 
 const getDefaultStorage = () => {
   if (typeof globalThis.localStorage === 'undefined') return null;
@@ -21,7 +22,12 @@ export const readCustomers = (storage = getDefaultStorage()) => {
       return { customers: [], status: 'invalid' };
     }
 
-    return { customers: parsed, status: 'ok' };
+    const customers = normalizeCustomers(parsed);
+    return {
+      customers,
+      invalidCount: parsed.length - customers.length,
+      status: customers.length === parsed.length ? 'ok' : 'partial',
+    };
   } catch (error) {
     return { customers: [], status: 'malformed', error };
   }
@@ -31,9 +37,11 @@ export const loadCustomers = (storage = getDefaultStorage()) => readCustomers(st
 
 export const saveCustomers = (customers, storage = getDefaultStorage()) => {
   if (!storage || !Array.isArray(customers)) return false;
+  const normalizedCustomers = normalizeCustomers(customers);
+  if (normalizedCustomers.length !== customers.length) return false;
 
   try {
-    storage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
+    storage.setItem(CUSTOMERS_KEY, JSON.stringify(normalizedCustomers));
     return true;
   } catch {
     return false;

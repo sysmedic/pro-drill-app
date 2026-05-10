@@ -17,9 +17,32 @@ test('readCustomers returns stored customer arrays', () => {
 
   assert.deepEqual(readCustomers(storage), {
     customers,
+    invalidCount: 0,
     status: 'ok',
   });
   assert.deepEqual(loadCustomers(storage), customers);
+});
+
+test('readCustomers filters invalid customer records without overwriting storage', () => {
+  const validCustomer = { id: 'cus_valid', name: '정상 고객', phone: '010' };
+  const rawCustomers = [
+    validCustomer,
+    null,
+    { id: 'cus_missing_name' },
+    { name: '아이디 없음' },
+    'broken',
+  ];
+  const raw = JSON.stringify(rawCustomers);
+  const storage = new MockStorage({
+    [CUSTOMERS_KEY]: raw,
+  });
+
+  assert.deepEqual(readCustomers(storage), {
+    customers: [validCustomer],
+    invalidCount: 4,
+    status: 'partial',
+  });
+  assert.equal(storage.getItem(CUSTOMERS_KEY), raw);
 });
 
 test('readCustomers does not overwrite malformed JSON', () => {
@@ -60,6 +83,16 @@ test('saveCustomers only writes explicit customer arrays', () => {
 
   assert.equal(saveCustomers(nextCustomers, storage), true);
   assert.equal(storage.getItem(CUSTOMERS_KEY), JSON.stringify(nextCustomers));
+});
+
+test('saveCustomers rejects arrays with invalid customer records', () => {
+  const original = JSON.stringify([{ id: 'cus_original', name: '기존' }]);
+  const storage = new MockStorage({
+    [CUSTOMERS_KEY]: original,
+  });
+
+  assert.equal(saveCustomers([{ id: 'cus_next', name: '신규' }, { id: 'broken' }], storage), false);
+  assert.equal(storage.getItem(CUSTOMERS_KEY), original);
 });
 
 test('saveCustomers reports write failures without throwing', () => {

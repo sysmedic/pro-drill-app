@@ -141,6 +141,20 @@ test('storage key constants remain backward compatible', () => {
   assert.equal(PRE_V7_CHART_HISTORY_PREFIX, 'chart_history_');
 });
 
+test('source UI creates ids through the shared local id helper', () => {
+  const sourceFiles = listFiles('src').filter((file) => (
+    /\.(jsx|js)$/.test(file) && file !== 'src/lib/ids.js'
+  ));
+  const matches = [];
+
+  for (const file of sourceFiles) {
+    const source = readFileSync(file, 'utf8');
+    if (/Date\.now\s*\(/.test(source)) matches.push(file);
+  }
+
+  assert.deepEqual(matches, []);
+});
+
 test('source UI does not call native browser dialogs', () => {
   const sourceFiles = listFiles('src').filter((file) => /\.(jsx|js)$/.test(file));
   const matches = [];
