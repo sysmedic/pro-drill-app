@@ -15,6 +15,7 @@
 - 공용 레이아웃은 `src/components/layout/PageShell.jsx`와 `src/components/layout/TopBarShell.jsx`를 먼저 사용한다.
 - 최상위 화면 폭과 화면 패딩은 `PageShell.jsx`의 `PAGE_MAX_WIDTH_CLASS`, `PAGE_INLINE_PADDING_CLASS` 토큰을 기본으로 한다.
 - 고객 목록 같은 화면 제목 영역은 `TopBarShell`의 `pageHeader` 변형을 사용하고, 차트 상세의 고정 조작 영역은 더 얇은 `toolbar` 변형을 사용한다.
+- fixed 상단 툴바는 `PageShell`의 내부 content 폭과 맞추기 위해 `FIXED_SURFACE_WIDTH_CLASS`를 사용한다.
 - 배경은 `bg-slate-50` 또는 앱 전체 `bg-slate-200` 계열을 유지한다.
 - 화면 단위 여백은 `p-2 sm:p-4`를 기본으로 한다.
 - 고정 상단바, 바텀시트, 오버레이의 `z-index`는 `PageShell.jsx`의 `LAYER_CLASS`를 먼저 사용하고 충돌을 확인한다.

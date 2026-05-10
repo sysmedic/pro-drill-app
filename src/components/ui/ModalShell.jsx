@@ -43,6 +43,11 @@ export default function ModalShell({
   zClassName = 'z-[120]',
 }) {
   const panelRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const previousFocusableElement = document.activeElement;
@@ -58,7 +63,7 @@ export default function ModalShell({
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -87,7 +92,7 @@ export default function ModalShell({
         previousFocusableElement.focus();
       }
     };
-  }, [initialFocusSelector, onClose]);
+  }, [initialFocusSelector]);
 
   return (
     <div
