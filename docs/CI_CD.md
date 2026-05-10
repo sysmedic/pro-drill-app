@@ -25,7 +25,7 @@ npm run build
 npm run check:e2e
 ```
 
-`npm run check:e2e`는 기본 품질 게이트 뒤 Playwright Chromium 테스트를 실행한다. 최초 실행 환경에서는 `npx playwright install chromium`이 필요할 수 있다.
+`npm run check:e2e`는 기본 품질 게이트 뒤 Playwright desktop/mobile Chromium 테스트와 PWA manifest smoke를 실행한다. 최초 실행 환경에서는 `npx playwright install chromium`이 필요할 수 있다.
 
 ## GitHub Actions
 
@@ -57,7 +57,7 @@ GitHub Pages에서 루트 도메인 또는 커스텀 도메인을 쓴다면 work
 
 ## 추후 확장
 
-- Playwright 흐름 확장: 기록 불러오기, 뒤로가기 경고 확인
+- Playwright 흐름 확장: 주요 화면 screenshot smoke
 - Lighthouse/PWA audit
 - manifest 아이콘이 외부 URL을 참조하지 않는지 검사
 - `localStorage` 마이그레이션 단위 테스트

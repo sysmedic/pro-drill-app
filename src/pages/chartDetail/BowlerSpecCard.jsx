@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import Card from '../../components/ui/Card.jsx';
+import Icon from '../../components/ui/Icon.jsx';
 import FractionKeypad from './FractionKeypad.jsx';
 
 const InfoSelect = ({ label, value, options, onChange }) => (
@@ -34,24 +36,29 @@ export default function BowlerSpecCard({
   };
 
   return (
-    <div ref={innerRef} className="w-full bg-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-200 mt-2 mb-4 sm:mb-6 max-w-[768px] mx-auto relative z-40 transform-gpu [backface-visibility:hidden]">
+    <Card ref={innerRef} className="mt-2 mb-4 sm:mb-6" constrained elevation="md" gpu layer="content" padding="md">
       {memoOverlay}
       {memosRenderer}
 
-      <div className="flex items-center justify-between cursor-pointer select-none relative z-10 gap-2" onClick={onToggleOpen}>
-        <div className="flex items-center gap-2 shrink-0">
-          <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center flex-wrap gap-1.5">
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        className="flex w-full items-center justify-between select-none relative z-10 gap-2 rounded-xl text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+        onClick={onToggleOpen}
+      >
+        <span className="flex items-center gap-2 shrink-0">
+          <span className="text-xl sm:text-2xl font-black text-slate-800 flex items-center flex-wrap gap-1.5">
             {customer.name}
             {(customer.hand || customer.style) && (
               <span className="text-slate-500">
                 {[customer.hand, customer.style].filter(Boolean).join(' ')}
               </span>
             )}
-          </h2>
-        </div>
+          </span>
+        </span>
 
         {!isOpen && (
-          <div className="flex flex-1 items-center justify-end animate-fade-in overflow-hidden ml-auto px-1">
+          <span className="flex flex-1 items-center justify-end animate-fade-in overflow-hidden ml-auto px-1">
             {(customerInfo.papX || customerInfo.papY || customerInfo.ballSpeed || customerInfo.rpm) && (
               <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded-md border border-slate-200 shadow-sm inline-block truncate max-w-full">
                 {customerInfo.papX || customerInfo.papY ? <span>{customerInfo.papX || '-'} : {customerInfo.papY || '-'}</span> : null}
@@ -61,13 +68,13 @@ export default function BowlerSpecCard({
                 {customerInfo.rpm ? <span>{customerInfo.rpm}r</span> : null}
               </span>
             )}
-          </div>
+          </span>
         )}
 
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 transition-colors shrink-0">
-          <span className={`transition-transform duration-300 font-bold text-xs ${isOpen ? 'rotate-180' : ''}`}>▼</span>
-        </div>
-      </div>
+        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 transition-colors shrink-0">
+          <Icon name="chevronDown" className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} size={16} strokeWidth={3} />
+        </span>
+      </button>
 
       <div className={`grid transition-[grid-template-rows,opacity,margin] duration-400 ease-in-out relative z-10 ${isOpen ? 'grid-rows-[1fr] opacity-100 mt-3 sm:mt-4' : 'grid-rows-[0fr] opacity-0 mt-0 pointer-events-none'}`}>
         <div className="overflow-hidden min-h-0">
@@ -158,6 +165,6 @@ export default function BowlerSpecCard({
         onClose={() => setKeypad(prev => ({ ...prev, isOpen: false }))}
         onConfirm={handleKeypadConfirm}
       />
-    </div>
+    </Card>
   );
 }

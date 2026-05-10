@@ -16,16 +16,36 @@
 - `src/lib/`: 저장키, 고객 스키마, 차트 히스토리 저장 같은 데이터 계약 코드가 있다.
 - `test/`: Node 내장 테스트 기반 단위/계약 테스트가 있다.
 - `e2e/`: Playwright 기반 실제 브라우저 플로우 테스트가 있다.
-- `docs/`: AI 작업 컨텍스트, CI/CD, 세션 상태, 바이브코딩 요청 가이드가 있다.
+- `docs/`: AI 작업 컨텍스트, UI 가이드, 요청 템플릿, CI/CD, 세션 상태, 바이브코딩 요청 가이드가 있다.
 - `.github/workflows/`: CI와 GitHub Pages 배포 워크플로가 있다.
 
 ## 에이전트에게 먼저 시킬 일
 
 새 세션을 시작할 때는 아래처럼 요청한다.
 
+Gemini 웹처럼 파일을 직접 읽지 못하는 도구라면, 작업 범위에 따라 먼저 아래 중 하나를 붙여넣는다.
+
+```bash
+npm run context:light
+npm run context -- --mode ui
+npm run context -- --mode data
+npm run context -- --mode e2e
+npm run context
+```
+
+일상적인 UI/버그/E2E/저장 로직 작업 요청은 아래 명령으로 짧은 프롬프트를 만든 뒤 빈칸만 채운다.
+
+```bash
+npm run prompt:ui
+npm run prompt:fix
+npm run prompt:e2e
+npm run prompt:data
+```
+
 ```text
 이 프로젝트는 볼링 지공 차트 PWA다.
-먼저 GEMINI.md, docs/VIBE_CODING_GUIDE.md, docs/PROJECT_CONTEXT.md, docs/SESSION_STATE.md, docs/CI_CD.md를 읽고 현재 구조와 우선순위를 요약해줘.
+먼저 GEMINI.md, docs/VIBE_CODING_GUIDE.md, docs/UI_GUIDE.md, docs/GEMINI_TASK_TEMPLATE.md, docs/PROJECT_CONTEXT.md, docs/SESSION_STATE.md를 읽고 현재 구조와 우선순위를 요약해줘.
+CI/E2E/배포 작업이면 docs/CI_CD.md도 읽어줘.
 작업 전에는 git status --short --branch로 변경분을 확인하고, 변경 범위를 짧게 말해줘.
 작업 후에는 npm run check 결과, 필요한 경우 npm run e2e 또는 npm run check:e2e 결과, docs/SESSION_STATE.md 갱신 내용을 알려줘.
 기존 localStorage 데이터와 저장키를 깨지 않게 작업해줘.
@@ -33,16 +53,20 @@
 
 ## 좋은 요청 형식
 
-에이전트에게 일을 맡길 때는 아래 6가지를 한 번에 준다.
+에이전트에게 일을 맡길 때는 아래 7가지를 한 번에 준다.
 
 1. 목표: 사용자가 어떤 화면에서 무엇을 할 수 있어야 하는지 적는다.
 2. 범위: 건드려도 되는 파일이나 영역을 적는다.
 3. 금지 조건: 저장키, 기존 데이터, 모바일 레이아웃처럼 깨지면 안 되는 것을 적는다.
-4. 완료 기준: 화면 동작, 테스트, 문서 갱신 조건을 적는다.
-5. 검증 명령: 기본은 `npm run check`, 화면 흐름 변경은 `npm run check:e2e`를 요구한다.
-6. 보고 방식: 바뀐 파일, 테스트 결과, 남은 리스크를 짧게 보고하게 한다.
+4. 디자인 기준: UI 작업은 `docs/UI_GUIDE.md`를 따르게 한다.
+5. 완료 기준: 화면 동작, 테스트, 문서 갱신 조건을 적는다.
+6. 검증 명령: 기본은 `npm run check`, 화면 흐름 변경은 `npm run check:e2e`를 요구한다.
+7. 보고 방식: 바뀐 파일, 테스트 결과, 남은 리스크를 짧게 보고하게 한다.
 
 요청에 없는 메인 화면 UI, 버튼, 사용자 흐름은 추가하지 말라고 명시한다. 에이전트가 필요하다고 판단한 기능이 있어도 먼저 제안만 하고, 승인 전에는 구현하지 않게 한다.
+새 작업을 줄 때는 `docs/GEMINI_TASK_TEMPLATE.md`를 복사해 목표, 수정 가능 파일, 수정 금지, 완료 기준을 채운다.
+반복 작업은 문서를 직접 복사하지 말고 `npm run prompt:*` 출력에서 빈칸만 채워 사용한다.
+`npm run prompt:*`가 출력하는 필수 읽기 목록과 공통 수정 금지 블록은 삭제하지 않는다.
 
 ## 요청 예시
 
@@ -51,6 +75,7 @@
 ```text
 고객 목록의 검색 입력 영역을 모바일 540px 폭에서 더 읽기 쉽게 정리해줘.
 src/pages/CustomerManager.jsx와 src/pages/customerManager/* 범위에서만 작업해줘.
+docs/UI_GUIDE.md의 기존 slate/indigo 색상, 카드, 입력 기준을 따라줘.
 요청하지 않은 버튼이나 새 흐름은 추가하지 말고, 완료 후 npm run check를 실행해줘.
 ```
 
@@ -103,6 +128,7 @@ src/pages/ChartDetail.jsx와 src/pages/chartDetail/* 범위에서 작업해줘.
 
 - 기존 고객 데이터와 차트 히스토리를 읽을 수 있어야 한다.
 - 요청받지 않은 메인 화면 UI, 버튼, 사용자 흐름을 추가하지 않는다.
+- UI 변경은 `docs/UI_GUIDE.md`의 색상, 카드, 버튼, 모달 기준을 따른다.
 - `localStorage["bowling_customers"]` 고객 목록 키를 함부로 바꾸지 않는다.
 - `chart_history_v8_${customer.id}`를 새 저장 기준으로 유지한다.
 - 기존 `chart_history_v7_${customer.name}`와 `chart_history_${customer.name}`는 마이그레이션 대상으로 계속 읽는다.

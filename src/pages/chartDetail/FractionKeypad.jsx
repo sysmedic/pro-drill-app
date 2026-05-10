@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import ModalShell from '../../components/ui/ModalShell.jsx';
 
 export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValue = '', title = '수치 입력', extraKeys = [] }) {
   const [value, setValue] = useState('');
@@ -27,10 +28,7 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
     if (!isOpen) return;
 
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-        e.preventDefault();
-      } else if (e.key === 'Enter') {
+      if (e.key === 'Enter') {
         onConfirm(value.trim());
         onClose();
         e.preventDefault();
@@ -72,23 +70,37 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
     onClose();
   };
 
-  // 큼지막한 숫자 키패드 배열
   const keys = [
-    '1', '2', '3',
-    '4', '5', '6',
-    '7', '8', '9',
-    '-', '0', '/',
-    '␣', '⌫' // ␣는 공백(Space)을 의미
+    { value: '1', label: '1' },
+    { value: '2', label: '2' },
+    { value: '3', label: '3' },
+    { value: '4', label: '4' },
+    { value: '5', label: '5' },
+    { value: '6', label: '6' },
+    { value: '7', label: '7' },
+    { value: '8', label: '8' },
+    { value: '9', label: '9' },
+    { value: '-', label: '-' },
+    { value: '0', label: '0' },
+    { value: '/', label: '/' },
+    { value: ' ', label: '띄어쓰기', variant: 'space' },
+    { action: 'delete', label: '삭제', variant: 'delete' },
   ];
 
   const modalContent = (
-    <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 sm:items-center" onClick={onClose}>
-      <div 
-        className="w-full max-w-[540px] bg-white rounded-t-2xl sm:rounded-2xl p-4 shadow-xl animate-[slideUp_0.2s_ease-out]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex justify-between items-center mb-4 px-2">
-          <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+    <ModalShell
+      align="bottom"
+      bodyClassName="p-4"
+      className="rounded-t-2xl sm:rounded-2xl"
+      onClose={onClose}
+      size="lg"
+      title={title}
+      titleId="fraction-keypad-title"
+      variant="light"
+      zClassName="z-[9999]"
+    >
+      <div>
+        <div className="mb-4 px-2">
           <div className="text-2xl font-bold text-indigo-600 tracking-wider bg-slate-100 px-4 py-2 rounded-lg min-w-[140px] text-right overflow-x-auto border border-slate-200">
             {value || <span className="text-slate-400 font-normal text-base">입력하세요</span>}
           </div>
@@ -113,20 +125,20 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
         )}
 
         <div className="grid grid-cols-3 gap-2 mb-2">
-          {keys.map((key, index) => (
+          {keys.map((key) => (
             <button
-              key={index}
+              key={key.action || key.value}
               type="button"
-              onClick={() => key === '⌫' ? handleDelete() : handleKeyPress(key === '␣' ? ' ' : key)}
+              onClick={() => key.action === 'delete' ? handleDelete() : handleKeyPress(key.value)}
               className={`h-14 sm:h-16 rounded-xl text-xl sm:text-2xl font-bold transition-colors active:scale-95 flex items-center justify-center ${
-                key === '⌫' 
+                key.variant === 'delete'
                   ? 'bg-rose-100 text-rose-600 hover:bg-rose-200' 
-                  : key === '␣'
+                  : key.variant === 'space'
                   ? 'col-span-2 bg-slate-100 text-slate-700 hover:bg-slate-200'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
-              {key === '␣' ? <span className="text-base sm:text-lg">띄어쓰기</span> : key}
+              {key.variant === 'space' || key.variant === 'delete' ? <span className="text-base sm:text-lg">{key.label}</span> : key.label}
             </button>
           ))}
         </div>
@@ -148,7 +160,7 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
           </button>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 
   return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;

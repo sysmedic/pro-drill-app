@@ -4,10 +4,10 @@
 
 ## 현재 우선순위
 
-1. 모달 포커스 복귀와 focus trap을 보강한다.
-2. Playwright E2E 범위를 히스토리와 나가기 경고까지 확장한다.
+1. 주요 화면 Playwright screenshot smoke를 추가해 디자인 일관성 회귀를 잡는다.
+2. 모바일 390px E2E 결과를 기준으로 540px 추가 필요성을 판단한다.
 3. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
-4. 저장소 관련 UI 핸들러를 더 얇게 분리한다.
+4. 차트 입력 primitive를 다른 입력 화면까지 확장하기 전 모바일 회귀를 확인한다.
 
 ## 최근 변경
 
@@ -37,12 +37,23 @@
 - 바이브코딩 작업자가 에이전트에게 요청할 때 사용할 `docs/VIBE_CODING_GUIDE.md`를 추가하고 컨텍스트 문서에 연결했다.
 - 요청받지 않은 메인 화면 UI/버튼/사용자 흐름을 추가하지 않는 규칙을 `GEMINI.md`와 바이브코딩 가이드에 명시했다.
 - 차트 보기 모드의 흰 부모 카드 컨테이너를 제거하고, 차트 wrapper에 `shadow-md`를 추가해 다른 카드들과 시각 밀도를 맞췄다.
+- Gemini 바이브코딩 혼선을 줄이기 위해 `docs/UI_GUIDE.md`와 `docs/GEMINI_TASK_TEMPLATE.md`를 추가하고 AI 하네스 문서와 컨텍스트 팩에 연결했다.
+- `ChartTopBar.jsx`의 유틸리티 버튼에 `aria-expanded`를 추가해 사용 중인 prop 계약을 명확히 하고 lint 실패를 해소했다.
+- `npm run context:light`와 `npm run prompt:ui|fix|e2e|data`를 추가해 Gemini 웹에서 매번 긴 문서를 복사하지 않아도 작업 요청을 만들 수 있게 했다.
+- 프론트 구조 1차 정리로 `src/components/layout/`와 `src/components/ui/` primitive를 추가하고 고객 목록/차트 상단/주요 카드/모달 일부를 공용 래퍼와 아이콘으로 이전했다.
+- 화면 JSX의 raw emoji 노출을 제거하고, 아이콘은 `src/components/ui/Icon.jsx`에서 재사용하게 했다.
+- `ModalShell.jsx`와 `Field.jsx`를 추가해 고객 폼, 차트 메모/히스토리/나가기 모달, 작업내용 입력을 공용 focus trap/입력 스타일로 이전했다.
+- `ChartDetail.jsx`의 히스토리 저장/삭제/이름변경 흐름을 `useHistoryRecords.js`로 분리했다.
+- `ChartDetail.jsx`의 메모 배치/드래그/활성 메모 편집 상태를 `useMemoOverlay.jsx`로 분리했다.
+- `ChartInputForm.jsx`의 반복 accordion/select/keypad trigger UI를 `DisclosureSection`, `SelectField`, `KeypadField` primitive로 옮겼다.
+- 고객 목록 저장을 `customerStorage` helper로 분리하고, malformed/non-array 고객 저장값과 legacy 차트 히스토리 migration edge case가 즉시 유실되지 않도록 보강했다.
+- Playwright에 390px 모바일 프로젝트와 저장 localStorage 키/히스토리 불러오기/미저장 나가기/PWA manifest E2E를 추가했다.
 
 ## 다음 할 일
 
-- 모달 focus trap과 닫힌 뒤 포커스 복귀를 보강한다.
-- Playwright E2E에 히스토리 불러오기와 나가기 경고 흐름을 추가한다.
-- GitHub remote를 연결하고 GitHub Actions/Pages 첫 실행을 확인한다.
+- 주요 화면 Playwright screenshot smoke를 추가해 디자인 일관성 회귀를 더 잘 잡는다.
+- 차트 입력 primitive를 다른 화면에 확장하기 전 모바일 390px/540px 회귀를 확인한다.
+- GitHub Actions/Pages 첫 실행을 확인한다.
 
 ## 세션 시작 프롬프트
 

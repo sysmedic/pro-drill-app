@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
+import PageShell from '../../components/layout/PageShell.jsx';
+import Card from '../../components/ui/Card.jsx';
+import Icon from '../../components/ui/Icon.jsx';
 import { commonBoxClass, getEdgePoint } from './chartOptions.js';
+
+const { PAGE_MAX_WIDTH_PX, PAGE_PADDING_X_PX } = PageShell.tokens;
 
 const Abs = ({ x, y, children, z = 10 }) => (
   <div className="absolute flex items-center justify-center" style={{ left: x, top: y, transform: 'translate(-50%, -50%)', zIndex: z }}>{children}</div>
@@ -9,9 +14,19 @@ const PitchBox = ({ upValue, downValue }) => {
   const value = upValue || downValue || '';
   return (
     <div className="relative w-[80px] h-[36px] flex justify-center">
-      {upValue && <div className="absolute bottom-[100%] flex flex-col items-center mb-1"><span className="text-[14px] leading-none text-black mb-0.5">▲</span><span className="text-[12px] font-bold text-black">Reverse</span></div>}
+      {upValue && (
+        <div className="absolute bottom-[100%] flex flex-col items-center mb-1">
+          <Icon name="arrowUp" className="text-black mb-0.5" size={14} strokeWidth={3} />
+          <span className="text-[12px] font-bold text-black">Reverse</span>
+        </div>
+      )}
       <div className={`w-full h-full ${commonBoxClass}`}>{value}</div>
-      {downValue && <div className="absolute top-[100%] flex flex-col items-center mt-1"><span className="text-[12px] font-bold text-black mb-0.5">Forward</span><span className="text-[14px] leading-none text-black">▼</span></div>}
+      {downValue && (
+        <div className="absolute top-[100%] flex flex-col items-center mt-1">
+          <span className="text-[12px] font-bold text-black mb-0.5">Forward</span>
+          <Icon name="arrowDown" className="text-black" size={14} strokeWidth={3} />
+        </div>
+      )}
     </div>
   );
 };
@@ -34,9 +49,9 @@ export default function ChartBlueprintView({ data = {}, memoOverlay, memosRender
     if (typeof window === 'undefined') return 1;
     const cw = document.documentElement.clientWidth;
     const isSm = cw >= 640;
-    const parentPadding = isSm ? 32 : 16; // ChartDetail 컨테이너의 좌우 패딩 (p-2 or sm:p-4)
-    const containerW = Math.min(cw, 768) - parentPadding; // max-w-[768px] 제약 적용
-    const wrapperW = Math.min(containerW, 768); // 차트 래퍼의 최대 너비(768px) 제약 적용
+    const parentPadding = isSm ? PAGE_PADDING_X_PX.sm : PAGE_PADDING_X_PX.base;
+    const containerW = Math.min(cw, PAGE_MAX_WIDTH_PX) - parentPadding;
+    const wrapperW = Math.min(containerW, PAGE_MAX_WIDTH_PX);
     const innerW = wrapperW - 2; // 테두리(border) 2px 제외
     return innerW / 540;
   };
@@ -61,7 +76,7 @@ export default function ChartBlueprintView({ data = {}, memoOverlay, memosRender
   const activeCanvasHeight = isThumbless ? 320 : 640;
 
   return (
-    <div className="w-full max-w-[768px] mx-auto overflow-hidden rounded-2xl shadow-md border border-slate-200 bg-white transition-[height] duration-500 relative z-40 animate-fade-in mt-2 mb-4 sm:mb-6 transform-gpu [backface-visibility:hidden]" style={{ height: `${activeCanvasHeight * scale}px` }}>
+    <Card className="overflow-hidden transition-[height] duration-500 animate-fade-in mt-2 mb-4 sm:mb-6" constrained elevation="md" gpu layer="content" style={{ height: `${activeCanvasHeight * scale}px` }}>
       <div
         ref={innerRef}
         className={`relative shrink-0 select-none ${isMemoActive ? 'touch-none' : 'touch-auto'} transform-gpu`}
@@ -84,9 +99,9 @@ export default function ChartBlueprintView({ data = {}, memoOverlay, memosRender
           <div className="flex flex-col items-center whitespace-nowrap">
             <span className="text-[17px] font-bold text-black mb-1">{firstLabel}</span>
             <div className="flex items-center gap-1.5 h-[36px]">
-              <span className={`font-bold transition-opacity ${firstPitch?.lat && firstPitch?.latDir === 'left' ? 'opacity-100' : 'opacity-0'}`}>◀</span>
+              <span className={`font-bold transition-opacity ${firstPitch?.lat && firstPitch?.latDir === 'left' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowLeft" className="text-black" size={14} strokeWidth={3} /></span>
               <div className={`w-[80px] h-full ${commonBoxClass}`}>{firstPitch?.lat || ''}</div>
-              <span className={`font-bold transition-opacity ${firstPitch?.lat && firstPitch?.latDir === 'right' ? 'opacity-100' : 'opacity-0'}`}>▶</span>
+              <span className={`font-bold transition-opacity ${firstPitch?.lat && firstPitch?.latDir === 'right' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowRight" className="text-black" size={14} strokeWidth={3} /></span>
             </div>
           </div>
         </Abs>
@@ -103,9 +118,9 @@ export default function ChartBlueprintView({ data = {}, memoOverlay, memosRender
           <div className="flex flex-col items-center whitespace-nowrap">
             <span className="text-[17px] font-bold text-black mb-1">{secondLabel}</span>
             <div className="flex items-center gap-1.5 h-[36px]">
-              <span className={`font-bold transition-opacity ${secondPitch?.lat && secondPitch?.latDir === 'left' ? 'opacity-100' : 'opacity-0'}`}>◀</span>
+              <span className={`font-bold transition-opacity ${secondPitch?.lat && secondPitch?.latDir === 'left' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowLeft" className="text-black" size={14} strokeWidth={3} /></span>
               <div className={`w-[80px] h-full ${commonBoxClass}`}>{secondPitch?.lat || ''}</div>
-              <span className={`font-bold transition-opacity ${secondPitch?.lat && secondPitch?.latDir === 'right' ? 'opacity-100' : 'opacity-0'}`}>▶</span>
+              <span className={`font-bold transition-opacity ${secondPitch?.lat && secondPitch?.latDir === 'right' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowRight" className="text-black" size={14} strokeWidth={3} /></span>
             </div>
           </div>
         </Abs>
@@ -125,17 +140,28 @@ export default function ChartBlueprintView({ data = {}, memoOverlay, memosRender
         {!isThumbless && (
           <>
             <Abs x={270} y={spanLeftPos.y - 45} z={20}>
-              <div className="bg-white px-4 rounded-md text-[16px] font-bold text-black">
-                {data?.spanType || ''} ✔
+              <div className="bg-white px-4 rounded-md text-[16px] font-bold text-black flex items-center gap-1.5">
+                {data?.spanType || ''}
+                <Icon name="check" className="text-black" size={15} strokeWidth={3} />
               </div>
             </Abs>
             <Abs x={spanLeftPos.x} y={spanLeftPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass}`}>{data?.spanLeft || ''}</div></Abs>
             <Abs x={spanRightPos.x} y={spanRightPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass}`}>{data?.spanRight || ''}</div></Abs>
             <Abs x={150} y={layout.thumb.y}>
               <div className="relative w-[80px] h-[36px] flex justify-center">
-                {thumbPitch?.up && <div className="absolute bottom-[100%] flex flex-col items-center mb-1"><span className="text-[14px] leading-none text-black mb-0.5">▲</span><span className="text-[12px] font-bold text-black">Forward</span></div>}
+                {thumbPitch?.up && (
+                  <div className="absolute bottom-[100%] flex flex-col items-center mb-1">
+                    <Icon name="arrowUp" className="text-black mb-0.5" size={14} strokeWidth={3} />
+                    <span className="text-[12px] font-bold text-black">Forward</span>
+                  </div>
+                )}
                 <div className={`w-full h-full ${commonBoxClass}`}>{thumbPitch?.up || thumbPitch?.down || ''}</div>
-                {thumbPitch?.down && <div className="absolute top-[100%] flex flex-col items-center mt-1"><span className="text-[12px] font-bold text-black mb-0.5">Reverse</span><span className="text-[14px] leading-none text-black">▼</span></div>}
+                {thumbPitch?.down && (
+                  <div className="absolute top-[100%] flex flex-col items-center mt-1">
+                    <span className="text-[12px] font-bold text-black mb-0.5">Reverse</span>
+                    <Icon name="arrowDown" className="text-black" size={14} strokeWidth={3} />
+                  </div>
+                )}
               </div>
             </Abs>
             <Abs x={380} y={layout.thumb.y}>
@@ -143,9 +169,15 @@ export default function ChartBlueprintView({ data = {}, memoOverlay, memosRender
             </Abs>
             <Abs x={layout.thumb.x} y={570}>
               <div className="flex items-center gap-2 h-[36px] whitespace-nowrap">
-                <span className={`font-bold transition-opacity duration-300 ${thumbPitch?.left ? 'text-black opacity-100' : 'opacity-0'}`}>◀ Left</span>
+                <span className={`font-bold transition-opacity duration-300 flex items-center gap-1 ${thumbPitch?.left ? 'text-black opacity-100' : 'opacity-0'}`}>
+                  <Icon name="arrowLeft" className="text-black" size={14} strokeWidth={3} />
+                  Left
+                </span>
                 <div className={`w-[80px] h-full ${commonBoxClass}`}>{thumbPitch?.left || thumbPitch?.right || ''}</div>
-                <span className={`font-bold transition-opacity duration-300 ${thumbPitch?.right ? 'text-black opacity-100' : 'opacity-0'}`}>Right ▶</span>
+                <span className={`font-bold transition-opacity duration-300 flex items-center gap-1 ${thumbPitch?.right ? 'text-black opacity-100' : 'opacity-0'}`}>
+                  Right
+                  <Icon name="arrowRight" className="text-black" size={14} strokeWidth={3} />
+                </span>
               </div>
             </Abs>
             <Abs x={layout.thumb.x} y={layout.thumb.y}>
@@ -159,6 +191,6 @@ export default function ChartBlueprintView({ data = {}, memoOverlay, memosRender
         )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

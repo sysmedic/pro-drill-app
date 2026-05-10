@@ -40,19 +40,40 @@ Gemini 웹처럼 세션 컨텍스트가 쉽게 끊기는 도구를 사용할 때
 npm run context
 ```
 
+작업 유형별로 더 짧고 관련 파일 본문을 포함한 컨텍스트를 만들 수 있습니다.
+
+```bash
+npm run context:light
+npm run context -- --mode ui
+npm run context -- --mode data
+npm run context -- --mode e2e
+npm run context
+```
+
+Gemini에게 매번 긴 요청을 새로 쓰지 않도록 작업 유형별 프롬프트도 생성할 수 있습니다.
+
+```bash
+npm run prompt:ui
+npm run prompt:fix
+npm run prompt:e2e
+npm run prompt:data
+```
+
 핵심 문서:
 
 - `GEMINI.md`: AI 작업 규칙
 - `docs/VIBE_CODING_GUIDE.md`: 바이브코딩 요청법과 현재 구조 설명
+- `docs/UI_GUIDE.md`: 디자인 일관성 기준
+- `docs/GEMINI_TASK_TEMPLATE.md`: Gemini 작업 요청 템플릿
 - `docs/PROJECT_CONTEXT.md`: 프로젝트 구조와 데이터 저장 계약
 - `docs/SESSION_STATE.md`: 현재 우선순위와 이어받을 작업
 - `docs/CI_CD.md`: CI/CD 설계
 
-작업을 끝낸 AI는 `docs/SESSION_STATE.md`를 갱신해야 합니다.
+작업을 끝낸 AI는 `docs/SESSION_STATE.md`를 갱신해야 합니다. CI/E2E/배포 작업이 아니라면 `docs/CI_CD.md`는 mode별 컨텍스트에서 생략될 수 있습니다.
 
 ## Git 운영 규칙
 
-현재 로컬 폴더는 GitHub Actions 설정을 포함하지만, `.git` 저장소 초기화와 원격 연결은 별도로 필요합니다. 저장소로 운영할 때는 아래 흐름을 기준으로 잡습니다.
+현재 저장소는 GitHub Actions 설정과 원격 저장소 연결을 포함합니다. 저장소로 운영할 때는 아래 흐름을 기준으로 잡습니다.
 
 ```bash
 git status --short --branch

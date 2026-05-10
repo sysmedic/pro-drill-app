@@ -1,22 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import PageShell from '../components/layout/PageShell.jsx';
 import { deleteChartHistory, renameChartHistory } from '../lib/chartHistoryStorage.js';
-import { CUSTOMERS_KEY } from '../lib/storageKeys.js';
+import { loadCustomers, saveCustomers } from '../lib/customerStorage.js';
 import CustomerFormModal from './customerManager/CustomerFormModal.jsx';
 import CustomerHeader from './customerManager/CustomerHeader.jsx';
 import CustomerList from './customerManager/CustomerList.jsx';
 
-const loadLocal = (key, fallback) => {
-  try {
-    const saved = localStorage.getItem(key);
-    return saved !== null ? JSON.parse(saved) : fallback;
-  } catch (e) {
-    console.error("스토리지 읽기 에러:", e);
-    return fallback;
-  }
-};
-
 export default function CustomerManagement({ onSelectCustomer }) {
-  const [customers, setCustomers] = useState(() => loadLocal(CUSTOMERS_KEY, []));
+  const [customers, setCustomers] = useState(() => loadCustomers());
   const [searchQuery, setSearchQuery] = useState('');
   const [sortType, setSortType] = useState('latest');
 
@@ -30,15 +21,16 @@ export default function CustomerManagement({ onSelectCustomer }) {
     style: '',
   });
 
-  useEffect(() => {
-    localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
-  }, [customers]);
+  const persistCustomers = (nextCustomers) => {
+    setCustomers(nextCustomers);
+    saveCustomers(nextCustomers);
+  };
 
   const optimizeScreen = () => {
     const vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
     window.scrollTo(0, 0);
-    alert('📱 디바이스 화면 높이가 최적화되었습니다.');
+    alert('디바이스 화면 높이가 최적화되었습니다.');
   };
 
   const handleOpenAdd = () => {
@@ -79,7 +71,7 @@ export default function CustomerManagement({ onSelectCustomer }) {
       const updated = customers.map(c =>
         c.id === editId ? { ...c, ...customerData, name: trimmedName } : c
       );
-      setCustomers(updated);
+      persistCustomers(updated);
     } else {
       const newCustomer = {
         ...customerData,
@@ -87,7 +79,7 @@ export default function CustomerManagement({ onSelectCustomer }) {
         name: customerData.name.trim(),
         createdAt: new Date().toLocaleDateString(),
       };
-      setCustomers([newCustomer, ...customers]);
+      persistCustomers([newCustomer, ...customers]);
     }
 
     setShowModal(false);
@@ -96,10 +88,10 @@ export default function CustomerManagement({ onSelectCustomer }) {
   const handleDelete = (e, customer) => {
     e.stopPropagation();
     const customerName = customer.name;
-    if (window.confirm(`⚠️ 1차 경고\n${customerName} 고객 정보를 삭제하시겠습니까?`)) {
-      if (window.confirm(`🚨 2차 경고\n정말로 영구 삭제하시겠습니까?\n삭제 후에는 고객의 모든 지공 기록이 함께 영구히 삭제되며 절대 복원할 수 없습니다.`)) {
+    if (window.confirm(`1차 경고\n${customerName} 고객 정보를 삭제하시겠습니까?`)) {
+      if (window.confirm(`2차 경고\n정말로 영구 삭제하시겠습니까?\n삭제 후에는 고객의 모든 지공 기록이 함께 영구히 삭제되며 절대 복원할 수 없습니다.`)) {
         const updated = customers.filter(c => c.id !== customer.id);
-        setCustomers(updated);
+        persistCustomers(updated);
         deleteChartHistory(customer);
       }
     }
@@ -114,7 +106,7 @@ export default function CustomerManagement({ onSelectCustomer }) {
   }
 
   return (
-    <div className="w-full max-w-[768px] mx-auto p-2 sm:p-4 bg-slate-50 min-h-screen relative pb-24" style={{ minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
+    <PageShell bottomPadding="pb-24" style={{ minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
       <CustomerHeader
         customerCount={customers.length}
         onAdd={handleOpenAdd}
@@ -141,6 +133,6 @@ export default function CustomerManagement({ onSelectCustomer }) {
           onSubmit={handleSaveCustomer}
         />
       )}
-    </div>
+    </PageShell>
   );
 }
