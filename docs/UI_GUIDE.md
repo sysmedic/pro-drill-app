@@ -48,6 +48,8 @@
 - Primary: indigo 계열 배경, 흰색 텍스트
 - Secondary: 흰색 또는 slate 계열 배경, slate 텍스트
 - Danger: red 계열 텍스트 또는 배경
+- 공용 버튼 variant에는 gradient나 누를 때 세로로 밀리는 효과를 넣지 않는다. 같은 toolbar 안에서 버튼 깊이와 기준선이 달라지면 안 된다.
+- 아이콘과 텍스트는 `Button` primitive의 flex/line-height 기준에 맡기고, 개별 화면에서 임의 padding이나 translate로 보정하지 않는다.
 - Icon button: 정사각형 터치 영역과 `aria-label`을 유지한다.
 - 모바일에서 버튼 텍스트가 줄바꿈되거나 잘리면 폭, 축약 라벨, 아이콘 버튼 중 하나로 정리한다.
 

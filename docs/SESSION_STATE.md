@@ -59,6 +59,7 @@
 - Playwright에 `storage-failure` smoke를 추가해 고객 저장/차트 저장 실패가 성공처럼 보이지 않도록 검증한다.
 - `projectContracts` 테스트가 이제 `src` 전체의 native `alert`/`confirm`/`prompt` 사용을 금지한다.
 - 고객 관리 헤더의 수동 `최적화` 버튼과 `--vh` 직접 세팅을 제거하고, viewport 대응은 `PageShell`의 `100svh` 기반 레이아웃에 맡기도록 정리했다.
+- 공용 `Button` variant의 gradient/세로 press offset을 제거하고 line-height 기준을 통일해 툴바 버튼 깊이와 내부 아이콘-텍스트 정렬을 맞췄다.
 
 ## 다음 할 일
 

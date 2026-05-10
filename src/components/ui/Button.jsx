@@ -2,10 +2,10 @@ import Icon from './Icon.jsx';
 import { cn } from './classNames.js';
 
 const variants = {
-  primary: 'bg-gradient-to-b from-indigo-500 to-indigo-600 text-white border-indigo-700 border-b-[3px] shadow-md hover:from-indigo-500 hover:to-indigo-700 active:border-b-[1px] active:translate-y-[2px]',
-  secondary: 'bg-gradient-to-b from-white to-slate-100 text-slate-700 border-slate-200 shadow-sm hover:to-slate-200',
-  subtle: 'bg-slate-50 text-slate-700 border-slate-200 shadow-sm hover:bg-slate-100',
-  danger: 'bg-red-100 text-red-600 border-red-200 shadow-sm hover:bg-red-200',
+  primary: 'bg-indigo-600 text-white border-indigo-600 shadow-sm hover:bg-indigo-700 active:bg-indigo-800',
+  secondary: 'bg-white text-slate-700 border-slate-200 shadow-sm hover:bg-slate-50 active:bg-slate-100',
+  subtle: 'bg-slate-100 text-slate-700 border-slate-200 shadow-sm hover:bg-slate-200 active:bg-slate-200',
+  danger: 'bg-red-50 text-red-600 border-red-200 shadow-sm hover:bg-red-100 active:bg-red-200',
   plain: 'bg-transparent text-slate-500 border-transparent hover:bg-slate-100 hover:text-slate-800',
 };
 
@@ -28,7 +28,7 @@ export default function Button({
   return (
     <button
       className={cn(
-        'inline-flex shrink-0 items-center justify-center whitespace-nowrap border font-bold transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60',
+        'inline-flex shrink-0 items-center justify-center whitespace-nowrap border font-bold leading-none transition-colors active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60',
         variants[variant],
         sizes[size],
         className,
@@ -37,7 +37,7 @@ export default function Button({
       {...props}
     >
       {icon && iconPosition === 'left' && <Icon name={icon} size={size === 'xs' ? 14 : 16} />}
-      {children}
+      {children && <span className="leading-none">{children}</span>}
       {icon && iconPosition === 'right' && <Icon name={icon} size={size === 'xs' ? 14 : 16} />}
     </button>
   );
@@ -54,7 +54,7 @@ export function IconButton({ 'aria-label': ariaLabel, className = '', icon, size
     <button
       aria-label={ariaLabel}
       className={cn(
-        'inline-flex shrink-0 items-center justify-center whitespace-nowrap border font-bold transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60',
+        'inline-flex shrink-0 items-center justify-center whitespace-nowrap border font-bold leading-none transition-colors active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60',
         variants[variant],
         boxSizes[size],
         className,

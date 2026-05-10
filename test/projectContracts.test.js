@@ -145,6 +145,14 @@ test('source UI does not call native browser dialogs', () => {
   assert.deepEqual(matches, []);
 });
 
+test('shared button variants stay flat and baseline-stable', () => {
+  const source = readFileSync('src/components/ui/Button.jsx', 'utf8');
+
+  assert.doesNotMatch(source, /bg-gradient/);
+  assert.doesNotMatch(source, /translate-y/);
+  assert.match(source, /leading-none/);
+});
+
 test('package scripts expose lightweight Gemini harness commands', () => {
   const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
 
