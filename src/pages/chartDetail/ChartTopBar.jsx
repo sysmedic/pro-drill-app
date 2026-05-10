@@ -5,6 +5,7 @@ export default function ChartTopBar({
   isEditMode,
   utilityState,
   onBack,
+  onStartMemo,
   onSave,
   onToggleEditMode,
   onToggleUtility,
@@ -22,6 +23,7 @@ export default function ChartTopBar({
         >
           유틸
         </Button>
+        <Button onClick={onStartMemo} size="sm" variant="secondary" icon="memo">메모</Button>
       </div>
 
       <div className="flex gap-1.5 sm:gap-2 shrink-0">

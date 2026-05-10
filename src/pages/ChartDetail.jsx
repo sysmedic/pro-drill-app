@@ -244,18 +244,19 @@ export default function ChartDetail({ customer, onBack }) {
 
   return (
     <PageShell bottomPadding="pb-40">
-      {isPlacingMemo && <div className="fixed inset-0 z-[30] bg-black/5" onClick={() => setIsPlacingMemo(false)} />}
+      {isPlacingMemo && <div className="fixed inset-0 z-[30] bg-black/5 touch-none" onClick={() => setIsPlacingMemo(false)} />}
 
       {isPlacingMemo && (
-        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 max-w-[calc(100%-24px)] bg-indigo-600 text-white px-4 py-2.5 rounded-xl shadow-2xl z-[100] font-bold text-sm flex items-center gap-2 animate-fade-in">
-          <span className="min-w-0 text-center leading-snug">원하는 카드(스펙, 차트/수정, 작업)를 터치하세요</span>
-          <Button className="ml-1 border-indigo-900 bg-indigo-800 text-white hover:bg-indigo-900" onClick={() => setIsPlacingMemo(false)} size="xs" variant="plain">취소</Button>
+        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 max-w-[calc(100%-24px)] bg-indigo-600/80 backdrop-blur-sm text-white px-4 py-2.5 rounded-xl shadow-2xl z-[100] font-bold text-sm flex items-center gap-2 animate-fade-in">
+          <span className="min-w-0 text-center leading-snug">원하는 위치를 터치하세요</span>
+          <Button className="ml-1 border-transparent bg-white/20 text-white hover:bg-white/30" onClick={() => setIsPlacingMemo(false)} size="xs" variant="plain">✕</Button>
         </div>
       )}
 
       <ChartTopBar
         isEditMode={isEditMode}
         utilityState={utilityState}
+        onStartMemo={() => setIsPlacingMemo(true)}
         onBack={handleBackClick}
         onSave={handleSave}
         onToggleEditMode={() => setIsEditMode(!isEditMode)}

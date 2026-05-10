@@ -29,8 +29,8 @@ export default function useMemoOverlay({ onDirty }) {
 
     return (
       <div
-        className="absolute inset-0 z-[80] cursor-crosshair bg-indigo-500/10 rounded-2xl outline-dashed outline-2 outline-indigo-400 transition-all animate-pulse"
-        onPointerDown={event => handleMemoPlace(event, section, ref)}
+          className="absolute inset-0 z-[80] touch-none cursor-crosshair bg-indigo-500/10 rounded-2xl outline-dashed outline-2 outline-indigo-400 transition-all animate-pulse"
+          onClick={event => handleMemoPlace(event, section, ref)}
       />
     );
   }, [handleMemoPlace, isPlacingMemo]);
@@ -55,7 +55,7 @@ export default function useMemoOverlay({ onDirty }) {
               event.clientX - dragStartPos.current.x,
               event.clientY - dragStartPos.current.y,
             );
-            if (distance > 5) dragMoved.current = true;
+            if (distance > 15) dragMoved.current = true;
 
             const rect = ref.current.getBoundingClientRect();
             const x = Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100));
@@ -72,11 +72,21 @@ export default function useMemoOverlay({ onDirty }) {
             setDraggingMemo(null);
             if (dragMoved.current) {
               onDirty();
-            } else if (!isPlacingMemo) {
+            }
+          }}
+          onPointerCancel={(event) => {
+            if (draggingMemo?.id !== memo.id) return;
+            event.currentTarget.releasePointerCapture(event.pointerId);
+            setDraggingMemo(null);
+            dragMoved.current = false;
+          }}
+          onClick={(event) => {
+            event.stopPropagation();
+            if (!dragMoved.current && !isPlacingMemo) {
               setActiveMemoId(memo.id);
             }
           }}
-          className={`absolute -translate-x-1/2 -translate-y-1/2 z-[60] touch-none transition-transform ${draggingMemo?.id === memo.id ? 'scale-110 cursor-grabbing' : 'cursor-grab hover:scale-105 active:scale-95'}`}
+          className={`absolute -translate-x-1/2 -translate-y-1/2 z-[60] touch-none transition-transform ${draggingMemo?.id === memo.id && dragMoved.current ? 'scale-110 cursor-grabbing' : 'cursor-grab hover:scale-105'}`}
           style={{ left: `${memo.x}%`, top: `${memo.y}%` }}
         >
           <div className="bg-yellow-200 w-8 h-8 sm:w-10 sm:h-10 rounded-md shadow-md border border-yellow-400 flex items-center justify-center text-yellow-900 pointer-events-none">
