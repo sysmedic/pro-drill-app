@@ -6,6 +6,39 @@ import { commonBoxClass, getEdgePoint } from './chartOptions.js';
 
 const { PAGE_MAX_WIDTH_PX, PAGE_PADDING_X_PX } = PageShell.tokens;
 
+const parseFraction = (str) => {
+  if (!str) return 0;
+  const cleanStr = String(str).split('(')[0].trim();
+  const parts = cleanStr.split(' ');
+  if (parts.length === 2 && parts[1].includes('/')) {
+    const whole = parseFloat(parts[0]);
+    const frac = parts[1].split('/');
+    return whole + (parseFloat(frac[0]) / parseFloat(frac[1]));
+  } else if (parts.length === 1) {
+    if (parts[0].includes('/')) {
+      const frac = parts[0].split('/');
+      return parseFloat(frac[0]) / parseFloat(frac[1]);
+    }
+    return parseFloat(parts[0]);
+  }
+  return 0;
+};
+
+const getDefaultHoleCutSize = (insertSize) => {
+  if (!insertSize) return '31/32';
+  const num = parseFraction(insertSize);
+  if (num >= 27 / 32) return '1 1/32';
+  return '31/32';
+};
+
+const getDefaultThumbHoleCutSize = (slugType, gender) => {
+  const type = String(slugType || '').trim().toUpperCase();
+  if (type.includes('IT')) return '1 3/8';
+  if (type.includes('스위치') || type.includes('조포')) return '1 1/2';
+  if (gender === '여') return '1 1/8';
+  return '1 1/4';
+};
+
 const Abs = ({ x, y, children, z = 10 }) => (
   <div className="absolute flex items-center justify-center" style={{ left: x, top: y, transform: 'translate(-50%, -50%)', zIndex: z }}>{children}</div>
 );
@@ -31,7 +64,7 @@ const PitchBox = ({ upValue, downValue }) => {
   );
 };
 
-export default function ChartBlueprintView({ data = {}, memoOverlay, memosRenderer, innerRef, isMemoActive }) {
+export default function ChartBlueprintView({ data = {}, customer = {}, memoOverlay, memosRenderer, innerRef, isMemoActive }) {
   const isThumbless = data?.isThumbless || false;
   const isLeft = data?.handedness === 'left';
   const midPitch = data?.midPitch || {};
@@ -109,7 +142,7 @@ export default function ChartBlueprintView({ data = {}, memoOverlay, memosRender
         <Abs x={50} y={layout.mid.y}><PitchBox upValue={firstPitch?.up} downValue={firstPitch?.down} /></Abs>
         <Abs x={layout.mid.x} y={layout.mid.y}>
           <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white flex flex-col items-center justify-evenly pt-[7px] pb-[17px] shadow-sm relative">
-            <div className="text-[14px] font-medium text-black">31/32</div>
+            <div className="text-[14px] font-medium text-black">{firstPitch?.holeCutSize || getDefaultHoleCutSize(firstPitch?.insertSize)}</div>
             <span className="text-[19px] leading-tight tracking-tight font-semibold text-black whitespace-nowrap">{firstPitch?.insertSize || ''}</span>
             <span className="text-[17px] font-semibold text-black">{firstPitch?.tipType || ''}</span>
           </div>
@@ -128,7 +161,7 @@ export default function ChartBlueprintView({ data = {}, memoOverlay, memosRender
         <Abs x={490} y={layout.ring.y}><PitchBox upValue={secondPitch?.up} downValue={secondPitch?.down} /></Abs>
         <Abs x={layout.ring.x} y={layout.ring.y}>
           <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white flex flex-col items-center justify-evenly pt-[7px] pb-[17px] shadow-sm relative">
-            <div className="text-[14px] font-medium text-black">31/32</div>
+            <div className="text-[14px] font-medium text-black">{secondPitch?.holeCutSize || getDefaultHoleCutSize(secondPitch?.insertSize)}</div>
             <span className="text-[19px] leading-tight tracking-tight font-semibold text-black whitespace-nowrap">{secondPitch?.insertSize || ''}</span>
             <span className="text-[17px] font-semibold text-black">{secondPitch?.tipType || ''}</span>
           </div>
@@ -183,7 +216,7 @@ export default function ChartBlueprintView({ data = {}, memoOverlay, memosRender
             </Abs>
             <Abs x={layout.thumb.x} y={layout.thumb.y}>
               <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white flex flex-col items-center justify-evenly pt-[7px] pb-[17px] shadow-lg relative">
-                <div className="text-[14px] font-medium text-black">1 1/4</div>
+                <div className="text-[14px] font-medium text-black">{thumbDetails?.holeCutSize || getDefaultThumbHoleCutSize(thumbDetails?.slugType, customer?.gender)}</div>
                 <span className="text-[22px] font-semibold text-black">{thumbDetails?.holeSize || ''}</span>
                 <span className="text-[22px] font-semibold text-black">{thumbDetails?.ovalSize || ''}</span>
               </div>

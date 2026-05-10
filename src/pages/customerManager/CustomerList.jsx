@@ -26,6 +26,7 @@ export default function CustomerList({ customers, onDelete, onEdit, onSelect }) 
                 {customer.gender && <Badge>{customer.gender}</Badge>}
                 {customer.hand && <Badge>{customer.hand}</Badge>}
                 {customer.style && <Badge variant="accent">{customer.style}</Badge>}
+                {customer.style2 && <Badge variant="accent">{customer.style2}</Badge>}
               </span>
             </button>
 

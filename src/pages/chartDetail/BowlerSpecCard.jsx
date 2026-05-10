@@ -49,9 +49,17 @@ export default function BowlerSpecCard({
         <span className="flex items-center gap-2 shrink-0">
           <span className="text-xl sm:text-2xl font-black text-slate-800 flex items-center flex-wrap gap-1.5">
             {customer.name}
-            {(customer.hand || customer.style) && (
+            {(customer.gender || customer.hand || customer.style || customer.style2) && (
               <span className="text-slate-500">
-                {[customer.hand, customer.style].filter(Boolean).join(' ')}
+                {customer.gender && (
+                  <>
+                    <span className={customer.gender === '남' ? 'text-blue-400' : customer.gender === '여' ? 'text-red-400' : ''}>
+                      {customer.gender}
+                    </span>
+                    {(customer.hand || customer.style || customer.style2) && ' '}
+                  </>
+                )}
+                {[customer.hand, customer.style, customer.style2].filter(Boolean).join(' ')}
               </span>
             )}
           </span>
@@ -113,7 +121,7 @@ export default function BowlerSpecCard({
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              className="w-full bg-transparent text-center text-sm sm:text-base font-black text-black outline-none placeholder:text-slate-400 placeholder:font-normal"
+              className="w-full bg-transparent text-center text-base font-black text-black outline-none placeholder:text-slate-400 placeholder:font-normal"
               value={customerInfo.rpm}
               onChange={e => onCustomerInfoChange(p => ({ ...p, rpm: e.target.value }))}
               placeholder="입력"
@@ -125,7 +133,7 @@ export default function BowlerSpecCard({
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              className="w-full bg-transparent text-center text-sm sm:text-base font-black text-black outline-none placeholder:text-slate-400 placeholder:font-normal"
+              className="w-full bg-transparent text-center text-base font-black text-black outline-none placeholder:text-slate-400 placeholder:font-normal"
               value={customerInfo.ballSpeed}
               onChange={e => onCustomerInfoChange(p => ({ ...p, ballSpeed: e.target.value }))}
               placeholder="입력"
@@ -136,7 +144,7 @@ export default function BowlerSpecCard({
             <span className="text-[9px] sm:text-[10px] text-black font-bold mb-0.5 tracking-tighter pointer-events-none">PAP (Over)</span>
             <button
               type="button"
-              className="w-full bg-transparent text-center text-sm sm:text-base font-black text-black outline-none min-h-[24px] flex items-center justify-center"
+              className="w-full bg-transparent text-center text-base font-black text-black outline-none min-h-[24px] flex items-center justify-center"
               onClick={() => openKeypad('papX', customerInfo.papX, 'PAP (Over)')}
             >
               {customerInfo.papX || <span className="text-slate-400 font-normal">입력</span>}
@@ -147,7 +155,7 @@ export default function BowlerSpecCard({
             <span className="text-[9px] sm:text-[10px] text-black font-bold mb-0.5 tracking-tighter pointer-events-none">PAP (Up/Down)</span>
             <button
               type="button"
-              className="w-full bg-transparent text-center text-sm sm:text-base font-black text-black outline-none min-h-[24px] flex items-center justify-center"
+              className="w-full bg-transparent text-center text-base font-black text-black outline-none min-h-[24px] flex items-center justify-center"
               onClick={() => openKeypad('papY', customerInfo.papY, 'PAP (Up/Down)', ['Up', 'Down'])}
             >
               {customerInfo.papY || <span className="text-slate-400 font-normal">입력</span>}

@@ -85,6 +85,21 @@ export default function CustomerFormModal({ customerData, editId, onChange, onCl
             <option value="덤리스">덤리스</option>
             <option value="투핸드">투핸드</option>
           </Field>
+
+          <Field
+            as="select"
+            label="투구 스타일 (추가)"
+            onChange={e => onChange({ ...customerData, style2: e.target.value })}
+            style={{ textAlignLast: 'center' }}
+            value={customerData.style2 || ''}
+          >
+            <option value="">선택 안함</option>
+            <option value="스트로커">스트로커</option>
+            <option value="트위너">트위너</option>
+            <option value="크랭커">크랭커</option>
+            <option value="덤리스">덤리스</option>
+            <option value="투핸드">투핸드</option>
+          </Field>
         </div>
 
         <Button className="w-full mt-8" size="lg" type="submit" variant="primary">

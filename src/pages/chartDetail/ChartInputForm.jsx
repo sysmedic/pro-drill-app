@@ -18,6 +18,42 @@ import {
 
 const FORM_DENSITY = 'compact';
 
+const FINGER_HOLE_CUT_OPTIONS = ['31/32', '1 1/32'];
+const THUMB_HOLE_CUT_OPTIONS = ['1 1/8', '1 1/4', '1 3/8', '1 1/2'];
+
+const parseFraction = (str) => {
+  if (!str) return 0;
+  const cleanStr = String(str).split('(')[0].trim();
+  const parts = cleanStr.split(' ');
+  if (parts.length === 2 && parts[1].includes('/')) {
+    const whole = parseFloat(parts[0]);
+    const frac = parts[1].split('/');
+    return whole + (parseFloat(frac[0]) / parseFloat(frac[1]));
+  } else if (parts.length === 1) {
+    if (parts[0].includes('/')) {
+      const frac = parts[0].split('/');
+      return parseFloat(frac[0]) / parseFloat(frac[1]);
+    }
+    return parseFloat(parts[0]);
+  }
+  return 0;
+};
+
+const getDefaultHoleCutSize = (insertSize) => {
+  if (!insertSize) return '31/32';
+  const num = parseFraction(insertSize);
+  if (num >= 27 / 32) return '1 1/32';
+  return '31/32';
+};
+
+const getDefaultThumbHoleCutSize = (slugType, gender) => {
+  const type = String(slugType || '').trim().toUpperCase();
+  if (type.includes('IT')) return '1 3/8';
+  if (type.includes('스위치') || type.includes('조포')) return '1 1/2';
+  if (gender === '여') return '1 1/8';
+  return '1 1/4';
+};
+
 function ChartSelectField(props) {
   return <SelectField density={FORM_DENSITY} {...props} />;
 }
@@ -26,7 +62,7 @@ function ChartKeypadField(props) {
   return <KeypadField density={FORM_DENSITY} {...props} />;
 }
 
-export default function ChartInputForm({ data = {}, onChange }) {
+export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
   const isThumbless = data?.isThumbless || false;
   const handedness = data?.handedness || 'right';
   const handCondition = data?.handCondition || {};
@@ -68,6 +104,9 @@ export default function ChartInputForm({ data = {}, onChange }) {
       if (val !== '' && !next.latDir) next.latDir = isLeft ? 'right' : 'left';
       if (val === '') next.latDir = '';
     }
+    if (key === 'insertSize') {
+      next.holeCutSize = getDefaultHoleCutSize(val);
+    }
     onChange({ ...data, midPitch: next });
   };
 
@@ -78,6 +117,9 @@ export default function ChartInputForm({ data = {}, onChange }) {
     if (key === 'lat') {
       if (val !== '' && !next.latDir) next.latDir = isLeft ? 'left' : 'right';
       if (val === '') next.latDir = '';
+    }
+    if (key === 'insertSize') {
+      next.holeCutSize = getDefaultHoleCutSize(val);
     }
     onChange({ ...data, ringPitch: next });
   };
@@ -91,7 +133,13 @@ export default function ChartInputForm({ data = {}, onChange }) {
     onChange({ ...data, thumbPitch: next });
   };
 
-  const updateThumbDetails = (key, val) => onChange({ ...data, thumbDetails: { ...thumbDetails, [key]: val } });
+  const updateThumbDetails = (key, val) => {
+    const next = { ...thumbDetails, [key]: val };
+    if (key === 'slugType') {
+      next.holeCutSize = getDefaultThumbHoleCutSize(val, customer?.gender);
+    }
+    onChange({ ...data, thumbDetails: next });
+  };
 
   const updateFirst = isLeft ? updateRing : updateMid;
   const updateSecond = isLeft ? updateMid : updateRing;
@@ -112,6 +160,7 @@ export default function ChartInputForm({ data = {}, onChange }) {
     if (pitch.lat) parts.push(`${pitch.latDir === 'left' ? 'L' : 'R'} ${pitch.lat}`);
     if (pitch.insertSize) parts.push(String(pitch.insertSize).split(' ')[0]);
     if (pitch.tipType) parts.push(pitch.tipType);
+    if (pitch.holeCutSize) parts.push(`H/C ${pitch.holeCutSize}`);
     return parts.length > 0 ? parts.join(', ') : '';
   };
 
@@ -133,6 +182,7 @@ export default function ChartInputForm({ data = {}, onChange }) {
     if (details?.ovalSize) parts.push(`오발 ${details.ovalSize}`);
     if (angle) parts.push(`${angle}°`);
     if (details?.slugType) parts.push(details.slugType);
+    if (details?.holeCutSize) parts.push(`H/C ${details.holeCutSize}`);
     return parts.length > 0 ? parts.join(', ') : '';
   };
 
@@ -179,14 +229,22 @@ export default function ChartInputForm({ data = {}, onChange }) {
       {renderSection('first', firstLabel, getFingerSummary(firstPitch), (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={firstPitch.up} onChange={v => updateFirst('up', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Forward (▼)" value={firstPitch.down} onChange={v => updateFirst('down', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Lateral" value={firstPitch.lat} onChange={v => updateFirst('lat', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Lateral 방향" value={firstPitch.latDir} onChange={v => updateFirst('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
-          <div className="grid grid-cols-2 gap-2.5"><ChartSelectField allowCustom label="인서트 사이즈" value={firstPitch.insertSize} onChange={v => updateFirst('insertSize', v)} options={FINGER_INSERT_OPTIONS} /><ChartSelectField allowCustom label="팁 종류" value={firstPitch.tipType} onChange={v => updateFirst('tipType', v)} options={TIP_OPTIONS} /></div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <ChartSelectField allowCustom label="인서트 사이즈" value={firstPitch.insertSize} onChange={v => updateFirst('insertSize', v)} options={FINGER_INSERT_OPTIONS} />
+            <ChartSelectField allowCustom label="팁 종류" value={firstPitch.tipType} onChange={v => updateFirst('tipType', v)} options={TIP_OPTIONS} />
+            <ChartSelectField allowCustom label="홀컷 사이즈" value={firstPitch.holeCutSize} onChange={v => updateFirst('holeCutSize', v)} options={FINGER_HOLE_CUT_OPTIONS} />
+          </div>
         </>
       ))}
 
       {renderSection('second', secondLabel, getFingerSummary(secondPitch), (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={secondPitch.up} onChange={v => updateSecond('up', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Forward (▼)" value={secondPitch.down} onChange={v => updateSecond('down', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Lateral" value={secondPitch.lat} onChange={v => updateSecond('lat', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Lateral 방향" value={secondPitch.latDir} onChange={v => updateSecond('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
-          <div className="grid grid-cols-2 gap-2.5"><ChartSelectField allowCustom label="인서트 사이즈" value={secondPitch.insertSize} onChange={v => updateSecond('insertSize', v)} options={FINGER_INSERT_OPTIONS} /><ChartSelectField allowCustom label="팁 종류" value={secondPitch.tipType} onChange={v => updateSecond('tipType', v)} options={TIP_OPTIONS} /></div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <ChartSelectField allowCustom label="인서트 사이즈" value={secondPitch.insertSize} onChange={v => updateSecond('insertSize', v)} options={FINGER_INSERT_OPTIONS} />
+            <ChartSelectField allowCustom label="팁 종류" value={secondPitch.tipType} onChange={v => updateSecond('tipType', v)} options={TIP_OPTIONS} />
+            <ChartSelectField allowCustom label="홀컷 사이즈" value={secondPitch.holeCutSize} onChange={v => updateSecond('holeCutSize', v)} options={FINGER_HOLE_CUT_OPTIONS} />
+          </div>
         </>
       ))}
 
@@ -216,6 +274,7 @@ export default function ChartInputForm({ data = {}, onChange }) {
             <ChartSelectField allowCustom label="오발 사이즈" value={thumbDetails.ovalSize} onChange={v => updateThumbDetails('ovalSize', v)} options={OVAL_OPTIONS} />
             <ChartKeypadField label="오발 각도" onOpen={() => openKeypad('ovalAngle', ovalAngle, '오발 각도')} placeholder="숫자만" value={ovalAngle} />
             <ChartSelectField allowCustom label="덤 타입" value={thumbDetails.slugType} onChange={v => updateThumbDetails('slugType', v)} options={THUMB_TYPE_OPTIONS} />
+            <ChartSelectField allowCustom label="홀컷 사이즈" value={thumbDetails.holeCutSize} onChange={v => updateThumbDetails('holeCutSize', v)} options={THUMB_HOLE_CUT_OPTIONS} />
           </div>
           </>
         ))}

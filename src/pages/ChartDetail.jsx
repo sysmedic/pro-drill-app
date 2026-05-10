@@ -19,10 +19,10 @@ const createDefaultChartData = ({ handedness = 'right', isThumbless = false } = 
   isThumbless,
   handedness,
   handCondition: { moisture: '', fingerStiffness: '', thumbStiffness: '' },
-  midPitch: { up: '', down: '', lat: '', latDir: '', insertSize: '', tipType: '' },
-  ringPitch: { up: '', down: '', lat: '', latDir: '', insertSize: '', tipType: '' },
+  midPitch: { up: '', down: '', lat: '', latDir: '', insertSize: '', tipType: '', holeCutSize: '' },
+  ringPitch: { up: '', down: '', lat: '', latDir: '', insertSize: '', tipType: '', holeCutSize: '' },
   thumbPitch: { up: '', down: '', left: '', right: '' },
-  thumbDetails: { holeSize: '', ovalSize: '', slugType: '' },
+  thumbDetails: { holeSize: '', ovalSize: '', slugType: '', holeCutSize: '' },
   bridge: '3/16',
   spanLeft: '',
   spanRight: '',
@@ -132,8 +132,8 @@ export default function ChartDetail({ customer, onBack }) {
       if (loadedChart) {
         setChartData({
           ...loadedChart,
-          handedness: profile.handedness,
-          isThumbless: profile.isThumbless,
+          handedness: loadedChart.handedness ?? profile.handedness,
+          isThumbless: loadedChart.isThumbless ?? profile.isThumbless,
         });
       }
       if (loadedCust) setCustomerInfo(loadedCust);
@@ -190,8 +190,8 @@ export default function ChartDetail({ customer, onBack }) {
     if (loadedChart) {
       setChartData({
         ...loadedChart,
-        handedness: profile.handedness,
-        isThumbless: profile.isThumbless,
+        handedness: loadedChart.handedness ?? profile.handedness,
+        isThumbless: loadedChart.isThumbless ?? profile.isThumbless,
       });
     }
     if (loadedCust) setCustomerInfo(loadedCust);
@@ -281,11 +281,12 @@ export default function ChartDetail({ customer, onBack }) {
           <div ref={formRef} className="relative w-full h-full">
             {renderMemoOverlay('form', formRef)}
             {renderMemos('form', formRef)}
-            <ChartInputForm data={chartData} onChange={handleChartDataChange} />
+            <ChartInputForm customer={customer} data={chartData} onChange={handleChartDataChange} />
           </div>
         </Card>
       ) : (
         <ChartBlueprintView
+          customer={customer}
           data={chartData}
           innerRef={chartRef}
           memoOverlay={renderMemoOverlay('chart', chartRef)}
