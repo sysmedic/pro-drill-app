@@ -40,7 +40,7 @@ const saveChart = async (page) => {
     await dialog.accept();
   });
 
-  await page.getByRole('button', { name: /^Save$/ }).click();
+  await page.getByRole('button', { name: '저장', exact: true }).click();
   expect(saveMessage).toContain('안전하게 저장');
 };
 
@@ -78,7 +78,7 @@ test('saved chart creates the expected localStorage history key and reloads thro
   expect(storageState.history[0].name).toBe(ballName);
   expect(storageState.history[0].data.ballName).toBe(ballName);
 
-  await page.getByRole('button', { name: /Back/ }).click();
+  await page.getByRole('button', { name: /뒤로/ }).click();
   await expect(page.getByRole('heading', { name: /고객 관리/ })).toBeVisible();
 
   await page.getByText(customerName, { exact: true }).click();
@@ -109,7 +109,7 @@ test('unsaved chart edits show an exit confirmation before leaving', async ({ pa
   await openTaskDetails(page);
   await page.getByLabel(/레이아웃/).fill('40 x 5 x 35');
 
-  await page.getByRole('button', { name: /Back/ }).click();
+  await page.getByRole('button', { name: /뒤로/ }).click();
   const exitDialog = page.getByRole('dialog', { name: /주의/ });
   await expect(exitDialog).toBeVisible();
   await expect(exitDialog).toContainText(/저장되지 않은 변경 사항/);
@@ -118,7 +118,7 @@ test('unsaved chart edits show an exit confirmation before leaving', async ({ pa
   await expect(exitDialog).toBeHidden();
   await expect(page.getByText('작업내용')).toBeVisible();
 
-  await page.getByRole('button', { name: /Back/ }).click();
+  await page.getByRole('button', { name: /뒤로/ }).click();
   const reopenedExitDialog = page.getByRole('dialog', { name: /주의/ });
   await reopenedExitDialog.getByRole('button', { name: /저장하지 않고 나가기/ }).click();
   await expect(page.getByRole('heading', { name: /고객 관리/ })).toBeVisible();

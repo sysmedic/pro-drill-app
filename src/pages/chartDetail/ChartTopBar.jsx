@@ -10,9 +10,9 @@ export default function ChartTopBar({
   onToggleUtility,
 }) {
   return (
-    <TopBarShell fixed className="flex justify-between items-center">
+    <TopBarShell fixed variant="toolbar" className="flex justify-between items-center gap-2">
       <div className="flex gap-1.5 sm:gap-2 shrink-0">
-        <Button icon="back" onClick={onBack} size="sm" variant="secondary">Back</Button>
+        <Button icon="back" onClick={onBack} size="sm" variant="secondary">뒤로</Button>
         <Button
           aria-expanded={utilityState === 'expanded'}
           icon="tools"
@@ -33,7 +33,7 @@ export default function ChartTopBar({
         >
           {isEditMode ? '차트' : '수정'}
         </Button>
-        <Button onClick={onSave} size="md" variant="primary">Save</Button>
+        <Button onClick={onSave} size="sm" variant="primary">저장</Button>
       </div>
     </TopBarShell>
   );
