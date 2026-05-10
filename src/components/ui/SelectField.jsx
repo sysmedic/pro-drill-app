@@ -2,7 +2,15 @@ import { useId, useState } from 'react';
 import { TextInputModal } from './Dialogs.jsx';
 import { cn } from './classNames.js';
 
-export const selectFieldControlClass = 'h-[46px] w-full border border-slate-300 rounded-lg bg-white p-2.5 text-base text-black font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500';
+const controlClasses = {
+  default: 'h-[46px] w-full border border-slate-300 rounded-lg bg-white p-2.5 text-base text-black font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500',
+  compact: 'h-10 w-full border border-slate-300 rounded-md bg-white px-2 py-1.5 text-[16px] sm:text-sm text-black font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500',
+};
+
+const labelClasses = {
+  default: 'text-sm font-bold text-slate-600 mb-1.5',
+  compact: 'text-xs font-bold text-slate-600 mb-1',
+};
 
 const getOptionValue = (option) => (typeof option === 'object' ? option.value : option);
 const getOptionLabel = (option) => (typeof option === 'object' ? option.label : option);
@@ -13,6 +21,7 @@ export default function SelectField({
   controlClassName = '',
   customLabel = '+ 직접 입력',
   customPrompt,
+  density = 'default',
   label,
   labelClassName = '',
   onChange,
@@ -25,6 +34,8 @@ export default function SelectField({
   const currentValue = value || '';
   const hasCurrentOption = options.some((option) => getOptionValue(option) === currentValue);
   const [customInputOpen, setCustomInputOpen] = useState(false);
+  const controlClass = controlClasses[density] || controlClasses.default;
+  const labelClass = labelClasses[density] || labelClasses.default;
 
   const handleChange = (event) => {
     const nextValue = event.target.value;
@@ -41,11 +52,11 @@ export default function SelectField({
     <>
       <div className={cn('flex flex-col w-full', className)}>
         {label && (
-          <label className={cn('text-sm font-bold text-slate-600 mb-1.5', labelClassName)} htmlFor={id}>
+          <label className={cn(labelClass, labelClassName)} htmlFor={id}>
             {label}
           </label>
         )}
-        <select className={cn(selectFieldControlClass, controlClassName)} id={id} onChange={handleChange} value={currentValue} {...props}>
+        <select className={cn(controlClass, controlClassName)} id={id} onChange={handleChange} value={currentValue} {...props}>
           <option value=""></option>
           {options.map((option) => {
             const optionValue = getOptionValue(option);

@@ -45,6 +45,7 @@
 
 - 새 버튼은 `src/components/ui/Button.jsx`와 `IconButton`을 먼저 사용한다.
 - 클릭 가능한 주요 surface는 native `button`을 우선 사용하고, 불가피한 `div` 상호작용은 `role`, `tabIndex`, Enter/Space keyboard 처리를 둔다.
+- 아직 구현되지 않은 기능은 disabled 버튼으로 노출하지 않는다. 실제 동작이 없으면 버튼을 숨기고, 구현 범위가 확정된 뒤에 추가한다.
 - Primary: indigo 계열 배경, 흰색 텍스트
 - Secondary: 흰색 또는 slate 계열 배경, slate 텍스트
 - Danger: red 계열 텍스트 또는 배경
@@ -63,6 +64,7 @@
 
 - 새 input/select/textarea는 `src/components/ui/Field.jsx`를 먼저 사용한다.
 - 차트 입력폼의 반복 select는 `src/components/ui/SelectField.jsx`, 접이식 섹션은 `src/components/ui/DisclosureSection.jsx`, 키패드 호출 버튼은 `src/components/ui/KeypadField.jsx`를 사용한다.
+- 차트 입력처럼 현장 데이터가 많은 화면은 `DisclosureSection`, `SelectField`, `KeypadField`의 `density="compact"` 옵션을 사용한다. 페이지 JSX에서 padding/height를 임의로 여러 번 덮어쓰지 않는다.
 - `focus:ring-2 focus:ring-indigo-500 outline-none`을 유지한다.
 - iOS 자동 줌을 피하려면 모바일 텍스트 입력은 최소 `16px`를 사용한다.
 - 필수 입력만 `required`로 막고, 작업 중 흐름을 끊는 새 `alert`는 추가하지 않는다.

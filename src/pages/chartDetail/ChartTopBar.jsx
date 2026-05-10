@@ -26,10 +26,12 @@ export default function ChartTopBar({
 
       <div className="flex gap-1.5 sm:gap-2 shrink-0">
         <Button
+          aria-label={isEditMode ? '차트 보기로 전환' : '수정 모드로 전환'}
           icon={isEditMode ? 'chart' : 'edit'}
           onClick={onToggleEditMode}
           size="sm"
-          variant="subtle"
+          title={isEditMode ? '차트 보기로 전환' : '수정 모드로 전환'}
+          variant="secondary"
         >
           {isEditMode ? '차트' : '수정'}
         </Button>

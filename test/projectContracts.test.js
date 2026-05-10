@@ -109,6 +109,19 @@ test('shared frontend primitives exist before page-specific styling grows', () =
   }
 });
 
+test('chart input density stays controlled by shared primitives', () => {
+  const disclosureSource = readFileSync('src/components/ui/DisclosureSection.jsx', 'utf8');
+  const selectSource = readFileSync('src/components/ui/SelectField.jsx', 'utf8');
+  const keypadSource = readFileSync('src/components/ui/KeypadField.jsx', 'utf8');
+  const chartInputSource = readFileSync('src/pages/chartDetail/ChartInputForm.jsx', 'utf8');
+
+  assert.match(disclosureSource, /compact:/);
+  assert.match(selectSource, /compact:/);
+  assert.match(keypadSource, /compact:/);
+  assert.match(chartInputSource, /const FORM_DENSITY = 'compact'/);
+  assert.match(chartInputSource, /<DisclosureSection density=\{FORM_DENSITY\}/);
+});
+
 test('source UI does not use raw emoji glyphs directly', () => {
   const files = listFiles('src').filter((file) => /\.(jsx|js)$/.test(file));
   const blockedGlyphs = ['📱', '🎳', '✨', '✏️', '📝', '📜', '📷', '⚠️', '🚨', '✅', '👇', '🔍'];
@@ -140,6 +153,19 @@ test('source UI does not call native browser dialogs', () => {
       if (!/\b(?:window\.)?(?:alert|confirm|prompt)\s*\(/.test(line)) continue;
       matches.push(`${file}: ${line}`);
     }
+  }
+
+  assert.deepEqual(matches, []);
+});
+
+test('source UI does not expose unavailable future-action placeholders', () => {
+  const sourceFiles = listFiles('src').filter((file) => /\.(jsx|js)$/.test(file));
+  const matches = [];
+
+  for (const file of sourceFiles) {
+    const source = readFileSync(file, 'utf8');
+    if (source.includes('사진첨부')) matches.push(`${file}: 사진첨부`);
+    if (/icon=["']image["']/.test(source)) matches.push(`${file}: image icon usage`);
   }
 
   assert.deepEqual(matches, []);

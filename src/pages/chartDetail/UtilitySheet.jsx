@@ -64,7 +64,6 @@ export default function UtilitySheet({ utilityState, setUtilityState, pullStartY
             <div className="flex items-center gap-2 overflow-x-auto w-full pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               <Button icon="memo" onClick={onStartMemo} size="sm" variant="subtle">메모하기</Button>
               <Button icon="history" onClick={onShowHistory} size="sm" variant="subtle">저장기록</Button>
-              <Button aria-disabled="true" disabled icon="image" size="sm" variant="subtle">사진첨부</Button>
             </div>
           </div>
         </div>

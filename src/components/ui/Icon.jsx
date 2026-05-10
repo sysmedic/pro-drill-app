@@ -41,13 +41,6 @@ const paths = {
       <path d="M12 8v5l3 2" />
     </>
   ),
-  image: (
-    <>
-      <rect x="4" y="5" width="16" height="14" rx="2" />
-      <path d="M8 14l2.5-2.5L14 15l2-2 3 3" />
-      <circle cx="9" cy="9" r="1" fill="currentColor" stroke="none" />
-    </>
-  ),
   memo: (
     <>
       <path d="M6 4h9l3 3v13H6z" />

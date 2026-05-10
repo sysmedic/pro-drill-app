@@ -50,13 +50,17 @@ export const HistoryModal = ({ history, onSelect, onClose, onDelete, onRename })
         </div>
       ) : (
         history.map((record, index) => (
-          <div key={record.id} className="w-full flex items-center justify-between p-4 mb-2 bg-white rounded-2xl border border-slate-200 shadow-sm transition-all hover:border-indigo-400 group">
-            <div className="flex flex-col items-start flex-1 cursor-pointer" onClick={() => { onSelect(record); onClose(); }}>
+          <div key={record.id} className="w-full flex items-center justify-between p-3 mb-2 bg-white rounded-xl border border-slate-200 shadow-sm transition-all hover:border-indigo-400 group">
+            <button
+              className="flex flex-col items-start flex-1 min-w-0 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+              onClick={() => { onSelect(record); onClose(); }}
+              type="button"
+            >
               <span className="text-sm font-black text-indigo-600 mb-1 group-hover:text-indigo-700">
                 {record.name || (index === 0 ? "최근 버전" : `Version ${history.length - index}`)}
               </span>
               <span className="text-xs font-bold text-slate-500">{record.timestamp}</span>
-            </div>
+            </button>
 
             <div className="flex gap-1 ml-2 shrink-0">
               <IconButton aria-label="기록 이름 변경" icon="edit" onClick={(e) => { e.stopPropagation(); onRename(record.id, record.name || `Version ${history.length - index}`); }} size="xs" variant="plain" />

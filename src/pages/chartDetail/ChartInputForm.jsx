@@ -16,6 +16,16 @@ import {
   TIP_OPTIONS,
 } from './chartOptions.js';
 
+const FORM_DENSITY = 'compact';
+
+function ChartSelectField(props) {
+  return <SelectField density={FORM_DENSITY} {...props} />;
+}
+
+function ChartKeypadField(props) {
+  return <KeypadField density={FORM_DENSITY} {...props} />;
+}
+
 export default function ChartInputForm({ data = {}, onChange }) {
   const isThumbless = data?.isThumbless || false;
   const handedness = data?.handedness || 'right';
@@ -127,33 +137,33 @@ export default function ChartInputForm({ data = {}, onChange }) {
   };
 
   const renderSection = (id, title, summary, children) => (
-    <DisclosureSection id={id} isOpen={activeAccordion === id} onToggle={() => toggleAccordion(id)} summary={summary} title={title}>
+    <DisclosureSection density={FORM_DENSITY} id={id} isOpen={activeAccordion === id} onToggle={() => toggleAccordion(id)} summary={summary} title={title}>
       {children}
     </DisclosureSection>
   );
 
   return (
-    <div className="w-full flex flex-col gap-3 pb-8">
-      <div className="relative flex items-center justify-center p-3 bg-slate-50 rounded-xl shadow-sm border border-slate-200 min-h-[58px]">
-        <div className="absolute left-4 flex items-center"><h3 className="font-bold text-lg text-indigo-900 shrink-0 whitespace-nowrap">{isLeft ? '왼손' : '오른손'}</h3></div>
+    <div className="w-full flex flex-col gap-2.5 pb-6">
+      <div className="relative flex items-center justify-center p-2.5 bg-slate-50 rounded-lg shadow-sm border border-slate-200 min-h-[50px]">
+        <div className="absolute left-3 flex items-center"><h3 className="font-bold text-base text-indigo-900 shrink-0 whitespace-nowrap">{isLeft ? '왼손' : '오른손'}</h3></div>
         <div className="flex bg-slate-200 rounded-md p-1 border border-slate-300">
-          <button className={`px-4 py-1.5 text-sm font-bold rounded-md transition-colors ${!isThumbless ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => onChange({ ...data, isThumbless: false })}>쓰리핑거</button>
-          <button className={`px-4 py-1.5 text-sm font-bold rounded-md transition-colors ${isThumbless ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => onChange({ ...data, isThumbless: true })}>덤리스</button>
+          <button className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-md transition-colors ${!isThumbless ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => onChange({ ...data, isThumbless: false })}>쓰리핑거</button>
+          <button className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-md transition-colors ${isThumbless ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => onChange({ ...data, isThumbless: true })}>덤리스</button>
         </div>
       </div>
 
       {renderSection('hand', '핸드 컨디션', getHandCondSummary(handCondition), (
         <div className="grid grid-cols-3 gap-2">
-          <SelectField label="건/습" value={handCondition.moisture} onChange={v => updateCondition('moisture', v)} options={MOISTURE_OPTIONS} />
-          <SelectField label="중약지" value={handCondition.fingerStiffness} onChange={v => updateCondition('fingerStiffness', v)} options={STIFFNESS_OPTIONS} />
-          <SelectField label="엄지" value={handCondition.thumbStiffness} onChange={v => updateCondition('thumbStiffness', v)} options={STIFFNESS_OPTIONS} />
+          <ChartSelectField label="건/습" value={handCondition.moisture} onChange={v => updateCondition('moisture', v)} options={MOISTURE_OPTIONS} />
+          <ChartSelectField label="중약지" value={handCondition.fingerStiffness} onChange={v => updateCondition('fingerStiffness', v)} options={STIFFNESS_OPTIONS} />
+          <ChartSelectField label="엄지" value={handCondition.thumbStiffness} onChange={v => updateCondition('thumbStiffness', v)} options={STIFFNESS_OPTIONS} />
         </div>
       ))}
 
       {renderSection('bridge', 'Bridge', bridge, (
-        <div className="flex items-center justify-between gap-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
-          <label className="text-sm font-bold text-slate-600 whitespace-nowrap">브릿지 간격</label>
-          <SelectField
+        <div className="flex items-center justify-between gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <label className="text-xs font-bold text-slate-600 whitespace-nowrap">브릿지 간격</label>
+          <ChartSelectField
             aria-label="브릿지 간격"
             allowCustom
             className="max-w-[200px]"
@@ -168,44 +178,44 @@ export default function ChartInputForm({ data = {}, onChange }) {
 
       {renderSection('first', firstLabel, getFingerSummary(firstPitch), (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3"><SelectField label="Reverse (▲)" value={firstPitch.up} onChange={v => updateFirst('up', v)} options={PITCH_OPTIONS} /><SelectField label="Forward (▼)" value={firstPitch.down} onChange={v => updateFirst('down', v)} options={PITCH_OPTIONS} /><SelectField label="Lateral" value={firstPitch.lat} onChange={v => updateFirst('lat', v)} options={PITCH_OPTIONS} /><SelectField label="Lateral 방향" value={firstPitch.latDir} onChange={v => updateFirst('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
-          <div className="grid grid-cols-2 gap-3"><SelectField allowCustom label="인서트 사이즈" value={firstPitch.insertSize} onChange={v => updateFirst('insertSize', v)} options={FINGER_INSERT_OPTIONS} /><SelectField allowCustom label="팁 종류" value={firstPitch.tipType} onChange={v => updateFirst('tipType', v)} options={TIP_OPTIONS} /></div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={firstPitch.up} onChange={v => updateFirst('up', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Forward (▼)" value={firstPitch.down} onChange={v => updateFirst('down', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Lateral" value={firstPitch.lat} onChange={v => updateFirst('lat', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Lateral 방향" value={firstPitch.latDir} onChange={v => updateFirst('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
+          <div className="grid grid-cols-2 gap-2.5"><ChartSelectField allowCustom label="인서트 사이즈" value={firstPitch.insertSize} onChange={v => updateFirst('insertSize', v)} options={FINGER_INSERT_OPTIONS} /><ChartSelectField allowCustom label="팁 종류" value={firstPitch.tipType} onChange={v => updateFirst('tipType', v)} options={TIP_OPTIONS} /></div>
         </>
       ))}
 
       {renderSection('second', secondLabel, getFingerSummary(secondPitch), (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3"><SelectField label="Reverse (▲)" value={secondPitch.up} onChange={v => updateSecond('up', v)} options={PITCH_OPTIONS} /><SelectField label="Forward (▼)" value={secondPitch.down} onChange={v => updateSecond('down', v)} options={PITCH_OPTIONS} /><SelectField label="Lateral" value={secondPitch.lat} onChange={v => updateSecond('lat', v)} options={PITCH_OPTIONS} /><SelectField label="Lateral 방향" value={secondPitch.latDir} onChange={v => updateSecond('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
-          <div className="grid grid-cols-2 gap-3"><SelectField allowCustom label="인서트 사이즈" value={secondPitch.insertSize} onChange={v => updateSecond('insertSize', v)} options={FINGER_INSERT_OPTIONS} /><SelectField allowCustom label="팁 종류" value={secondPitch.tipType} onChange={v => updateSecond('tipType', v)} options={TIP_OPTIONS} /></div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={secondPitch.up} onChange={v => updateSecond('up', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Forward (▼)" value={secondPitch.down} onChange={v => updateSecond('down', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Lateral" value={secondPitch.lat} onChange={v => updateSecond('lat', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Lateral 방향" value={secondPitch.latDir} onChange={v => updateSecond('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
+          <div className="grid grid-cols-2 gap-2.5"><ChartSelectField allowCustom label="인서트 사이즈" value={secondPitch.insertSize} onChange={v => updateSecond('insertSize', v)} options={FINGER_INSERT_OPTIONS} /><ChartSelectField allowCustom label="팁 종류" value={secondPitch.tipType} onChange={v => updateSecond('tipType', v)} options={TIP_OPTIONS} /></div>
         </>
       ))}
 
       <div className={`grid transition-[grid-template-rows,opacity] duration-500 ease-in-out ${!isThumbless ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
-        <div className="overflow-hidden min-h-0 flex flex-col gap-3">
+        <div className="overflow-hidden min-h-0 flex flex-col gap-2.5">
         {renderSection('span', 'Span', getSpanSummary(), (
           <>
-          <div className="mb-3"><SelectField label="Span 타입" value={spanType} onChange={v => onChange({ ...data, spanType: v })} options={SPAN_TYPE_OPTIONS} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <KeypadField label={`${firstLabel} Span`} onOpen={() => openKeypad('spanLeft', spanLeft, `${firstLabel} Span`)} value={spanLeft} />
-            <KeypadField label={`${secondLabel} Span`} onOpen={() => openKeypad('spanRight', spanRight, `${secondLabel} Span`)} value={spanRight} />
+          <div className="mb-2.5"><ChartSelectField label="Span 타입" value={spanType} onChange={v => onChange({ ...data, spanType: v })} options={SPAN_TYPE_OPTIONS} /></div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <ChartKeypadField label={`${firstLabel} Span`} onOpen={() => openKeypad('spanLeft', spanLeft, `${firstLabel} Span`)} value={spanLeft} />
+            <ChartKeypadField label={`${secondLabel} Span`} onOpen={() => openKeypad('spanRight', spanRight, `${secondLabel} Span`)} value={spanRight} />
           </div>
           </>
         ))}
 
         {renderSection('thumb', 'Thumb', getThumbSummary(thumbPitch, thumbDetails, ovalAngle), (
           <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-            <SelectField label="Forward (▲)" value={thumbPitch.up} onChange={v => updateThumb('up', v)} options={PITCH_OPTIONS} />
-            <SelectField label="Reverse (▼)" value={thumbPitch.down} onChange={v => updateThumb('down', v)} options={PITCH_OPTIONS} />
-            <SelectField label="Left (◀)" value={thumbPitch.left} onChange={v => updateThumb('left', v)} options={PITCH_OPTIONS} />
-            <SelectField label="Right (▶)" value={thumbPitch.right} onChange={v => updateThumb('right', v)} options={PITCH_OPTIONS} />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
+            <ChartSelectField label="Forward (▲)" value={thumbPitch.up} onChange={v => updateThumb('up', v)} options={PITCH_OPTIONS} />
+            <ChartSelectField label="Reverse (▼)" value={thumbPitch.down} onChange={v => updateThumb('down', v)} options={PITCH_OPTIONS} />
+            <ChartSelectField label="Left (◀)" value={thumbPitch.left} onChange={v => updateThumb('left', v)} options={PITCH_OPTIONS} />
+            <ChartSelectField label="Right (▶)" value={thumbPitch.right} onChange={v => updateThumb('right', v)} options={PITCH_OPTIONS} />
           </div>
-          <h4 className="font-bold text-base mb-2 text-slate-700">상세 사이즈 및 각도</h4>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <SelectField allowCustom label="원홀" value={thumbDetails.holeSize} onChange={v => updateThumbDetails('holeSize', v)} options={HOLE_OPTIONS} />
-            <SelectField allowCustom label="오발 사이즈" value={thumbDetails.ovalSize} onChange={v => updateThumbDetails('ovalSize', v)} options={OVAL_OPTIONS} />
-            <KeypadField label="오발 각도" onOpen={() => openKeypad('ovalAngle', ovalAngle, '오발 각도')} placeholder="숫자만" value={ovalAngle} />
-            <SelectField allowCustom label="덤 타입" value={thumbDetails.slugType} onChange={v => updateThumbDetails('slugType', v)} options={THUMB_TYPE_OPTIONS} />
+          <h4 className="font-bold text-sm mb-2 text-slate-700">상세 사이즈 및 각도</h4>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <ChartSelectField allowCustom label="원홀" value={thumbDetails.holeSize} onChange={v => updateThumbDetails('holeSize', v)} options={HOLE_OPTIONS} />
+            <ChartSelectField allowCustom label="오발 사이즈" value={thumbDetails.ovalSize} onChange={v => updateThumbDetails('ovalSize', v)} options={OVAL_OPTIONS} />
+            <ChartKeypadField label="오발 각도" onOpen={() => openKeypad('ovalAngle', ovalAngle, '오발 각도')} placeholder="숫자만" value={ovalAngle} />
+            <ChartSelectField allowCustom label="덤 타입" value={thumbDetails.slugType} onChange={v => updateThumbDetails('slugType', v)} options={THUMB_TYPE_OPTIONS} />
           </div>
           </>
         ))}

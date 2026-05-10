@@ -60,6 +60,10 @@
 - `projectContracts` 테스트가 이제 `src` 전체의 native `alert`/`confirm`/`prompt` 사용을 금지한다.
 - 고객 관리 헤더의 수동 `최적화` 버튼과 `--vh` 직접 세팅을 제거하고, viewport 대응은 `PageShell`의 `100svh` 기반 레이아웃에 맡기도록 정리했다.
 - 공용 `Button` variant의 gradient/세로 press offset을 제거하고 line-height 기준을 통일해 툴바 버튼 깊이와 내부 아이콘-텍스트 정렬을 맞췄다.
+- `DisclosureSection`, `SelectField`, `KeypadField`에 `density="compact"`를 추가하고 차트 입력폼 밀도를 줄여 한 화면에서 더 많은 지공 값을 확인할 수 있게 했다.
+- 유틸 바텀시트의 미구현 `사진첨부` placeholder 버튼을 제거하고, 히스토리 목록 선택 영역을 native `button`으로 바꿨다.
+- 차트 상단 모드 전환 버튼의 접근성 라벨을 보강하고, 메모 배치 안내가 화면을 덜 가리도록 위치/애니메이션을 낮췄다.
+- `projectContracts`에 compact 입력 primitive와 미구현 future-action placeholder 금지 계약을 추가했다.
 
 ## 다음 할 일
 
