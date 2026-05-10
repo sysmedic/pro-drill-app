@@ -231,7 +231,7 @@ export default function ChartDetail({ customer, onBack }) {
       )}
 
       {isEditMode ? (
-        <Card className="w-full p-2 pb-6 sm:p-6 sm:pb-8 mt-2 mb-4 sm:mb-6 relative z-40 overflow-hidden animate-fade-in transform-gpu [backface-visibility:hidden]">
+        <Card className="w-full p-2 pb-6 sm:p-6 sm:pb-8 mt-2 mb-4 sm:mb-6 relative z-40 overflow-hidden animate-fade-in transform-gpu [backface-visibility:hidden]" data-testid="chart-edit-surface">
           <div ref={formRef} className="relative w-full h-full">
             {renderMemoOverlay('form', formRef)}
             {renderMemos('form', formRef)}

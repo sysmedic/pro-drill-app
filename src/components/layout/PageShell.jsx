@@ -8,7 +8,8 @@ const PAGE_CONTENT_MAX_WIDTH_CLASS = 'max-w-[736px]';
 const PAGE_INLINE_PADDING_CLASS = 'p-2 sm:p-4';
 const PAGE_BOTTOM_PADDING_CLASS = 'pb-24';
 const PAGE_SURFACE_CLASS = cn('w-full', PAGE_MAX_WIDTH_CLASS, 'mx-auto');
-const FIXED_SURFACE_WIDTH_CLASS = cn('left-1/2 -translate-x-1/2 w-[calc(100%-16px)] sm:w-[calc(100%-32px)]', PAGE_CONTENT_MAX_WIDTH_CLASS);
+const PAGE_CONTENT_SURFACE_CLASS = cn('w-[calc(100%-16px)] sm:w-[calc(100%-32px)]', PAGE_CONTENT_MAX_WIDTH_CLASS);
+const FIXED_SURFACE_WIDTH_CLASS = cn('left-1/2 -translate-x-1/2', PAGE_CONTENT_SURFACE_CLASS);
 const GPU_SURFACE_CLASS = 'transform-gpu [backface-visibility:hidden]';
 const LAYER_CLASS = {
   content: 'relative z-40',
@@ -24,11 +25,14 @@ function PageShell({
   contentPadding = PAGE_INLINE_PADDING_CLASS,
   bottomPadding = PAGE_BOTTOM_PADDING_CLASS,
   style,
+  ...props
 }) {
   return (
     <div
-      className={cn(PAGE_SURFACE_CLASS, 'bg-slate-50 min-h-screen relative', contentPadding, bottomPadding, className)}
+      className={cn(PAGE_SURFACE_CLASS, 'bg-slate-50 min-h-screen min-h-[100svh] relative', contentPadding, bottomPadding, className)}
+      data-testid="page-shell"
       style={style}
+      {...props}
     >
       {children}
     </div>
@@ -42,6 +46,7 @@ PageShell.tokens = {
   PAGE_BOTTOM_PADDING_CLASS,
   PAGE_CONTENT_MAX_WIDTH_CLASS,
   PAGE_CONTENT_MAX_WIDTH_PX,
+  PAGE_CONTENT_SURFACE_CLASS,
   PAGE_INLINE_PADDING_CLASS,
   PAGE_MAX_WIDTH_CLASS,
   PAGE_MAX_WIDTH_PX,

@@ -16,6 +16,8 @@
 - 최상위 화면 폭과 화면 패딩은 `PageShell.jsx`의 `PAGE_MAX_WIDTH_CLASS`, `PAGE_INLINE_PADDING_CLASS` 토큰을 기본으로 한다.
 - 고객 목록 같은 화면 제목 영역은 `TopBarShell`의 `pageHeader` 변형을 사용하고, 차트 상세의 고정 조작 영역은 더 얇은 `toolbar` 변형을 사용한다.
 - fixed 상단 툴바는 `PageShell`의 내부 content 폭과 맞추기 위해 `FIXED_SURFACE_WIDTH_CLASS`를 사용한다.
+- fixed/sticky/sheet처럼 페이지 padding 밖에 렌더되는 표면은 `PAGE_CONTENT_SURFACE_CLASS` 또는 `FIXED_SURFACE_WIDTH_CLASS` 중 하나를 사용해 본문 카드와 좌우 기준선을 맞춘다.
+- fixed 상단바의 spacer 높이는 `TopBarShell`이 실제 렌더 높이를 측정해 맞춘다. 새 버튼/문구를 넣을 때 spacer 높이 숫자를 직접 늘리는 방식으로 해결하지 않는다.
 - 배경은 `bg-slate-50` 또는 앱 전체 `bg-slate-200` 계열을 유지한다.
 - 화면 단위 여백은 `p-2 sm:p-4`를 기본으로 한다.
 - 고정 상단바, 바텀시트, 오버레이의 `z-index`는 `PageShell.jsx`의 `LAYER_CLASS`를 먼저 사용하고 충돌을 확인한다.
@@ -87,3 +89,9 @@
 - 화면 JSX에 raw emoji를 직접 넣는다.
 - 요청받지 않은 백업, 설정, 메뉴, 튜토리얼, 랜딩 섹션을 추가한다.
 - 저장 구조 변경 없이 UI에서 데이터 의미를 바꾼다.
+
+## 회귀 테스트 기준
+
+- 레이아웃 기준선을 건드리면 `e2e/visual-layout.spec.js`가 390px, 540px, desktop에서 통과해야 한다.
+- 한글 입력이나 모달 focus trap을 건드리면 `e2e/korean-ime.spec.js`가 통과해야 한다.
+- 새 native `alert`, `confirm`, `prompt`를 추가하지 않는다. 기존 call site는 `test/projectContracts.test.js`의 quarantine 목록에 남아 있으며 새 UI는 `ModalShell` 기반으로 만든다.

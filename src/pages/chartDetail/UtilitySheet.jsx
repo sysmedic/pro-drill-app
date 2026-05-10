@@ -2,7 +2,7 @@ import PageShell from '../../components/layout/PageShell.jsx';
 import Button, { IconButton } from '../../components/ui/Button.jsx';
 import { cn } from '../../components/ui/classNames.js';
 
-const { LAYER_CLASS, PAGE_MAX_WIDTH_CLASS } = PageShell.tokens;
+const { LAYER_CLASS, PAGE_CONTENT_SURFACE_CLASS } = PageShell.tokens;
 
 export default function UtilitySheet({ utilityState, setUtilityState, pullStartYRef, onStartMemo, onShowHistory, isLocked }) {
   return (
@@ -24,7 +24,10 @@ export default function UtilitySheet({ utilityState, setUtilityState, pullStartY
           isLocked ? 'pointer-events-none opacity-50 grayscale' : 'pointer-events-auto',
         )}
       >
-        <div className={cn('bg-white/95 backdrop-blur-md shadow-[0_-10px_40px_rgba(0,0,0,0.15)] rounded-t-3xl border border-slate-200 flex flex-col w-full pb-8 pt-1 relative', PAGE_MAX_WIDTH_CLASS)}>
+        <div
+          className={cn('bg-white/95 backdrop-blur-md shadow-[0_-10px_40px_rgba(0,0,0,0.15)] rounded-t-3xl border border-slate-200 flex flex-col pb-8 pt-1 relative', PAGE_CONTENT_SURFACE_CLASS)}
+          data-testid="utility-sheet-surface"
+        >
           <button
             type="button"
             aria-expanded={utilityState === 'expanded'}

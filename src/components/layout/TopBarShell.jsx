@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '../ui/classNames.js';
 import PageShell from './PageShell.jsx';
 
@@ -12,17 +13,48 @@ const layoutClasses = {
   pageHeader: {
     fixed: 'fixed top-2 p-3 sm:p-4',
     static: 'sticky top-2 mb-4 sm:mb-6 w-full p-3 sm:p-4',
-    spacer: 'h-[64px] sm:h-[76px] mb-4 sm:mb-6',
+    spacerFallback: 'h-[64px] sm:h-[76px] mb-4 sm:mb-6',
+    spacerGap: 'mb-4 sm:mb-6',
+    topOffsetPx: 8,
   },
   toolbar: {
     fixed: 'fixed top-2 p-2.5 sm:p-3',
     static: 'sticky top-2 mb-3 sm:mb-4 w-full p-2.5 sm:p-3',
-    spacer: 'h-[58px] sm:h-[64px] mb-3 sm:mb-4',
+    spacerFallback: 'h-[58px] sm:h-[64px] mb-3 sm:mb-4',
+    spacerGap: 'mb-3 sm:mb-4',
+    topOffsetPx: 8,
   },
 };
 
-export default function TopBarShell({ children, className = '', fixed = false, variant = 'pageHeader' }) {
+export default function TopBarShell({ children, className = '', fixed = false, variant = 'pageHeader', ...props }) {
   const layout = layoutClasses[variant] || layoutClasses.pageHeader;
+  const barRef = useRef(null);
+  const [measuredHeight, setMeasuredHeight] = useState(null);
+
+  useEffect(() => {
+    if (!fixed || !barRef.current) return undefined;
+
+    const element = barRef.current;
+    const updateHeight = () => {
+      setMeasuredHeight(Math.ceil(element.getBoundingClientRect().height));
+    };
+
+    updateHeight();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateHeight);
+      return () => window.removeEventListener('resize', updateHeight);
+    }
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(element);
+    window.addEventListener('resize', updateHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateHeight);
+    };
+  }, [fixed, variant]);
 
   const bar = (
     <div
@@ -33,6 +65,9 @@ export default function TopBarShell({ children, className = '', fixed = false, v
           : cn(layout.static, LAYER_CLASS.stickyTopBar),
         className,
       )}
+      data-testid={`${variant}-${fixed ? 'fixed' : 'static'}-topbar`}
+      ref={fixed ? barRef : undefined}
+      {...props}
     >
       {children}
     </div>
@@ -42,7 +77,11 @@ export default function TopBarShell({ children, className = '', fixed = false, v
 
   return (
     <>
-      <div className={cn(layout.spacer, 'w-full shrink-0')} aria-hidden="true" />
+      <div
+        className={cn(measuredHeight === null ? layout.spacerFallback : layout.spacerGap, 'w-full shrink-0')}
+        aria-hidden="true"
+        style={measuredHeight === null ? undefined : { height: `${measuredHeight + layout.topOffsetPx}px` }}
+      />
       {bar}
     </>
   );

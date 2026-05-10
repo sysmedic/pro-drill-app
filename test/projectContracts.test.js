@@ -1,6 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
+import {
+  CHART_HISTORY_PREFIX,
+  CUSTOMERS_KEY,
+  LEGACY_CHART_HISTORY_PREFIX,
+  PRE_V7_CHART_HISTORY_PREFIX,
+} from '../src/lib/storageKeys.js';
+
+const listFiles = (dir) => {
+  const files = [];
+
+  for (const name of readdirSync(dir)) {
+    const fullPath = join(dir, name);
+    const stat = statSync(fullPath);
+
+    if (stat.isDirectory()) {
+      files.push(...listFiles(fullPath));
+    } else {
+      files.push(relative(process.cwd(), fullPath));
+    }
+  }
+
+  return files;
+};
 
 test('html document declares Korean language', () => {
   const html = readFileSync('index.html', 'utf8');
@@ -85,16 +109,7 @@ test('shared frontend primitives exist before page-specific styling grows', () =
 });
 
 test('source UI does not use raw emoji glyphs directly', () => {
-  const files = [
-    'src/pages/CustomerManager.jsx',
-    'src/pages/ChartDetail.jsx',
-    'src/pages/chartDetail/ChartModals.jsx',
-    'src/pages/chartDetail/ChartTopBar.jsx',
-    'src/pages/chartDetail/UtilitySheet.jsx',
-    'src/pages/customerManager/CustomerFormModal.jsx',
-    'src/pages/customerManager/CustomerHeader.jsx',
-    'src/pages/customerManager/CustomerList.jsx',
-  ];
+  const files = listFiles('src').filter((file) => /\.(jsx|js)$/.test(file));
   const blockedGlyphs = ['📱', '🎳', '✨', '✏️', '📝', '📜', '📷', '⚠️', '🚨', '✅', '👇', '🔍'];
 
   for (const file of files) {
@@ -103,6 +118,51 @@ test('source UI does not use raw emoji glyphs directly', () => {
       assert.equal(source.includes(glyph), false, `${file} should not contain ${glyph}`);
     }
   }
+});
+
+test('storage key constants remain backward compatible', () => {
+  assert.equal(CUSTOMERS_KEY, 'bowling_customers');
+  assert.equal(CHART_HISTORY_PREFIX, 'chart_history_v8_');
+  assert.equal(LEGACY_CHART_HISTORY_PREFIX, 'chart_history_v7_');
+  assert.equal(PRE_V7_CHART_HISTORY_PREFIX, 'chart_history_');
+});
+
+test('native browser dialogs stay quarantined to known legacy call sites', () => {
+  const allowedDialogLines = {
+    'src/components/ui/SelectField.jsx': [
+      'const customValue = window.prompt(customPrompt || `${label || \'항목\'} 수치를 직접 입력하세요:`);',
+    ],
+    'src/pages/ChartDetail.jsx': [
+      'alert(`${customer.name} 고객님의 기록이 안전하게 저장되었습니다.`);',
+      'onSelect={(record) => { if (window.confirm(`${record.timestamp} 기록을 불러오시겠습니까?`)) loadRecord(record); }}',
+      'const newName = window.prompt(\'새로운 이름을 입력하세요:\', currentName);',
+    ],
+    'src/pages/CustomerManager.jsx': [
+      'alert(\'디바이스 화면 높이가 최적화되었습니다.\');',
+      'if (!customerData.name.trim()) return alert("이름을 입력해주세요!");',
+      'if (window.confirm(`1차 경고\\n${customerName} 고객 정보를 삭제하시겠습니까?`)) {',
+      'if (window.confirm(`2차 경고\\n정말로 영구 삭제하시겠습니까?\\n삭제 후에는 고객의 모든 지공 기록이 함께 영구히 삭제되며 절대 복원할 수 없습니다.`)) {',
+    ],
+  };
+  const sourceFiles = listFiles('src').filter((file) => /\.(jsx|js)$/.test(file));
+  const unapproved = [];
+
+  for (const file of sourceFiles) {
+    const source = readFileSync(file, 'utf8');
+    const sourceLines = source.split('\n').map((line) => line.trim());
+    const allowedLines = allowedDialogLines[file] || [];
+
+    for (const line of sourceLines) {
+      if (!/\b(?:window\.)?(?:alert|confirm|prompt)\s*\(/.test(line)) continue;
+      if (!allowedLines.includes(line)) unapproved.push(`${file}: ${line}`);
+    }
+
+    for (const allowedLine of allowedLines) {
+      assert.equal(sourceLines.includes(allowedLine), true, `${file} should keep legacy native dialog allowlist explicit`);
+    }
+  }
+
+  assert.deepEqual(unapproved, []);
 });
 
 test('package scripts expose lightweight Gemini harness commands', () => {

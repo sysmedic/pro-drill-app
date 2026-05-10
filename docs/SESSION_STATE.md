@@ -4,10 +4,10 @@
 
 ## 현재 우선순위
 
-1. 주요 화면 Playwright screenshot smoke를 추가해 디자인 일관성 회귀를 잡는다.
-2. 모바일 390px E2E 결과를 기준으로 540px 추가 필요성을 판단한다.
-3. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
-4. 차트 입력 primitive를 다른 입력 화면까지 확장하기 전 모바일 회귀를 확인한다.
+1. native `alert`/`confirm`/`prompt` 기존 call site를 `ModalShell` 기반 UI로 교체한다.
+2. 저장 실패를 성공처럼 처리하지 않도록 storage write 결과를 UI 상태와 연결한다.
+3. 차트 입력 primitive를 다른 입력 화면까지 확장하기 전 모바일 회귀를 확인한다.
+4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
 ## 최근 변경
 
@@ -48,10 +48,16 @@
 - `ChartInputForm.jsx`의 반복 accordion/select/keypad trigger UI를 `DisclosureSection`, `SelectField`, `KeypadField` primitive로 옮겼다.
 - 고객 목록 저장을 `customerStorage` helper로 분리하고, malformed/non-array 고객 저장값과 legacy 차트 히스토리 migration edge case가 즉시 유실되지 않도록 보강했다.
 - Playwright에 390px 모바일 프로젝트와 저장 localStorage 키/히스토리 불러오기/미저장 나가기/PWA manifest E2E를 추가했다.
+- `PageShell`의 content surface 폭 토큰을 정리하고 fixed 상단바/하단 유틸 시트가 본문 카드와 같은 좌우 기준선을 쓰게 했다.
+- `TopBarShell` fixed spacer가 실제 상단바 높이를 측정해 본문 겹침 회귀를 줄이게 했다.
+- Playwright에 540px 모바일 프로젝트와 `visual-layout` smoke를 추가해 상단바/본문/하단 시트 폭 어긋남을 잡게 했다.
+- Playwright에 한글 IME 조합 입력 smoke를 추가해 모달 입력이 조각나는 회귀를 잡게 했다.
+- storage key 상수값과 기존 native dialog call site quarantine을 `projectContracts` 테스트로 고정했다.
 
 ## 다음 할 일
 
-- 주요 화면 Playwright screenshot smoke를 추가해 디자인 일관성 회귀를 더 잘 잡는다.
+- 기존 native `alert`/`confirm`/`prompt`를 `ModalShell` 기반 confirm/input/toast 흐름으로 교체한다.
+- `saveCustomers`/`saveChartHistory` 결과를 UI에서 확인하고 실패 시 state/dirty/알림을 되돌리는 저장 실패 처리를 추가한다.
 - 차트 입력 primitive를 다른 화면에 확장하기 전 모바일 390px/540px 회귀를 확인한다.
 - GitHub Actions/Pages 첫 실행을 확인한다.
 

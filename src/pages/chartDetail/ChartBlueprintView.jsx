@@ -76,10 +76,11 @@ export default function ChartBlueprintView({ data = {}, memoOverlay, memosRender
   const activeCanvasHeight = isThumbless ? 320 : 640;
 
   return (
-    <Card className="overflow-hidden transition-[height] duration-500 animate-fade-in mt-2 mb-4 sm:mb-6" constrained elevation="md" gpu layer="content" style={{ height: `${activeCanvasHeight * scale}px` }}>
+    <Card className="overflow-hidden transition-[height] duration-500 animate-fade-in mt-2 mb-4 sm:mb-6" constrained data-testid="chart-blueprint-surface" elevation="md" gpu layer="content" style={{ height: `${activeCanvasHeight * scale}px` }}>
       <div
         ref={innerRef}
         className={`relative shrink-0 select-none ${isMemoActive ? 'touch-none' : 'touch-auto'} transform-gpu`}
+        data-testid="chart-blueprint-canvas"
         style={{ width: '540px', height: `${activeCanvasHeight}px`, transform: `scale(${scale}) translateZ(0)`, transformOrigin: 'top left', backfaceVisibility: 'hidden', WebkitFontSmoothing: 'antialiased' }}
       >
         {memoOverlay}
