@@ -58,6 +58,7 @@
 - 고객 생성/수정/삭제와 차트 저장/삭제/이름변경이 저장 성공 여부를 확인한 뒤에만 화면 state를 확정하도록 바꿨다.
 - Playwright에 `storage-failure` smoke를 추가해 고객 저장/차트 저장 실패가 성공처럼 보이지 않도록 검증한다.
 - `projectContracts` 테스트가 이제 `src` 전체의 native `alert`/`confirm`/`prompt` 사용을 금지한다.
+- 고객 관리 헤더의 수동 `최적화` 버튼과 `--vh` 직접 세팅을 제거하고, viewport 대응은 `PageShell`의 `100svh` 기반 레이아웃에 맡기도록 정리했다.
 
 ## 다음 할 일
 

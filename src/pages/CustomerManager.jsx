@@ -40,13 +40,6 @@ export default function CustomerManagement({ onSelectCustomer }) {
     return true;
   };
 
-  const optimizeScreen = () => {
-    const vh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty('--vh', `${vh}px`);
-    window.scrollTo(0, 0);
-    setFeedback({ message: '디바이스 화면 높이가 최적화되었습니다.', tone: 'success' });
-  };
-
   const handleOpenAdd = () => {
     setEditId(null);
     setCustomerData({ name: '', phone: '', gender: '', hand: '', style: '' });
@@ -135,11 +128,10 @@ export default function CustomerManagement({ onSelectCustomer }) {
   }
 
   return (
-    <PageShell bottomPadding="pb-24" style={{ minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
+    <PageShell bottomPadding="pb-24">
       <CustomerHeader
         customerCount={customers.length}
         onAdd={handleOpenAdd}
-        onOptimize={optimizeScreen}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         sortType={sortType}

@@ -28,12 +28,6 @@ const paths = {
       <path d="M18 6L6 18" />
     </>
   ),
-  device: (
-    <>
-      <rect x="7" y="3" width="10" height="18" rx="2" />
-      <path d="M11 18h2" />
-    </>
-  ),
   edit: (
     <>
       <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z" />

@@ -2,7 +2,7 @@ import TopBarShell from '../../components/layout/TopBarShell.jsx';
 import Button, { IconButton } from '../../components/ui/Button.jsx';
 import Icon from '../../components/ui/Icon.jsx';
 
-export default function CustomerHeader({ customerCount, onAdd, onOptimize, searchQuery, setSearchQuery, sortType, setSortType }) {
+export default function CustomerHeader({ customerCount, onAdd, searchQuery, setSearchQuery, sortType, setSortType }) {
   return (
     <TopBarShell className="flex flex-col gap-3">
       <div className="flex justify-between items-center w-full">
@@ -11,14 +11,6 @@ export default function CustomerHeader({ customerCount, onAdd, onOptimize, searc
           <p className="text-[11px] sm:text-xs font-bold text-slate-400 mt-0.5 ml-1">등록된 고객: {customerCount}명</p>
         </div>
         <div className="flex gap-1.5 sm:gap-2 shrink-0">
-          <Button
-            icon="device"
-            onClick={onOptimize}
-            size="sm"
-            variant="secondary"
-          >
-            최적화
-          </Button>
           <Button
             icon="plus"
             onClick={onAdd}
