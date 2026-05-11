@@ -9,6 +9,7 @@ import ChartInputForm from './chartDetail/ChartInputForm.jsx';
 import DrillingGuideView from './chartDetail/DrillingGuideView.jsx';
 import { ExitConfirmModal, HistoryModal, MemoModal } from './chartDetail/ChartModals.jsx';
 import ChartTopBar from './chartDetail/ChartTopBar.jsx';
+import SettingsModal from './customerManager/SettingsModal.jsx';
 import TaskDetailsCard from './chartDetail/TaskDetailsCard.jsx';
 import UtilitySheet from './chartDetail/UtilitySheet.jsx';
 import useHistoryRecords from './chartDetail/useHistoryRecords.js';
@@ -50,6 +51,7 @@ export default function ChartDetail({ customer, onBack }) {
   const [isTaskOpen, setIsTaskOpen] = useState(false);
   const [utilityState, setUtilityState] = useState('hidden');
   const [showDrillingGuide, setShowDrillingGuide] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [historyConfirm, setHistoryConfirm] = useState(null);
   const [renameRequest, setRenameRequest] = useState(null);
@@ -84,6 +86,7 @@ export default function ChartDetail({ customer, onBack }) {
   const taskRef = useRef(null);
   const formRef = useRef(null);
   const pullStartY = useRef(null);
+  const exportRef = useRef(null);
 
   const [chartData, setChartData] = useState(() => createDefaultChartData());
   const [customerInfo, setCustomerInfo] = useState(() => createDefaultCustomerInfo());
@@ -126,10 +129,6 @@ export default function ChartDetail({ customer, onBack }) {
       const {
         chartData: loadedChart,
         customerInfo: loadedCust,
-        ballName: loadedBallName,
-        layoutInfo: loadedLayoutInfo,
-        intent: loadedIntent,
-        memos: loadedMemos,
       } = parsedHistory[0].data;
 
       if (loadedChart) {
@@ -141,10 +140,10 @@ export default function ChartDetail({ customer, onBack }) {
         });
       }
       if (loadedCust) setCustomerInfo(loadedCust);
-      setBallName(loadedBallName || '');
-      setLayoutInfo(loadedLayoutInfo || '');
-      setIntent(loadedIntent || '');
-      setMemos(loadedMemos || []);
+      setBallName('');
+      setLayoutInfo('');
+      setIntent('');
+      setMemos([]);
       setSaveDate(parsedHistory[0].timestamp);
       setIsEditMode(false);
     } else {
@@ -247,6 +246,85 @@ export default function ChartDetail({ customer, onBack }) {
     onBack();
   };
 
+  const handleShare = async () => {
+    if (isEditMode) {
+      setFeedback({ message: '차트 보기 모드에서만 공유할 수 있습니다.', tone: 'warning' });
+      setUtilityState('collapsed');
+      return;
+    }
+
+    if (!exportRef.current) return;
+    setUtilityState('collapsed');
+    setFeedback({ message: '차트 이미지를 생성하고 있습니다...', tone: 'info' });
+
+    try {
+      const htmlToImage = await import('html-to-image');
+      const node = exportRef.current;
+      
+      const blob = await htmlToImage.toBlob(node, {
+        backgroundColor: '#f8fafc',
+        pixelRatio: 2,
+        width: node.scrollWidth,
+        height: node.scrollHeight,
+        style: { 
+          margin: '0', 
+          transform: 'scale(0.96)', 
+          transformOrigin: 'top left' 
+        }
+      });
+
+      if (!blob) throw new Error('Blob 생성 실패');
+      const file = new File([blob], `${customer.name}_지공차트.png`, { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ title: `${customer.name} 지공차트`, files: [file] });
+          setFeedback(null);
+        } catch (shareError) {
+          console.warn('공유가 취소되었거나 지원하지 않아 다운로드로 대체합니다.', shareError);
+          downloadBlob(blob, `${customer.name}_지공차트.png`);
+        }
+      } else {
+        downloadBlob(blob, `${customer.name}_지공차트.png`);
+      }
+    } catch (error) {
+      console.error('공유 실패:', error);
+      setFeedback({ message: '이미지 공유 중 오류가 발생했습니다.', tone: 'danger' });
+    }
+  };
+
+  const downloadBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setFeedback({ message: '차트 이미지가 다운로드되었습니다.', tone: 'success' });
+  };
+
+  const isBetaExpired = new Date() > new Date('2026-06-30T23:59:59+09:00');
+  if (isBetaExpired) {
+    return (
+      <PageShell>
+        <div className="flex flex-col items-center justify-center min-h-[80vh] p-4">
+          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-md text-center border border-slate-200 w-full max-w-sm">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-red-500 font-black text-xl">!</span>
+            </div>
+            <h1 className="text-lg sm:text-xl font-black text-slate-800 mb-2">베타 테스트 기간 만료</h1>
+            <p className="text-sm font-bold text-slate-500 leading-relaxed">
+              2026년 6월 30일부로<br/>베타 서비스가 종료되었습니다.<br/>정식 버전을 이용해 주세요.
+            </p>
+          </div>
+        </div>
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell bottomPadding="pb-40">
       {isPlacingMemo && <div className="fixed inset-0 z-[30] bg-black/5 touch-none" onClick={() => setIsPlacingMemo(false)} />}
@@ -268,54 +346,56 @@ export default function ChartDetail({ customer, onBack }) {
         onToggleUtility={() => setUtilityState(utilityState === 'expanded' ? 'collapsed' : 'expanded')}
       />
 
-      {!isEditMode && (
-        <BowlerSpecCard
-          chartData={chartData}
-          customer={customer}
-          customerInfo={customerInfo}
-          innerRef={specRef}
-          isOpen={isDetailOpen}
-          memoOverlay={renderMemoOverlay('spec', specRef)}
-          memosRenderer={renderMemos('spec', specRef)}
-          onCustomerInfoChange={updateCustomerInfo}
-          onToggleOpen={() => setIsDetailOpen(!isDetailOpen)}
-        />
-      )}
+      <div ref={exportRef} className="flex flex-col">
+        {!isEditMode && (
+          <BowlerSpecCard
+            chartData={chartData}
+            customer={customer}
+            customerInfo={customerInfo}
+            innerRef={specRef}
+            isOpen={isDetailOpen}
+            memoOverlay={renderMemoOverlay('spec', specRef)}
+            memosRenderer={renderMemos('spec', specRef)}
+            onCustomerInfoChange={updateCustomerInfo}
+            onToggleOpen={() => setIsDetailOpen(!isDetailOpen)}
+          />
+        )}
 
-      {isEditMode ? (
-        <Card className="w-full p-2 pb-6 sm:p-6 sm:pb-8 mt-2 mb-4 sm:mb-6 relative z-40 overflow-hidden animate-fade-in transform-gpu [backface-visibility:hidden]" data-testid="chart-edit-surface">
-          <div ref={formRef} className="relative w-full h-full">
-            {renderMemoOverlay('form', formRef)}
-            {renderMemos('form', formRef)}
-            <ChartInputForm customer={customer} data={chartData} onChange={handleChartDataChange} />
-          </div>
-        </Card>
-      ) : (
-        <ChartBlueprintView
-          customer={customer}
-          data={chartData}
-          innerRef={chartRef}
-          memoOverlay={renderMemoOverlay('chart', chartRef)}
-          memosRenderer={renderMemos('chart', chartRef)}
-          isMemoActive={isMemoActive}
-        />
-      )}
+        {isEditMode ? (
+          <Card className="w-full p-2 pb-6 sm:p-6 sm:pb-8 mt-2 mb-4 sm:mb-6 relative z-40 overflow-hidden animate-fade-in transform-gpu [backface-visibility:hidden]" data-testid="chart-edit-surface">
+            <div ref={formRef} className="relative w-full h-full">
+              {renderMemoOverlay('form', formRef)}
+              {renderMemos('form', formRef)}
+              <ChartInputForm customer={customer} data={chartData} onChange={handleChartDataChange} />
+            </div>
+          </Card>
+        ) : (
+          <ChartBlueprintView
+            customer={customer}
+            data={chartData}
+            innerRef={chartRef}
+            memoOverlay={renderMemoOverlay('chart', chartRef)}
+            memosRenderer={renderMemos('chart', chartRef)}
+            isMemoActive={isMemoActive}
+          />
+        )}
 
-      {!isEditMode && (
-        <TaskDetailsCard
-          ballName={ballName}
-          innerRef={taskRef}
-          intent={intent}
-          isOpen={isTaskOpen}
-          layoutInfo={layoutInfo}
-          memoOverlay={renderMemoOverlay('task', taskRef)}
-          memosRenderer={renderMemos('task', taskRef)}
-          onBallNameChange={updateWorkField(setBallName)}
-          onIntentChange={updateWorkField(setIntent)}
-          onLayoutInfoChange={updateWorkField(setLayoutInfo)}
-          onToggleOpen={() => setIsTaskOpen(!isTaskOpen)}
-        />
-      )}
+        {!isEditMode && (
+          <TaskDetailsCard
+            ballName={ballName}
+            innerRef={taskRef}
+            intent={intent}
+            isOpen={isTaskOpen}
+            layoutInfo={layoutInfo}
+            memoOverlay={renderMemoOverlay('task', taskRef)}
+            memosRenderer={renderMemos('task', taskRef)}
+            onBallNameChange={updateWorkField(setBallName)}
+            onIntentChange={updateWorkField(setIntent)}
+            onLayoutInfoChange={updateWorkField(setLayoutInfo)}
+            onToggleOpen={() => setIsTaskOpen(!isTaskOpen)}
+          />
+        )}
+      </div>
 
       {activeMemoId && (
         <MemoModal
@@ -330,12 +410,16 @@ export default function ChartDetail({ customer, onBack }) {
         setUtilityState={setUtilityState}
         pullStartYRef={pullStartY}
         isLocked={isMemoActive || activeMemoId !== null}
+        onStartBackup={() => {
+          setFeedback({ message: '베타 버전에서는 제한된 기능입니다.', tone: 'warning' });
+          setUtilityState('collapsed');
+        }}
         onStartDrilling={() => {
           setShowDrillingGuide(true);
           setUtilityState('collapsed');
         }}
-        onStartMemo={() => {
-          setIsPlacingMemo(true);
+        onStartShare={() => {
+          setFeedback({ message: '베타 버전에서는 제한된 기능입니다.', tone: 'warning' });
           setUtilityState('collapsed');
         }}
         onShowHistory={() => {
@@ -403,6 +487,13 @@ export default function ChartDetail({ customer, onBack }) {
           customer={customer}
           onClose={() => setShowDrillingGuide(false)}
           onGuideStateChange={(drillingGuide) => handleChartDataChange({ ...chartData, drillingGuide })}
+        />
+      )}
+
+      {showSettingsModal && (
+        <SettingsModal
+          onClose={() => setShowSettingsModal(false)}
+          onFeedback={setFeedback}
         />
       )}
 
