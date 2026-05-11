@@ -29,7 +29,6 @@ const createDefaultChartData = ({ handedness = 'right', isThumbless = false } = 
   spanRight: '',
   spanType: '',
   ovalAngle: '',
-  drillingGuide: { ovalCut: '', ovalCorrection: '0', isDetailedMode: false },
 });
 
 const createDefaultCustomerInfo = () => ({
@@ -135,7 +134,6 @@ export default function ChartDetail({ customer, onBack }) {
       if (loadedChart) {
         setChartData({
           ...loadedChart,
-          drillingGuide: loadedChart.drillingGuide || { ovalCut: '', ovalCorrection: '0', isDetailedMode: false },
           handedness: loadedChart.handedness ?? profile.handedness,
           isThumbless: loadedChart.isThumbless ?? profile.isThumbless,
         });
@@ -194,7 +192,6 @@ export default function ChartDetail({ customer, onBack }) {
     if (loadedChart) {
       setChartData({
         ...loadedChart,
-        drillingGuide: loadedChart.drillingGuide || { ovalCut: '', ovalCorrection: '0', isDetailedMode: false },
         handedness: loadedChart.handedness ?? profile.handedness,
         isThumbless: loadedChart.isThumbless ?? profile.isThumbless,
       });
@@ -402,7 +399,6 @@ export default function ChartDetail({ customer, onBack }) {
           data={chartData}
           customer={customer}
           onClose={() => setShowDrillingGuide(false)}
-          onGuideStateChange={(drillingGuide) => handleChartDataChange({ ...chartData, drillingGuide })}
         />
       )}
 

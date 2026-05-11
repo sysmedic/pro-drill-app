@@ -4,7 +4,7 @@ import { cn } from '../../components/ui/classNames.js';
 
 const { LAYER_CLASS, PAGE_CONTENT_SURFACE_CLASS } = PageShell.tokens;
 
-export default function UtilitySheet({ utilityState, setUtilityState, pullStartYRef, onStartMemo, onShowHistory, isLocked }) {
+export default function UtilitySheet({ utilityState, setUtilityState, pullStartYRef, onStartMemo, onShowHistory, onStartDrilling, isLocked }) {
   return (
     <>
       {utilityState === 'expanded' && (
@@ -62,6 +62,7 @@ export default function UtilitySheet({ utilityState, setUtilityState, pullStartY
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto w-full pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <Button icon="tools" onClick={(e) => { e.stopPropagation(); if (onStartDrilling) onStartDrilling(); }} size="sm" variant="subtle">드릴링</Button>
               <Button icon="memo" onClick={onStartMemo} size="sm" variant="subtle">메모하기</Button>
               <Button icon="history" onClick={onShowHistory} size="sm" variant="subtle">저장기록</Button>
             </div>
