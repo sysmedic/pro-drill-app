@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import DisclosureSection from '../../components/ui/DisclosureSection.jsx';
 import KeypadField from '../../components/ui/KeypadField.jsx';
 import SelectField from '../../components/ui/SelectField.jsx';
+import { TextInputModal } from '../../components/ui/Dialogs.jsx';
 import FractionKeypad from './FractionKeypad.jsx';
+import Icon from '../../components/ui/Icon.jsx';
 import {
   FINGER_INSERT_OPTIONS,
   HOLE_OPTIONS,
@@ -20,6 +22,14 @@ const FORM_DENSITY = 'compact';
 
 const FINGER_HOLE_CUT_OPTIONS = ['31/32', '1 1/32'];
 const THUMB_HOLE_CUT_OPTIONS = ['1 1/8', '1 1/4', '1 3/8', '1 1/2'];
+const BEVEL_DEPTH_OPTIONS = [
+  '1/16', '1/8', '3/16', '1/4', '5/16', '3/8', '7/16', '1/2',
+  '9/16', '5/8', '11/16', '3/4', '13/16', '7/8', '15/16', '1'
+];
+const OFFSET_OPTIONS = [
+  '1/16', '1/8', '3/16', '1/4', '5/16', '3/8', '7/16', '1/2',
+  '9/16', '5/8', '11/16', '3/4', '13/16', '7/8', '15/16', '1'
+];
 
 const parseFraction = (str) => {
   if (!str) return 0;
@@ -54,12 +64,162 @@ const getDefaultThumbHoleCutSize = (slugType, gender) => {
   return '1 1/4';
 };
 
+const toFraction64 = (num) => {
+  if (num <= 0) return '';
+  const totalNumerator = Math.round(num * 64);
+  const whole = Math.floor(totalNumerator / 64);
+  const numerator = totalNumerator % 64;
+
+  if (numerator === 0) return String(whole);
+
+  let n = numerator;
+  let d = 64;
+  while (n % 2 === 0 && d % 2 === 0) {
+    n /= 2;
+    d /= 2;
+  }
+
+  if (whole > 0) {
+    return `${whole} ${n}/${d}`;
+  }
+  return `${n}/${d}`;
+};
+
+const getBevelOptions = (holeSize) => {
+  const baseNum = parseFraction(holeSize);
+  if (!baseNum) return [];
+  const maxNum = 1.125; // 1 1/8
+  const options = [];
+  let currentNum = baseNum + 1 / 64;
+  while (Math.round(currentNum * 64) <= Math.round(maxNum * 64)) {
+    options.push(toFraction64(currentNum));
+    currentNum += 1 / 64;
+  }
+  return options;
+};
+
+const getDynamicOvalOptions = (holeSize, defaultOptions) => {
+  const baseNum = parseFraction(holeSize);
+  if (!baseNum) return defaultOptions;
+  const maxNum = 1.25; // 1 1/4
+  const options = [];
+  let currentNum = baseNum;
+  while (Math.round(currentNum * 64) <= Math.round(maxNum * 64)) {
+    options.push(toFraction64(currentNum));
+    currentNum += 1 / 64;
+  }
+  return options;
+};
+
 function ChartSelectField(props) {
   return <SelectField density={FORM_DENSITY} {...props} />;
 }
 
 function ChartKeypadField(props) {
   return <KeypadField density={FORM_DENSITY} {...props} />;
+}
+
+function BevelField({ label, value, onChange, sizeOptions, depthOptions }) {
+  let size = '';
+  let depth = '';
+  if (value) {
+    if (value.includes('|')) {
+      [size, depth] = value.split('|');
+    } else if (value.includes('/')) {
+      const parts = value.split('/');
+      if (parts.length > 2) {
+        depth = parts.pop();
+        size = parts.join('/');
+      } else {
+        [size, depth] = parts;
+      }
+    } else {
+      size = value;
+    }
+  }
+  const [customTarget, setCustomTarget] = useState(null);
+
+  const handleSizeChange = (newSize) => {
+    if (!newSize && !depth) onChange('');
+    else onChange(`${newSize}|${depth}`);
+  };
+
+  const handleDepthChange = (newDepth) => {
+    if (!size && !newDepth) onChange('');
+    else onChange(`${size}|${newDepth}`);
+  };
+
+  const handleSelectChange = (e, type) => {
+    const val = e.target.value;
+    if (val === 'CUSTOM') {
+      setCustomTarget(type);
+    } else {
+      if (type === 'size') handleSizeChange(val);
+      else handleDepthChange(val);
+    }
+  };
+
+  const hasSizeOption = sizeOptions.includes(size);
+  const hasDepthOption = depthOptions.includes(depth);
+
+  return (
+    <>
+      <div className="flex flex-col w-full">
+        <label className="text-xs font-bold text-slate-600 mb-1">{label}</label>
+        <div className="relative flex items-center w-full border border-slate-300 rounded-md bg-white focus-within:ring-2 focus-within:ring-indigo-500 overflow-hidden h-10">
+          {/* 시각적 레이어 (가운데 정렬 및 드롭다운 아이콘) */}
+          <div className="absolute inset-0 flex items-center pointer-events-none">
+            <div className="flex-1 flex items-center justify-center px-1">
+              <span className="text-[16px] sm:text-sm text-black font-semibold truncate">{size}</span>
+              <Icon name="chevronDown" className="text-slate-400 ml-0.5" size={14} />
+            </div>
+            <span className="text-slate-300 font-bold shrink-0">/</span>
+            <div className="flex-1 flex items-center justify-center px-1">
+              <span className="text-[16px] sm:text-sm text-black font-semibold truncate">{depth}</span>
+              <Icon name="chevronDown" className="text-slate-400 ml-0.5" size={14} />
+            </div>
+          </div>
+          {/* 상호작용 레이어 (투명한 실제 select) */}
+          <select
+            className="flex-1 w-1/2 h-full opacity-0 cursor-pointer appearance-none outline-none"
+            value={size}
+            onChange={(e) => handleSelectChange(e, 'size')}
+          >
+            <option value=""></option>
+            {sizeOptions.map(o => <option key={o} value={o}>{o}</option>)}
+            {size && !hasSizeOption && <option value={size} hidden>{size}</option>}
+            <option value="CUSTOM">+ 직접 입력</option>
+          </select>
+          <select
+            className="flex-1 w-1/2 h-full opacity-0 cursor-pointer appearance-none outline-none"
+            value={depth}
+            onChange={(e) => handleSelectChange(e, 'depth')}
+          >
+            <option value=""></option>
+            {depthOptions.map(o => <option key={o} value={o}>{o}</option>)}
+            {depth && !hasDepthOption && <option value={depth} hidden>{depth}</option>}
+            <option value="CUSTOM">+ 직접 입력</option>
+          </select>
+        </div>
+      </div>
+      {customTarget && (
+        <TextInputModal
+          confirmLabel="적용"
+          initialValue={customTarget === 'size' ? (hasSizeOption ? '' : size) : (hasDepthOption ? '' : depth)}
+          label={customTarget === 'size' ? '드릴 사이즈 입력' : '깊이 입력'}
+          onCancel={() => setCustomTarget(null)}
+          onConfirm={(val) => {
+            if (customTarget === 'size') handleSizeChange(val);
+            else handleDepthChange(val);
+            setCustomTarget(null);
+          }}
+          placeholder="수치를 직접 입력하세요"
+          title="직접 입력"
+          titleId={`custom-input-${customTarget}`}
+        />
+      )}
+    </>
+  );
 }
 
 export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
@@ -69,6 +229,7 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
   const midPitch = data?.midPitch || {};
   const ringPitch = data?.ringPitch || {};
   const thumbPitch = data?.thumbPitch || {};
+  const thumbOffset = data?.thumbOffset || { left: '', right: '' };
   const thumbDetails = data?.thumbDetails || {};
   const bridge = data?.bridge || '';
   const spanType = data?.spanType || '';
@@ -76,16 +237,24 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
   const spanRight = data?.spanRight || '';
   const ovalAngle = data?.ovalAngle || '';
 
+  const bevelOptions = useMemo(() => getBevelOptions(thumbDetails?.holeSize), [thumbDetails?.holeSize]);
+  const dynamicOvalOptions = useMemo(() => getDynamicOvalOptions(thumbDetails?.holeSize, OVAL_OPTIONS), [thumbDetails?.holeSize]);
+
   const [activeAccordion, setActiveAccordion] = useState(null);
   const toggleAccordion = (id) => setActiveAccordion(prev => prev === id ? null : id);
 
   // 분수 키패드 상태 관리
-  const [keypad, setKeypad] = useState({ isOpen: false, field: null, value: '', title: '' });
-  const openKeypad = (field, value, title) => {
-    setKeypad({ isOpen: true, field, value, title });
+  const [keypad, setKeypad] = useState({ isOpen: false, field: null, value: '', title: '', mode: 'fraction' });
+  const openKeypad = (field, value, title, mode = 'fraction') => {
+    setKeypad({ isOpen: true, field, value, title, mode });
   };
   const handleKeypadConfirm = (newValue) => {
-    onChange({ ...data, [keypad.field]: newValue });
+    if (keypad.field?.startsWith('thumbDetails.')) {
+      const key = keypad.field.split('.')[1];
+      onChange({ ...data, thumbDetails: { ...thumbDetails, [key]: newValue } });
+    } else {
+      onChange({ ...data, [keypad.field]: newValue });
+    }
   };
 
   const isLeft = handedness === 'left';
@@ -133,6 +302,13 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
     onChange({ ...data, thumbPitch: next });
   };
 
+  const updateThumbOffset = (key, val) => {
+    let next = { ...thumbOffset, [key]: val };
+    if (key === 'left') next.right = '';
+    if (key === 'right') next.left = '';
+    onChange({ ...data, thumbOffset: next });
+  };
+
   const updateThumbDetails = (key, val) => {
     const next = { ...thumbDetails, [key]: val };
     if (key === 'slugType') {
@@ -172,17 +348,22 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
     return parts.length > 0 ? parts.join(', ') : '';
   };
 
-  const getThumbSummary = (pitch, details, angle) => {
+  const getThumbSummary = (pitch, details, angle, offset) => {
     const parts = [];
     if (pitch?.up) parts.push(`Fwd ${pitch.up}`);
     else if (pitch?.down) parts.push(`Rev ${pitch.down}`);
     if (pitch?.left) parts.push(`L ${pitch.left}`);
     else if (pitch?.right) parts.push(`R ${pitch.right}`);
+    if (offset?.left) parts.push(`Offset Left ${offset.left}`);
+    else if (offset?.right) parts.push(`Offset Right ${offset.right}`);
     if (details?.holeSize) parts.push(`원홀 ${details.holeSize}`);
     if (details?.ovalSize) parts.push(`오발 ${details.ovalSize}`);
     if (angle) parts.push(`${angle}°`);
     if (details?.slugType) parts.push(details.slugType);
     if (details?.holeCutSize) parts.push(`H/C ${details.holeCutSize}`);
+    if (details?.bevel1) parts.push(`B1 ${details.bevel1.replace(/\|/g, '/')}`);
+    if (details?.bevel2) parts.push(`B2 ${details.bevel2.replace(/\|/g, '/')}`);
+    if (details?.bevel3) parts.push(`B3 ${details.bevel3.replace(/\|/g, '/')}`);
     return parts.length > 0 ? parts.join(', ') : '';
   };
 
@@ -248,8 +429,6 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
         </>
       ))}
 
-      <div className={`grid transition-[grid-template-rows,opacity] duration-500 ease-in-out ${!isThumbless ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
-        <div className="overflow-hidden min-h-0 flex flex-col gap-2.5">
         {renderSection('span', 'Span', getSpanSummary(), (
           <>
           <div className="mb-2.5"><ChartSelectField label="Span 타입" value={spanType} onChange={v => onChange({ ...data, spanType: v })} options={SPAN_TYPE_OPTIONS} /></div>
@@ -260,7 +439,9 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
           </>
         ))}
 
-        {renderSection('thumb', 'Thumb', getThumbSummary(thumbPitch, thumbDetails, ovalAngle), (
+      <div className={`grid transition-[grid-template-rows,opacity] duration-500 ease-in-out ${!isThumbless ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
+        <div className="overflow-hidden min-h-0 flex flex-col gap-2.5">
+        {renderSection('thumb', 'Thumb', getThumbSummary(thumbPitch, thumbDetails, ovalAngle, thumbOffset), (
           <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
             <ChartSelectField label="Forward (▲)" value={thumbPitch.up} onChange={v => updateThumb('up', v)} options={PITCH_OPTIONS} />
@@ -268,13 +449,23 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
             <ChartSelectField label="Left (◀)" value={thumbPitch.left} onChange={v => updateThumb('left', v)} options={PITCH_OPTIONS} />
             <ChartSelectField label="Right (▶)" value={thumbPitch.right} onChange={v => updateThumb('right', v)} options={PITCH_OPTIONS} />
           </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
+            <ChartSelectField label="Offset - Left" value={thumbOffset.left} onChange={v => updateThumbOffset('left', v)} options={OFFSET_OPTIONS} />
+            <ChartSelectField label="Offset - Right" value={thumbOffset.right} onChange={v => updateThumbOffset('right', v)} options={OFFSET_OPTIONS} />
+          </div>
           <h4 className="font-bold text-sm mb-2 text-slate-700">상세 사이즈 및 각도</h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <ChartSelectField allowCustom label="원홀" value={thumbDetails.holeSize} onChange={v => updateThumbDetails('holeSize', v)} options={HOLE_OPTIONS} />
-            <ChartSelectField allowCustom label="오발 사이즈" value={thumbDetails.ovalSize} onChange={v => updateThumbDetails('ovalSize', v)} options={OVAL_OPTIONS} />
-            <ChartKeypadField label="오발 각도" onOpen={() => openKeypad('ovalAngle', ovalAngle, '오발 각도')} placeholder="숫자만" value={ovalAngle} />
+            <ChartSelectField allowCustom label="오발 사이즈" value={thumbDetails.ovalSize} onChange={v => updateThumbDetails('ovalSize', v)} options={dynamicOvalOptions} />
+            <ChartKeypadField label="오발 각도" onOpen={() => openKeypad('ovalAngle', ovalAngle, '오발 각도', 'number')} placeholder="" value={ovalAngle} />
             <ChartSelectField allowCustom label="덤 타입" value={thumbDetails.slugType} onChange={v => updateThumbDetails('slugType', v)} options={THUMB_TYPE_OPTIONS} />
             <ChartSelectField allowCustom label="홀컷 사이즈" value={thumbDetails.holeCutSize} onChange={v => updateThumbDetails('holeCutSize', v)} options={THUMB_HOLE_CUT_OPTIONS} />
+          </div>
+          <h4 className="font-bold text-sm mb-2 mt-3 text-slate-700">Bevel (드릴 사이즈/깊이)</h4>
+          <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <BevelField label="Bevel 1" value={thumbDetails.bevel1} onChange={v => updateThumbDetails('bevel1', v)} sizeOptions={bevelOptions} depthOptions={BEVEL_DEPTH_OPTIONS} />
+            <BevelField label="Bevel 2" value={thumbDetails.bevel2} onChange={v => updateThumbDetails('bevel2', v)} sizeOptions={bevelOptions} depthOptions={BEVEL_DEPTH_OPTIONS} />
+            <BevelField label="Bevel 3" value={thumbDetails.bevel3} onChange={v => updateThumbDetails('bevel3', v)} sizeOptions={bevelOptions} depthOptions={BEVEL_DEPTH_OPTIONS} />
           </div>
           </>
         ))}
@@ -285,6 +476,7 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
         isOpen={keypad.isOpen}
         initialValue={keypad.value}
         title={keypad.title}
+        mode={keypad.mode}
         onClose={() => setKeypad(prev => ({ ...prev, isOpen: false }))}
         onConfirm={handleKeypadConfirm}
       />

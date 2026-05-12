@@ -22,6 +22,12 @@ const paths = {
   ),
   chevronDown: <path d="M6 9l6 6 6-6" />,
   check: <path d="M5 13l4 4L19 7" />,
+  checkSquare: (
+    <>
+      <path d="M9 11l3 3L22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </>
+  ),
   close: (
     <>
       <path d="M6 6l12 12" />
@@ -60,6 +66,9 @@ const paths = {
       <circle cx="11" cy="11" r="6" />
       <path d="M16 16l4 4" />
     </>
+  ),
+  star: (
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
   ),
   tools: (
     <>

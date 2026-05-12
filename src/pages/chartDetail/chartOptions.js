@@ -1,4 +1,4 @@
-export const PITCH_OPTIONS = ["1/16", "1/8", "3/16", "1/4", "5/16", "3/8", "7/16", "1/2", "9/16", "5/8", "11/16", "3/4", "13/16", "7/8", "15/16", "1"];
+export const PITCH_OPTIONS = ["0", "1/16", "1/8", "3/16", "1/4", "5/16", "3/8", "7/16", "1/2", "9/16", "5/8", "11/16", "3/4", "13/16", "7/8", "15/16", "1"];
 export const MOISTURE_OPTIONS = ["건조", "보통", "다습"];
 export const STIFFNESS_OPTIONS = ["유연", "보통", "뻣뻣"];
 export const SPAN_TYPE_OPTIONS = ["Actual Span", "Cut to Cut", "Center to Center"];

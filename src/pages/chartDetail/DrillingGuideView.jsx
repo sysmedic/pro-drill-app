@@ -86,13 +86,15 @@ export default function DrillingGuideView({ data = {}, customer = {}, onClose, o
   const secondPitch = isLeft ? midPitch : ringPitch;
   const firstLabel = isLeft ? "약지" : "중지";
   const secondLabel = isLeft ? "중지" : "약지";
+  const firstTitle = isLeft ? "약지 (Ring)" : "중지 (Middle)";
+  const secondTitle = isLeft ? "중지 (Middle)" : "약지 (Ring)";
 
   const baseHoleSizeNum = parseFraction(thumbDetails?.holeSize);
 
   const ovalCutOptions = useMemo(() => {
     if (!baseHoleSizeNum) return [];
     const options = [];
-    for (let i = 0; i <= 5; i++) {
+    for (let i = 0; i <= 10; i++) {
       const val = baseHoleSizeNum - (i / 64);
       if (val > 0) options.push(toFraction64(val));
     }
@@ -215,7 +217,7 @@ export default function DrillingGuideView({ data = {}, customer = {}, onClose, o
           
           {/* Fingers Row */}
           <div className="flex justify-between gap-4 sm:gap-6">
-            <GlassBox title={firstLabel} className="flex-1">
+            <GlassBox title={firstTitle} className="flex-1">
               <div className="p-2 bg-white/5 rounded-lg text-sm sm:text-base">
                 <div className="flex justify-between mb-2 pb-2 border-b border-white/10">
                   <span className="text-white/50">홀컷</span>
@@ -232,7 +234,7 @@ export default function DrillingGuideView({ data = {}, customer = {}, onClose, o
               </div>
             </GlassBox>
 
-            <GlassBox title={secondLabel} className="flex-1">
+            <GlassBox title={secondTitle} className="flex-1">
               <div className="p-2 bg-white/5 rounded-lg text-sm sm:text-base">
                 <div className="flex justify-between mb-2 pb-2 border-b border-white/10">
                   <span className="text-white/50">홀컷</span>
@@ -356,6 +358,38 @@ export default function DrillingGuideView({ data = {}, customer = {}, onClose, o
                   );
                 })}
               </div>
+            </GlassBox>
+          )}
+
+          {/* Bevel Row */}
+          {!data?.isThumbless && (thumbDetails?.bevel1 || thumbDetails?.bevel2 || thumbDetails?.bevel3) && (
+            <GlassBox title="Bevel" className="w-full">
+              {(() => {
+                const bevels = [
+                  { label: '1st', value: thumbDetails?.bevel1 },
+                  { label: '2nd', value: thumbDetails?.bevel2 },
+                  { label: '3rd', value: thumbDetails?.bevel3 }
+                ].filter(b => b.value);
+
+                if (bevels.length === 1) {
+                  return (
+                    <div className="flex items-center justify-center p-2 bg-white/5 rounded-lg text-sm sm:text-base text-center">
+                      <div className="font-bold text-white">{bevels[0].value.replace(/\|/g, ' : ')}</div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="flex flex-col sm:flex-row p-2 bg-white/5 rounded-lg text-sm sm:text-base text-center">
+                    {bevels.map((b, idx) => (
+                      <div key={b.label} className={`flex-1 flex flex-col items-center justify-center py-1.5 sm:py-0 ${idx !== 0 ? 'border-t sm:border-t-0 sm:border-l border-white/10 mt-1.5 pt-1.5 sm:mt-0 sm:pt-0' : ''}`}>
+                        <div className="text-[10px] sm:text-xs text-white/50 mb-0.5">{b.label}</div>
+                        <div className="font-bold text-white">{b.value.replace(/\|/g, ' : ')}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </GlassBox>
           )}
 

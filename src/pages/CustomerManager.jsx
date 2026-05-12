@@ -128,25 +128,6 @@ export default function CustomerManagement({ onSelectCustomer }) {
     filteredCustomers.sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  const isBetaExpired = new Date() > new Date('2026-06-30T23:59:59+09:00');
-  if (isBetaExpired) {
-    return (
-      <PageShell>
-        <div className="flex flex-col items-center justify-center min-h-[80vh] p-4">
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-md text-center border border-slate-200 w-full max-w-sm">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-red-500 font-black text-xl">!</span>
-            </div>
-            <h1 className="text-lg sm:text-xl font-black text-slate-800 mb-2">베타 테스트 기간 만료</h1>
-            <p className="text-sm font-bold text-slate-500 leading-relaxed">
-              2026년 6월 30일부로<br/>베타 서비스가 종료되었습니다.<br/>정식 버전을 이용해 주세요.
-            </p>
-          </div>
-        </div>
-      </PageShell>
-    );
-  }
-
   return (
     <PageShell bottomPadding="pb-24">
       <CustomerHeader

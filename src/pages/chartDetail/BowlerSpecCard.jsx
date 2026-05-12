@@ -29,8 +29,8 @@ export default function BowlerSpecCard({
   onCustomerInfoChange,
   onToggleOpen,
 }) {
-  const [keypad, setKeypad] = useState({ isOpen: false, field: null, value: '', title: '', extraKeys: [] });
-  const openKeypad = (field, value, title, extraKeys = []) => setKeypad({ isOpen: true, field, value, title, extraKeys });
+  const [keypad, setKeypad] = useState({ isOpen: false, field: null, value: '', title: '', extraKeys: [], mode: 'fraction' });
+  const openKeypad = (field, value, title, extraKeys = [], mode = 'fraction') => setKeypad({ isOpen: true, field, value, title, extraKeys, mode });
   const handleKeypadConfirm = (newValue) => {
     onCustomerInfoChange(p => ({ ...p, [keypad.field]: newValue }));
   };
@@ -117,27 +117,23 @@ export default function BowlerSpecCard({
 
           <div className="border rounded-lg py-1 px-2 flex flex-col items-center justify-center bg-slate-50 border-slate-200 focus-within:border-indigo-500 focus-within:bg-indigo-50 transition-colors">
             <span className="text-[9px] sm:text-[10px] text-black font-bold mb-0.5 tracking-tighter pointer-events-none">RPM</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              className="w-full bg-transparent text-center text-base font-black text-black outline-none placeholder:text-slate-400 placeholder:font-normal"
-              value={customerInfo.rpm}
-              onChange={e => onCustomerInfoChange(p => ({ ...p, rpm: e.target.value }))}
-              placeholder="입력"
-            />
+            <button
+              type="button"
+              className="w-full bg-transparent text-center text-base font-black text-black outline-none min-h-[24px] flex items-center justify-center"
+              onClick={() => openKeypad('rpm', customerInfo.rpm, 'RPM', [], 'number')}
+            >
+              {customerInfo.rpm || <span className="text-slate-400 font-normal">입력</span>}
+            </button>
           </div>
           <div className="border rounded-lg py-1 px-2 flex flex-col items-center justify-center bg-slate-50 border-slate-200 focus-within:border-indigo-500 focus-within:bg-indigo-50 transition-colors">
             <span className="text-[9px] sm:text-[10px] text-black font-bold mb-0.5 tracking-tighter pointer-events-none">구속 (km/h)</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              className="w-full bg-transparent text-center text-base font-black text-black outline-none placeholder:text-slate-400 placeholder:font-normal"
-              value={customerInfo.ballSpeed}
-              onChange={e => onCustomerInfoChange(p => ({ ...p, ballSpeed: e.target.value }))}
-              placeholder="입력"
-            />
+            <button
+              type="button"
+              className="w-full bg-transparent text-center text-base font-black text-black outline-none min-h-[24px] flex items-center justify-center"
+              onClick={() => openKeypad('ballSpeed', customerInfo.ballSpeed, '구속 (km/h)', [], 'number')}
+            >
+              {customerInfo.ballSpeed || <span className="text-slate-400 font-normal">입력</span>}
+            </button>
           </div>
 
           <div className="border rounded-lg py-1 px-2 flex flex-col items-center justify-center bg-slate-50 border-slate-200 focus-within:border-indigo-500 focus-within:bg-indigo-50 transition-colors">
@@ -170,6 +166,7 @@ export default function BowlerSpecCard({
         initialValue={keypad.value}
         title={keypad.title}
         extraKeys={keypad.extraKeys}
+        mode={keypad.mode}
         onClose={() => setKeypad(prev => ({ ...prev, isOpen: false }))}
         onConfirm={handleKeypadConfirm}
       />

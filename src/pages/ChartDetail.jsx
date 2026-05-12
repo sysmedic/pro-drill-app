@@ -3,11 +3,13 @@ import PageShell from '../components/layout/PageShell.jsx';
 import Card from '../components/ui/Card.jsx';
 import Button from '../components/ui/Button.jsx';
 import { ConfirmModal, FeedbackToast, TextInputModal } from '../components/ui/Dialogs.jsx';
+import Icon from '../components/ui/Icon.jsx';
 import BowlerSpecCard from './chartDetail/BowlerSpecCard.jsx';
 import ChartBlueprintView from './chartDetail/ChartBlueprintView.jsx';
 import ChartInputForm from './chartDetail/ChartInputForm.jsx';
 import DrillingGuideView from './chartDetail/DrillingGuideView.jsx';
 import { ExitConfirmModal, HistoryModal, MemoModal } from './chartDetail/ChartModals.jsx';
+import ModalShell from '../components/ui/ModalShell.jsx';
 import ChartTopBar from './chartDetail/ChartTopBar.jsx';
 import SettingsModal from './customerManager/SettingsModal.jsx';
 import TaskDetailsCard from './chartDetail/TaskDetailsCard.jsx';
@@ -24,6 +26,7 @@ const createDefaultChartData = ({ handedness = 'right', isThumbless = false } = 
   midPitch: { up: '', down: '', lat: '', latDir: '', insertSize: '', tipType: '', holeCutSize: '' },
   ringPitch: { up: '', down: '', lat: '', latDir: '', insertSize: '', tipType: '', holeCutSize: '' },
   thumbPitch: { up: '', down: '', left: '', right: '' },
+  thumbOffset: { left: '', right: '' },
   thumbDetails: { holeSize: '', ovalSize: '', slugType: '', holeCutSize: '' },
   bridge: '3/16',
   spanLeft: '',
@@ -48,16 +51,22 @@ const createDefaultCustomerInfo = () => ({
 export default function ChartDetail({ customer, onBack }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isTaskOpen, setIsTaskOpen] = useState(false);
+  const [isTaskOpen, setIsTaskOpen] = useState(true);
   const [utilityState, setUtilityState] = useState('hidden');
   const [showDrillingGuide, setShowDrillingGuide] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [historyConfirm, setHistoryConfirm] = useState(null);
   const [renameRequest, setRenameRequest] = useState(null);
+  const [deleteRequest, setDeleteRequest] = useState(null);
+  const [sharePreview, setSharePreview] = useState(null);
+  const [shareFilename, setShareFilename] = useState('');
   const [feedback, setFeedback] = useState(null);
   const [, setSaveDate] = useState('');
+  const [viewingRecord, setViewingRecord] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showModifyWarning, setShowModifyWarning] = useState(false);
+  const [hasWarnedModify, setHasWarnedModify] = useState(false);
   const markDirty = useCallback(() => setHasUnsavedChanges(true), []);
   const {
     history,
@@ -121,6 +130,8 @@ export default function ChartDetail({ customer, onBack }) {
       setIntent('');
       setMemos([]);
       setSaveDate('');
+      setViewingRecord(null);
+      setHasWarnedModify(false);
     };
 
     const parsedHistory = loadHistoryForCustomer();
@@ -134,6 +145,7 @@ export default function ChartDetail({ customer, onBack }) {
       if (loadedChart) {
         setChartData({
           ...loadedChart,
+          thumbOffset: loadedChart.thumbOffset || { left: '', right: '' },
           drillingGuide: loadedChart.drillingGuide || { ovalCut: '', ovalCorrection: '0', isDetailedMode: false },
           handedness: loadedChart.handedness ?? profile.handedness,
           isThumbless: loadedChart.isThumbless ?? profile.isThumbless,
@@ -145,13 +157,23 @@ export default function ChartDetail({ customer, onBack }) {
       setIntent('');
       setMemos([]);
       setSaveDate(parsedHistory[0].timestamp);
+      setViewingRecord(null);
       setIsEditMode(false);
+      setHasWarnedModify(false);
     } else {
       initializeNewCustomer();
     }
 
     setHasUnsavedChanges(false);
   }, [customer, loadHistoryForCustomer, setMemos]);
+
+  // 내용 수정 발생 시 첫 1회 안내/경고창 노출 로직
+  useEffect(() => {
+    if (hasUnsavedChanges && viewingRecord && !hasWarnedModify) {
+      setShowModifyWarning(true);
+      setHasWarnedModify(true);
+    }
+  }, [hasUnsavedChanges, viewingRecord, hasWarnedModify]);
 
   const handleSave = () => {
     const now = new Date().toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -174,6 +196,12 @@ export default function ChartDetail({ customer, onBack }) {
     }
 
     setSaveDate(now);
+    
+    // 과거 기록을 불러온 상태에서 저장했을 때만 워터마크 정보를 새 기록으로 갱신하고,
+    // 신규 차트 작성 중 저장했을 때는 워터마크를 띄우지 않습니다.
+    if (viewingRecord) {
+      setViewingRecord({ id: newRecord.id, name: recordName, timestamp: now });
+    }
     setHasUnsavedChanges(false);
     setFeedback({ message: `${customer.name} 고객님의 기록이 안전하게 저장되었습니다.`, tone: 'success' });
     return true;
@@ -193,6 +221,7 @@ export default function ChartDetail({ customer, onBack }) {
     if (loadedChart) {
       setChartData({
         ...loadedChart,
+        thumbOffset: loadedChart.thumbOffset || { left: '', right: '' },
         drillingGuide: loadedChart.drillingGuide || { ovalCut: '', ovalCorrection: '0', isDetailedMode: false },
         handedness: loadedChart.handedness ?? profile.handedness,
         isThumbless: loadedChart.isThumbless ?? profile.isThumbless,
@@ -204,7 +233,13 @@ export default function ChartDetail({ customer, onBack }) {
     setIntent(loadedIntent || '');
     setMemos(loadedMemos || []);
     setSaveDate(record.timestamp);
-    setHasUnsavedChanges(true);
+    setViewingRecord({ 
+      id: record.id, 
+      name: record.name || '불러온 기록', 
+      timestamp: record.timestamp 
+    });
+    setHasUnsavedChanges(false);
+    setHasWarnedModify(false);
   };
 
   const handleDeleteRecord = (id) => {
@@ -234,6 +269,10 @@ export default function ChartDetail({ customer, onBack }) {
       return;
     }
 
+    if (viewingRecord && viewingRecord.id === renameRequest.id) {
+      setViewingRecord(prev => ({ ...prev, name: nextName }));
+    }
+
     setRenameRequest(null);
     setFeedback({ message: '저장 기록 이름을 변경했습니다.', tone: 'success' });
   };
@@ -257,39 +296,65 @@ export default function ChartDetail({ customer, onBack }) {
     setUtilityState('collapsed');
     setFeedback({ message: '차트 이미지를 생성하고 있습니다...', tone: 'info' });
 
+    const node = exportRef.current;
+    
+    // 캡처 시 그림자 제거를 위한 임시 스타일 주입
+    const styleEl = document.createElement('style');
+    styleEl.innerHTML = '[data-exporting="true"] * { box-shadow: none !important; }';
+    document.head.appendChild(styleEl);
+    node.setAttribute('data-exporting', 'true');
+
     try {
+      await new Promise(resolve => setTimeout(resolve, 50)); // 스타일 반영 대기
       const htmlToImage = await import('html-to-image');
-      const node = exportRef.current;
       
       const blob = await htmlToImage.toBlob(node, {
         backgroundColor: '#f8fafc',
-        pixelRatio: 2,
+        pixelRatio: 3,
         width: node.scrollWidth,
         height: node.scrollHeight,
         style: { 
           margin: '0', 
           transform: 'scale(0.96)', 
-          transformOrigin: 'top left' 
+          transformOrigin: 'top center' 
         }
       });
 
       if (!blob) throw new Error('Blob 생성 실패');
-      const file = new File([blob], `${customer.name}_지공차트.png`, { type: 'image/png' });
 
+      // 이미지를 바로 공유하지 않고 미리보기 상태에 넘깁니다.
+      setSharePreview(blob);
+      setShareFilename(`${customer.name}_지공차트`);
+      setFeedback(null);
+    } catch (error) {
+      console.error('이미지 생성 실패:', error);
+      setFeedback({ message: '이미지 생성 중 오류가 발생했습니다.', tone: 'danger' });
+    } finally {
+      // 임시 스타일 복구
+      node.removeAttribute('data-exporting');
+      document.head.removeChild(styleEl);
+    }
+  };
+
+  // 미리보기 확인 후 실제 공유/다운로드를 실행하는 함수
+  const executeShare = async () => {
+    if (!sharePreview) return;
+    
+    const finalFilename = shareFilename.trim() || `${customer.name}_지공차트`;
+    const file = new File([sharePreview], `${finalFilename}.png`, { type: 'image/png' });
+    
+    try {
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ title: `${customer.name} 지공차트`, files: [file] });
-          setFeedback(null);
-        } catch (shareError) {
-          console.warn('공유가 취소되었거나 지원하지 않아 다운로드로 대체합니다.', shareError);
-          downloadBlob(blob, `${customer.name}_지공차트.png`);
-        }
+        await navigator.share({ title: `${customer.name} 지공차트`, files: [file] });
+        setFeedback({ message: '공유가 완료되었습니다.', tone: 'success' });
       } else {
-        downloadBlob(blob, `${customer.name}_지공차트.png`);
+        downloadBlob(sharePreview, `${finalFilename}.png`);
       }
     } catch (error) {
-      console.error('공유 실패:', error);
-      setFeedback({ message: '이미지 공유 중 오류가 발생했습니다.', tone: 'danger' });
+      console.warn('공유가 취소되었거나 지원하지 않아 다운로드로 대체합니다.', error);
+      downloadBlob(sharePreview, `${finalFilename}.png`);
+    } finally {
+      setSharePreview(null);
     }
   };
 
@@ -306,25 +371,6 @@ export default function ChartDetail({ customer, onBack }) {
     setFeedback({ message: '차트 이미지가 다운로드되었습니다.', tone: 'success' });
   };
 
-  const isBetaExpired = new Date() > new Date('2026-06-30T23:59:59+09:00');
-  if (isBetaExpired) {
-    return (
-      <PageShell>
-        <div className="flex flex-col items-center justify-center min-h-[80vh] p-4">
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-md text-center border border-slate-200 w-full max-w-sm">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-red-500 font-black text-xl">!</span>
-            </div>
-            <h1 className="text-lg sm:text-xl font-black text-slate-800 mb-2">베타 테스트 기간 만료</h1>
-            <p className="text-sm font-bold text-slate-500 leading-relaxed">
-              2026년 6월 30일부로<br/>베타 서비스가 종료되었습니다.<br/>정식 버전을 이용해 주세요.
-            </p>
-          </div>
-        </div>
-      </PageShell>
-    );
-  }
-
   return (
     <PageShell bottomPadding="pb-40">
       {isPlacingMemo && <div className="fixed inset-0 z-[30] bg-black/5 touch-none" onClick={() => setIsPlacingMemo(false)} />}
@@ -339,6 +385,7 @@ export default function ChartDetail({ customer, onBack }) {
       <ChartTopBar
         isEditMode={isEditMode}
         utilityState={utilityState}
+        viewingRecord={viewingRecord}
         onStartMemo={() => setIsPlacingMemo(true)}
         onBack={handleBackClick}
         onSave={handleSave}
@@ -411,17 +458,14 @@ export default function ChartDetail({ customer, onBack }) {
         pullStartYRef={pullStartY}
         isLocked={isMemoActive || activeMemoId !== null}
         onStartBackup={() => {
-          setFeedback({ message: '베타 버전에서는 제한된 기능입니다.', tone: 'warning' });
+          setShowSettingsModal(true);
           setUtilityState('collapsed');
         }}
         onStartDrilling={() => {
           setShowDrillingGuide(true);
           setUtilityState('collapsed');
         }}
-        onStartShare={() => {
-          setFeedback({ message: '베타 버전에서는 제한된 기능입니다.', tone: 'warning' });
-          setUtilityState('collapsed');
-        }}
+        onStartShare={handleShare}
         onShowHistory={() => {
           setShowHistoryModal(true);
           setUtilityState('collapsed');
@@ -433,7 +477,7 @@ export default function ChartDetail({ customer, onBack }) {
           history={history}
           onSelect={(record) => setHistoryConfirm(record)}
           onClose={() => setShowHistoryModal(false)}
-          onDelete={handleDeleteRecord}
+          onDelete={(id) => setDeleteRequest(id)}
           onRename={(id, currentName) => setRenameRequest({ id, currentName })}
         />
       )}
@@ -465,6 +509,41 @@ export default function ChartDetail({ customer, onBack }) {
         />
       )}
 
+      {deleteRequest && (
+        <ConfirmModal
+          cancelLabel="취소"
+          confirmLabel="삭제"
+          danger={true}
+          message={"이 기록을 정말 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다."}
+          onCancel={() => setDeleteRequest(null)}
+          onConfirm={() => {
+            handleDeleteRecord(deleteRequest);
+            setDeleteRequest(null);
+          }}
+          title="기록 삭제"
+          titleId="history-delete-confirm-title"
+        />
+      )}
+
+      {showModifyWarning && (
+        <ConfirmModal
+          cancelLabel="취소"
+          confirmLabel="확인"
+          message={"불러온 기록을 수정합니다.\n(저장 시 새로운 기록으로 만들어집니다.)"}
+          onCancel={() => {
+            // 취소 시: 수정한 내용을 버리고 원래 기록으로 되돌림
+            const originalRecord = history.find(r => r.id === viewingRecord.id);
+            if (originalRecord) {
+              loadRecord(originalRecord);
+            }
+            setShowModifyWarning(false);
+          }}
+          onConfirm={() => setShowModifyWarning(false)}
+          title="기록 수정 안내"
+          titleId="modify-warning-title"
+        />
+      )}
+
       {showExitConfirm && (
         <ExitConfirmModal
           onClose={() => setShowExitConfirm(false)}
@@ -481,11 +560,53 @@ export default function ChartDetail({ customer, onBack }) {
         />
       )}
 
+      {sharePreview && (
+        <ModalShell
+          bodyClassName="p-5 flex flex-col gap-4 bg-slate-50"
+          icon="chart"
+          onClose={() => setSharePreview(null)}
+          size="md"
+          title="미리보기"
+          titleId="share-preview-modal-title"
+          zClassName="z-[150]"
+        >
+          <div className="w-full max-h-[50vh] overflow-y-auto rounded-lg border border-slate-300 shadow-inner bg-white">
+            <img src={URL.createObjectURL(sharePreview)} alt="지공차트 미리보기" className="w-full h-auto" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="share-filename" className="text-sm font-bold text-slate-700">저장 파일명</label>
+            <div className="flex items-center gap-2">
+              <input
+                id="share-filename"
+                type="text"
+                value={shareFilename}
+                onChange={(e) => setShareFilename(e.target.value)}
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                placeholder="파일명을 입력하세요"
+              />
+              <span className="text-slate-500 font-medium text-sm">.png</span>
+            </div>
+          </div>
+          <p className="text-xs text-center text-slate-500 font-medium px-2 mt-1">이 이미지를 공유하거나 기기에 저장하시겠습니까?</p>
+          <div className="flex gap-2 mt-2">
+            <Button className="flex-1" onClick={() => setSharePreview(null)} size="lg" variant="secondary">
+              취소
+            </Button>
+            <Button className="flex-1" onClick={executeShare} size="lg" variant="primary">
+              공유 / 저장
+            </Button>
+          </div>
+        </ModalShell>
+      )}
+
       {showDrillingGuide && (
         <DrillingGuideView
           data={chartData}
           customer={customer}
-          onClose={() => setShowDrillingGuide(false)}
+          onClose={() => {
+            setShowDrillingGuide(false);
+            setIsEditMode(false);
+          }}
           onGuideStateChange={(drillingGuide) => handleChartDataChange({ ...chartData, drillingGuide })}
         />
       )}

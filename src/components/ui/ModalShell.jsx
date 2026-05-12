@@ -50,6 +50,15 @@ export default function ModalShell({
   }, [onClose]);
 
   useEffect(() => {
+    // 모달이 열려있는 동안 배경 스크롤을 방지합니다.
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
+  useEffect(() => {
     const previousFocusableElement = document.activeElement;
 
     const focusTimer = setTimeout(() => {

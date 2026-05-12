@@ -47,15 +47,15 @@ const PitchBox = ({ upValue, downValue }) => {
   const value = upValue || downValue || '';
   return (
     <div className="relative w-[80px] h-[36px] flex justify-center">
-      {upValue && (
-        <div className="absolute bottom-[100%] flex flex-col items-center mb-1">
+      {upValue && upValue !== '0' && (
+        <div className="absolute left-0 bottom-[100%] w-full flex flex-col items-center mb-1">
           <Icon name="arrowUp" className="text-black mb-0.5" size={14} strokeWidth={3} />
           <span className="text-[12px] font-bold text-black">Reverse</span>
         </div>
       )}
       <div className={`w-full h-full ${commonBoxClass}`}>{value}</div>
-      {downValue && (
-        <div className="absolute top-[100%] flex flex-col items-center mt-1">
+      {downValue && downValue !== '0' && (
+        <div className="absolute left-0 top-[100%] w-full flex flex-col items-center mt-1">
           <span className="text-[12px] font-bold text-black mb-0.5">Forward</span>
           <Icon name="arrowDown" className="text-black" size={14} strokeWidth={3} />
         </div>
@@ -70,6 +70,7 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
   const midPitch = data?.midPitch || {};
   const ringPitch = data?.ringPitch || {};
   const thumbPitch = data?.thumbPitch || {};
+  const thumbOffset = data?.thumbOffset || {};
   const thumbDetails = data?.thumbDetails || {};
 
   const firstPitch = isLeft ? ringPitch : midPitch;
@@ -108,6 +109,52 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
   const spanRightPos = { x: (ringEdge.x + thumbEdgeR.x) / 2, y: (ringEdge.y + thumbEdgeR.y) / 2 };
   const activeCanvasHeight = isThumbless ? 320 : 640;
 
+  let thumblessSpanLeftDisplay = data?.spanLeft;
+  let thumblessSpanRightDisplay = data?.spanRight;
+  let showThumblessSpanLeft = !!data?.spanLeft;
+  let showThumblessSpanRight = !!data?.spanRight;
+
+  if (isThumbless && data?.spanLeft && data?.spanRight) {
+    const leftF = parseFraction(data.spanLeft);
+    const rightF = parseFraction(data.spanRight);
+    
+    if (leftF > 0 && rightF > 0) {
+      const diffF = leftF - rightF;
+      const diff32 = Math.round(Math.abs(diffF) * 32);
+      
+      if (diff32 === 0) {
+        showThumblessSpanLeft = false;
+        showThumblessSpanRight = false;
+      } else {
+        let n = diff32;
+        let d = 32;
+        const whole = Math.floor(n / d);
+        n = n % d;
+        
+        while (n > 0 && n % 2 === 0 && d % 2 === 0) {
+          n /= 2;
+          d /= 2;
+        }
+        
+        let diffStr = '+';
+        if (whole > 0) {
+          diffStr += whole;
+          if (n > 0) diffStr += ` ${n}/${d}`;
+        } else if (n > 0) {
+          diffStr += `${n}/${d}`;
+        }
+        
+        if (leftF > rightF) {
+          thumblessSpanLeftDisplay = diffStr;
+          showThumblessSpanRight = false;
+        } else {
+          thumblessSpanRightDisplay = diffStr;
+          showThumblessSpanLeft = false;
+        }
+      }
+    }
+  }
+
   return (
     <Card className="overflow-hidden transition-[height] duration-500 animate-fade-in mt-2 mb-4 sm:mb-6" constrained data-testid="chart-blueprint-surface" elevation="md" gpu layer="content" style={{ height: `${activeCanvasHeight * scale}px` }}>
       <div
@@ -132,16 +179,16 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
         <Abs x={layout.mid.x} y={57}>
           <div className="flex flex-col items-center whitespace-nowrap">
             <span className="text-[17px] font-bold text-black mb-1">{firstLabel}</span>
-            <div className="flex items-center gap-1.5 h-[36px]">
-              <span className={`font-bold transition-opacity ${firstPitch?.lat && firstPitch?.latDir === 'left' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowLeft" className="text-black" size={14} strokeWidth={3} /></span>
+            <div className="relative flex items-center justify-center h-[36px]">
+              <span className={`absolute right-[100%] mr-1.5 font-bold transition-opacity ${firstPitch?.lat && firstPitch?.lat !== '0' && firstPitch?.latDir === 'left' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowLeft" className="text-black" size={14} strokeWidth={3} /></span>
               <div className={`w-[80px] h-full ${commonBoxClass}`}>{firstPitch?.lat || ''}</div>
-              <span className={`font-bold transition-opacity ${firstPitch?.lat && firstPitch?.latDir === 'right' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowRight" className="text-black" size={14} strokeWidth={3} /></span>
+              <span className={`absolute left-[100%] ml-1.5 font-bold transition-opacity ${firstPitch?.lat && firstPitch?.lat !== '0' && firstPitch?.latDir === 'right' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowRight" className="text-black" size={14} strokeWidth={3} /></span>
             </div>
           </div>
         </Abs>
         <Abs x={50} y={layout.mid.y}><PitchBox upValue={firstPitch?.up} downValue={firstPitch?.down} /></Abs>
         <Abs x={layout.mid.x} y={layout.mid.y}>
-          <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white flex flex-col items-center justify-evenly pt-[7px] pb-[17px] shadow-sm relative">
+          <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white flex flex-col items-center justify-evenly pt-[7px] pb-[17px] relative">
             <div className="text-[14px] font-medium text-black">{firstPitch?.holeCutSize || getDefaultHoleCutSize(firstPitch?.insertSize)}</div>
             <span className="text-[19px] leading-tight tracking-tight font-semibold text-black whitespace-nowrap">{firstPitch?.insertSize || ''}</span>
             <span className="text-[17px] font-semibold text-black">{firstPitch?.tipType || ''}</span>
@@ -151,16 +198,16 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
         <Abs x={layout.ring.x} y={57}>
           <div className="flex flex-col items-center whitespace-nowrap">
             <span className="text-[17px] font-bold text-black mb-1">{secondLabel}</span>
-            <div className="flex items-center gap-1.5 h-[36px]">
-              <span className={`font-bold transition-opacity ${secondPitch?.lat && secondPitch?.latDir === 'left' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowLeft" className="text-black" size={14} strokeWidth={3} /></span>
+            <div className="relative flex items-center justify-center h-[36px]">
+              <span className={`absolute right-[100%] mr-1.5 font-bold transition-opacity ${secondPitch?.lat && secondPitch?.lat !== '0' && secondPitch?.latDir === 'left' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowLeft" className="text-black" size={14} strokeWidth={3} /></span>
               <div className={`w-[80px] h-full ${commonBoxClass}`}>{secondPitch?.lat || ''}</div>
-              <span className={`font-bold transition-opacity ${secondPitch?.lat && secondPitch?.latDir === 'right' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowRight" className="text-black" size={14} strokeWidth={3} /></span>
+              <span className={`absolute left-[100%] ml-1.5 font-bold transition-opacity ${secondPitch?.lat && secondPitch?.lat !== '0' && secondPitch?.latDir === 'right' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowRight" className="text-black" size={14} strokeWidth={3} /></span>
             </div>
           </div>
         </Abs>
         <Abs x={490} y={layout.ring.y}><PitchBox upValue={secondPitch?.up} downValue={secondPitch?.down} /></Abs>
         <Abs x={layout.ring.x} y={layout.ring.y}>
-          <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white flex flex-col items-center justify-evenly pt-[7px] pb-[17px] shadow-sm relative">
+          <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white flex flex-col items-center justify-evenly pt-[7px] pb-[17px] relative">
             <div className="text-[14px] font-medium text-black">{secondPitch?.holeCutSize || getDefaultHoleCutSize(secondPitch?.insertSize)}</div>
             <span className="text-[19px] leading-tight tracking-tight font-semibold text-black whitespace-nowrap">{secondPitch?.insertSize || ''}</span>
             <span className="text-[17px] font-semibold text-black">{secondPitch?.tipType || ''}</span>
@@ -183,15 +230,15 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
             <Abs x={spanRightPos.x} y={spanRightPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass}`}>{data?.spanRight || ''}</div></Abs>
             <Abs x={150} y={layout.thumb.y}>
               <div className="relative w-[80px] h-[36px] flex justify-center">
-                {thumbPitch?.up && (
-                  <div className="absolute bottom-[100%] flex flex-col items-center mb-1">
+                {thumbPitch?.up && thumbPitch?.up !== '0' && (
+                  <div className="absolute left-0 bottom-[100%] w-full flex flex-col items-center mb-1">
                     <Icon name="arrowUp" className="text-black mb-0.5" size={14} strokeWidth={3} />
                     <span className="text-[12px] font-bold text-black">Forward</span>
                   </div>
                 )}
                 <div className={`w-full h-full ${commonBoxClass}`}>{thumbPitch?.up || thumbPitch?.down || ''}</div>
-                {thumbPitch?.down && (
-                  <div className="absolute top-[100%] flex flex-col items-center mt-1">
+                {thumbPitch?.down && thumbPitch?.down !== '0' && (
+                  <div className="absolute left-0 top-[100%] w-full flex flex-col items-center mt-1">
                     <span className="text-[12px] font-bold text-black mb-0.5">Reverse</span>
                     <Icon name="arrowDown" className="text-black" size={14} strokeWidth={3} />
                   </div>
@@ -199,28 +246,105 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
               </div>
             </Abs>
             <Abs x={380} y={layout.thumb.y}>
-              <div className="border border-slate-400 bg-white w-[46px] h-[46px] rounded-full flex items-center justify-center text-[15px] font-bold text-black shadow-sm" style={{ transform: `rotate(${data?.ovalAngle || 0}deg)` }}>{data?.ovalAngle || ''}°</div>
+              <div className="border border-slate-400 bg-white w-[46px] h-[46px] rounded-full flex items-center justify-center text-[15px] font-bold text-black" style={{ transform: `rotate(${data?.ovalAngle || 0}deg)` }}>{data?.ovalAngle || ''}°</div>
             </Abs>
             <Abs x={layout.thumb.x} y={570}>
-              <div className="flex items-center gap-2 h-[36px] whitespace-nowrap">
-                <span className={`font-bold transition-opacity duration-300 flex items-center gap-1 ${thumbPitch?.left ? 'text-black opacity-100' : 'opacity-0'}`}>
+              <div className="relative flex items-center justify-center h-[36px] whitespace-nowrap">
+                <span className={`absolute right-[100%] mr-2 text-[12px] font-bold transition-opacity duration-300 flex items-center gap-1 ${thumbPitch?.left && thumbPitch?.left !== '0' ? 'text-black opacity-100' : 'opacity-0'}`}>
                   <Icon name="arrowLeft" className="text-black" size={14} strokeWidth={3} />
                   Left
                 </span>
                 <div className={`w-[80px] h-full ${commonBoxClass}`}>{thumbPitch?.left || thumbPitch?.right || ''}</div>
-                <span className={`font-bold transition-opacity duration-300 flex items-center gap-1 ${thumbPitch?.right ? 'text-black opacity-100' : 'opacity-0'}`}>
+                <span className={`absolute left-[100%] ml-2 text-[12px] font-bold transition-opacity duration-300 flex items-center gap-1 ${thumbPitch?.right && thumbPitch?.right !== '0' ? 'text-black opacity-100' : 'opacity-0'}`}>
                   Right
                   <Icon name="arrowRight" className="text-black" size={14} strokeWidth={3} />
                 </span>
               </div>
             </Abs>
             <Abs x={layout.thumb.x} y={layout.thumb.y}>
-              <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white flex flex-col items-center justify-evenly pt-[7px] pb-[17px] shadow-lg relative">
+              <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white flex flex-col items-center justify-evenly pt-[7px] pb-[17px] relative">
                 <div className="text-[14px] font-medium text-black">{thumbDetails?.holeCutSize || getDefaultThumbHoleCutSize(thumbDetails?.slugType, customer?.gender)}</div>
                 <span className="text-[22px] font-semibold text-black">{thumbDetails?.holeSize || ''}</span>
                 <span className="text-[22px] font-semibold text-black">{thumbDetails?.ovalSize || ''}</span>
               </div>
             </Abs>
+            
+            {(thumbDetails?.bevel1 || thumbDetails?.bevel2 || thumbDetails?.bevel3) && (
+              <div className="absolute z-30" style={{ left: '450px', bottom: '52px', transform: 'translateX(-50%)' }}>
+                <div className="bg-white border-b border-r border-slate-400 px-3 py-2 rounded-lg shadow-sm text-xs font-bold text-slate-700 flex flex-col justify-end whitespace-nowrap">
+                  <div className="text-center border-b border-slate-300 pb-1 mb-1.5 text-[10px] text-slate-500 uppercase tracking-widest">Bevel</div>
+                  <div className="grid grid-cols-[auto_auto_1fr_auto_1fr] gap-x-1.5 gap-y-0.5 items-center">
+                    {thumbDetails?.bevel1 && (
+                      <>
+                        <span className="text-slate-500 text-right">1st</span>
+                        <span className="text-slate-300">:</span>
+                        <span className="text-center">{thumbDetails.bevel1.split('|')[0] || '-'}</span>
+                        <span className="text-slate-300">:</span>
+                        <span className="text-center">{thumbDetails.bevel1.split('|')[1] || '-'}</span>
+                      </>
+                    )}
+                    {thumbDetails?.bevel2 && (
+                      <>
+                        <span className="text-slate-500 text-right">2nd</span>
+                        <span className="text-slate-300">:</span>
+                        <span className="text-center">{thumbDetails.bevel2.split('|')[0] || '-'}</span>
+                        <span className="text-slate-300">:</span>
+                        <span className="text-center">{thumbDetails.bevel2.split('|')[1] || '-'}</span>
+                      </>
+                    )}
+                    {thumbDetails?.bevel3 && (
+                      <>
+                        <span className="text-slate-500 text-right">3rd</span>
+                        <span className="text-slate-300">:</span>
+                        <span className="text-center">{thumbDetails.bevel3.split('|')[0] || '-'}</span>
+                        <span className="text-slate-300">:</span>
+                        <span className="text-center">{thumbDetails.bevel3.split('|')[1] || '-'}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {(thumbOffset?.left || thumbOffset?.right) && (
+              <div className="absolute z-30" style={{ left: '90px', bottom: '52px', transform: 'translateX(-50%)' }}>
+                <div className="bg-white border-b border-l border-slate-400 px-3 py-2 rounded-lg shadow-sm text-xs font-bold text-slate-700 flex flex-col justify-end whitespace-nowrap min-w-[70px]">
+                  <div className="text-center border-b border-slate-300 pb-1 mb-1.5 text-[10px] text-slate-500 uppercase tracking-widest">Offset</div>
+                  <div className="grid grid-cols-[auto_auto_1fr] gap-x-1.5 gap-y-0.5 items-center">
+                    {thumbOffset?.left && (
+                      <>
+                        <span className="text-slate-500 text-right">Left</span>
+                        <span className="text-slate-300">:</span>
+                        <span className="text-center">{thumbOffset.left}</span>
+                      </>
+                    )}
+                    {thumbOffset?.right && (
+                      <>
+                        <span className="text-slate-500 text-right">Right</span>
+                        <span className="text-slate-300">:</span>
+                        <span className="text-center">{thumbOffset.right}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* 덤리스(Thumbless) 모드일 때 스판 표시. 중약지 원 하단에 개별 배치 */}
+        {isThumbless && (
+          <>
+            {showThumblessSpanLeft && (
+              <Abs x={layout.mid.x} y={layout.mid.y + 100} z={30}>
+                <div className="w-[85px] h-[36px] flex items-center justify-center text-[16px] font-bold text-black">{thumblessSpanLeftDisplay}</div>
+              </Abs>
+            )}
+            {showThumblessSpanRight && (
+              <Abs x={layout.ring.x} y={layout.ring.y + 100} z={30}>
+                <div className="w-[85px] h-[36px] flex items-center justify-center text-[16px] font-bold text-black">{thumblessSpanRightDisplay}</div>
+              </Abs>
+            )}
           </>
         )}
         </div>

@@ -3,31 +3,74 @@ import Button, { IconButton } from '../../components/ui/Button.jsx';
 import Icon from '../../components/ui/Icon.jsx';
 import ModalShell from '../../components/ui/ModalShell.jsx';
 
+const MEMO_COLORS = [
+  { id: 'yellow', bg: 'bg-yellow-400', ring: 'ring-yellow-400' },
+  { id: 'red', bg: 'bg-red-400', ring: 'ring-red-400' },
+  { id: 'blue', bg: 'bg-blue-400', ring: 'ring-blue-400' },
+  { id: 'green', bg: 'bg-emerald-400', ring: 'ring-emerald-400' },
+  { id: 'purple', bg: 'bg-purple-400', ring: 'ring-purple-400' },
+];
+
+const MEMO_SHAPES = [
+  { id: 'memo', icon: 'memo' },
+  { id: 'checkSquare', icon: 'checkSquare' },
+  { id: 'star', icon: 'star' },
+];
+
 export const MemoModal = ({ memo, onSave, onDelete }) => {
   const [text, setText] = useState(memo?.text || '');
+  const [color, setColor] = useState(memo?.color || 'yellow');
+  const [shape, setShape] = useState(memo?.shape || 'memo');
 
   const handleSaveAndClose = (e) => {
     e?.stopPropagation();
-    onSave(text);
+    onSave(text, color, shape);
   };
 
   return (
     <ModalShell
-      bodyClassName="bg-yellow-50 p-4"
+      bodyClassName="bg-slate-50 p-4"
       footer={(
         <>
-          <Button onClick={(e) => { e.stopPropagation(); onDelete(); }} size="sm" variant="danger">삭제</Button>
-          <Button className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 border-yellow-500" onClick={handleSaveAndClose} size="sm" variant="secondary">저장</Button>
+          <div className="flex items-center justify-between w-full mb-1">
+            <div className="flex gap-1">
+              {MEMO_SHAPES.map(s => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setShape(s.id); }}
+                  className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors ${shape === s.id ? 'bg-slate-300 text-slate-800' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-600'}`}
+                >
+                  <Icon name={s.icon} size={16} />
+                </button>
+              ))}
+            </div>
+            <div className="w-px h-4 bg-slate-300 mx-1"></div>
+            <div className="flex gap-2">
+              {MEMO_COLORS.map(c => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setColor(c.id); }}
+                  className={`w-6 h-6 rounded-full shadow-sm ${c.bg} transition-transform ${color === c.id ? `ring-2 ring-offset-2 ${c.ring} scale-110` : 'hover:scale-110'}`}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center justify-between w-full">
+            <Button onClick={(e) => { e.stopPropagation(); onDelete(); }} size="sm" variant="danger">삭제</Button>
+            <Button onClick={handleSaveAndClose} size="sm" variant="primary">저장</Button>
+          </div>
         </>
       )}
-      footerClassName="bg-yellow-100/50 px-4 py-3 flex justify-between items-center border-t border-yellow-200"
+      footerClassName="bg-slate-100 px-4 py-3 flex flex-col gap-2 border-t border-slate-200"
       icon="memo"
       initialFocusSelector="textarea"
       onClose={handleSaveAndClose}
       size="sm"
       title="메모 작성"
       titleId="memo-modal-title"
-      variant="memo"
+      variant="light"
       zClassName="z-[120]"
     >
       <textarea

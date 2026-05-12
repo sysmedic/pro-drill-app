@@ -9,6 +9,7 @@ import ChartInputForm from './chartDetail/ChartInputForm.jsx';
 import DrillingGuideView from './chartDetail/DrillingGuideView.jsx';
 import { ExitConfirmModal, HistoryModal, MemoModal } from './chartDetail/ChartModals.jsx';
 import ChartTopBar from './chartDetail/ChartTopBar.jsx';
+import SettingsModal from './customerManager/SettingsModal.jsx';
 import TaskDetailsCard from './chartDetail/TaskDetailsCard.jsx';
 import UtilitySheet from './chartDetail/UtilitySheet.jsx';
 import useHistoryRecords from './chartDetail/useHistoryRecords.js';
@@ -49,6 +50,7 @@ export default function ChartDetail({ customer, onBack }) {
   const [isTaskOpen, setIsTaskOpen] = useState(false);
   const [utilityState, setUtilityState] = useState('hidden');
   const [showDrillingGuide, setShowDrillingGuide] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [historyConfirm, setHistoryConfirm] = useState(null);
   const [renameRequest, setRenameRequest] = useState(null);
@@ -331,8 +333,9 @@ export default function ChartDetail({ customer, onBack }) {
           setShowDrillingGuide(true);
           setUtilityState('collapsed');
         }}
-        onStartMemo={() => {
-          setIsPlacingMemo(true);
+        onStartShare={handleShare}
+        onStartBackup={() => {
+          setShowSettingsModal(true);
           setUtilityState('collapsed');
         }}
         onShowHistory={() => {
@@ -399,6 +402,13 @@ export default function ChartDetail({ customer, onBack }) {
           data={chartData}
           customer={customer}
           onClose={() => setShowDrillingGuide(false)}
+        />
+      )}
+
+      {showSettingsModal && (
+        <SettingsModal
+          onClose={() => setShowSettingsModal(false)}
+          onFeedback={setFeedback}
         />
       )}
 

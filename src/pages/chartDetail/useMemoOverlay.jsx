@@ -2,6 +2,14 @@ import { useCallback, useRef, useState } from 'react';
 import Icon from '../../components/ui/Icon.jsx';
 import { createLocalId } from '../../lib/ids.js';
 
+const COLOR_CLASSES = {
+  yellow: 'bg-yellow-200 border-yellow-400 text-yellow-900',
+  red: 'bg-red-200 border-red-400 text-red-900',
+  blue: 'bg-blue-200 border-blue-400 text-blue-900',
+  green: 'bg-emerald-200 border-emerald-400 text-emerald-900',
+  purple: 'bg-purple-200 border-purple-400 text-purple-900',
+};
+
 export default function useMemoOverlay({ onDirty }) {
   const [memos, setMemos] = useState([]);
   const [isPlacingMemo, setIsPlacingMemo] = useState(false);
@@ -16,7 +24,7 @@ export default function useMemoOverlay({ onDirty }) {
     const rect = ref.current.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
-    const newMemo = { id: createLocalId('memo'), x, y, text: '', section };
+    const newMemo = { id: createLocalId('memo'), x, y, text: '', section, color: 'yellow', shape: 'memo' };
 
     setMemos(prev => [...prev, newMemo]);
     setIsPlacingMemo(false);
@@ -89,8 +97,8 @@ export default function useMemoOverlay({ onDirty }) {
           className={`absolute -translate-x-1/2 -translate-y-1/2 z-[60] touch-none transition-transform ${draggingMemo?.id === memo.id && dragMoved.current ? 'scale-110 cursor-grabbing' : 'cursor-grab hover:scale-105'}`}
           style={{ left: `${memo.x}%`, top: `${memo.y}%` }}
         >
-          <div className="bg-yellow-200 w-8 h-8 sm:w-10 sm:h-10 rounded-md shadow-md border border-yellow-400 flex items-center justify-center text-yellow-900 pointer-events-none">
-            <Icon name="memo" size={18} />
+          <div className={`${COLOR_CLASSES[memo.color || 'yellow']} w-8 h-8 sm:w-10 sm:h-10 rounded-md shadow-md border flex items-center justify-center pointer-events-none`}>
+            <Icon name={memo.shape || 'memo'} size={18} />
           </div>
           {memo.text && (
             <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white/90 px-2 py-0.5 rounded shadow-sm text-[10px] sm:text-xs font-bold text-slate-700 whitespace-nowrap max-w-[100px] overflow-hidden text-ellipsis pointer-events-none">
@@ -101,13 +109,13 @@ export default function useMemoOverlay({ onDirty }) {
       ))
   ), [draggingMemo, isPlacingMemo, memos, onDirty]);
 
-  const saveActiveMemoText = useCallback((text) => {
+  const saveActiveMemoText = useCallback((text, color = 'yellow', shape = 'memo') => {
     if (!activeMemoId) return;
 
     const trimmedText = text.trim();
     setMemos(prev => (
       trimmedText
-        ? prev.map(memo => memo.id === activeMemoId ? { ...memo, text } : memo)
+        ? prev.map(memo => memo.id === activeMemoId ? { ...memo, text, color, shape } : memo)
         : prev.filter(memo => memo.id !== activeMemoId)
     ));
     setActiveMemoId(null);

@@ -79,6 +79,7 @@ export default function CustomerFormModal({ customerData, editId, onChange, onCl
             value={customerData.style}
           >
             <option value="" disabled hidden>선택</option>
+            <option value="아대 스트로커">아대 스트로커</option>
             <option value="스트로커">스트로커</option>
             <option value="트위너">트위너</option>
             <option value="크랭커">크랭커</option>
@@ -94,6 +95,7 @@ export default function CustomerFormModal({ customerData, editId, onChange, onCl
             value={customerData.style2 || ''}
           >
             <option value="">선택 안함</option>
+            <option value="아대 스트로커">아대 스트로커</option>
             <option value="스트로커">스트로커</option>
             <option value="트위너">트위너</option>
             <option value="크랭커">크랭커</option>

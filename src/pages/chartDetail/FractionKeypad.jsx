@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import ModalShell from '../../components/ui/ModalShell.jsx';
 
-export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValue = '', title = '수치 입력', extraKeys = [] }) {
+export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValue = '', title = '수치 입력', extraKeys = [], mode = 'fraction' }) {
   const [value, setValue] = useState('');
 
   // 키패드가 열릴 때 초기값을 세팅합니다
@@ -35,7 +35,7 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
       } else if (e.key === 'Backspace') {
         setValue((prev) => prev.slice(0, -1));
         e.preventDefault();
-      } else if (/^[0-9\-/ ]$/.test(e.key)) {
+      } else if (mode === 'number' ? /^[0-9]$/.test(e.key) : /^[0-9\-/ ]$/.test(e.key)) {
         setValue((prev) => prev + e.key);
         e.preventDefault();
       } else if (e.key === 'ArrowUp' && extraKeys.includes('Up')) {
@@ -49,7 +49,7 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, value, onClose, onConfirm, extraKeys, handleExtraKeyPress]);
+  }, [isOpen, value, onClose, onConfirm, extraKeys, handleExtraKeyPress, mode]);
 
   if (!isOpen) return null;
 
@@ -70,7 +70,20 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
     onClose();
   };
 
-  const keys = [
+  const keys = mode === 'number' ? [
+    { value: '1', label: '1' },
+    { value: '2', label: '2' },
+    { value: '3', label: '3' },
+    { value: '4', label: '4' },
+    { value: '5', label: '5' },
+    { value: '6', label: '6' },
+    { value: '7', label: '7' },
+    { value: '8', label: '8' },
+    { value: '9', label: '9' },
+    { value: 'empty', label: '', variant: 'empty' },
+    { value: '0', label: '0' },
+    { action: 'delete', label: '삭제', variant: 'delete' },
+  ] : [
     { value: '1', label: '1' },
     { value: '2', label: '2' },
     { value: '3', label: '3' },
@@ -129,9 +142,12 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
             <button
               key={key.action || key.value}
               type="button"
-              onClick={() => key.action === 'delete' ? handleDelete() : handleKeyPress(key.value)}
+              disabled={key.variant === 'empty'}
+              onClick={() => key.action === 'delete' ? handleDelete() : (key.variant !== 'empty' ? handleKeyPress(key.value) : undefined)}
               className={`h-14 sm:h-16 rounded-xl text-xl sm:text-2xl font-bold transition-colors active:scale-95 flex items-center justify-center ${
-                key.variant === 'delete'
+                key.variant === 'empty'
+                  ? 'opacity-0 pointer-events-none'
+                  : key.variant === 'delete'
                   ? 'bg-rose-100 text-rose-600 hover:bg-rose-200' 
                   : key.variant === 'space'
                   ? 'col-span-2 bg-slate-100 text-slate-700 hover:bg-slate-200'
