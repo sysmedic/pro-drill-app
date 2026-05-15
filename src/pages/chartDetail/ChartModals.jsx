@@ -83,9 +83,22 @@ export const MemoModal = ({ memo, onSave, onDelete }) => {
   );
 };
 
-export const HistoryModal = ({ history, onSelect, onClose, onDelete, onRename }) => {
+export const HistoryModal = ({ history, onSelect, onClose, onDelete, onRename, maxChartsAllowed, currentChartsCount }) => {
+  // 📍 타이틀 구성: 무제한(Infinity)일 경우 카운트 표시를 숨김
+  const modalTitle = (
+    <span className="flex items-center gap-1">
+      저장 기록
+      {maxChartsAllowed !== Infinity && (
+        <span className="text-sm font-medium text-slate-400">
+          ({currentChartsCount}/{maxChartsAllowed}개)
+        </span>
+      )}
+    </span>
+  );
+
   return (
-    <ModalShell bodyClassName="p-3 max-h-[60vh] overflow-y-auto bg-slate-50" icon="history" onClose={onClose} size="sm" title="저장 기록" titleId="history-modal-title">
+    <ModalShell bodyClassName="p-3 max-h-[60vh] overflow-y-auto bg-slate-50" icon="history" onClose={onClose} size="sm"
+      title={modalTitle} titleId="history-modal-title">
       {history.length === 0 ? (
         <div className="py-12 text-center flex flex-col items-center gap-2">
           <Icon name="history" className="text-slate-300" size={42} />

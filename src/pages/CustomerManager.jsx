@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PageShell from '../components/layout/PageShell.jsx';
 import { ConfirmModal, FeedbackToast } from '../components/ui/Dialogs.jsx';
 import { db, auth } from '../firebase'; 
-import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, orderBy, getDocs, writeBatch } from 'firebase/firestore';
 import CustomerHeader from './customerManager/CustomerHeader.jsx';
 import CustomerList from './customerManager/CustomerList.jsx';
 import CustomerFormModal from './customerManager/CustomerFormModal.jsx';
@@ -16,7 +16,17 @@ export default function CustomerManagement({ onSelectCustomer, isAdmin, onOpenAd
   const [showModal, setShowModal] = useState(false);
   const [showSecondDeleteConfirm, setShowSecondDeleteConfirm] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [customerData, setCustomerData] = useState({ name: '', phone: '', gender: '', hand: '', style: '' });
+  
+  // 📍 신규 항목(club, styleExtra) 데이터 상태에 추가
+  const [customerData, setCustomerData] = useState({ 
+    name: '', 
+    club: '', 
+    phone: '', 
+    gender: '', 
+    hand: '', 
+    style: '',
+    styleExtra: '' 
+  });
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -48,7 +58,12 @@ export default function CustomerManagement({ onSelectCustomer, isAdmin, onOpenAd
     <PageShell bottomPadding="pb-24">
       <CustomerHeader
         customerCount={customers.length}
-        onAdd={() => { setEditId(null); setCustomerData({ name: '', phone: '', gender: '', hand: '', style: '' }); setShowModal(true); }}
+        onAdd={() => { 
+          setEditId(null); 
+          // 📍 추가 모달 열 때 신규 항목 포함하여 초기화
+          setCustomerData({ name: '', club: '', phone: '', gender: '', hand: '', style: '', styleExtra: '' }); 
+          setShowModal(true); 
+        }}
         searchQuery={searchQuery} setSearchQuery={setSearchQuery}
         sortType={sortType} setSortType={setSortType}
         isAdmin={isAdmin} onOpenAdmin={onOpenAdmin}
@@ -76,21 +91,40 @@ export default function CustomerManagement({ onSelectCustomer, isAdmin, onOpenAd
         />
       )}
 
-      {/* 2차 삭제 확인 모달 (1차 확인 후 표시) */}
+      {/* 2차 삭제 확인 모달 (연쇄 삭제 반영) */}
       {deleteRequest && showSecondDeleteConfirm && (
         <ConfirmModal
           confirmLabel="영구 삭제"
           danger={true}
-          message={`정말로 ${deleteRequest.name}님을 영구 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`}
+          message={`정말로 ${deleteRequest.name}님을 영구 삭제하시겠습니까?\n이 고객과 연결된 모든 지공 차트도 함께 삭제됩니다.`}
           onCancel={() => {
             setDeleteRequest(null);
             setShowSecondDeleteConfirm(false);
           }}
           onConfirm={async () => {
-            await deleteDoc(doc(db, 'customers', deleteRequest.id));
-            setDeleteRequest(null);
-            setShowSecondDeleteConfirm(false);
-            setFeedback({ message: '고객 정보가 영구 삭제되었습니다.', tone: 'success' });
+            try {
+              const batch = writeBatch(db);
+              
+              const chartsRef = collection(db, 'drilling_charts');
+              const q = query(chartsRef, where('customerId', '==', deleteRequest.id));
+              const chartSnapshots = await getDocs(q);
+              
+              chartSnapshots.forEach((chartDoc) => {
+                batch.delete(chartDoc.ref);
+              });
+
+              const customerRef = doc(db, 'customers', deleteRequest.id);
+              batch.delete(customerRef);
+
+              await batch.commit();
+
+              setDeleteRequest(null);
+              setShowSecondDeleteConfirm(false);
+              setFeedback({ message: '고객 정보와 관련 차트가 모두 삭제되었습니다.', tone: 'success' });
+            } catch (error) {
+              console.error("삭제 중 오류:", error);
+              setFeedback({ message: '삭제 작업 중 오류가 발생했습니다.', tone: 'danger' });
+            }
           }}
           title="최종 삭제 확인"
           titleId="final-delete-confirm-title"

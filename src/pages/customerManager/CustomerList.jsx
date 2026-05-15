@@ -2,6 +2,16 @@ import Badge from '../../components/ui/Badge.jsx';
 import Card from '../../components/ui/Card.jsx';
 import { IconButton } from '../../components/ui/Button.jsx';
 
+// 📍 Firestore 타임스탬프를 YYYY-MM-DD 형태로 변환하는 헬퍼 함수
+const formatDate = (timestamp) => {
+  if (!timestamp) return '';
+  if (typeof timestamp.toDate === 'function') {
+    const d = timestamp.toDate();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  return '';
+};
+
 export default function CustomerList({ customers, onDelete, onEdit, onSelect }) {
   return (
     <div className="space-y-3 pb-20">
@@ -20,13 +30,36 @@ export default function CustomerList({ customers, onDelete, onEdit, onSelect }) 
               className="flex-1 min-w-0 p-4 sm:p-5 text-left active:scale-[0.99] transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
               onClick={() => onSelect && onSelect(customer)}
             >
-              <span className="block font-black text-lg sm:text-xl text-slate-800 truncate">{customer.name}</span>
-              <span className="block text-xs sm:text-sm font-bold text-slate-500 mt-0.5 truncate">{customer.phone || '연락처 없음'}</span>
+              {/* 📍 이름과 상주 볼링장/클럽을 나란히 배치 */}
+              <div className="flex items-baseline gap-2 w-full truncate">
+                <span className="font-black text-lg sm:text-xl text-slate-800 shrink-0">
+                  {customer.name}
+                </span>
+                {customer.club && (
+                  <span className="font-bold text-lg sm:text-xl text-slate-400 opacity-80 truncate">
+                    {customer.club}
+                  </span>
+                )}
+              </div>
+              
+              {/* 📍 전화번호 진하게 & 등록일 나란히 배치 */}
+              <div className="flex items-baseline gap-2 mt-0.5 w-full truncate">
+                <span className="text-xs sm:text-sm font-extrabold text-slate-600 shrink-0">
+                  {customer.phone || '연락처 없음'}
+                </span>
+                {customer.createdAt && (
+                  <span className="text-xs sm:text-sm font-bold text-slate-400 opacity-80 truncate">
+                    {formatDate(customer.createdAt)}
+                  </span>
+                )}
+              </div>
+              
               <span className="flex flex-wrap gap-1.5 text-[10px] sm:text-xs font-bold mt-2.5">
                 {customer.gender && <Badge>{customer.gender}</Badge>}
                 {customer.hand && <Badge>{customer.hand}</Badge>}
                 {customer.style && <Badge variant="accent">{customer.style}</Badge>}
-                {customer.style2 && <Badge variant="accent">{customer.style2}</Badge>}
+                {/* 📍 style2를 styleExtra로 수정 */}
+                {customer.styleExtra && <Badge variant="accent">{customer.styleExtra}</Badge>}
               </span>
             </button>
 
