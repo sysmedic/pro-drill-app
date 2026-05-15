@@ -63,9 +63,8 @@ export default function UtilitySheet({ utilityState, setUtilityState, pullStartY
 
             <div className="flex items-center gap-2 overflow-x-auto w-full pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               <Button icon="tools" onClick={(e) => { e.stopPropagation(); if (onStartDrilling) onStartDrilling(); }} size="sm" variant="subtle">드릴링</Button>
-              <Button onClick={(e) => { e.stopPropagation(); if (onStartShare) onStartShare(); }} size="sm" variant="subtle">공유</Button>
-              <Button icon="history" onClick={onShowHistory} size="sm" variant="subtle">저장기록</Button>
-              <Button onClick={(e) => { e.stopPropagation(); if (onStartBackup) onStartBackup(); }} size="sm" variant="subtle">백업</Button>
+              <Button icon="history" onClick={onShowHistory} size="sm" variant="subtle">저장 기록</Button>
+              <Button icon="picture" onClick={(e) => { e.stopPropagation(); if (onStartShare) onStartShare(); }} size="sm" variant="subtle">공유</Button>
             </div>
           </div>
         </div>

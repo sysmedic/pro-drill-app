@@ -7,7 +7,7 @@ export default defineConfig({
   base: process.env.VITE_BASE_PATH || '/',
   plugins: [
     react(),
-    basicSsl(), // ⭐️ 안드로이드 PWA 설치를 위한 HTTPS 가짜 인증서 생성
+    //basicSsl(), // ⭐️ 안드로이드 PWA 설치를 위한 HTTPS 가짜 인증서 생성
     VitePWA({
       registerType: 'autoUpdate', // 앱이 업데이트되면 자동으로 새로고침
       devOptions: {

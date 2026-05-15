@@ -42,7 +42,7 @@ export default function TaskDetailsCard({
               <Field label="볼링공 모델명 / 작업" onChange={e => onBallNameChange(e.target.value)} placeholder="예: 페이즈 4" type="text" value={ballName} />
               <Field label="레이아웃 (Dual Angle 등)" onChange={e => onLayoutInfoChange(e.target.value)} placeholder="예: 50 x 4 x 30" type="text" value={layoutInfo} />
             </div>
-            <Field as="textarea" controlClassName="text-sm text-slate-700 resize-none" label="상담 내용 및 지공 의도" onChange={e => onIntentChange(e.target.value)} placeholder="특이사항, 지공 변경 이유, 고객 요청사항 등을 자유롭게 기록하세요." rows="5" value={intent} />
+            <Field as="textarea" controlClassName="text-base text-slate-700 resize-none" label="상담 내용 및 지공 의도" onChange={e => onIntentChange(e.target.value)} placeholder="특이사항, 지공 변경 이유, 고객 요청사항 등을 자유롭게 기록하세요." rows="5" value={intent} />
           </div>
         </div>
       </div>

@@ -36,7 +36,7 @@ export default function BowlerSpecCard({
   };
 
   return (
-    <Card ref={innerRef} className="mt-2 mb-4 sm:mb-6" constrained elevation="md" gpu layer="content" padding="md">
+    <Card ref={innerRef} className="mt-1 sm:mt-1.5 mb-4 sm:mb-6" constrained elevation="md" gpu layer="content" padding="md">
       {memoOverlay}
       {memosRenderer}
 

@@ -70,9 +70,9 @@ export default function ChartDetail({ customer, onBack }) {
   const markDirty = useCallback(() => setHasUnsavedChanges(true), []);
   const {
     history,
+    loading, // 🔥 로딩 상태 가져오기
     showHistoryModal,
     setShowHistoryModal,
-    loadHistoryForCustomer,
     saveRecord,
     deleteRecord,
     renameRecord,
@@ -89,6 +89,10 @@ export default function ChartDetail({ customer, onBack }) {
     saveActiveMemoText,
     deleteActiveMemo,
   } = useMemoOverlay({ onDirty: markDirty });
+
+  // 🔥 무한 덮어쓰기 방지용
+  const loadedCustomerId = useRef(null);
+  const historyLengthRef = useRef(0);
 
   const chartRef = useRef(null);
   const specRef = useRef(null);
@@ -118,7 +122,18 @@ export default function ChartDetail({ customer, onBack }) {
     setHasUnsavedChanges(true);
   };
 
+  // 🔥 0.1초 메모 타이밍 버그가 해결된 최신 useEffect
   useEffect(() => {
+    if (loading) return; // 데이터 도착 전 대기
+
+    if (loadedCustomerId.current === customer.id) {
+      if (historyLengthRef.current === 0 && history.length > 0) {
+        // 빈 수레였다가 진짜 데이터가 오면 통과
+      } else {
+        return; 
+      }
+    }
+
     const profile = getCustomerChartProfile(customer);
 
     const initializeNewCustomer = () => {
@@ -134,38 +149,46 @@ export default function ChartDetail({ customer, onBack }) {
       setHasWarnedModify(false);
     };
 
-    const parsedHistory = loadHistoryForCustomer();
+    if (history && history.length > 0) {
+      const latestRecord = history[0];
+      const recordData = latestRecord.data || latestRecord;
 
-    if (parsedHistory.length > 0) {
-      const {
-        chartData: loadedChart,
-        customerInfo: loadedCust,
-      } = parsedHistory[0].data;
-
-      if (loadedChart) {
+      if (recordData.chartData) {
         setChartData({
-          ...loadedChart,
-          thumbOffset: loadedChart.thumbOffset || { left: '', right: '' },
-          drillingGuide: loadedChart.drillingGuide || { ovalCut: '', ovalCorrection: '0', isDetailedMode: false },
-          handedness: loadedChart.handedness ?? profile.handedness,
-          isThumbless: loadedChart.isThumbless ?? profile.isThumbless,
+          ...createDefaultChartData(profile),
+          ...recordData.chartData,
+          thumbOffset: recordData.chartData.thumbOffset || { left: '', right: '' },
+          drillingGuide: recordData.chartData.drillingGuide || { ovalCut: '', ovalCorrection: '0', isDetailedMode: false },
+          handedness: recordData.chartData.handedness ?? profile.handedness,
+          isThumbless: recordData.chartData.isThumbless ?? profile.isThumbless,
         });
       }
-      if (loadedCust) setCustomerInfo(loadedCust);
+      if (recordData.customerInfo) setCustomerInfo(recordData.customerInfo);
+
+      // 작업 내용은 초기화
       setBallName('');
       setLayoutInfo('');
       setIntent('');
-      setMemos([]);
-      setSaveDate(parsedHistory[0].timestamp);
+      setSaveDate(latestRecord.timestamp || latestRecord.createdAt || '');
       setViewingRecord(null);
-      setIsEditMode(false);
+      setIsEditMode(false); // 차트 화면 그리기 시작!
       setHasWarnedModify(false);
+
+      // 🔥 화면이 다 그려질 시간을 준 뒤(0.1초)에 메모를 붙입니다.
+      setTimeout(() => {
+        setMemos(recordData.memos || []);
+      }, 100);
+
+      loadedCustomerId.current = customer.id;
+      historyLengthRef.current = history.length;
     } else {
       initializeNewCustomer();
+      loadedCustomerId.current = customer.id;
+      historyLengthRef.current = 0;
     }
 
     setHasUnsavedChanges(false);
-  }, [customer, loadHistoryForCustomer, setMemos]);
+  }, [customer, loading, history, setMemos]);
 
   // 내용 수정 발생 시 첫 1회 안내/경고창 노출 로직
   useEffect(() => {
@@ -175,8 +198,21 @@ export default function ChartDetail({ customer, onBack }) {
     }
   }, [hasUnsavedChanges, viewingRecord, hasWarnedModify]);
 
-  const handleSave = () => {
-    const now = new Date().toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const handleSave = useCallback(async (silent = false) => {
+    // 변경사항이 없으면 저장하지 않고 바로 반환 (메시지 없음)
+    // 자동 저장(silent)이든 수동 저장(non-silent)이든 변경사항이 없으면 저장하지 않음
+    // 사용자에게 메시지를 보여줄 필요 없다는 요청 반영
+    if (!hasUnsavedChanges) {
+      return true;
+    }
+
+    const now = new Date().toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
     const recordName = ballName ? ballName : `기록 ${history.length + 1}`;
     const newRecord = {
       id: createLocalId('record'),
@@ -185,65 +221,71 @@ export default function ChartDetail({ customer, onBack }) {
       data: { chartData, customerInfo, ballName, layoutInfo, intent, memos },
     };
 
-    const result = saveRecord(newRecord);
+    const result = await saveRecord(newRecord);
     if (!result.ok) {
-      setFeedback({
-        message: '브라우저 저장공간에 차트 기록을 쓰지 못했습니다. 저장 상태를 유지하고 다시 시도해주세요.',
-        title: '저장 실패',
-        tone: 'danger',
-      });
+      if (!silent) { // 자동 저장 시에는 피드백을 띄우지 않음
+        setFeedback({
+          message: '클라우드 저장공간에 차트 기록을 쓰지 못했습니다. 네트워크 상태를 확인해주세요.',
+          title: '저장 실패',
+          tone: 'danger',
+        });
+      }
       return false;
     }
 
     setSaveDate(now);
-    
+
     // 과거 기록을 불러온 상태에서 저장했을 때만 워터마크 정보를 새 기록으로 갱신하고,
     // 신규 차트 작성 중 저장했을 때는 워터마크를 띄우지 않습니다.
     if (viewingRecord) {
       setViewingRecord({ id: newRecord.id, name: recordName, timestamp: now });
     }
     setHasUnsavedChanges(false);
-    setFeedback({ message: `${customer.name} 고객님의 기록이 안전하게 저장되었습니다.`, tone: 'success' });
+    if (!silent) { // 자동 저장 시에는 피드백을 띄우지 않음
+      setFeedback({ message: `${customer.name} 고객님의 기록이 안전하게 저장되었습니다.`, tone: 'success' });
+    }
     return true;
-  };
+  }, [hasUnsavedChanges, ballName, history.length, chartData, customerInfo, layoutInfo, intent, memos, viewingRecord, saveRecord, customer.name]);
 
   const loadRecord = (record) => {
-    const {
-      chartData: loadedChart,
-      customerInfo: loadedCust,
-      ballName: loadedBallName,
-      layoutInfo: loadedLayoutInfo,
-      intent: loadedIntent,
-      memos: loadedMemos,
-    } = record.data;
+    const recordData = record.data || record;
     const profile = getCustomerChartProfile(customer);
+    // 🔥 기록 로드 시, 메모리 누수 방지를 위해 이전 메모 삭제 후 새 메모 부착.
+    // 이전에 setMemos([]); 코드가 없어서 기록 불러오기 시 이전 기록의 메모가 남아있던 현상 수정.
+    setMemos([]);
 
-    if (loadedChart) {
+    if (recordData.chartData) {
       setChartData({
-        ...loadedChart,
-        thumbOffset: loadedChart.thumbOffset || { left: '', right: '' },
-        drillingGuide: loadedChart.drillingGuide || { ovalCut: '', ovalCorrection: '0', isDetailedMode: false },
-        handedness: loadedChart.handedness ?? profile.handedness,
-        isThumbless: loadedChart.isThumbless ?? profile.isThumbless,
+        ...recordData.chartData,
+        thumbOffset: recordData.chartData.thumbOffset || { left: '', right: '' },
+        drillingGuide: recordData.chartData.drillingGuide || { ovalCut: '', ovalCorrection: '0', isDetailedMode: false },
+        handedness: recordData.chartData.handedness ?? profile.handedness,
+        isThumbless: recordData.chartData.isThumbless ?? profile.isThumbless,
       });
     }
-    if (loadedCust) setCustomerInfo(loadedCust);
-    setBallName(loadedBallName || '');
-    setLayoutInfo(loadedLayoutInfo || '');
-    setIntent(loadedIntent || '');
-    setMemos(loadedMemos || []);
-    setSaveDate(record.timestamp);
+    if (recordData.customerInfo) setCustomerInfo(recordData.customerInfo);
+    setBallName(recordData.ballName || '');
+    setLayoutInfo(recordData.layoutInfo || '');
+    setIntent(recordData.intent || '');
+    setSaveDate(record.timestamp || record.createdAt || '');
     setViewingRecord({ 
       id: record.id, 
       name: record.name || '불러온 기록', 
-      timestamp: record.timestamp 
+      timestamp: record.timestamp || record.createdAt 
     });
+    
+    setIsEditMode(false); // 차트 화면 그리기 시작
     setHasUnsavedChanges(false);
     setHasWarnedModify(false);
+
+    // 🔥 기록 불러오기 모달에서 불러올 때도 0.1초 대기 후 메모 부착!
+    setTimeout(() => {
+      setMemos(recordData.memos || []);
+    }, 100);
   };
 
-  const handleDeleteRecord = (id) => {
-    const result = deleteRecord(id);
+  const handleDeleteRecord = async (id) => {
+    const result = await deleteRecord(id);
     if (!result.ok) {
       setFeedback({
         message: '저장 기록 삭제를 브라우저 저장공간에 반영하지 못했습니다.',
@@ -256,10 +298,10 @@ export default function ChartDetail({ customer, onBack }) {
     setFeedback({ message: '저장 기록을 삭제했습니다.', tone: 'success' });
   };
 
-  const handleRenameRecord = (nextName) => {
+  const handleRenameRecord = async (nextName) => {
     if (!renameRequest) return;
 
-    const result = renameRecord(renameRequest.id, nextName);
+    const result = await renameRecord(renameRequest.id, nextName);
     if (!result.ok) {
       setFeedback({
         message: '저장 기록 이름 변경을 브라우저 저장공간에 반영하지 못했습니다.',
@@ -284,6 +326,27 @@ export default function ChartDetail({ customer, onBack }) {
     }
     onBack();
   };
+
+  // PWA 환경에서 앱이 백그라운드로 전환될 때 자동 저장 로직
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // 앱이 백그라운드로 전환될 때
+        // 변경 사항이 있을 경우, 사용자에게 알리지 않고 자동 저장 시도
+        // hasUnsavedChanges는 handleSave 내부에서 다시 한 번 검사하므로 여기서는 생략 가능
+        handleSave(true); // silent 모드로 저장
+        // console.log('App going to background, auto-saving changes...'); // 디버깅용
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [handleSave]); // handleSave는 useCallback으로 래핑되어 있으므로 안정적
+
+
 
   const handleShare = async () => {
     if (isEditMode) {
@@ -371,6 +434,17 @@ export default function ChartDetail({ customer, onBack }) {
     setFeedback({ message: '차트 이미지가 다운로드되었습니다.', tone: 'success' });
   };
 
+  // 🔥 파이어베이스 로딩 중 화면 표시 (깜빡임 방지)
+  if (loading) {
+    return (
+      <PageShell>
+         <div className="flex justify-center items-center h-full text-slate-500 font-bold animate-pulse pt-20">
+            차트 데이터를 불러오는 중입니다...
+         </div>
+      </PageShell>
+    )
+  }
+
   return (
     <PageShell bottomPadding="pb-40">
       {isPlacingMemo && <div className="fixed inset-0 z-[30] bg-black/5 touch-none" onClick={() => setIsPlacingMemo(false)} />}
@@ -409,7 +483,7 @@ export default function ChartDetail({ customer, onBack }) {
         )}
 
         {isEditMode ? (
-          <Card className="w-full p-2 pb-6 sm:p-6 sm:pb-8 mt-2 mb-4 sm:mb-6 relative z-40 overflow-hidden animate-fade-in transform-gpu [backface-visibility:hidden]" data-testid="chart-edit-surface">
+          <Card className="w-full p-2 pb-6 sm:p-6 sm:pb-8 mt-1 sm:mt-1.5 mb-4 sm:mb-6 relative z-40 overflow-hidden animate-fade-in transform-gpu [backface-visibility:hidden]" data-testid="chart-edit-surface">
             <div ref={formRef} className="relative w-full h-full">
               {renderMemoOverlay('form', formRef)}
               {renderMemos('form', formRef)}
@@ -547,8 +621,9 @@ export default function ChartDetail({ customer, onBack }) {
       {showExitConfirm && (
         <ExitConfirmModal
           onClose={() => setShowExitConfirm(false)}
-          onSaveAndExit={() => {
-            if (handleSave()) {
+          onSaveAndExit={async () => {
+            const isSaved = await handleSave();
+            if (isSaved) {
               setShowExitConfirm(false);
               onBack();
             }

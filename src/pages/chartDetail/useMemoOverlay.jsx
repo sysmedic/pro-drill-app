@@ -14,7 +14,12 @@ export default function useMemoOverlay({ onDirty }) {
   const [memos, setMemos] = useState([]);
   const [isPlacingMemo, setIsPlacingMemo] = useState(false);
   const [activeMemoId, setActiveMemoId] = useState(null);
-  const [draggingMemo, setDraggingMemo] = useState(null);
+  
+  // 🔥 CSS 모양 변화용 상태 (한 박자 느림)
+  const [draggingMemoId, setDraggingMemoId] = useState(null); 
+  
+  // 🚀 빛의 속도로 반응하는 실제 터치 판독기 (핵심 해결책)
+  const dragId = useRef(null); 
   const dragMoved = useRef(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
 
@@ -51,51 +56,62 @@ export default function useMemoOverlay({ onDirty }) {
           key={memo.id}
           onPointerDown={(event) => {
             event.stopPropagation();
-            event.currentTarget.setPointerCapture(event.pointerId);
+            try { event.currentTarget.setPointerCapture(event.pointerId); } catch(e) {}
+            
+            // 🔥 손가락이 닿자마자 빛의 속도로 메모 ID를 기록합니다!
+            dragId.current = memo.id; 
             dragMoved.current = false;
             dragStartPos.current = { x: event.clientX, y: event.clientY };
-            setDraggingMemo({ id: memo.id, ref });
+            setDraggingMemoId(memo.id); // 모양 변화용
           }}
           onPointerMove={(event) => {
-            if (draggingMemo?.id !== memo.id || !ref.current) return;
+            // 🔥 느린 상태(draggingMemoId)가 아닌, 즉각 기록된 dragId로 검사합니다!
+            if (dragId.current !== memo.id || !ref.current) return;
 
             const distance = Math.hypot(
               event.clientX - dragStartPos.current.x,
               event.clientY - dragStartPos.current.y,
             );
-            if (distance > 15) dragMoved.current = true;
+            
+            if (distance > 10) { // 반응성을 위해 15px -> 10px로 살짝 줄임
+              dragMoved.current = true;
+              const rect = ref.current.getBoundingClientRect();
+              const x = Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100));
+              const y = Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100));
 
-            const rect = ref.current.getBoundingClientRect();
-            const x = Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100));
-            const y = Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100));
-
-            setMemos(prev => prev.map(item => (
-              item.id === memo.id ? { ...item, x, y } : item
-            )));
+              setMemos(prev => prev.map(item => (
+                item.id === memo.id ? { ...item, x, y } : item
+              )));
+            }
           }}
           onPointerUp={(event) => {
-            if (draggingMemo?.id !== memo.id) return;
+            event.stopPropagation();
+            // 🔥 아이폰 빛의 속도 탭도 여기서 100% 걸러집니다!
+            if (dragId.current !== memo.id) return;
 
-            event.currentTarget.releasePointerCapture(event.pointerId);
-            setDraggingMemo(null);
+            try { event.currentTarget.releasePointerCapture(event.pointerId); } catch(e) {}
+            
             if (dragMoved.current) {
               onDirty();
-            }
-          }}
-          onPointerCancel={(event) => {
-            if (draggingMemo?.id !== memo.id) return;
-            event.currentTarget.releasePointerCapture(event.pointerId);
-            setDraggingMemo(null);
-            dragMoved.current = false;
-          }}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (!dragMoved.current && !isPlacingMemo) {
+            } else if (!isPlacingMemo) {
+              // 🎯 드래그 안 하고 손 뗐으니 즉시 메모 오픈!
               setActiveMemoId(memo.id);
             }
+
+            // 터치 끝났으니 초기화
+            dragId.current = null;
+            setDraggingMemoId(null);
           }}
-          className={`absolute -translate-x-1/2 -translate-y-1/2 z-[60] touch-none transition-transform ${draggingMemo?.id === memo.id && dragMoved.current ? 'scale-110 cursor-grabbing' : 'cursor-grab hover:scale-105'}`}
-          style={{ left: `${memo.x}%`, top: `${memo.y}%` }}
+          onPointerCancel={(event) => {
+            if (dragId.current !== memo.id) return;
+            try { event.currentTarget.releasePointerCapture(event.pointerId); } catch(e) {}
+            dragId.current = null;
+            setDraggingMemoId(null);
+            dragMoved.current = false;
+          }}
+          onClick={(e) => e.stopPropagation()} // 사파리 고스트 클릭 방지용 안전장치
+          className={`absolute -translate-x-1/2 -translate-y-1/2 z-[60] touch-none transition-transform ${draggingMemoId === memo.id && dragMoved.current ? 'scale-110 cursor-grabbing' : 'cursor-grab hover:scale-105'}`}
+          style={{ left: `${memo.x}%`, top: `${memo.y}%`, touchAction: 'none' }}
         >
           <div className={`${COLOR_CLASSES[memo.color || 'yellow']} w-8 h-8 sm:w-10 sm:h-10 rounded-md shadow-md border flex items-center justify-center pointer-events-none`}>
             <Icon name={memo.shape || 'memo'} size={18} />
@@ -107,7 +123,7 @@ export default function useMemoOverlay({ onDirty }) {
           )}
         </div>
       ))
-  ), [draggingMemo, isPlacingMemo, memos, onDirty]);
+  ), [draggingMemoId, isPlacingMemo, memos, onDirty]);
 
   const saveActiveMemoText = useCallback((text, color = 'yellow', shape = 'memo') => {
     if (!activeMemoId) return;
@@ -138,7 +154,7 @@ export default function useMemoOverlay({ onDirty }) {
     activeMemoId,
     renderMemoOverlay,
     renderMemos,
-    isMemoActive: isPlacingMemo || draggingMemo !== null,
+    isMemoActive: isPlacingMemo || draggingMemoId !== null,
     saveActiveMemoText,
     deleteActiveMemo,
   };

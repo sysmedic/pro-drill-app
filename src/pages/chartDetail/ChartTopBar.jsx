@@ -17,14 +17,7 @@ export default function ChartTopBar({
       <div className="flex justify-between items-center w-full gap-2">
         <div className="flex gap-1.5 sm:gap-2 shrink-0">
         <Button aria-label="뒤로" className="max-[380px]:[&>span.leading-none]:hidden" icon="back" onClick={onBack} size="sm" variant="secondary">뒤로</Button>
-        <Button
-          aria-expanded={utilityState === 'expanded'}
-          aria-label="유틸리티"
-          className="max-[380px]:[&>span.leading-none]:hidden"
-          icon="tools"
-          onClick={onToggleUtility}
-          size="sm"
-          variant="secondary"
+        <Button aria-expanded={utilityState === 'expanded'} aria-label="유틸리티" className="max-[380px]:[&>span.leading-none]:hidden" icon="tools" onClick={onToggleUtility} size="sm" variant="secondary"
         >
           유틸
         </Button>
@@ -33,16 +26,16 @@ export default function ChartTopBar({
 
       <div className="flex gap-1.5 sm:gap-2 shrink-0">
         <Button
-          aria-label={isEditMode ? '차트 보기로 전환' : '입력 모드로 전환'}
+          aria-label={isEditMode ? '차트 보기로 전환' : '수정 모드로 전환'}
           icon={isEditMode ? 'chart' : 'edit'}
           onClick={onToggleEditMode}
           size="sm"
-          title={isEditMode ? '차트 보기로 전환' : '입력 모드로 전환'}
+          title={isEditMode ? '차트 보기로 전환' : '수정 모드로 전환'}
           variant="secondary"
         >
-          {isEditMode ? '차트' : '입력'}
+          {isEditMode ? '차트' : '수정'}
         </Button>
-        <Button onClick={onSave} size="sm" variant="primary">저장</Button>
+        <Button icon="save" onClick={onSave} size="sm" variant="secondary" className="bg-indigo-200 text-indigo-800 hover:bg-indigo-300">저장</Button>
       </div>
       </div>
       

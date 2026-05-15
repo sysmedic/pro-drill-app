@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // users 컬렉션에 대한 규칙
+    match /users/{userId} {
+      // 로그인된 사용자만 자신의 사용자 문서에 접근 가능
+      allow read, update, delete: if request.auth != null && request.auth.token.email == userId;
+      // 신규 사용자 문서 생성 (Google 로그인 시 자동으로 생성되는 시나리오)
+      allow create: if request.auth != null && request.auth.token.email == userId
+                     && request.resource.data.keys().hasAll(['uid', 'email', 'joinedAt', 'tier', 'status', 'maxDevices', 'activeDevices'])
+                     && request.resource.data.uid == request.auth.uid
+                     && request.resource.data.email == request.auth.token.email
+                     && request.resource.data.tier == 'trial_beta'
+                     && request.resource.data.status == 'active'
+                     && request.resource.data.maxDevices == 1
+                     && request.resource.data.activeDevices is list;
+
+      // 사용자 등급 및 상태 기반 데이터 접근 권한
+      // 'active' 또는 'approved' 상태가 아닌 사용자는 핵심 데이터를 읽을 수 없음
+      allow read: if request.auth != null
+                     && request.auth.token.email == userId
+                     && (resource.data.status == 'active' || resource.data.status == 'approved');
+
+      // 'trial_beta' 사용자는 maxDevices가 1인 경우에만 특정 리소스에 접근 (예: 차트 데이터)
+      // 이 규칙은 실제 데이터를 처리하는 규칙에서 더 구체적으로 정의되어야 합니다.
+      // 예시: allow read: if resource.data.tier == 'trial_beta' && resource.data.maxDevices == 1;
+      // (실제 데이터 컬렉션에 대한 규칙 필요)
+    }
+  }
+}
