@@ -2,12 +2,23 @@ import { useState, useEffect } from 'react';
 import PageShell from '../components/layout/PageShell.jsx';
 import { ConfirmModal, FeedbackToast } from '../components/ui/Dialogs.jsx';
 import { db, auth } from '../firebase'; 
-import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, orderBy, getDocs, writeBatch } from 'firebase/firestore';
+import { 
+  collection, query, where, onSnapshot, addDoc, updateDoc, doc, 
+  serverTimestamp, orderBy, getDocs, writeBatch, increment // 🟢 increment 추가
+} from 'firebase/firestore';
 import CustomerHeader from './customerManager/CustomerHeader.jsx';
 import CustomerList from './customerManager/CustomerList.jsx';
 import CustomerFormModal from './customerManager/CustomerFormModal.jsx';
 
-export default function CustomerManagement({ onSelectCustomer, isAdmin, onOpenAdmin, isMenuOpen, setIsMenuOpen, onLogout }) {
+export default function CustomerManagement({ 
+  onSelectCustomer, 
+  isAdmin, 
+  onOpenAdmin, 
+  isMenuOpen, 
+  setIsMenuOpen, 
+  onLogout,
+  onNfcScan
+}) {
   const [customers, setCustomers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortType, setSortType] = useState('latest');
@@ -17,7 +28,6 @@ export default function CustomerManagement({ onSelectCustomer, isAdmin, onOpenAd
   const [showSecondDeleteConfirm, setShowSecondDeleteConfirm] = useState(false);
   const [editId, setEditId] = useState(null);
   
-  // 📍 신규 항목(club, styleExtra) 데이터 상태에 추가
   const [customerData, setCustomerData] = useState({ 
     name: '', 
     club: '', 
@@ -37,6 +47,7 @@ export default function CustomerManagement({ onSelectCustomer, isAdmin, onOpenAd
     return () => unsubscribe();
   }, []);
 
+  // 👥 고객 저장/수정 함수
   const handleSaveCustomer = async (e) => {
     e.preventDefault();
     if (!customerData.name.trim()) return setFeedback({ message: '이름을 입력하세요.', tone: 'warning' });
@@ -44,7 +55,15 @@ export default function CustomerManagement({ onSelectCustomer, isAdmin, onOpenAd
       if (editId) {
         await updateDoc(doc(db, 'customers', editId), { ...customerData, updatedAt: serverTimestamp() });
       } else {
+        // 신규 등록
         await addDoc(collection(db, 'customers'), { ...customerData, userId: auth.currentUser.uid, createdAt: serverTimestamp() });
+        
+        // 🟢 [비용 최적화] 지공사 유저 문서의 고객 수(customerCount) +1 증가
+        if (auth.currentUser?.email) {
+          await updateDoc(doc(db, 'users', auth.currentUser.email), {
+            customerCount: increment(1)
+          });
+        }
       }
       setShowModal(false);
       setFeedback({ message: '저장되었습니다.', tone: 'success' });
@@ -60,7 +79,6 @@ export default function CustomerManagement({ onSelectCustomer, isAdmin, onOpenAd
         customerCount={customers.length}
         onAdd={() => { 
           setEditId(null); 
-          // 📍 추가 모달 열 때 신규 항목 포함하여 초기화
           setCustomerData({ name: '', club: '', phone: '', gender: '', hand: '', style: '', styleExtra: '' }); 
           setShowModal(true); 
         }}
@@ -68,6 +86,7 @@ export default function CustomerManagement({ onSelectCustomer, isAdmin, onOpenAd
         sortType={sortType} setSortType={setSortType}
         isAdmin={isAdmin} onOpenAdmin={onOpenAdmin}
         isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} onLogout={onLogout}
+        onNfcScan={onNfcScan}
       />
       <CustomerList customers={filtered} onDelete={(e, c) => { e.stopPropagation(); setDeleteRequest(c); }} onEdit={(e, c) => { e.stopPropagation(); setEditId(c.id); setCustomerData(c); setShowModal(true); }} onSelect={onSelectCustomer} />
       
@@ -105,17 +124,32 @@ export default function CustomerManagement({ onSelectCustomer, isAdmin, onOpenAd
             try {
               const batch = writeBatch(db);
               
+              // 삭제될 고객의 차트 전조사
               const chartsRef = collection(db, 'drilling_charts');
               const q = query(chartsRef, where('customerId', '==', deleteRequest.id));
               const chartSnapshots = await getDocs(q);
               
+              // 📊 함께 삭제되는 차트 총 개수 확보
+              const deletedChartsCount = chartSnapshots.size;
+
               chartSnapshots.forEach((chartDoc) => {
                 batch.delete(chartDoc.ref);
               });
 
+              // 고객 문서 삭제 일괄 등록
               const customerRef = doc(db, 'customers', deleteRequest.id);
               batch.delete(customerRef);
 
+              // 🟢 [비용 최적화] 삭제 묶음(Batch)에 유저 카운터 차감 연산도 함께 포함하여 완벽한 동기화
+              if (auth.currentUser?.email) {
+                const userRef = doc(db, 'users', auth.currentUser.email);
+                batch.update(userRef, {
+                  customerCount: increment(-1),
+                  chartCount: increment(-deletedChartsCount) // 🚀 연쇄 삭제되는 차트 개수만큼 정밀 차감!
+                });
+              }
+
+              // 원자적(All or Nothing) 실행
               await batch.commit();
 
               setDeleteRequest(null);

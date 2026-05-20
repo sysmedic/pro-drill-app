@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import CustomerManager from './pages/CustomerManager.jsx';
 import ChartDetail from './pages/ChartDetail.jsx';
 import AdminPage from './pages/chartDetail/AdminPage.jsx';
+import { FeedbackToast } from './components/ui/Dialogs.jsx'; // 🟢 글로벌 알림 토스트 수입
 
 // 📍 Firebase 도구들 정리
 import { 
@@ -11,8 +12,9 @@ import {
 import { auth, db, googleProvider } from './firebase'; 
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { getDeviceId } from './lib/device';
+import useGlobalNfcRead from './hooks/useGlobalNfcRead.js'; // 🟢 글로벌 NFC 리더 훅 수입
 
-// [STEP 1] 회원 등급별 최대 허용 갯수 정의
+// 회원 등급별 최대 허용 갯수 정의
 const getMaxChartsAllowed = (tier) => {
   switch (tier) {
     case 'trial_beta':
@@ -21,7 +23,7 @@ const getMaxChartsAllowed = (tier) => {
     case 'pro': return 500;
     case 'expert':
     case 'master': return Infinity;
-    default: return 100; // 기본값
+    default: return 100;
   }
 };
 
@@ -38,11 +40,12 @@ export default function App() {
 
   const [showAdminPage, setShowAdminPage] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [feedback, setFeedback] = useState(null); // 🟢 메인화면용 알림 피드백 상태 추가
 
   const ADMIN_EMAILS = ["sysmedic@gmail.com"]; 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email);
 
-  // [STEP 2] 실시간 차트 카운트 함수 (ChartDetail에서도 호출 가능하도록 useCallback 사용)
+  // 실시간 차트 카운트 함수
   const refreshChartCount = useCallback(async (uid) => {
     if (!uid) return;
     try {
@@ -56,7 +59,15 @@ export default function App() {
     }
   }, []);
 
-  // [STEP 3] 인증 및 등급 확인 로직
+  // 🟢 [초고속 워프 스캔 가동] 공을 대면 고객 정보 조회 후 상세창으로 강제 점프
+  const { handleGlobalNfcRead } = useGlobalNfcRead({
+    setFeedback,
+    onWalletJump: useCallback((customerData) => {
+      setSelectedCustomer(customerData); // 🚀 고객 상태를 변경하여 지공 상세 화면으로 즉시 전환!
+    }, [])
+  });
+
+  // 인증 및 등급 확인 로직
   useEffect(() => {
     const forceShow = setTimeout(() => { setIsAuthChecking(false); }, 3000);
 
@@ -75,7 +86,6 @@ export default function App() {
             const { activeDevices = [], maxDevices = 1 } = userData;
             currentTier = userData.tier || "trial_beta";
 
-            // 관리자 여부 확인 전 기기 체크
             if (!ADMIN_EMAILS.includes(currentUser.email)) {
               const isKnown = activeDevices.includes(deviceId);
               if (!isKnown && activeDevices.length >= maxDevices) {
@@ -89,7 +99,6 @@ export default function App() {
             }
             setUser({ ...currentUser, tier: currentTier });
           } else {
-            // 신규 유저 자동 등록
             const newUserProfile = {
               uid: currentUser.uid,
               email: currentUser.email,
@@ -105,13 +114,11 @@ export default function App() {
             setUser({ ...currentUser, tier: currentTier });
           }
 
-          // 상태 업데이트 및 카운트 실행
           setUserTier(currentTier);
           setMaxChartsAllowed(getMaxChartsAllowed(currentTier));
           await refreshChartCount(currentUser.uid);
 
         } else {
-          // 로그아웃 상태
           setUser(null);
           setCurrentChartsCount(0);
         }
@@ -151,18 +158,21 @@ export default function App() {
           isMenuOpen={isMenuOpen}
           setIsMenuOpen={setIsMenuOpen}
           onLogout={() => signOut(auth)}
+          onNfcScan={handleGlobalNfcRead} // 🟢 📟 메인 매니저에 NFC 스캔 전송!
         />
       ) : (
         <ChartDetail
           customer={selectedCustomer}
           onBack={() => setSelectedCustomer(null)}
-          // 📍 ChartDetail에 필요한 정보들 전달
           maxChartsAllowed={maxChartsAllowed}
           currentChartsCount={currentChartsCount}
           userTier={userTier}
           refreshChartCount={() => refreshChartCount(user.uid)}
         />
       )}
+
+      {/* 🟢 메인 화면용 피드백 토스트 배치 */}
+      <FeedbackToast message={feedback?.message} onDismiss={() => setFeedback(null)} title={feedback?.title} tone={feedback?.tone} />
     </div>
   );
 }

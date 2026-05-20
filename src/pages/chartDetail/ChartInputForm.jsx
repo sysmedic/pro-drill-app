@@ -52,7 +52,7 @@ const parseFraction = (str) => {
 const getDefaultHoleCutSize = (insertSize) => {
   if (!insertSize) return '31/32';
   const num = parseFraction(insertSize);
-  if (num >= 27 / 32) return '1 1/32';
+  if (num >= 55 / 64) return '1 1/32';
   return '31/32';
 };
 
