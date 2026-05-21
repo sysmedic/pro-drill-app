@@ -97,7 +97,7 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
     sessionManager.setBallName('');
     sessionManager.setLayoutInfo('');
     sessionManager.setIntent('');
-    memoManager.setMemos([]);
+    // memoManager.setMemos([]);
     sessionManager.setViewingRecord(null);
     sessionManager.setSessionRecordId(null);
     if (sessionManager.setHasUnsavedChanges) {
@@ -108,8 +108,8 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
   useEffect(() => {
     setEntryKey(Date.now());
     wipeCleanSlate(); 
-    const timer = setTimeout(() => wipeCleanSlate(), 100); 
-    return () => clearTimeout(timer);
+    // const timer = setTimeout(() => wipeCleanSlate(), 100); 
+    // return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customer]);
 
@@ -359,7 +359,7 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
       {showTemplateConfirm && (
         <ConfirmModal
           title="새 차트 만들기"
-          message="현재 기록의 지공 수치를 바탕으로 새로운 차트를 작성하시겠습니까? (기존 메모, 작업내용, 관리내역은 초기화됩니다.)"
+          message="현재 기록의 지공 수치를 바탕으로 새로운 차트를 작성하시겠습니까? (기존 메모는 유지되며 공 이름, 작업내용, 관리내역은 초기화됩니다.)"
           confirmLabel="확인"
           cancelLabel="취소"
           onConfirm={() => {

@@ -11,7 +11,7 @@ import {
   LATERAL_DIR_OPTIONS,
   MOISTURE_OPTIONS,
   OVAL_OPTIONS,
-  PITCH_OPTIONS,
+  // PITCH_OPTIONS, 🟢 기존 16분모 배열 임포트 제거
   SPAN_TYPE_OPTIONS,
   STIFFNESS_OPTIONS,
   THUMB_TYPE_OPTIONS,
@@ -30,6 +30,25 @@ const OFFSET_OPTIONS = [
   '1/16', '1/8', '3/16', '1/4', '5/16', '3/8', '7/16', '1/2',
   '9/16', '5/8', '11/16', '3/4', '13/16', '7/8', '15/16', '1'
 ];
+
+// 🟢 1/32 기약분수 자동 생성 로직 (0 ~ 1인치 범위, 직접입력 삭제)
+const getGCD = (a, b) => (b === 0 ? a : getGCD(b, a % b));
+const getReducedFraction = (num, den) => {
+  if (num === 0) return '0';
+  const gcd = getGCD(num, den);
+  const reducedNum = num / gcd;
+  const reducedDen = den / gcd;
+  if (reducedDen === 1) return String(reducedNum);
+  if (reducedNum > reducedDen) {
+    const whole = Math.floor(reducedNum / reducedDen);
+    const rem = reducedNum % reducedDen;
+    return `${whole} ${rem}/${reducedDen}`;
+  }
+  return `${reducedNum}/${reducedDen}`;
+};
+// 0부터 32(1인치)까지 1/32 단위 배열 생성
+const PITCH_OPTIONS_32 = Array.from({ length: 33 }, (_, i) => getReducedFraction(i, 32));
+
 
 const parseFraction = (str) => {
   if (!str) return 0;
@@ -409,7 +428,8 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
 
       {renderSection('first', firstLabel, getFingerSummary(firstPitch), (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={firstPitch.up} onChange={v => updateFirst('up', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Forward (▼)" value={firstPitch.down} onChange={v => updateFirst('down', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Lateral" value={firstPitch.lat} onChange={v => updateFirst('lat', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Lateral 방향" value={firstPitch.latDir} onChange={v => updateFirst('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
+          {/* 🟢 피치 옵션을 PITCH_OPTIONS_32로 교체 */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={firstPitch.up} onChange={v => updateFirst('up', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Forward (▼)" value={firstPitch.down} onChange={v => updateFirst('down', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Lateral" value={firstPitch.lat} onChange={v => updateFirst('lat', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Lateral 방향" value={firstPitch.latDir} onChange={v => updateFirst('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             <ChartSelectField allowCustom label="인서트 사이즈" value={firstPitch.insertSize} onChange={v => updateFirst('insertSize', v)} options={FINGER_INSERT_OPTIONS} />
             <ChartSelectField allowCustom label="팁 종류" value={firstPitch.tipType} onChange={v => updateFirst('tipType', v)} options={TIP_OPTIONS} />
@@ -420,7 +440,8 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
 
       {renderSection('second', secondLabel, getFingerSummary(secondPitch), (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={secondPitch.up} onChange={v => updateSecond('up', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Forward (▼)" value={secondPitch.down} onChange={v => updateSecond('down', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Lateral" value={secondPitch.lat} onChange={v => updateSecond('lat', v)} options={PITCH_OPTIONS} /><ChartSelectField label="Lateral 방향" value={secondPitch.latDir} onChange={v => updateSecond('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
+          {/* 🟢 피치 옵션을 PITCH_OPTIONS_32로 교체 */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={secondPitch.up} onChange={v => updateSecond('up', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Forward (▼)" value={secondPitch.down} onChange={v => updateSecond('down', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Lateral" value={secondPitch.lat} onChange={v => updateSecond('lat', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Lateral 방향" value={secondPitch.latDir} onChange={v => updateSecond('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             <ChartSelectField allowCustom label="인서트 사이즈" value={secondPitch.insertSize} onChange={v => updateSecond('insertSize', v)} options={FINGER_INSERT_OPTIONS} />
             <ChartSelectField allowCustom label="팁 종류" value={secondPitch.tipType} onChange={v => updateSecond('tipType', v)} options={TIP_OPTIONS} />
@@ -443,11 +464,12 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
         <div className="overflow-hidden min-h-0 flex flex-col gap-2.5">
         {renderSection('thumb', 'Thumb', getThumbSummary(thumbPitch, thumbDetails, ovalAngle, thumbOffset), (
           <>
+          {/* 🟢 피치 옵션을 PITCH_OPTIONS_32로 교체 */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
-            <ChartSelectField label="Forward (▲)" value={thumbPitch.up} onChange={v => updateThumb('up', v)} options={PITCH_OPTIONS} />
-            <ChartSelectField label="Reverse (▼)" value={thumbPitch.down} onChange={v => updateThumb('down', v)} options={PITCH_OPTIONS} />
-            <ChartSelectField label="Left (◀)" value={thumbPitch.left} onChange={v => updateThumb('left', v)} options={PITCH_OPTIONS} />
-            <ChartSelectField label="Right (▶)" value={thumbPitch.right} onChange={v => updateThumb('right', v)} options={PITCH_OPTIONS} />
+            <ChartSelectField label="Forward (▲)" value={thumbPitch.up} onChange={v => updateThumb('up', v)} options={PITCH_OPTIONS_32} />
+            <ChartSelectField label="Reverse (▼)" value={thumbPitch.down} onChange={v => updateThumb('down', v)} options={PITCH_OPTIONS_32} />
+            <ChartSelectField label="Left (◀)" value={thumbPitch.left} onChange={v => updateThumb('left', v)} options={PITCH_OPTIONS_32} />
+            <ChartSelectField label="Right (▶)" value={thumbPitch.right} onChange={v => updateThumb('right', v)} options={PITCH_OPTIONS_32} />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
             <ChartSelectField label="Offset - Left" value={thumbOffset.left} onChange={v => updateThumbOffset('left', v)} options={OFFSET_OPTIONS} />
