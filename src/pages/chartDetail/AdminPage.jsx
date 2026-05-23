@@ -1,13 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { db } from '../../firebase';
 import { 
-  collection, onSnapshot, doc, updateDoc, query, orderBy 
+  collection, onSnapshot, doc, updateDoc, query, orderBy, 
+  getDocs, where, writeBatch 
 } from 'firebase/firestore';
 
 export default function AdminPage({ onBack }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  const [isRecalculating, setIsRecalculating] = useState(false);
+
   // 활성화된 탭 상태 ('search', 'management', 'charts')
   const [activeTab, setActiveTab] = useState('search');
 
@@ -19,7 +22,7 @@ export default function AdminPage({ onBack }) {
   // 📊 통계 탭 전용 정렬 기준 상태 ('customer' 또는 'chart')
   const [statsType, setStatsType] = useState('customer');
 
-  // 🟢 [추가] 마스터 제어실 진입 시 강제 1배율 리셋 (타이머 꼬임 방지 적용)
+  // 🟢 마스터 제어실 진입 시 강제 1배율 리셋 (타이머 꼬임 방지 적용)
   useEffect(() => {
     let timeoutId;
     const viewportMeta = document.querySelector('meta[name="viewport"]');
@@ -50,6 +53,67 @@ export default function AdminPage({ onBack }) {
     });
     return () => unsubscribe();
   }, []);
+
+  // 🟢 전체 유저 통계 정밀 보정 로직
+  const handleRecalibrateStats = async () => {
+    const confirmMsg = "⚠️ [위험] 서버에 등록된 모든 지공사의 고객 및 차트 데이터를 직접 전수조사하여 통계를 강제 교정합니다.\n\n정말로 진행하시겠습니까?";
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsRecalculating(true);
+    try {
+      let batch = writeBatch(db);
+      let opCount = 0;
+
+      for (const u of users) {
+        // UID 필드가 없는 비정상 유저 데이터는 스킵
+        if (!u.uid) {
+          console.warn(`[스킵] UID가 없는 유저 문서 발견: ${u.id}`);
+          continue; 
+        }
+
+        console.log(`[계측 시작] 유저 UID: ${u.uid} (문서 ID: ${u.id})`);
+
+        // 🔴 [수정됨] u.id(이메일)가 아닌 u.uid(고유 Auth ID)로 검색
+        const custQ = query(collection(db, 'customers'), where('userId', '==', u.uid));
+        const custSnap = await getDocs(custQ);
+        const realCustomerCount = custSnap.size;
+
+        // 🔴 [수정됨] u.id(이메일)가 아닌 u.uid(고유 Auth ID)로 검색
+        const chartQ = query(collection(db, 'drilling_charts'), where('userId', '==', u.uid));
+        const chartSnap = await getDocs(chartQ);
+        const realChartCount = chartSnap.size;
+
+        console.log(`👉 결과 - 고객: ${realCustomerCount}, 차트: ${realChartCount}`);
+
+        // DB에 값을 업데이트할 때는 문서 ID(이메일)를 찾아가야 하므로 u.id 사용
+        const userRef = doc(db, 'users', u.id);
+        batch.set(userRef, { 
+          customerCount: realCustomerCount, 
+          chartCount: realChartCount 
+        }, { merge: true });
+
+        opCount++;
+
+        // 파이어스토어 배치 제한(최대 500개) 방어 
+        if (opCount >= 400) {
+          await batch.commit();
+          batch = writeBatch(db);
+          opCount = 0;
+        }
+      }
+
+      if (opCount > 0) {
+        await batch.commit();
+      }
+
+      alert("✅ 모든 유저의 고객 및 차트 통계가 실제 데이터와 완벽하게 동기화되었습니다.");
+    } catch (error) {
+      console.error("통계 보정 에러:", error);
+      alert(`❌ 통계 보정 중 오류가 발생했습니다: ${error.message}`);
+    } finally {
+      setIsRecalculating(false);
+    }
+  };
 
   // 등급 정책
   const deviceMapping = {
@@ -118,6 +182,13 @@ export default function AdminPage({ onBack }) {
             <span className="text-indigo-600">🛡️</span> 마스터 제어실
           </h1>
           <div className="flex items-center gap-2">
+            <button 
+              onClick={handleRecalibrateStats} 
+              disabled={isRecalculating}
+              className={`text-xs font-bold px-4 py-2 rounded-lg transition-all ${isRecalculating ? 'bg-indigo-300 text-white cursor-wait' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 active:scale-95'}`}
+            >
+              {isRecalculating ? '🔄 계측 중...' : '🔄 전체 통계 정밀 보정'}
+            </button>
             <button onClick={onBack} className="text-xs font-bold bg-slate-200 px-4 py-2 rounded-lg active:scale-95 transition-all">
               나가기
             </button>
