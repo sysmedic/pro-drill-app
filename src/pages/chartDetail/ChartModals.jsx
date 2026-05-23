@@ -17,14 +17,22 @@ const MEMO_SHAPES = [
   { id: 'star', icon: 'star' },
 ];
 
-export const MemoModal = ({ memo, onSave, onDelete }) => {
+export const MemoModal = ({ title, memo, onSave, onDelete }) => {
   const [text, setText] = useState(memo?.text || '');
   const [color, setColor] = useState(memo?.color || 'yellow');
   const [shape, setShape] = useState(memo?.shape || 'memo');
+  
+  // 기존의 고정 상태 기억
+  const [isPinned] = useState(memo?.isPinned || false);
 
   const handleSaveAndClose = (e) => {
     e?.stopPropagation();
-    onSave(text, color, shape);
+    onSave(text, color, shape, isPinned);
+  };
+
+  const handlePinAndClose = (e) => {
+    e?.stopPropagation();
+    onSave(text, color, shape, true);
   };
 
   return (
@@ -57,9 +65,29 @@ export const MemoModal = ({ memo, onSave, onDelete }) => {
               ))}
             </div>
           </div>
-          <div className="flex items-center justify-between w-full">
-            <Button onClick={(e) => { e.stopPropagation(); onDelete(); }} size="sm" variant="danger">삭제</Button>
-            <Button onClick={handleSaveAndClose} size="sm" variant="primary">저장</Button>
+          
+          {/* 🟢 버튼 레이아웃 개편: 3분할 그리드로 정중앙 배치 구현 */}
+          <div className="grid grid-cols-3 items-center w-full mt-1">
+            <div className="flex justify-start">
+              <Button onClick={(e) => { e.stopPropagation(); onDelete(); }} size="sm" variant="danger">삭제</Button>
+            </div>
+            
+            <div className="flex justify-center">
+              {/* 🟢 버튼명 변경 및 부드러운 인디고 강조 테마 적용 */}
+              {!isPinned && (
+                <Button 
+                  onClick={handlePinAndClose} 
+                  size="sm" 
+                  className="bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 font-bold whitespace-nowrap px-4 py-2 rounded-lg transition-colors"
+                >
+                  차트에 고정 하기
+                </Button>
+              )}
+            </div>
+            
+            <div className="flex justify-end">
+              <Button onClick={handleSaveAndClose} size="sm" variant="primary">저장</Button>
+            </div>
           </div>
         </>
       )}
@@ -68,7 +96,7 @@ export const MemoModal = ({ memo, onSave, onDelete }) => {
       initialFocusSelector="textarea"
       onClose={handleSaveAndClose}
       size="sm"
-      title="메모 작성"
+      title={title || "메모 작성"}
       titleId="memo-modal-title"
       variant="light"
       zClassName="z-[120]"
@@ -84,7 +112,6 @@ export const MemoModal = ({ memo, onSave, onDelete }) => {
 };
 
 export const HistoryModal = ({ history, onSelect, onClose, onDelete, onRename, maxChartsAllowed, currentChartsCount }) => {
-  // 📍 타이틀 구성: 무제한(Infinity)일 경우 카운트 표시를 숨김
   const modalTitle = (
     <span className="flex items-center gap-1">
       저장 기록

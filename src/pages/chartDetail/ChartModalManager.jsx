@@ -61,14 +61,39 @@ export default function ChartModalManager({
   saveActiveMemoText,
   deleteActiveMemo
 }) {
+  // 🟢 메모 삭제 확인 모달 제어 상태 추가
+  const [memoDeleteRequested, setMemoDeleteRequested] = React.useState(false);
+
   return (
     <>
       {/* 1. 메모 모달 */}
-      {activeMemoId && (
-        <MemoModal
-          memo={memos.find(m => m.id === activeMemoId)}
-          onSave={saveActiveMemoText}
-          onDelete={deleteActiveMemo}
+      {activeMemoId && (() => {
+        const activeMemo = memos.find(m => m.id === activeMemoId);
+        return (
+          <MemoModal
+            // 🟢 이미 내용이 작성된 메모면 "메모", 새로 작성하는 거면 "메모 작성"
+            title={activeMemo?.text ? "메모" : "메모 작성"}
+            memo={activeMemo}
+            onSave={saveActiveMemoText}
+            onDelete={() => setMemoDeleteRequested(true)} // 🟢 내부 ConfirmModal 오픈
+          />
+        );
+      })()}
+
+      {/* 🟢 앱 내 UI 스타일을 활용한 메모 삭제 확인 모달 */}
+      {memoDeleteRequested && (
+        <ConfirmModal
+          cancelLabel="취소"
+          confirmLabel="삭제"
+          danger={true}
+          message="이 메모를 정말 삭제하시겠습니까?"
+          onCancel={() => setMemoDeleteRequested(false)}
+          onConfirm={() => {
+            deleteActiveMemo();
+            setMemoDeleteRequested(false);
+          }}
+          title="메모 삭제"
+          titleId="memo-delete-confirm-title"
         />
       )}
 
@@ -143,7 +168,6 @@ export default function ChartModalManager({
             setShowModifyWarning(false);
           }}
           onCancel={() => {
-            // 변경 내용을 되돌리고 모달을 닫음 (이후 배너를 클릭하여 안전하게 새 템플릿 생성 가능)
             const originalRecord = history.find(r => r.id === viewingRecord.id);
             if (originalRecord) loadRecord(originalRecord);
             setShowModifyWarning(false);

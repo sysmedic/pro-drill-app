@@ -47,6 +47,29 @@ export default function CustomerManagement({
     return () => unsubscribe();
   }, []);
 
+  // 🟢 [추가] 화면 진입 및 주요 모달 전환 시 강제 1배율 리셋 (타이머 꼬임 방지 적용)
+  useEffect(() => {
+    let timeoutId;
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    const unlockedViewport = 'width=device-width, initial-scale=1.0'; 
+    
+    if (viewportMeta) {
+      // 강제로 1배율로 축소하여 실사이즈 복구
+      viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      
+      timeoutId = setTimeout(() => {
+        // 브라우저 렌더링이 안정화될 즈음 다시 확대 가능하도록 원상복구
+        viewportMeta.setAttribute('content', unlockedViewport); 
+      }, 350);
+    }
+
+    return () => clearTimeout(timeoutId); 
+  }, [
+    showModal, 
+    deleteRequest, 
+    showSecondDeleteConfirm
+  ]); // 컴포넌트 마운트(진입) 시점과 모달 열림/닫힘 시 작동
+
   // 👥 고객 저장/수정 함수
   const handleSaveCustomer = async (e) => {
     e.preventDefault();

@@ -39,32 +39,60 @@ const getDefaultThumbHoleCutSize = (slugType, gender) => {
   return '1 1/4';
 };
 
+// 🟢 [추가] 인서트 사이즈 내 괄호 (n호) 부분만 분리하여 투명도 플러그인을 적용하는 함수
+const renderInsertSize = (size) => {
+  if (!size) return '';
+  const str = String(size);
+  const match = str.match(/(.*?)(\(.*?\))(.*)/);
+  if (match) {
+    return (
+      <>
+        {match[1]}
+        <span className="text-black/65 text-[19px] font-normal">{match[2]}</span>
+        {match[3]}
+      </>
+    );
+  }
+  return str;
+};
+
 const Abs = ({ x, y, children, z = 10 }) => (
   <div className="absolute flex items-center justify-center" style={{ left: x, top: y, transform: 'translate(-50%, -50%)', zIndex: z }}>{children}</div>
 );
 
-const PitchBox = ({ upValue, downValue }) => {
-  const value = upValue || downValue || '';
+const SingleValueBox = ({ value, title, iconName, labelPosition = 'top' }) => {
   return (
     <div className="relative w-[80px] h-[36px] flex justify-center">
-      {upValue && upValue !== '0' && (
-        <div className="absolute left-0 bottom-[100%] w-full flex flex-col items-center mb-1">
-          <Icon name="arrowUp" className="text-black mb-0.5" size={14} strokeWidth={3} />
-          <span className="text-[12px] font-bold text-black">Reverse</span>
+      {value && value !== '0' && labelPosition === 'top' && (
+        <div className="absolute left-0 bottom-[100%] w-full flex flex-col items-center mb-1 whitespace-nowrap">
+          {iconName && <Icon name={iconName} className="text-black mb-0.5" size={14} strokeWidth={3} />}
+          <span className="text-[12px] font-bold text-black leading-tight">{title}</span>
         </div>
       )}
-      <div className={`w-full h-full ${commonBoxClass}`}>{value}</div>
-      {downValue && downValue !== '0' && (
-        <div className="absolute left-0 top-[100%] w-full flex flex-col items-center mt-1">
-          <span className="text-[12px] font-bold text-black mb-0.5">Forward</span>
-          <Icon name="arrowDown" className="text-black" size={14} strokeWidth={3} />
+      {value && value !== '0' && labelPosition === 'bottom' && (
+        <div className="absolute left-0 top-[100%] w-full flex flex-col items-center mt-1 whitespace-nowrap">
+          <span className="text-[12px] font-bold text-black leading-tight">{title}</span>
+          {iconName && <Icon name={iconName} className="text-black mt-0.5" size={14} strokeWidth={3} />}
         </div>
       )}
+      {value && value !== '0' && labelPosition === 'left' && (
+        <div className="absolute right-[100%] top-0 h-full flex items-center mr-1.5 whitespace-nowrap">
+          {iconName && <Icon name={iconName} className="text-black mr-0.5" size={14} strokeWidth={3} />}
+          <span className="text-[12px] font-bold text-black">{title}</span>
+        </div>
+      )}
+      {value && value !== '0' && labelPosition === 'right' && (
+        <div className="absolute left-[100%] top-0 h-full flex items-center ml-1.5 whitespace-nowrap">
+          <span className="text-[12px] font-bold text-black mr-0.5">{title}</span>
+          {iconName && <Icon name={iconName} className="text-black" size={14} strokeWidth={3} />}
+        </div>
+      )}
+      <div className={`w-full h-full ${commonBoxClass}`}>{value || ''}</div>
     </div>
   );
 };
 
-export default function ChartBlueprintView({ data = {}, customer = {}, memoOverlay, memosRenderer, innerRef, isMemoActive }) {
+export default function ChartBlueprintView({ data = {}, customer = {}, memoOverlay, memosRenderer, innerRef, isMemoActive, onGuideClick }) {
   const isThumbless = data?.isThumbless || false;
   const isLeft = data?.handedness === 'left';
   const midPitch = data?.midPitch || {};
@@ -78,7 +106,6 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
   const firstLabel = isLeft ? "약지" : "중지";
   const secondLabel = isLeft ? "중지" : "약지";
 
-  // 부모 컨테이너의 정확한 내부 픽셀 너비를 계산하여 소수점 오차를 없앱니다.
   const getExactScale = () => {
     if (typeof window === 'undefined') return 1;
     const cw = document.documentElement.clientWidth;
@@ -86,7 +113,7 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
     const parentPadding = isSm ? PAGE_PADDING_X_PX.sm : PAGE_PADDING_X_PX.base;
     const containerW = Math.min(cw, PAGE_MAX_WIDTH_PX) - parentPadding;
     const wrapperW = Math.min(containerW, PAGE_MAX_WIDTH_PX);
-    const innerW = wrapperW - 2; // 테두리(border) 2px 제외
+    const innerW = wrapperW - 2; 
     return innerW / 540;
   };
 
@@ -99,7 +126,7 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const layout = { mid: { x: 170, y: 170, r: 70 }, ring: { x: 370, y: 170, r: 70 }, thumb: { x: 270, y: 470, r: 70 } };
+  const layout = { mid: { x: 170, y: 148, r: 70 }, ring: { x: 370, y: 148, r: 70 }, thumb: { x: 270, y: 470, r: 70 } };
   const midEdge = getEdgePoint(layout.mid, layout.thumb, layout.mid.r);
   const thumbEdgeM = getEdgePoint(layout.thumb, layout.mid, layout.thumb.r);
   const ringEdge = getEdgePoint(layout.ring, layout.thumb, layout.ring.r);
@@ -155,6 +182,8 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
     }
   }
 
+  const hasOvalData = !!thumbDetails?.ovalSize || !!data?.ovalAngle;
+
   return (
     <Card className="overflow-hidden transition-[height] duration-500 animate-fade-in mt-2 mb-4 sm:mb-6" constrained data-testid="chart-blueprint-surface" elevation="md" gpu layer="content" style={{ height: `${activeCanvasHeight * scale}px` }}>
       <div
@@ -176,41 +205,110 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
           )}
         </svg>
 
-        <Abs x={layout.mid.x} y={57}>
-          <div className="flex flex-col items-center whitespace-nowrap">
-            <span className="text-[17px] font-bold text-black mb-1">{firstLabel}</span>
-            <div className="relative flex items-center justify-center h-[36px]">
-              <span className={`absolute right-[100%] mr-1.5 font-bold transition-opacity ${firstPitch?.lat && firstPitch?.lat !== '0' && firstPitch?.latDir === 'left' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowLeft" className="text-black" size={14} strokeWidth={3} /></span>
-              <div className={`w-[80px] h-full ${commonBoxClass}`}>{firstPitch?.lat || ''}</div>
-              <span className={`absolute left-[100%] ml-1.5 font-bold transition-opacity ${firstPitch?.lat && firstPitch?.lat !== '0' && firstPitch?.latDir === 'right' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowRight" className="text-black" size={14} strokeWidth={3} /></span>
-            </div>
-          </div>
+        {/* ========================================================= */}
+        {/* 🟢 첫 번째 손가락 (중지) */}
+        {/* ========================================================= */}
+        <Abs x={layout.mid.x + 1} y={57}>
+          <span className="text-[17px] font-bold text-black">{firstLabel}</span>
         </Abs>
-        <Abs x={50} y={layout.mid.y}><PitchBox upValue={firstPitch?.up} downValue={firstPitch?.down} /></Abs>
+
+        {firstPitch?.up !== undefined && firstPitch.up !== null && firstPitch.up !== '' && (
+          <Abs x={layout.mid.x - 60} y={57}>
+            <div className={`relative w-[80px] h-[36px] flex items-center justify-center ${commonBoxClass}`}>
+              <span className="font-bold z-10 text-black">{firstPitch.up}</span>
+              {String(firstPitch.up).trim() !== '0' && <div className="absolute -right-0"><Icon name="arrowUp" className="text-black" size={14} strokeWidth={3} /></div>}
+            </div>
+          </Abs>
+        )}
+        
+        {firstPitch?.lat !== undefined && firstPitch.lat !== null && firstPitch.lat !== '' && (
+          <Abs x={54} y={layout.mid.y}>
+             <div className={`relative w-[80px] h-[36px] flex items-center justify-center ${commonBoxClass}`}>
+                {String(firstPitch.lat).trim() !== '0' && firstPitch.latDir === 'left' && <div className="absolute left-[3px]"><Icon name="arrowLeft" className="text-black" size={14} strokeWidth={3} /></div>}
+                <span className={`font-bold z-10 ${firstPitch.latDir === 'right' ? 'text-red-500' : 'text-black'}`}>{firstPitch.lat}</span>
+                {String(firstPitch.lat).trim() !== '0' && firstPitch.latDir === 'right' && <div className="absolute right-[3px]"><Icon name="arrowRight" className="text-red-500" size={14} strokeWidth={3} /></div>}
+              </div>
+          </Abs>
+        )}
+
+        {firstPitch?.down !== undefined && firstPitch.down !== null && firstPitch.down !== '' && (
+          <Abs x={layout.mid.x - 60} y={238}>
+            <div className={`relative w-[80px] h-[36px] flex items-center justify-center ${commonBoxClass}`}>
+              <span className="font-bold z-10 text-red-500">{firstPitch.down}</span>
+              {String(firstPitch.down).trim() !== '0' && <div className="absolute -right-0"><Icon name="arrowDown" className="text-red-500" size={14} strokeWidth={3} /></div>}
+            </div>
+          </Abs>
+        )}
+
         <Abs x={layout.mid.x} y={layout.mid.y}>
-          <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white flex flex-col items-center justify-evenly pt-[7px] pb-[17px] relative">
-            <div className="text-[14px] font-medium text-black">{firstPitch?.holeCutSize || getDefaultHoleCutSize(firstPitch?.insertSize)}</div>
-            <span className="text-[19px] leading-tight tracking-tight font-semibold text-black whitespace-nowrap">{firstPitch?.insertSize || ''}</span>
-            <span className="text-[17px] font-semibold text-black">{firstPitch?.tipType || ''}</span>
+          <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white relative">
+            <div className="absolute top-[1px] left-1/2 transform -translate-x-1/2 w-full text-center text-[14px] font-medium text-black whitespace-nowrap">
+              {firstPitch?.holeCutSize || getDefaultHoleCutSize(firstPitch?.insertSize)}
+            </div>
+            <div className="absolute top-[25%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center text-[15px] font-medium text-slate-600 whitespace-nowrap z-10">
+              {firstPitch?.extraLine || ''}
+            </div>
+            {/* 🔄 [수정] 기존 {firstPitch?.insertSize || ''} 를 renderInsertSize 함수로 래핑 */}
+            <div className="absolute top-[50%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center text-[19px] leading-none tracking-tight font-semibold text-black whitespace-nowrap z-10">
+              {renderInsertSize(firstPitch?.insertSize)}
+            </div>
+            <div className="absolute top-[75%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center text-[17px] font-semibold text-black whitespace-nowrap z-10">
+              {firstPitch?.tipType || ''}
+            </div>
           </div>
         </Abs>
 
-        <Abs x={layout.ring.x} y={57}>
-          <div className="flex flex-col items-center whitespace-nowrap">
-            <span className="text-[17px] font-bold text-black mb-1">{secondLabel}</span>
-            <div className="relative flex items-center justify-center h-[36px]">
-              <span className={`absolute right-[100%] mr-1.5 font-bold transition-opacity ${secondPitch?.lat && secondPitch?.lat !== '0' && secondPitch?.latDir === 'left' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowLeft" className="text-black" size={14} strokeWidth={3} /></span>
-              <div className={`w-[80px] h-full ${commonBoxClass}`}>{secondPitch?.lat || ''}</div>
-              <span className={`absolute left-[100%] ml-1.5 font-bold transition-opacity ${secondPitch?.lat && secondPitch?.lat !== '0' && secondPitch?.latDir === 'right' ? 'opacity-100' : 'opacity-0'}`}><Icon name="arrowRight" className="text-black" size={14} strokeWidth={3} /></span>
-            </div>
-          </div>
+
+        {/* ========================================================= */}
+        {/* 🔵 두 번째 손가락 (약지) */}
+        {/* ========================================================= */}
+        <Abs x={layout.ring.x - 1} y={57}>
+          <span className="text-[17px] font-bold text-black">{secondLabel}</span>
         </Abs>
-        <Abs x={490} y={layout.ring.y}><PitchBox upValue={secondPitch?.up} downValue={secondPitch?.down} /></Abs>
+
+        {secondPitch?.up !== undefined && secondPitch.up !== null && secondPitch.up !== '' && (
+          <Abs x={layout.ring.x + 60} y={57}>
+            <div className={`relative w-[80px] h-[36px] flex items-center justify-center ${commonBoxClass}`}>
+              <span className="font-bold z-10 text-black">{secondPitch.up}</span>
+              {String(secondPitch.up).trim() !== '0' && <div className="absolute -left-0"><Icon name="arrowUp" className="text-black" size={14} strokeWidth={3} /></div>}
+            </div>
+          </Abs>
+        )}
+        
+        {secondPitch?.lat !== undefined && secondPitch.lat !== null && secondPitch.lat !== '' && (
+          <Abs x={486} y={layout.ring.y}>
+             <div className={`relative w-[80px] h-[36px] flex items-center justify-center ${commonBoxClass}`}>
+                {String(secondPitch.lat).trim() !== '0' && secondPitch.latDir === 'left' && <div className="absolute left-[3px]"><Icon name="arrowLeft" className="text-red-500" size={14} strokeWidth={3} /></div>}
+                <span className={`font-bold z-10 ${secondPitch.latDir === 'left' ? 'text-red-500' : 'text-black'}`}>{secondPitch.lat}</span>
+                {String(secondPitch.lat).trim() !== '0' && secondPitch.latDir === 'right' && <div className="absolute right-[3px]"><Icon name="arrowRight" className="text-black" size={14} strokeWidth={3} /></div>}
+              </div>
+          </Abs>
+        )}
+
+        {secondPitch?.down !== undefined && secondPitch.down !== null && secondPitch.down !== '' && (
+          <Abs x={layout.ring.x + 60} y={238}>
+            <div className={`relative w-[80px] h-[36px] flex items-center justify-center ${commonBoxClass}`}>
+              <span className="font-bold z-10 text-red-500">{secondPitch.down}</span>
+              {String(secondPitch.down).trim() !== '0' && <div className="absolute -left-0"><Icon name="arrowDown" className="text-red-500" size={14} strokeWidth={3} /></div>}
+            </div>
+          </Abs>
+        )}
+        
         <Abs x={layout.ring.x} y={layout.ring.y}>
-          <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white flex flex-col items-center justify-evenly pt-[7px] pb-[17px] relative">
-            <div className="text-[14px] font-medium text-black">{secondPitch?.holeCutSize || getDefaultHoleCutSize(secondPitch?.insertSize)}</div>
-            <span className="text-[19px] leading-tight tracking-tight font-semibold text-black whitespace-nowrap">{secondPitch?.insertSize || ''}</span>
-            <span className="text-[17px] font-semibold text-black">{secondPitch?.tipType || ''}</span>
+          <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white relative">
+            <div className="absolute top-[1px] left-1/2 transform -translate-x-1/2 w-full text-center text-[14px] font-medium text-black whitespace-nowrap">
+              {secondPitch?.holeCutSize || getDefaultHoleCutSize(secondPitch?.insertSize)}
+            </div>
+            <div className="absolute top-[25%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center text-[15px] font-medium text-slate-600 whitespace-nowrap z-10">
+              {secondPitch?.extraLine || ''}
+            </div>
+            {/* 🔄 [수정] 기존 {secondPitch?.insertSize || ''} 를 renderInsertSize 함수로 래핑 */}
+            <div className="absolute top-[50%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center text-[19px] leading-none tracking-tight font-semibold text-black whitespace-nowrap z-10">
+              {renderInsertSize(secondPitch?.insertSize)}
+            </div>
+            <div className="absolute top-[75%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center text-[17px] font-semibold text-black whitespace-nowrap z-10">
+              {secondPitch?.tipType || ''}
+            </div>
           </div>
         </Abs>
 
@@ -220,7 +318,7 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
 
         {!isThumbless && (
           <>
-            <Abs x={270} y={spanLeftPos.y - 45} z={20}>
+            <Abs x={270} y={spanLeftPos.y - 50} z={20}>
               <div className="bg-white px-4 rounded-md text-[16px] font-bold text-black flex items-center gap-1.5">
                 {data?.spanType || ''}
                 <Icon name="check" className="text-black" size={15} strokeWidth={3} />
@@ -228,44 +326,105 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
             </Abs>
             <Abs x={spanLeftPos.x} y={spanLeftPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass}`}>{data?.spanLeft || ''}</div></Abs>
             <Abs x={spanRightPos.x} y={spanRightPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass}`}>{data?.spanRight || ''}</div></Abs>
-            <Abs x={150} y={layout.thumb.y}>
-              <div className="relative w-[80px] h-[36px] flex justify-center">
-                {thumbPitch?.up && thumbPitch?.up !== '0' && (
-                  <div className="absolute left-0 bottom-[100%] w-full flex flex-col items-center mb-1">
-                    <Icon name="arrowUp" className="text-black mb-0.5" size={14} strokeWidth={3} />
-                    <span className="text-[12px] font-bold text-black">Forward</span>
+            
+            {/* 🔴 엄지 */}
+            {thumbPitch?.up !== undefined && thumbPitch.up !== null && thumbPitch.up !== '' && (
+              <Abs x={layout.thumb.x} y={375}>
+                  <div className={`relative w-[80px] h-[36px] flex items-center justify-center ${commonBoxClass}`}>
+                    <span className="font-bold z-10 text-red-500">{thumbPitch.up}</span>
+                    {String(thumbPitch.up).trim() !== '0' && <div className="absolute -right-0"><Icon name="arrowUp" className="text-red-500" size={14} strokeWidth={3} /></div>}
                   </div>
-                )}
-                <div className={`w-full h-full ${commonBoxClass}`}>{thumbPitch?.up || thumbPitch?.down || ''}</div>
-                {thumbPitch?.down && thumbPitch?.down !== '0' && (
-                  <div className="absolute left-0 top-[100%] w-full flex flex-col items-center mt-1">
-                    <span className="text-[12px] font-bold text-black mb-0.5">Reverse</span>
-                    <Icon name="arrowDown" className="text-black" size={14} strokeWidth={3} />
+              </Abs>
+            )}
+
+            {thumbPitch?.down !== undefined && thumbPitch.down !== null && thumbPitch.down !== '' && (
+              <Abs x={layout.thumb.x} y={566}>
+                  <div className={`relative w-[80px] h-[36px] flex items-center justify-center ${commonBoxClass}`}>
+                    <span className="font-bold z-10 text-black">{thumbPitch.down}</span>
+                    {String(thumbPitch.down).trim() !== '0' && <div className="absolute -right-0"><Icon name="arrowDown" className="text-black" size={14} strokeWidth={3} /></div>}
                   </div>
-                )}
-              </div>
-            </Abs>
-            <Abs x={380} y={layout.thumb.y}>
-              <div className="border border-slate-400 bg-white w-[46px] h-[46px] rounded-full flex items-center justify-center text-[15px] font-bold text-black" style={{ transform: `rotate(${data?.ovalAngle || 0}deg)` }}>{data?.ovalAngle || ''}°</div>
-            </Abs>
-            <Abs x={layout.thumb.x} y={570}>
-              <div className="relative flex items-center justify-center h-[36px] whitespace-nowrap">
-                <span className={`absolute right-[100%] mr-2 text-[12px] font-bold transition-opacity duration-300 flex items-center gap-1 ${thumbPitch?.left && thumbPitch?.left !== '0' ? 'text-black opacity-100' : 'opacity-0'}`}>
-                  <Icon name="arrowLeft" className="text-black" size={14} strokeWidth={3} />
-                  Left
-                </span>
-                <div className={`w-[80px] h-full ${commonBoxClass}`}>{thumbPitch?.left || thumbPitch?.right || ''}</div>
-                <span className={`absolute left-[100%] ml-2 text-[12px] font-bold transition-opacity duration-300 flex items-center gap-1 ${thumbPitch?.right && thumbPitch?.right !== '0' ? 'text-black opacity-100' : 'opacity-0'}`}>
-                  Right
-                  <Icon name="arrowRight" className="text-black" size={14} strokeWidth={3} />
-                </span>
-              </div>
-            </Abs>
+              </Abs>
+            )}
+
+            {thumbPitch?.left !== undefined && thumbPitch.left !== null && thumbPitch.left !== '' && (
+              <Abs x={152} y={layout.thumb.y}>
+                  <div className={`relative w-[80px] h-[36px] flex items-center justify-center ${commonBoxClass}`}>
+                    {String(thumbPitch.left).trim() !== '0' && <div className="absolute left-[3px]"><Icon name="arrowLeft" className="text-black" size={14} strokeWidth={3} /></div>}
+                    <span className="font-bold z-10 text-black">{thumbPitch.left}</span>
+                  </div>
+              </Abs>
+            )}
+
+            {thumbPitch?.right !== undefined && thumbPitch.right !== null && thumbPitch.right !== '' && (
+              <Abs x={388} y={layout.thumb.y}>
+                  <div className={`relative w-[80px] h-[36px] flex items-center justify-center ${commonBoxClass}`}>
+                    <span className="font-bold z-10 text-black">{thumbPitch.right}</span>
+                    {String(thumbPitch.right).trim() !== '0' && <div className="absolute right-[3px]"><Icon name="arrowRight" className="text-black" size={14} strokeWidth={3} /></div>}
+                  </div>
+              </Abs>
+            )}
+
+            {/* ✨ 덤타입(slugType) 자동 배치 (우측 피치가 있으면 좌측, 없으면 우측 배치) */}
+            {thumbDetails?.slugType && (
+              <Abs x={(thumbPitch?.right !== undefined && thumbPitch.right !== null && String(thumbPitch.right).trim() !== '') ? 152 : 388} y={layout.thumb.y}>
+                <div className={`relative w-[80px] h-[36px] flex items-center justify-center ${commonBoxClass}`}>
+                  <span className="font-bold z-10 text-indigo-800">{thumbDetails.slugType}</span>
+                </div>
+              </Abs>
+            )}
+
             <Abs x={layout.thumb.x} y={layout.thumb.y}>
-              <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white flex flex-col items-center justify-evenly pt-[7px] pb-[17px] relative">
-                <div className="text-[14px] font-medium text-black">{thumbDetails?.holeCutSize || getDefaultThumbHoleCutSize(thumbDetails?.slugType, customer?.gender)}</div>
-                <span className="text-[22px] font-semibold text-black">{thumbDetails?.holeSize || ''}</span>
-                <span className="text-[22px] font-semibold text-black">{thumbDetails?.ovalSize || ''}</span>
+              <div className="w-[140px] h-[140px] rounded-full border-[2px] border-black bg-white relative">
+                <div className="absolute top-[1px] left-1/2 transform -translate-x-1/2 w-full text-center text-[14px] font-medium text-black whitespace-nowrap">
+                  {thumbDetails?.holeCutSize || getDefaultThumbHoleCutSize(thumbDetails?.slugType, customer?.gender)}
+                </div>
+
+                {hasOvalData ? (
+                  <>
+                    <div className="absolute top-[calc(25%-2px)] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center text-[21px] font-semibold text-black whitespace-nowrap z-10">
+                      {thumbDetails?.holeSize || ''}
+                    </div>
+
+                    <div className="absolute top-[50%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+                      <style>{`
+                        @keyframes heartbeat-thump {
+                          0%, 100% { transform: scale(1); }
+                          10% { transform: scale(1.12); }
+                          20% { transform: scale(1); }
+                          30% { transform: scale(1.12); }
+                          40% { transform: scale(1); }
+                        }
+                      `}</style>
+                      <div className="relative flex items-center justify-center">
+                        <div 
+                          className="absolute w-[55px] h-[55px] rounded-full bg-indigo-500/30 blur-md animate-pulse pointer-events-none"
+                          style={{ animationDuration: '2s' }}
+                        ></div>
+                        <div style={{ animation: 'heartbeat-thump 2s infinite', position: 'relative', zIndex: 10 }}>
+                          <button
+                            onClick={onGuideClick}
+                            className="group relative w-[45px] h-[45px] rounded-full bg-white border-[2px] border-indigo-400 flex items-center justify-center shadow-[0_0_12px_rgba(99,102,241,0.2)] transition-all duration-300 hover:scale-110 hover:border-indigo-600 hover:shadow-[0_0_15px_rgba(99,102,241,0.5)] active:scale-95 outline-none cursor-pointer"
+                            title="드릴링 가이드 보기"
+                          >
+                            <span className="text-[14px] font-bold text-slate-800 transition-colors group-hover:text-black" style={{ transform: `rotate(${data?.ovalAngle || 0}deg)` }}>
+                              {data?.ovalAngle || ''}°
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="absolute top-[calc(75%+2px)] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center text-[21px] font-semibold text-black whitespace-nowrap z-10">
+                      {thumbDetails?.ovalSize || ''}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="absolute top-[50%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center text-[21px] font-semibold text-black whitespace-nowrap z-10">
+                      {thumbDetails?.holeSize || ''}
+                    </div>
+                  </>
+                )}
               </div>
             </Abs>
             
@@ -332,7 +491,6 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
           </>
         )}
 
-        {/* 덤리스(Thumbless) 모드일 때 스판 표시. 중약지 원 하단에 개별 배치 */}
         {isThumbless && (
           <>
             {showThumblessSpanLeft && (

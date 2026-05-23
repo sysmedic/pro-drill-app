@@ -11,7 +11,6 @@ import {
   LATERAL_DIR_OPTIONS,
   MOISTURE_OPTIONS,
   OVAL_OPTIONS,
-  // PITCH_OPTIONS, 🟢 기존 16분모 배열 임포트 제거
   SPAN_TYPE_OPTIONS,
   STIFFNESS_OPTIONS,
   THUMB_TYPE_OPTIONS,
@@ -30,6 +29,9 @@ const OFFSET_OPTIONS = [
   '1/16', '1/8', '3/16', '1/4', '5/16', '3/8', '7/16', '1/2',
   '9/16', '5/8', '11/16', '3/4', '13/16', '7/8', '15/16', '1'
 ];
+
+// ✨ 제조사 옵션 배열 추가
+const MANUFACTURER_OPTIONS = ['G & S', '로드필드', '텐스프레임', 'Turbo', 'Master'];
 
 // 🟢 1/32 기약분수 자동 생성 로직 (0 ~ 1인치 범위, 직접입력 삭제)
 const getGCD = (a, b) => (b === 0 ? a : getGCD(b, a % b));
@@ -285,31 +287,53 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
   const updateCondition = (key, val) => onChange({ ...data, handCondition: { ...handCondition, [key]: val } });
 
   const updateMid = (key, val) => {
-    let next = { ...midPitch, [key]: val };
-    if (key === 'up') next.down = '';
-    if (key === 'down') next.up = '';
+    let nextMid = { ...midPitch, [key]: val };
+    if (key === 'up') nextMid.down = '';
+    if (key === 'down') nextMid.up = '';
     if (key === 'lat') {
-      if (val !== '' && !next.latDir) next.latDir = isLeft ? 'right' : 'left';
-      if (val === '') next.latDir = '';
+      if (val !== '' && !nextMid.latDir) nextMid.latDir = isLeft ? 'right' : 'left';
+      if (val === '') nextMid.latDir = '';
     }
     if (key === 'insertSize') {
-      next.holeCutSize = getDefaultHoleCutSize(val);
+      nextMid.holeCutSize = getDefaultHoleCutSize(val);
     }
-    onChange({ ...data, midPitch: next });
+    
+    let updatedData = { ...data, midPitch: nextMid };
+
+    // ✨ 중지(Middle)를 먼저 입력할 때: 약지(Ring)가 비어있다면 자동 완성
+    if (key === 'tipType' && val && !ringPitch.tipType) {
+      updatedData.ringPitch = { ...ringPitch, tipType: val };
+    }
+    if (key === 'extraLine' && val && !ringPitch.extraLine) {
+      updatedData.ringPitch = { ...ringPitch, extraLine: val };
+    }
+
+    onChange(updatedData);
   };
 
   const updateRing = (key, val) => {
-    let next = { ...ringPitch, [key]: val };
-    if (key === 'up') next.down = '';
-    if (key === 'down') next.up = '';
+    let nextRing = { ...ringPitch, [key]: val };
+    if (key === 'up') nextRing.down = '';
+    if (key === 'down') nextRing.up = '';
     if (key === 'lat') {
-      if (val !== '' && !next.latDir) next.latDir = isLeft ? 'left' : 'right';
-      if (val === '') next.latDir = '';
+      if (val !== '' && !nextRing.latDir) nextRing.latDir = isLeft ? 'left' : 'right';
+      if (val === '') nextRing.latDir = '';
     }
     if (key === 'insertSize') {
-      next.holeCutSize = getDefaultHoleCutSize(val);
+      nextRing.holeCutSize = getDefaultHoleCutSize(val);
     }
-    onChange({ ...data, ringPitch: next });
+    
+    let updatedData = { ...data, ringPitch: nextRing };
+
+    // ✨ 약지(Ring)를 먼저 입력할 때: 중지(Middle)가 비어있다면 자동 완성
+    if (key === 'tipType' && val && !midPitch.tipType) {
+      updatedData.midPitch = { ...midPitch, tipType: val };
+    }
+    if (key === 'extraLine' && val && !midPitch.extraLine) {
+      updatedData.midPitch = { ...midPitch, extraLine: val };
+    }
+
+    onChange(updatedData);
   };
 
   const updateThumb = (key, val) => {
@@ -355,6 +379,7 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
     if (pitch.lat) parts.push(`${pitch.latDir === 'left' ? 'L' : 'R'} ${pitch.lat}`);
     if (pitch.insertSize) parts.push(String(pitch.insertSize).split(' ')[0]);
     if (pitch.tipType) parts.push(pitch.tipType);
+    if (pitch.extraLine) parts.push(pitch.extraLine); // ✨ 제조사 요약 추가
     if (pitch.holeCutSize) parts.push(`H/C ${pitch.holeCutSize}`);
     return parts.length > 0 ? parts.join(', ') : '';
   };
@@ -428,11 +453,12 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
 
       {renderSection('first', firstLabel, getFingerSummary(firstPitch), (
         <>
-          {/* 🟢 피치 옵션을 PITCH_OPTIONS_32로 교체 */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={firstPitch.up} onChange={v => updateFirst('up', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Forward (▼)" value={firstPitch.down} onChange={v => updateFirst('down', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Lateral" value={firstPitch.lat} onChange={v => updateFirst('lat', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Lateral 방향" value={firstPitch.latDir} onChange={v => updateFirst('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          {/* ✨ 제조사 필드 추가 및 4열(sm:grid-cols-4) 그리드로 확장 */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <ChartSelectField allowCustom label="인서트 사이즈" value={firstPitch.insertSize} onChange={v => updateFirst('insertSize', v)} options={FINGER_INSERT_OPTIONS} />
             <ChartSelectField allowCustom label="팁 종류" value={firstPitch.tipType} onChange={v => updateFirst('tipType', v)} options={TIP_OPTIONS} />
+            <ChartSelectField allowCustom label="제조사" value={firstPitch.extraLine} onChange={v => updateFirst('extraLine', v)} options={MANUFACTURER_OPTIONS} />
             <ChartSelectField allowCustom label="홀컷 사이즈" value={firstPitch.holeCutSize} onChange={v => updateFirst('holeCutSize', v)} options={FINGER_HOLE_CUT_OPTIONS} />
           </div>
         </>
@@ -440,11 +466,12 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
 
       {renderSection('second', secondLabel, getFingerSummary(secondPitch), (
         <>
-          {/* 🟢 피치 옵션을 PITCH_OPTIONS_32로 교체 */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={secondPitch.up} onChange={v => updateSecond('up', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Forward (▼)" value={secondPitch.down} onChange={v => updateSecond('down', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Lateral" value={secondPitch.lat} onChange={v => updateSecond('lat', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Lateral 방향" value={secondPitch.latDir} onChange={v => updateSecond('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          {/* ✨ 제조사 필드 추가 및 4열(sm:grid-cols-4) 그리드로 확장 */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <ChartSelectField allowCustom label="인서트 사이즈" value={secondPitch.insertSize} onChange={v => updateSecond('insertSize', v)} options={FINGER_INSERT_OPTIONS} />
             <ChartSelectField allowCustom label="팁 종류" value={secondPitch.tipType} onChange={v => updateSecond('tipType', v)} options={TIP_OPTIONS} />
+            <ChartSelectField allowCustom label="제조사" value={secondPitch.extraLine} onChange={v => updateSecond('extraLine', v)} options={MANUFACTURER_OPTIONS} />
             <ChartSelectField allowCustom label="홀컷 사이즈" value={secondPitch.holeCutSize} onChange={v => updateSecond('holeCutSize', v)} options={FINGER_HOLE_CUT_OPTIONS} />
           </div>
         </>
@@ -464,7 +491,6 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
         <div className="overflow-hidden min-h-0 flex flex-col gap-2.5">
         {renderSection('thumb', 'Thumb', getThumbSummary(thumbPitch, thumbDetails, ovalAngle, thumbOffset), (
           <>
-          {/* 🟢 피치 옵션을 PITCH_OPTIONS_32로 교체 */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
             <ChartSelectField label="Forward (▲)" value={thumbPitch.up} onChange={v => updateThumb('up', v)} options={PITCH_OPTIONS_32} />
             <ChartSelectField label="Reverse (▼)" value={thumbPitch.down} onChange={v => updateThumb('down', v)} options={PITCH_OPTIONS_32} />

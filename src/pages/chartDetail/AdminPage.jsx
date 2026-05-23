@@ -19,6 +19,25 @@ export default function AdminPage({ onBack }) {
   // 📊 통계 탭 전용 정렬 기준 상태 ('customer' 또는 'chart')
   const [statsType, setStatsType] = useState('customer');
 
+  // 🟢 [추가] 마스터 제어실 진입 시 강제 1배율 리셋 (타이머 꼬임 방지 적용)
+  useEffect(() => {
+    let timeoutId;
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    const unlockedViewport = 'width=device-width, initial-scale=1.0'; 
+    
+    if (viewportMeta) {
+      // 강제로 1배율로 축소하여 실사이즈 복구
+      viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      
+      timeoutId = setTimeout(() => {
+        // 브라우저 렌더링이 안정화될 즈음 다시 확대 가능하도록 원상복구
+        viewportMeta.setAttribute('content', unlockedViewport); 
+      }, 350);
+    }
+
+    return () => clearTimeout(timeoutId); 
+  }, []); // 컴포넌트 마운트(진입) 시점에 작동
+
   // 1. 사용자 데이터만 단독 실시간 구독 (비용 절감)
   useEffect(() => {
     const q = query(collection(db, 'users'), orderBy('joinedAt', 'desc'));

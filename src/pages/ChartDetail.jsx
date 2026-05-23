@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+
 import PageShell from '../components/layout/PageShell.jsx';
 import Card from '../components/ui/Card.jsx';
 import Button from '../components/ui/Button.jsx';
-// 🟢 수정됨: ConfirmModal 추가 임포트
 import { FeedbackToast, ConfirmModal } from '../components/ui/Dialogs.jsx';
 
 import BowlerSpecCard from './chartDetail/BowlerSpecCard.jsx';
@@ -36,8 +36,15 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
   
   // 신규 모달 상태 관리
   const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false);
-  const [showTemplateConfirm, setShowTemplateConfirm] = useState(false); // 🟢 템플릿 변환 확인 모달용
+  const [showTemplateConfirm, setShowTemplateConfirm] = useState(false);
   
+  // 지연된 모달 오픈을 위한 상태
+  const [delayedActiveMemoId, setDelayedActiveMemoId] = useState(null);
+
+  // 🟢 [추가] 불러오기 차단(Intercept) 및 대기를 위한 상태
+  const [pendingLoadTarget, setPendingLoadTarget] = useState(null);
+  const [showInterceptModal, setShowInterceptModal] = useState(false);
+
   // 찌꺼기 방지용 고유 키
   const [entryKey, setEntryKey] = useState(Date.now());
   
@@ -97,7 +104,6 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
     sessionManager.setBallName('');
     sessionManager.setLayoutInfo('');
     sessionManager.setIntent('');
-    // memoManager.setMemos([]);
     sessionManager.setViewingRecord(null);
     sessionManager.setSessionRecordId(null);
     if (sessionManager.setHasUnsavedChanges) {
@@ -108,23 +114,38 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
   useEffect(() => {
     setEntryKey(Date.now());
     wipeCleanSlate(); 
-    // const timer = setTimeout(() => wipeCleanSlate(), 100); 
-    // return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customer]);
+
+  const forceZoomResetAndExecute = useCallback((callback) => {
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    if (viewportMeta) {
+      viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      setTimeout(() => {
+        viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+        if (callback) callback();
+      }, 150);
+    } else {
+      if (callback) callback();
+    }
+  }, []);
 
   const handleBackExit = () => {
     if (sessionManager.hasUnsavedChanges) {
       setShowExitConfirm(true);
       return;
     }
-    wipeCleanSlate();
-    onBack();
+    forceZoomResetAndExecute(() => {
+      wipeCleanSlate();
+      onBack();
+    });
   };
 
   const handleConfirmedExit = () => {
-    wipeCleanSlate();
-    onBack();
+    forceZoomResetAndExecute(() => {
+      wipeCleanSlate();
+      onBack();
+    });
   };
 
   setViewingRecordRef.current = (id, nextName) => {
@@ -163,15 +184,94 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [handleSave]);
 
+  // 메모 클릭 시 줌 강제 리셋 ➔ 스크롤 센터링 ➔ 모달 오픈 (타이머 꼬임 방지 적용)
+  useEffect(() => {
+    let timeoutId;
+
+    if (memoManager.activeMemoId) {
+      const viewportMeta = document.querySelector('meta[name="viewport"]');
+      const unlockedViewport = 'width=device-width, initial-scale=1.0'; 
+      
+      if (viewportMeta) {
+        viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      }
+
+      if (memoManager.activeMemo) {
+        let targetRef = chartRef;
+        if (memoManager.activeMemo.section === 'task') targetRef = taskRef;
+        else if (memoManager.activeMemo.section === 'spec') targetRef = specRef;
+        else if (memoManager.activeMemo.section === 'form') targetRef = formRef;
+
+        if (targetRef && targetRef.current) {
+          setTimeout(() => {
+            targetRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 50);
+        }
+      }
+
+      timeoutId = setTimeout(() => {
+        if (viewportMeta) {
+          viewportMeta.setAttribute('content', unlockedViewport); 
+        }
+        setDelayedActiveMemoId(memoManager.activeMemoId);
+      }, 350); 
+    } else {
+      setDelayedActiveMemoId(null);
+    }
+
+    return () => clearTimeout(timeoutId); 
+  }, [memoManager.activeMemoId, memoManager.activeMemo]);
+
+  // 창 전환/이동 시 강제 1배율 리셋 (타이머 꼬임 방지 적용)
+  useEffect(() => {
+    let timeoutId;
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    const unlockedViewport = 'width=device-width, initial-scale=1.0'; 
+    
+    if (viewportMeta) {
+      viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      
+      timeoutId = setTimeout(() => {
+        viewportMeta.setAttribute('content', unlockedViewport); 
+      }, 350);
+    }
+
+    return () => clearTimeout(timeoutId); 
+  }, [
+    sessionManager.isEditMode, 
+    isTimelineModalOpen, 
+    historyManager.showHistoryModal,
+    showDrillingGuide,
+    utilityState,
+    exportManager.sharePreview,
+    showSettingsModal,
+    memoManager.isPlacingMemo
+  ]);
+
+  // 🟢 [핵심] 불러오기 실행 브릿지 함수 (모달 닫기 처리 포함)
+  const executeLoad = useCallback((record) => {
+    sessionManager.loadRecord(record);
+    setIsTimelineModalOpen(false);
+    historyManager.setShowHistoryModal(false);
+  }, [sessionManager, historyManager]);
+
+  // 🟢 [핵심] 모든 불러오기 요청을 가로채서 미저장 상태 검사 (Intercept)
+  const requestLoadRecord = useCallback((record) => {
+    if (sessionManager.hasUnsavedChanges) {
+      // 미저장 상태라면 불러오기를 즉시 멈추고 타겟을 대기소에 저장 후 모달 오픈
+      setPendingLoadTarget(record);
+      setShowInterceptModal(true);
+    } else {
+      // 안전하다면 즉시 불러오기
+      executeLoad(record);
+    }
+  }, [sessionManager.hasUnsavedChanges, executeLoad]);
+
+  // 🟢 [수정] 타임라인 클릭 시 로직도 Intercept로 교체
   const handleLoadRecordFromTimeline = (chartId) => {
     const targetRecord = historyManager.history.find(r => r.id === chartId);
-    
     if (targetRecord) {
-      if (sessionManager.hasUnsavedChanges) {
-        sessionManager.setShowModifyWarning(true);
-      } else {
-        sessionManager.loadRecord(targetRecord);
-      }
+      requestLoadRecord(targetRecord);
     } else {
       setFeedback({
         message: '이미 삭제되었거나 찾을 수 없는 차트입니다.',
@@ -218,10 +318,10 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
         onToggleEditMode={() => sessionManager.setIsEditMode(!sessionManager.isEditMode)}
         onToggleUtility={() => setUtilityState(utilityState === 'expanded' ? 'collapsed' : 'expanded')}
         onShowTimeline={() => setIsTimelineModalOpen(true)} 
-        onConvertTemplate={() => setShowTemplateConfirm(true)} // 🟢 배너 클릭 시 템플릿 모달 팝업
+        onConvertTemplate={() => setShowTemplateConfirm(true)}
       />
 
-      <div ref={exportManager.exportRef} className="flex flex-col">
+      <div ref={exportManager.exportRef} className="flex flex-col w-full">
         {!sessionManager.isEditMode && (
           <BowlerSpecCard
             chartData={sessionManager.chartData}
@@ -252,6 +352,7 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
             memoOverlay={memoManager.renderMemoOverlay('chart', chartRef)}
             memosRenderer={memoManager.renderMemos('chart', chartRef)}
             isMemoActive={memoManager.isMemoActive}
+            onGuideClick={() => setShowDrillingGuide(true)}
           />
         )}
 
@@ -261,8 +362,8 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
             ballName={sessionManager.ballName}
             innerRef={taskRef}
             intent={sessionManager.intent}
-            isOpen={isTaskOpen}
             layoutInfo={sessionManager.layoutInfo}
+            isOpen={isTaskOpen}
             memoOverlay={memoManager.renderMemoOverlay('task', taskRef)}
             memosRenderer={memoManager.renderMemos('task', taskRef)}
             onBallNameChange={sessionManager.updateWorkField(sessionManager.setBallName)}
@@ -298,7 +399,7 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
       />
 
       <ChartModalManager
-        activeMemoId={memoManager.activeMemoId}
+        activeMemoId={delayedActiveMemoId}
         showHistoryModal={historyManager.showHistoryModal}
         historyConfirm={historyManager.historyConfirm}
         renameRequest={historyManager.renameRequest}
@@ -337,7 +438,10 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
         setSessionRecordName={sessionManager.setSessionRecordName}
         setIsEditMode={sessionManager.setIsEditMode}
         setFeedback={setFeedback}
-        loadRecord={sessionManager.loadRecord}
+        
+        // 🟢 [수정] 모달 매니저 내부에서 차트를 클릭할 때도 Intercept 로직을 타도록 주입
+        loadRecord={requestLoadRecord} 
+        
         handleRenameRecord={historyManager.handleRenameRecord}
         handleDeleteRecord={handleDeleteRecord}
         handleSave={handleSave}
@@ -352,10 +456,58 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
         isOpen={isTimelineModalOpen}
         onClose={() => setIsTimelineModalOpen(false)}
         customer={customer}
+        // 🟢 [수정] 타임라인 모달에서 클릭할 때도 Intercept 로직을 타도록 주입
         onLoadRecord={handleLoadRecordFromTimeline}
       />
 
-      {/* 🟢 기획 추가: 새 차트 템플릿 변환 확인 모달 */}
+      {/* 🟢 [추가] 완벽한 흐름 제어를 위한 3지선다 차단 모달 (Intercept Modal) */}
+      {showInterceptModal && pendingLoadTarget && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
+            <div className="p-6">
+              <h3 className="text-lg font-black text-slate-800 mb-2">저장되지 않은 차트</h3>
+              <p className="text-sm text-slate-600 font-medium leading-snug">
+                현재 작업 중인 차트에 저장되지 않은 내용이 있습니다.<br/>새 차트를 불러오기 전에 저장하시겠습니까?
+              </p>
+            </div>
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex flex-col gap-2">
+              <button 
+                className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm active:scale-95 transition-all"
+                onClick={async () => {
+                  const success = await handleSave();
+                  if (success) {
+                    executeLoad(pendingLoadTarget);
+                    setShowInterceptModal(false);
+                    setPendingLoadTarget(null);
+                  }
+                }}
+              >
+                저장 후 불러오기
+              </button>
+              <button 
+                className="w-full py-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm active:scale-95 transition-all"
+                onClick={() => {
+                  executeLoad(pendingLoadTarget);
+                  setShowInterceptModal(false);
+                  setPendingLoadTarget(null);
+                }}
+              >
+                저장하지 않고 불러오기
+              </button>
+              <button 
+                className="w-full py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold text-sm active:scale-95 transition-all"
+                onClick={() => {
+                  setShowInterceptModal(false);
+                  setPendingLoadTarget(null);
+                }}
+              >
+                취소 (작업 계속하기)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showTemplateConfirm && (
         <ConfirmModal
           title="새 차트 만들기"

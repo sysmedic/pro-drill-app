@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom'; // 🟢 모달을 줌 영역 밖으로 빼내기 위해 추가
 import Icon from './Icon.jsx';
 import { IconButton } from './Button.jsx';
 import { cn } from './classNames.js';
@@ -103,7 +104,8 @@ export default function ModalShell({
     };
   }, [initialFocusSelector]);
 
-  return (
+  // 🟢 createPortal을 사용하여 모달 전체를 document.body에 직접 렌더링합니다.
+  return createPortal(
     <div
       className={cn(
         'fixed inset-0 flex justify-center bg-black/60 backdrop-blur-sm animate-fade-in',
@@ -138,6 +140,7 @@ export default function ModalShell({
         <div className={bodyClassName}>{children}</div>
         {footer && <div className={footerClassName}>{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
