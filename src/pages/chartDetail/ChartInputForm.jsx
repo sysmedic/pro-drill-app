@@ -30,10 +30,8 @@ const OFFSET_OPTIONS = [
   '9/16', '5/8', '11/16', '3/4', '13/16', '7/8', '15/16', '1'
 ];
 
-// ✨ 제조사 옵션 배열 추가
 const MANUFACTURER_OPTIONS = ['G & S', '로드필드', '텐스프레임', 'Turbo', 'Master'];
 
-// 🟢 1/32 기약분수 자동 생성 로직 (0 ~ 1인치 범위, 직접입력 삭제)
 const getGCD = (a, b) => (b === 0 ? a : getGCD(b, a % b));
 const getReducedFraction = (num, den) => {
   if (num === 0) return '0';
@@ -48,9 +46,7 @@ const getReducedFraction = (num, den) => {
   }
   return `${reducedNum}/${reducedDen}`;
 };
-// 0부터 32(1인치)까지 1/32 단위 배열 생성
 const PITCH_OPTIONS_32 = Array.from({ length: 33 }, (_, i) => getReducedFraction(i, 32));
-
 
 const parseFraction = (str) => {
   if (!str) return 0;
@@ -109,7 +105,7 @@ const toFraction64 = (num) => {
 const getBevelOptions = (holeSize) => {
   const baseNum = parseFraction(holeSize);
   if (!baseNum) return [];
-  const maxNum = 1.125; // 1 1/8
+  const maxNum = 1.125; 
   const options = [];
   let currentNum = baseNum + 1 / 64;
   while (Math.round(currentNum * 64) <= Math.round(maxNum * 64)) {
@@ -122,7 +118,7 @@ const getBevelOptions = (holeSize) => {
 const getDynamicOvalOptions = (holeSize, defaultOptions) => {
   const baseNum = parseFraction(holeSize);
   if (!baseNum) return defaultOptions;
-  const maxNum = 1.25; // 1 1/4
+  const maxNum = 1.25; 
   const options = [];
   let currentNum = baseNum;
   while (Math.round(currentNum * 64) <= Math.round(maxNum * 64)) {
@@ -188,7 +184,6 @@ function BevelField({ label, value, onChange, sizeOptions, depthOptions }) {
       <div className="flex flex-col w-full">
         <label className="text-xs font-bold text-slate-600 mb-1">{label}</label>
         <div className="relative flex items-center w-full border border-slate-300 rounded-md bg-white focus-within:ring-2 focus-within:ring-indigo-500 overflow-hidden h-10">
-          {/* 시각적 레이어 (가운데 정렬 및 드롭다운 아이콘) */}
           <div className="absolute inset-0 flex items-center pointer-events-none">
             <div className="flex-1 flex items-center justify-center px-1">
               <span className="text-[16px] sm:text-sm text-black font-semibold truncate">{size}</span>
@@ -200,7 +195,6 @@ function BevelField({ label, value, onChange, sizeOptions, depthOptions }) {
               <Icon name="chevronDown" className="text-slate-400 ml-0.5" size={14} />
             </div>
           </div>
-          {/* 상호작용 레이어 (투명한 실제 select) */}
           <select
             className="flex-1 w-1/2 h-full opacity-0 cursor-pointer appearance-none outline-none"
             value={size}
@@ -243,7 +237,7 @@ function BevelField({ label, value, onChange, sizeOptions, depthOptions }) {
   );
 }
 
-export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
+export default function ChartInputForm({ data = {}, customer = {}, historyData = [], onChange }) {
   const isThumbless = data?.isThumbless || false;
   const handedness = data?.handedness || 'right';
   const handCondition = data?.handCondition || {};
@@ -264,11 +258,45 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
   const [activeAccordion, setActiveAccordion] = useState(null);
   const toggleAccordion = (id) => setActiveAccordion(prev => prev === id ? null : id);
 
-  // 분수 키패드 상태 관리
   const [keypad, setKeypad] = useState({ isOpen: false, field: null, value: '', title: '', mode: 'fraction' });
+  
+  // 생성일(createdAt) 기준 마지막 차트 데이터를 정렬하여 인용 추적
+  const lastChart = useMemo(() => {
+    if (!historyData || historyData.length === 0) return null;
+    const sorted = [...historyData].sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return timeB - timeA;
+    });
+    return sorted[0];
+  }, [historyData]);
+
+  // 중지 피치 정밀도 기본 선택값 로직 (마지막 차트 기준 최적 승계)
+  const [pitchPrecision, setPitchPrecision] = useState(() => {
+    if (lastChart) {
+      const has32nd = (p) => p && [p.up, p.down, p.lat].some(v => v && String(v).includes('/32'));
+      if (has32nd(lastChart.midPitch) || has32nd(lastChart.ringPitch)) {
+        return '32';
+      }
+      return '16';
+    }
+    return '16';
+  });
+
+  // 🟢 [수정] 중지 라디오 상태(pitchPrecision)에 의해 중지, 약지, 엄지 피칭의 드롭다운이 일괄 통합 연동되도록 옵션 단일화
+  const filteredPitchOptions = useMemo(() => {
+    if (pitchPrecision === '32') return PITCH_OPTIONS_32;
+    return PITCH_OPTIONS_32.filter(opt => !opt.includes('/32'));
+  }, [pitchPrecision]);
+
   const openKeypad = (field, value, title, mode = 'fraction') => {
-    setKeypad({ isOpen: true, field, value, title, mode });
+    let initialValue = value;
+    if (!value && (field === 'spanLeft' || field === 'spanRight')) {
+      initialValue = field === 'spanLeft' ? spanRight : spanLeft;
+    }
+    setKeypad({ isOpen: true, field, value: initialValue, title, mode });
   };
+
   const handleKeypadConfirm = (newValue) => {
     if (keypad.field?.startsWith('thumbDetails.')) {
       const key = keypad.field.split('.')[1];
@@ -279,10 +307,8 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
   };
 
   const isLeft = handedness === 'left';
-  const firstLabel = isLeft ? "약지" : "중지";
-  const secondLabel = isLeft ? "중지" : "약지";
-  const firstPitch = isLeft ? ringPitch : midPitch;
-  const secondPitch = isLeft ? midPitch : ringPitch;
+  const firstLabel = "중지 (Middle)";
+  const secondLabel = "약지 (Ring)";
 
   const updateCondition = (key, val) => onChange({ ...data, handCondition: { ...handCondition, [key]: val } });
 
@@ -300,7 +326,6 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
     
     let updatedData = { ...data, midPitch: nextMid };
 
-    // ✨ 중지(Middle)를 먼저 입력할 때: 약지(Ring)가 비어있다면 자동 완성
     if (key === 'tipType' && val && !ringPitch.tipType) {
       updatedData.ringPitch = { ...ringPitch, tipType: val };
     }
@@ -325,7 +350,6 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
     
     let updatedData = { ...data, ringPitch: nextRing };
 
-    // ✨ 약지(Ring)를 먼저 입력할 때: 중지(Middle)가 비어있다면 자동 완성
     if (key === 'tipType' && val && !midPitch.tipType) {
       updatedData.midPitch = { ...midPitch, tipType: val };
     }
@@ -360,9 +384,6 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
     onChange({ ...data, thumbDetails: next });
   };
 
-  const updateFirst = isLeft ? updateRing : updateMid;
-  const updateSecond = isLeft ? updateMid : updateRing;
-
   const getHandCondSummary = (cond = {}) => {
     const p = [];
     if (cond.moisture) p.push(`습윤 ${cond.moisture}`);
@@ -379,15 +400,15 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
     if (pitch.lat) parts.push(`${pitch.latDir === 'left' ? 'L' : 'R'} ${pitch.lat}`);
     if (pitch.insertSize) parts.push(String(pitch.insertSize).split(' ')[0]);
     if (pitch.tipType) parts.push(pitch.tipType);
-    if (pitch.extraLine) parts.push(pitch.extraLine); // ✨ 제조사 요약 추가
+    if (pitch.extraLine) parts.push(pitch.extraLine); 
     if (pitch.holeCutSize) parts.push(`H/C ${pitch.holeCutSize}`);
     return parts.length > 0 ? parts.join(', ') : '';
   };
 
   const getSpanSummary = () => {
     const parts = [];
-    if (spanLeft) parts.push(`${firstLabel} ${spanLeft}`);
-    if (spanRight) parts.push(`${secondLabel} ${spanRight}`);
+    if (spanLeft) parts.push(`중지 ${spanLeft}`);
+    if (spanRight) parts.push(`약지 ${spanRight}`);
     if (spanType) parts.push(spanType);
     return parts.length > 0 ? parts.join(', ') : '';
   };
@@ -416,6 +437,45 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
       {children}
     </DisclosureSection>
   );
+
+  const renderMidTitleBar = (isOpen) => {
+    if (!isOpen) {
+      return <span className="font-bold">{firstLabel}</span>;
+    }
+
+    return (
+      <div className="flex items-center justify-between w-full pr-4 text-left">
+        <span className="font-bold">{firstLabel}</span>
+        <div 
+          className="flex items-center gap-4 bg-slate-100 p-1 rounded-md border border-slate-200"
+          onClick={(e) => e.stopPropagation()} 
+        >
+          <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer px-1.5 py-0.5 rounded">
+            <input 
+              type="radio" 
+              name="pitchPrecision" 
+              value="16" 
+              checked={pitchPrecision === '16'} 
+              onChange={() => setPitchPrecision('16')}
+              className="text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer" 
+            />
+            16분 단위
+          </label>
+          <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer px-1.5 py-0.5 rounded">
+            <input 
+              type="radio" 
+              name="pitchPrecision" 
+              value="32" 
+              checked={pitchPrecision === '32'} 
+              onChange={() => setPitchPrecision('32')}
+              className="text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer" 
+            />
+            32분 단위
+          </label>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="w-full flex flex-col gap-2.5 pb-6">
@@ -451,51 +511,73 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
         </div>
       ))}
 
-      {renderSection('first', firstLabel, getFingerSummary(firstPitch), (
+      <DisclosureSection 
+        density={FORM_DENSITY} 
+        id="first" 
+        isOpen={activeAccordion === 'first'} 
+        onToggle={() => toggleAccordion('first')} 
+        summary={getFingerSummary(midPitch)} 
+        title={renderMidTitleBar(activeAccordion === 'first')}
+      >
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={firstPitch.up} onChange={v => updateFirst('up', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Forward (▼)" value={firstPitch.down} onChange={v => updateFirst('down', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Lateral" value={firstPitch.lat} onChange={v => updateFirst('lat', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Lateral 방향" value={firstPitch.latDir} onChange={v => updateFirst('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
-          {/* ✨ 제조사 필드 추가 및 4열(sm:grid-cols-4) 그리드로 확장 */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={midPitch.up} onChange={v => updateMid('up', v)} options={filteredPitchOptions} /><ChartSelectField label="Forward (▼)" value={midPitch.down} onChange={v => updateMid('down', v)} options={filteredPitchOptions} /><ChartSelectField label="Lateral" value={midPitch.lat} onChange={v => updateMid('lat', v)} options={filteredPitchOptions} /><ChartSelectField label="Lateral 방향" value={midPitch.latDir} onChange={v => updateMid('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <ChartSelectField allowCustom label="인서트 사이즈" value={firstPitch.insertSize} onChange={v => updateFirst('insertSize', v)} options={FINGER_INSERT_OPTIONS} />
-            <ChartSelectField allowCustom label="팁 종류" value={firstPitch.tipType} onChange={v => updateFirst('tipType', v)} options={TIP_OPTIONS} />
-            <ChartSelectField allowCustom label="제조사" value={firstPitch.extraLine} onChange={v => updateFirst('extraLine', v)} options={MANUFACTURER_OPTIONS} />
-            <ChartSelectField allowCustom label="홀컷 사이즈" value={firstPitch.holeCutSize} onChange={v => updateFirst('holeCutSize', v)} options={FINGER_HOLE_CUT_OPTIONS} />
+            <ChartSelectField allowCustom label="인서트 사이즈" value={midPitch.insertSize} onChange={v => updateMid('insertSize', v)} options={FINGER_INSERT_OPTIONS} />
+            <ChartSelectField allowCustom label="팁 종류" value={midPitch.tipType} onChange={v => updateMid('tipType', v)} options={TIP_OPTIONS} />
+            <ChartSelectField allowCustom label="제조사" value={midPitch.extraLine} onChange={v => updateMid('extraLine', v)} options={MANUFACTURER_OPTIONS} />
+            <ChartSelectField allowCustom label="홀컷 사이즈" value={midPitch.holeCutSize} onChange={v => updateMid('holeCutSize', v)} options={FINGER_HOLE_CUT_OPTIONS} />
           </div>
         </>
-      ))}
+      </DisclosureSection>
 
-      {renderSection('second', secondLabel, getFingerSummary(secondPitch), (
+      <DisclosureSection 
+        density={FORM_DENSITY} 
+        id="second" 
+        isOpen={activeAccordion === 'second'} 
+        onToggle={() => toggleAccordion('second')} 
+        summary={getFingerSummary(ringPitch)} 
+        title={secondLabel}
+      >
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={secondPitch.up} onChange={v => updateSecond('up', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Forward (▼)" value={secondPitch.down} onChange={v => updateSecond('down', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Lateral" value={secondPitch.lat} onChange={v => updateSecond('lat', v)} options={PITCH_OPTIONS_32} /><ChartSelectField label="Lateral 방향" value={secondPitch.latDir} onChange={v => updateSecond('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
-          {/* ✨ 제조사 필드 추가 및 4열(sm:grid-cols-4) 그리드로 확장 */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={ringPitch.up} onChange={v => updateRing('up', v)} options={filteredPitchOptions} /><ChartSelectField label="Forward (▼)" value={ringPitch.down} onChange={v => updateRing('down', v)} options={filteredPitchOptions} /><ChartSelectField label="Lateral" value={ringPitch.lat} onChange={v => updateRing('lat', v)} options={filteredPitchOptions} /><ChartSelectField label="Lateral 방향" value={ringPitch.latDir} onChange={v => updateRing('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <ChartSelectField allowCustom label="인서트 사이즈" value={secondPitch.insertSize} onChange={v => updateSecond('insertSize', v)} options={FINGER_INSERT_OPTIONS} />
-            <ChartSelectField allowCustom label="팁 종류" value={secondPitch.tipType} onChange={v => updateSecond('tipType', v)} options={TIP_OPTIONS} />
-            <ChartSelectField allowCustom label="제조사" value={secondPitch.extraLine} onChange={v => updateSecond('extraLine', v)} options={MANUFACTURER_OPTIONS} />
-            <ChartSelectField allowCustom label="홀컷 사이즈" value={secondPitch.holeCutSize} onChange={v => updateSecond('holeCutSize', v)} options={FINGER_HOLE_CUT_OPTIONS} />
+            <ChartSelectField allowCustom label="인서트 사이즈" value={ringPitch.insertSize} onChange={v => updateRing('insertSize', v)} options={FINGER_INSERT_OPTIONS} />
+            <ChartSelectField allowCustom label="팁 종류" value={ringPitch.tipType} onChange={v => updateRing('tipType', v)} options={TIP_OPTIONS} />
+            <ChartSelectField allowCustom label="제조사" value={ringPitch.extraLine} onChange={v => updateRing('extraLine', v)} options={MANUFACTURER_OPTIONS} />
+            <ChartSelectField allowCustom label="홀컷 사이즈" value={ringPitch.holeCutSize} onChange={v => updateRing('holeCutSize', v)} options={FINGER_HOLE_CUT_OPTIONS} />
           </div>
         </>
-      ))}
+      </DisclosureSection>
 
-        {renderSection('span', 'Span', getSpanSummary(), (
-          <>
-          <div className="mb-2.5"><ChartSelectField label="Span 타입" value={spanType} onChange={v => onChange({ ...data, spanType: v })} options={SPAN_TYPE_OPTIONS} /></div>
-          <div className="grid grid-cols-2 gap-2.5">
-            <ChartKeypadField label={`${firstLabel} Span`} onOpen={() => openKeypad('spanLeft', spanLeft, `${firstLabel} Span`)} value={spanLeft} />
-            <ChartKeypadField label={`${secondLabel} Span`} onOpen={() => openKeypad('spanRight', spanRight, `${secondLabel} Span`)} value={spanRight} />
-          </div>
-          </>
-        ))}
+      {renderSection('span', 'Span', getSpanSummary(), (
+        <>
+        <div className="mb-2.5"><ChartSelectField label="Span 타입" value={spanType} onChange={v => onChange({ ...data, spanType: v })} options={SPAN_TYPE_OPTIONS} /></div>
+        <div className="grid grid-cols-2 gap-2.5">
+          <ChartKeypadField label="중지 Span" onOpen={() => openKeypad('spanLeft', spanLeft, "중지 Span", 'span')} value={spanLeft} />
+          <ChartKeypadField label="약지 Span" onOpen={() => openKeypad('spanRight', spanRight, "약지 Span", 'span')} value={spanRight} />
+        </div>
+        </>
+      ))}
 
       <div className={`grid transition-[grid-template-rows,opacity] duration-500 ease-in-out ${!isThumbless ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
         <div className="overflow-hidden min-h-0 flex flex-col gap-2.5">
-        {renderSection('thumb', 'Thumb', getThumbSummary(thumbPitch, thumbDetails, ovalAngle, thumbOffset), (
+        
+        {/* 🟢 [수정] 엄지 구역: 타이틀바의 라디오 그룹을 완전히 제거하고 순수 레이블 "Thumb" 명칭만 노출하도록 간소화 원복 */}
+        <DisclosureSection 
+          density={FORM_DENSITY} 
+          id="thumb" 
+          isOpen={activeAccordion === 'thumb'} 
+          onToggle={() => toggleAccordion('thumb')} 
+          summary={getThumbSummary(thumbPitch, thumbDetails, ovalAngle, thumbOffset)} 
+          title="Thumb"
+        >
           <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
-            <ChartSelectField label="Forward (▲)" value={thumbPitch.up} onChange={v => updateThumb('up', v)} options={PITCH_OPTIONS_32} />
-            <ChartSelectField label="Reverse (▼)" value={thumbPitch.down} onChange={v => updateThumb('down', v)} options={PITCH_OPTIONS_32} />
-            <ChartSelectField label="Left (◀)" value={thumbPitch.left} onChange={v => updateThumb('left', v)} options={PITCH_OPTIONS_32} />
-            <ChartSelectField label="Right (▶)" value={thumbPitch.right} onChange={v => updateThumb('right', v)} options={PITCH_OPTIONS_32} />
+            {/* 🟢 [수정] 엄지 피치값 옵션 배열들을 중지의 필터 결과물(filteredPitchOptions)과 직통 연동 */}
+            <ChartSelectField label="Forward (▲)" value={thumbPitch.up} onChange={v => updateThumb('up', v)} options={filteredPitchOptions} />
+            <ChartSelectField label="Reverse (▼)" value={thumbPitch.down} onChange={v => updateThumb('down', v)} options={filteredPitchOptions} />
+            <ChartSelectField label="Left (◀)" value={thumbPitch.left} onChange={v => updateThumb('left', v)} options={filteredPitchOptions} />
+            <ChartSelectField label="Right (▶)" value={thumbPitch.right} onChange={v => updateThumb('right', v)} options={filteredPitchOptions} />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
             <ChartSelectField label="Offset - Left" value={thumbOffset.left} onChange={v => updateThumbOffset('left', v)} options={OFFSET_OPTIONS} />
@@ -516,7 +598,7 @@ export default function ChartInputForm({ data = {}, customer = {}, onChange }) {
             <BevelField label="Bevel 3" value={thumbDetails.bevel3} onChange={v => updateThumbDetails('bevel3', v)} sizeOptions={bevelOptions} depthOptions={BEVEL_DEPTH_OPTIONS} />
           </div>
           </>
-        ))}
+        </DisclosureSection>
         </div>
       </div>
 

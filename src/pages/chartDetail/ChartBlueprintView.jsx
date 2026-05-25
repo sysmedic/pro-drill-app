@@ -39,7 +39,6 @@ const getDefaultThumbHoleCutSize = (slugType, gender) => {
   return '1 1/4';
 };
 
-// 🟢 [추가] 인서트 사이즈 내 괄호 (n호) 부분만 분리하여 투명도 플러그인을 적용하는 함수
 const renderInsertSize = (size) => {
   if (!size) return '';
   const str = String(size);
@@ -65,7 +64,7 @@ const SingleValueBox = ({ value, title, iconName, labelPosition = 'top' }) => {
     <div className="relative w-[80px] h-[36px] flex justify-center">
       {value && value !== '0' && labelPosition === 'top' && (
         <div className="absolute left-0 bottom-[100%] w-full flex flex-col items-center mb-1 whitespace-nowrap">
-          {iconName && <Icon name={iconName} className="text-black mb-0.5" size={14} strokeWidth={3} />}
+          {iconName && <Icon name="iconName" className="text-black mb-0.5" size={14} strokeWidth={3} />}
           <span className="text-[12px] font-bold text-black leading-tight">{title}</span>
         </div>
       )}
@@ -136,23 +135,23 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
   const spanRightPos = { x: (ringEdge.x + thumbEdgeR.x) / 2, y: (ringEdge.y + thumbEdgeR.y) / 2 };
   const activeCanvasHeight = isThumbless ? 320 : 640;
 
-  let thumblessSpanLeftDisplay = data?.spanLeft;
-  let thumblessSpanRightDisplay = data?.spanRight;
-  let showThumblessSpanLeft = !!data?.spanLeft;
-  let showThumblessSpanRight = !!data?.spanRight;
+  let thumblessDiffDisplay = '';
+  let thumblessDiffColor = 'text-black';
+  let showThumblessDiff = false;
 
   if (isThumbless && data?.spanLeft && data?.spanRight) {
-    const leftF = parseFraction(data.spanLeft);
-    const rightF = parseFraction(data.spanRight);
+    const leftF = parseFraction(data.spanLeft);   
+    const rightF = parseFraction(data.spanRight); 
     
     if (leftF > 0 && rightF > 0) {
-      const diffF = leftF - rightF;
+      const baseF = isLeft ? rightF : leftF;
+      const compareF = isLeft ? leftF : rightF;
+
+      const diffF = baseF - compareF;
       const diff32 = Math.round(Math.abs(diffF) * 32);
       
-      if (diff32 === 0) {
-        showThumblessSpanLeft = false;
-        showThumblessSpanRight = false;
-      } else {
+      if (diff32 > 0) {
+        showThumblessDiff = true;
         let n = diff32;
         let d = 32;
         const whole = Math.floor(n / d);
@@ -163,20 +162,20 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
           d /= 2;
         }
         
-        let diffStr = '+';
+        let fracStr = '';
         if (whole > 0) {
-          diffStr += whole;
-          if (n > 0) diffStr += ` ${n}/${d}`;
+          fracStr += whole;
+          if (n > 0) fracStr += ` ${n}/${d}`;
         } else if (n > 0) {
-          diffStr += `${n}/${d}`;
+          fracStr += `${n}/${d}`;
         }
         
-        if (leftF > rightF) {
-          thumblessSpanLeftDisplay = diffStr;
-          showThumblessSpanRight = false;
+        if (baseF > compareF) {
+          thumblessDiffDisplay = `+${fracStr}`;
+          thumblessDiffColor = 'text-black';
         } else {
-          thumblessSpanRightDisplay = diffStr;
-          showThumblessSpanLeft = false;
+          thumblessDiffDisplay = `-${fracStr}`;
+          thumblessDiffColor = 'text-red-500';
         }
       }
     }
@@ -206,7 +205,7 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
         </svg>
 
         {/* ========================================================= */}
-        {/* 🟢 첫 번째 손가락 (중지) */}
+        {/* 첫 번째 손가락 (우투: 중지 / 좌투: 약지) */}
         {/* ========================================================= */}
         <Abs x={layout.mid.x + 1} y={57}>
           <span className="text-[17px] font-bold text-black">{firstLabel}</span>
@@ -248,7 +247,6 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
             <div className="absolute top-[25%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center text-[15px] font-medium text-slate-600 whitespace-nowrap z-10">
               {firstPitch?.extraLine || ''}
             </div>
-            {/* 🔄 [수정] 기존 {firstPitch?.insertSize || ''} 를 renderInsertSize 함수로 래핑 */}
             <div className="absolute top-[50%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center text-[19px] leading-none tracking-tight font-semibold text-black whitespace-nowrap z-10">
               {renderInsertSize(firstPitch?.insertSize)}
             </div>
@@ -260,7 +258,7 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
 
 
         {/* ========================================================= */}
-        {/* 🔵 두 번째 손가락 (약지) */}
+        {/* 두 번째 손가락 (우투: 약지 / 좌투: 중지) */}
         {/* ========================================================= */}
         <Abs x={layout.ring.x - 1} y={57}>
           <span className="text-[17px] font-bold text-black">{secondLabel}</span>
@@ -302,7 +300,6 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
             <div className="absolute top-[25%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center text-[15px] font-medium text-slate-600 whitespace-nowrap z-10">
               {secondPitch?.extraLine || ''}
             </div>
-            {/* 🔄 [수정] 기존 {secondPitch?.insertSize || ''} 를 renderInsertSize 함수로 래핑 */}
             <div className="absolute top-[50%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center text-[19px] leading-none tracking-tight font-semibold text-black whitespace-nowrap z-10">
               {renderInsertSize(secondPitch?.insertSize)}
             </div>
@@ -324,10 +321,11 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
                 <Icon name="check" className="text-black" size={15} strokeWidth={3} />
               </div>
             </Abs>
-            <Abs x={spanLeftPos.x} y={spanLeftPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass}`}>{data?.spanLeft || ''}</div></Abs>
-            <Abs x={spanRightPos.x} y={spanRightPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass}`}>{data?.spanRight || ''}</div></Abs>
+            {/* 🟢 [버그 수정 완료] 기존 </Nav> 오타를 리액트 JSX 규격에 맞는 정밀 </Abs> 태그로 전면 교정 완료 */}
+            <Abs x={spanLeftPos.x} y={spanLeftPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass}`}>{isLeft ? data?.spanRight : data?.spanLeft || ''}</div></Abs>
+            <Abs x={spanRightPos.x} y={spanRightPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass}`}>{isLeft ? data?.spanLeft : data?.spanRight || ''}</div></Abs>
             
-            {/* 🔴 엄지 */}
+            {/* 엄지 구역 */}
             {thumbPitch?.up !== undefined && thumbPitch.up !== null && thumbPitch.up !== '' && (
               <Abs x={layout.thumb.x} y={375}>
                   <div className={`relative w-[80px] h-[36px] flex items-center justify-center ${commonBoxClass}`}>
@@ -364,7 +362,6 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
               </Abs>
             )}
 
-            {/* ✨ 덤타입(slugType) 자동 배치 (우측 피치가 있으면 좌측, 없으면 우측 배치) */}
             {thumbDetails?.slugType && (
               <Abs x={(thumbPitch?.right !== undefined && thumbPitch.right !== null && String(thumbPitch.right).trim() !== '') ? 152 : 388} y={layout.thumb.y}>
                 <div className={`relative w-[80px] h-[36px] flex items-center justify-center ${commonBoxClass}`}>
@@ -491,19 +488,13 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
           </>
         )}
 
-        {isThumbless && (
-          <>
-            {showThumblessSpanLeft && (
-              <Abs x={layout.mid.x} y={layout.mid.y + 100} z={30}>
-                <div className="w-[85px] h-[36px] flex items-center justify-center text-[16px] font-bold text-black">{thumblessSpanLeftDisplay}</div>
-              </Abs>
-            )}
-            {showThumblessSpanRight && (
-              <Abs x={layout.ring.x} y={layout.ring.y + 100} z={30}>
-                <div className="w-[85px] h-[36px] flex items-center justify-center text-[16px] font-bold text-black">{thumblessSpanRightDisplay}</div>
-              </Abs>
-            )}
-          </>
+        {/* 덤리스 상태 지정 좌표 X: 170, Y: 270 고정 렌더러 */}
+        {isThumbless && showThumblessDiff && (
+          <Abs x={170} y={270} z={30}>
+            <div className={`w-[85px] h-[36px] flex items-center justify-center text-[16px] font-bold ${thumblessDiffColor}`}>
+              {thumblessDiffDisplay}
+            </div>
+          </Abs>
         )}
         </div>
       </div>

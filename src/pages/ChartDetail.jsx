@@ -41,7 +41,7 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
   // 지연된 모달 오픈을 위한 상태
   const [delayedActiveMemoId, setDelayedActiveMemoId] = useState(null);
 
-  // 🟢 [추가] 불러오기 차단(Intercept) 및 대기를 위한 상태
+  // 불러오기 차단(Intercept) 및 대기를 위한 상태
   const [pendingLoadTarget, setPendingLoadTarget] = useState(null);
   const [showInterceptModal, setShowInterceptModal] = useState(false);
 
@@ -248,26 +248,24 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
     memoManager.isPlacingMemo
   ]);
 
-  // 🟢 [핵심] 불러오기 실행 브릿지 함수 (모달 닫기 처리 포함)
+  // 불러오기 실행 브릿지 함수 (모달 닫기 처리 포함)
   const executeLoad = useCallback((record) => {
     sessionManager.loadRecord(record);
     setIsTimelineModalOpen(false);
     historyManager.setShowHistoryModal(false);
   }, [sessionManager, historyManager]);
 
-  // 🟢 [핵심] 모든 불러오기 요청을 가로채서 미저장 상태 검사 (Intercept)
+  // 모든 불러오기 요청을 가로채서 미저장 상태 검사 (Intercept)
   const requestLoadRecord = useCallback((record) => {
     if (sessionManager.hasUnsavedChanges) {
-      // 미저장 상태라면 불러오기를 즉시 멈추고 타겟을 대기소에 저장 후 모달 오픈
       setPendingLoadTarget(record);
       setShowInterceptModal(true);
     } else {
-      // 안전하다면 즉시 불러오기
       executeLoad(record);
     }
   }, [sessionManager.hasUnsavedChanges, executeLoad]);
 
-  // 🟢 [수정] 타임라인 클릭 시 로직도 Intercept로 교체
+  // 타임라인 클릭 시 로직도 Intercept로 교체
   const handleLoadRecordFromTimeline = (chartId) => {
     const targetRecord = historyManager.history.find(r => r.id === chartId);
     if (targetRecord) {
@@ -293,6 +291,9 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
 
   const isNewChart = !sessionManager.sessionRecordId && !sessionManager.viewingRecord;
   const currentRecordId = sessionManager.viewingRecord?.id || sessionManager.sessionRecordId;
+
+  // 사전 권한 제어: 신규 차트 작성 중이면서 허용치를 채웠거나 초과했는지 판별
+  const isLimitExceeded = isNewChart && maxChartsAllowed !== Infinity && currentChartsCount >= maxChartsAllowed;
 
   return (
     <PageShell bottomPadding="pb-40">
@@ -320,6 +321,13 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
         onShowTimeline={() => setIsTimelineModalOpen(true)} 
         onConvertTemplate={() => setShowTemplateConfirm(true)}
       />
+
+      {/* 🟢 [수정] 박스 레이아웃 및 외곽선 구조로 변경완료 (Amber 색상 유지) */}
+      {isLimitExceeded && (
+        <div className="w-full mt-1.5 mb-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-center text-xs font-bold text-amber-700 animate-fade-in relative z-20 flex items-center justify-center gap-1.5 leading-snug shadow-sm transform-gpu [backface-visibility:hidden]">
+          <span>⚠️ 현재 {userTier?.toUpperCase()} 등급의 차트 생성 한도({maxChartsAllowed}개)에 도달하여 새 차트를 추가 저장할 수 없습니다.</span>
+        </div>
+      )}
 
       <div ref={exportManager.exportRef} className="flex flex-col w-full">
         {!sessionManager.isEditMode && (
@@ -439,7 +447,6 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
         setIsEditMode={sessionManager.setIsEditMode}
         setFeedback={setFeedback}
         
-        // 🟢 [수정] 모달 매니저 내부에서 차트를 클릭할 때도 Intercept 로직을 타도록 주입
         loadRecord={requestLoadRecord} 
         
         handleRenameRecord={historyManager.handleRenameRecord}
@@ -456,11 +463,9 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
         isOpen={isTimelineModalOpen}
         onClose={() => setIsTimelineModalOpen(false)}
         customer={customer}
-        // 🟢 [수정] 타임라인 모달에서 클릭할 때도 Intercept 로직을 타도록 주입
         onLoadRecord={handleLoadRecordFromTimeline}
       />
 
-      {/* 🟢 [추가] 완벽한 흐름 제어를 위한 3지선다 차단 모달 (Intercept Modal) */}
       {showInterceptModal && pendingLoadTarget && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
