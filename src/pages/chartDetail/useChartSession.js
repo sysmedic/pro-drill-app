@@ -73,10 +73,12 @@ export default function useChartSession({
   const loadedCustomerId = useRef(null);
   const historyLengthRef = useRef(0);
 
+  const customerId = customer?.id;
+
   useEffect(() => {
     if (loading) return;
 
-    if (loadedCustomerId.current === customer.id && (historyLengthRef.current > 0 || history.length === 0)) {
+    if (loadedCustomerId.current === customerId && (historyLengthRef.current > 0 || history.length === 0)) {
         return; 
     }
 
@@ -98,7 +100,8 @@ export default function useChartSession({
         setChartData({
           ...createDefaultChartData(profile),
           ...recordData.chartData,
-          maintenanceLogs: [], 
+          // 🟢 1. [변경] 마지막 차트의 관리 내용(정비 로그)을 초기화하지 않고 그대로 복사
+          maintenanceLogs: recordData.chartData.maintenanceLogs || [], 
           thumbOffset: recordData.chartData.thumbOffset || { left: '', right: '' },
           drillingGuide: recordData.chartData.drillingGuide || { ovalCut: '', ovalCorrection: '0', isDetailedMode: false },
           handedness: recordData.chartData.handedness ?? profile.handedness,
@@ -107,23 +110,38 @@ export default function useChartSession({
       }
       if (recordData.customerInfo) setCustomerInfo(recordData.customerInfo);
 
-      setBallName(''); setLayoutInfo(''); setIntent(''); setSaveDate('');
-      setViewingRecord(null); setSessionRecordId(null); setSessionRecordName('');
-      setIsEditMode(false); setHasWarnedModify(false);
+      // 🟢 1. [변경] 마지막 차트의 작업 내용(공 이름, 레이아웃, 의도)을 비우지 않고 그대로 로드
+      setBallName(recordData.ballName || ''); 
+      setLayoutInfo(recordData.layoutInfo || ''); 
+      setIntent(recordData.intent || ''); 
+      setSaveDate(latestRecord.timestamp || latestRecord.createdAt || '');
+      
+      // 🟢 2. [변경] 네비게이션 바에 정보 연동을 위해 마지막 차트의 세션 레코드 정보 주입
+      setViewingRecord({ 
+        id: latestRecord.id, 
+        name: latestRecord.name || '불러온 기록', 
+        timestamp: latestRecord.timestamp || latestRecord.createdAt 
+      }); 
+      setSessionRecordId(latestRecord.id); 
+      setSessionRecordName(latestRecord.name || '불러온 기록');
+      
+      setIsEditMode(false); 
+      setHasWarnedModify(false);
       
       setMemos(recordData.memos || []); 
 
-      loadedCustomerId.current = customer.id;
+      loadedCustomerId.current = customerId;
       historyLengthRef.current = history.length;
     } else {
       initializeNewCustomer();
-      loadedCustomerId.current = customer.id;
+      loadedCustomerId.current = customerId;
       historyLengthRef.current = 0;
     }
 
     setHasUnsavedChanges(false);
-  }, [customer, loading, history, setMemos, setSessionRecordId, setSessionRecordName, setViewingRecord]);
+  }, [customerId, loading, history, setMemos, setSessionRecordId, setSessionRecordName, setViewingRecord]);
 
+  // ... 이하 기존 동일 로직 수정 없음 (handleSave, loadRecord, convertToTemplate 등) ...
   useEffect(() => {
     if (hasUnsavedChanges && viewingRecord && !hasWarnedModify) {
       setShowModifyWarning(true);
@@ -164,8 +182,6 @@ export default function useChartSession({
       }
     }
 
-    // 🟢 수정된 부분: isNewSession일 때 배열을 강제로 초기화하던 덫을 제거했습니다.
-    // 이제 화면에 있는 데이터(chartData)와 메모(memos)가 온전히 저장됩니다.
     const finalChartData = { ...chartData };
     const finalMemos = [...memos];
     
@@ -183,8 +199,8 @@ export default function useChartSession({
     }
 
     try {
-      if (customer?.id) {
-        const customerRef = doc(db, 'customers', customer.id);
+      if (customerId) {
+        const customerRef = doc(db, 'customers', customerId);
         const logAmpm = nowObj.getHours() >= 12 ? '오후' : '오전';
         const logHour = nowObj.getHours() % 12 || 12;
         const customTimelineTimestamp = `${nowObj.getFullYear()}년 ${mm}월 ${dd}일 ${logAmpm} ${logHour}시`;

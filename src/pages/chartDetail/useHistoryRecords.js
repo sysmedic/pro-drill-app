@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { db, auth } from '../../firebase';
 import { 
   collection, doc, setDoc, deleteDoc, updateDoc, 
-  query, where, orderBy, limit, serverTimestamp, onSnapshot 
+  query, where, orderBy, serverTimestamp, onSnapshot,
+  getDoc, writeBatch, increment // 🟢 limit 임포트 구문 제거
 } from 'firebase/firestore';
 
 export default function useHistoryRecords(customer, { refreshChartCount, setFeedback, onRenameSuccess } = {}) {
@@ -23,12 +24,12 @@ export default function useHistoryRecords(customer, { refreshChartCount, setFeed
 
     setLoading(true);
 
+    // 🎯 [수정 완료] limit(20) 제약을 완전히 삭제하여 오래된 지공 기록까지 전수 검색이 가능합니다.
     const q = query(
       collection(db, 'drilling_charts'),
       where('userId', '==', auth.currentUser.uid),
       where('customerId', '==', customer.id),
-      orderBy('createdAt', 'desc'),
-      limit(20)
+      orderBy('createdAt', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -56,12 +57,26 @@ export default function useHistoryRecords(customer, { refreshChartCount, setFeed
     if (!auth.currentUser) return { ok: false };
 
     try {
-      await setDoc(doc(db, 'drilling_charts', record.id), {
+      const chartRef = doc(db, 'drilling_charts', record.id);
+      
+      const chartSnap = await getDoc(chartRef);
+      const isBrandNew = !chartSnap.exists();
+
+      const batch = writeBatch(db);
+      
+      batch.set(chartRef, {
         ...record,
         userId: auth.currentUser.uid,
         customerId: customer.id,
         createdAt: serverTimestamp(), 
       });
+
+      if (isBrandNew && auth.currentUser?.email) {
+        const userRef = doc(db, 'users', auth.currentUser.email);
+        batch.update(userRef, { chartCount: increment(1) });
+      }
+
+      await batch.commit();
       return { ok: true };
     } catch (error) {
       console.error("차트 기록 저장 실패:", error);
@@ -71,7 +86,17 @@ export default function useHistoryRecords(customer, { refreshChartCount, setFeed
 
   const handleDeleteRecord = useCallback(async (id) => {
     try {
-      await deleteDoc(doc(db, 'drilling_charts', id));
+      const batch = writeBatch(db);
+      
+      batch.delete(doc(db, 'drilling_charts', id));
+
+      if (auth.currentUser?.email) {
+        const userRef = doc(db, 'users', auth.currentUser.email);
+        batch.update(userRef, { chartCount: increment(-1) });
+      }
+
+      await batch.commit();
+
       if (refreshChartCount) await refreshChartCount();
       if (setFeedback) setFeedback({ message: '저장 기록을 삭제했습니다.', tone: 'success' });
       return { ok: true };

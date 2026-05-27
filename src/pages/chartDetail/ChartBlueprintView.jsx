@@ -184,7 +184,7 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
   const hasOvalData = !!thumbDetails?.ovalSize || !!data?.ovalAngle;
 
   return (
-    <Card className="overflow-hidden transition-[height] duration-500 animate-fade-in mt-2 mb-4 sm:mb-6" constrained data-testid="chart-blueprint-surface" elevation="md" gpu layer="content" style={{ height: `${activeCanvasHeight * scale}px` }}>
+    <Card className="overflow-hidden transition-[height] duration-500 animate-fade-in mt-2 mb-2 sm:mb-2" constrained data-testid="chart-blueprint-surface" elevation="md" gpu layer="content" style={{ height: `${activeCanvasHeight * scale}px` }}>
       <div
         ref={innerRef}
         className={`relative shrink-0 select-none ${isMemoActive ? 'touch-none' : 'touch-auto'} transform-gpu`}

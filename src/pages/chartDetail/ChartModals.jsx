@@ -66,14 +66,14 @@ export const MemoModal = ({ title, memo, onSave, onDelete }) => {
             </div>
           </div>
           
-          {/* 🟢 버튼 레이아웃 개편: 3분할 그리드로 정중앙 배치 구현 */}
+          {/* 버튼 레이아웃 개편: 3분할 그리드로 정중앙 배치 구현 */}
           <div className="grid grid-cols-3 items-center w-full mt-1">
             <div className="flex justify-start">
               <Button onClick={(e) => { e.stopPropagation(); onDelete(); }} size="sm" variant="danger">삭제</Button>
             </div>
             
             <div className="flex justify-center">
-              {/* 🟢 버튼명 변경 및 부드러운 인디고 강조 테마 적용 */}
+              {/* 버튼명 변경 및 부드러운 인디고 강조 테마 적용 */}
               {!isPinned && (
                 <Button 
                   onClick={handlePinAndClose} 
@@ -112,14 +112,13 @@ export const MemoModal = ({ title, memo, onSave, onDelete }) => {
 };
 
 export const HistoryModal = ({ history, onSelect, onClose, onDelete, onRename, maxChartsAllowed, currentChartsCount }) => {
+  // 🎯 [수정 완료] 원래의 (5/20개) 수량 표기 방식으로 회귀하고 흰색 투과도 작은 글씨 스타일(text-white/60 text-xs font-medium) 적용
   const modalTitle = (
     <span className="flex items-center gap-1">
       저장 기록
-      {maxChartsAllowed !== Infinity && (
-        <span className="text-sm font-medium text-slate-400">
-          ({currentChartsCount}/{maxChartsAllowed}개)
-        </span>
-      )}
+      <span className="text-white/60 text-xs font-medium ml-1">
+        ({currentChartsCount}{maxChartsAllowed !== Infinity ? `/${maxChartsAllowed}` : ''}개)
+      </span>
     </span>
   );
 

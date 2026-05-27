@@ -4,7 +4,8 @@ import { ConfirmModal, FeedbackToast } from '../components/ui/Dialogs.jsx';
 import { db, auth } from '../firebase'; 
 import { 
   collection, query, where, onSnapshot, addDoc, updateDoc, doc, 
-  serverTimestamp, orderBy, getDocs, writeBatch, increment // 🟢 increment 추가
+  serverTimestamp, orderBy, getDocs, writeBatch, increment,
+  limit 
 } from 'firebase/firestore';
 import CustomerHeader from './customerManager/CustomerHeader.jsx';
 import CustomerList from './customerManager/CustomerList.jsx';
@@ -28,6 +29,9 @@ export default function CustomerManagement({
   const [showSecondDeleteConfirm, setShowSecondDeleteConfirm] = useState(false);
   const [editId, setEditId] = useState(null);
   
+  // 유저 문서 기록 기반의 진짜 전체 고객 숫자를 담아둘 상태를 선언합니다.
+  const [totalCount, setTotalCount] = useState(0);
+
   const [customerData, setCustomerData] = useState({ 
     name: '', 
     club: '', 
@@ -38,39 +42,59 @@ export default function CustomerManagement({
     styleExtra: '' 
   });
 
+  // 비용 걱정 없는 단 1회성 유저 레코드 카운트 실시간 구독 파이프라인
   useEffect(() => {
-    if (!auth.currentUser) return;
-    const q = query(collection(db, 'customers'), where('userId', '==', auth.currentUser.uid), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setCustomers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    if (!auth.currentUser || !auth.currentUser.email) return;
+    
+    const userRef = doc(db, 'users', auth.currentUser.email);
+    const unsubscribe = onSnapshot(userRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setTotalCount(snapshot.data().customerCount || 0);
+      }
     });
     return () => unsubscribe();
   }, []);
 
-  // 🟢 [추가] 화면 진입 및 주요 모달 전환 시 강제 1배율 리셋 (타이머 꼬임 방지 적용)
+  // 리스트업 되지 않은 전체 고객까지 차별 없이 완벽하게 검색하도록 데이터 파이프라인 최적화 단일화
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    
+    // 복합 인덱스 오류를 원천 차단하고 전화번호/이름 중간 글자 검색까지 전체 기저 데이터 대상으로 유연하게 지원하기 위해 유저의 전체 목록을 가져옵니다.
+    const q = query(
+      collection(db, 'customers'), 
+      where('userId', '==', auth.currentUser.uid), 
+      orderBy('updatedAt', 'desc')
+    );
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setCustomers(snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data({ serverTimestamps: 'estimate' }) 
+      })));
+    }, (error) => {
+      console.error("고객 목록 로드 실패:", error);
+    });
+    return () => unsubscribe();
+  }, []); // searchQuery 의존성을 제거하여 무분별한 네트워크 재요청 및 인덱스 누락으로 인한 먹통 현상을 완벽 차단합니다.
+
+  // 화면 진입 및 주요 모달 전환 시 강제 1배율 리셋
   useEffect(() => {
     let timeoutId;
     const viewportMeta = document.querySelector('meta[name="viewport"]');
     const unlockedViewport = 'width=device-width, initial-scale=1.0'; 
     
     if (viewportMeta) {
-      // 강제로 1배율로 축소하여 실사이즈 복구
       viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
       
       timeoutId = setTimeout(() => {
-        // 브라우저 렌더링이 안정화될 즈음 다시 확대 가능하도록 원상복구
         viewportMeta.setAttribute('content', unlockedViewport); 
       }, 350);
     }
 
     return () => clearTimeout(timeoutId); 
-  }, [
-    showModal, 
-    deleteRequest, 
-    showSecondDeleteConfirm
-  ]); // 컴포넌트 마운트(진입) 시점과 모달 열림/닫힘 시 작동
+  }, [showModal, deleteRequest, showSecondDeleteConfirm]);
 
-  // 👥 고객 저장/수정 함수
+  // 고객 저장/수정 함수
   const handleSaveCustomer = async (e) => {
     e.preventDefault();
     if (!customerData.name.trim()) return setFeedback({ message: '이름을 입력하세요.', tone: 'warning' });
@@ -78,10 +102,13 @@ export default function CustomerManagement({
       if (editId) {
         await updateDoc(doc(db, 'customers', editId), { ...customerData, updatedAt: serverTimestamp() });
       } else {
-        // 신규 등록
-        await addDoc(collection(db, 'customers'), { ...customerData, userId: auth.currentUser.uid, createdAt: serverTimestamp() });
+        await addDoc(collection(db, 'customers'), { 
+          ...customerData, 
+          userId: auth.currentUser.uid, 
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp() 
+        });
         
-        // 🟢 [비용 최적화] 지공사 유저 문서의 고객 수(customerCount) +1 증가
         if (auth.currentUser?.email) {
           await updateDoc(doc(db, 'users', auth.currentUser.email), {
             customerCount: increment(1)
@@ -96,10 +123,16 @@ export default function CustomerManagement({
   const filtered = customers.filter(c => c.name.includes(searchQuery) || (c.phone && c.phone.includes(searchQuery)));
   if (sortType === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name));
 
+  // 🎯 [수정 완료] 초기 미검색 화면뿐만 아니라 검색 매칭 결과에 대해서도 무조건 최상위 30명만 슬라이싱 제어합니다.
+  // 이를 통해 헤비 유저가 흔한 글자나 공백을 쳐서 수백~수천 명이 동시 매칭되더라도 기기 렌더링 부하(DOM Stress)로 인한 렉을 완벽 차단합니다.
+  const displayedCustomers = filtered.slice(0, 30);
+
   return (
     <PageShell bottomPadding="pb-24">
       <CustomerHeader
-        customerCount={customers.length}
+        totalCount={totalCount}
+        // 헤더 내부의 카운트 표기도 현재 필터링되어 화면에 매칭된 실제 고객 숫자로 실시간 정밀 연동합니다.
+        currentCount={displayedCustomers.length}
         onAdd={() => { 
           setEditId(null); 
           setCustomerData({ name: '', club: '', phone: '', gender: '', hand: '', style: '', styleExtra: '' }); 
@@ -111,7 +144,8 @@ export default function CustomerManagement({
         isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} onLogout={onLogout}
         onNfcScan={onNfcScan}
       />
-      <CustomerList customers={filtered} onDelete={(e, c) => { e.stopPropagation(); setDeleteRequest(c); }} onEdit={(e, c) => { e.stopPropagation(); setEditId(c.id); setCustomerData(c); setShowModal(true); }} onSelect={onSelectCustomer} />
+      {/* 리스트 뷰어에도 전체가 아닌 조건부 필터링이 완료된 최적화 데이터 명단(displayedCustomers)을 바인딩합니다. */}
+      <CustomerList customers={displayedCustomers} onDelete={(e, c) => { e.stopPropagation(); setDeleteRequest(c); }} onEdit={(e, c) => { e.stopPropagation(); setEditId(c.id); setCustomerData(c); setShowModal(true); }} onSelect={onSelectCustomer} />
       
       {showModal && (
         <CustomerFormModal customerData={customerData} editId={editId} onChange={setCustomerData} onClose={() => setShowModal(false)} onSubmit={handleSaveCustomer} />
@@ -123,58 +157,41 @@ export default function CustomerManagement({
           confirmLabel="삭제"
           danger={true}
           message={`${deleteRequest.name}님을 삭제할까요?`}
-          onCancel={() => {
-            setDeleteRequest(null);
-            setShowSecondDeleteConfirm(false);
-          }}
+          onCancel={() => { setDeleteRequest(null); setShowSecondDeleteConfirm(false); }}
           onConfirm={() => setShowSecondDeleteConfirm(true)}
           title="고객 삭제 확인"
           titleId="first-delete-confirm-title"
         />
       )}
 
-      {/* 2차 삭제 확인 모달 (연쇄 삭제 반영) */}
+      {/* 2차 삭제 확인 모달 */}
       {deleteRequest && showSecondDeleteConfirm && (
         <ConfirmModal
           confirmLabel="영구 삭제"
           danger={true}
           message={`정말로 ${deleteRequest.name}님을 영구 삭제하시겠습니까?\n이 고객과 연결된 모든 지공 차트도 함께 삭제됩니다.`}
-          onCancel={() => {
-            setDeleteRequest(null);
-            setShowSecondDeleteConfirm(false);
-          }}
+          onCancel={() => { setDeleteRequest(null); setShowSecondDeleteConfirm(false); }}
           onConfirm={async () => {
             try {
               const batch = writeBatch(db);
-              
-              // 삭제될 고객의 차트 전조사
               const chartsRef = collection(db, 'drilling_charts');
               const q = query(chartsRef, where('customerId', '==', deleteRequest.id));
               const chartSnapshots = await getDocs(q);
-              
-              // 📊 함께 삭제되는 차트 총 개수 확보
               const deletedChartsCount = chartSnapshots.size;
 
-              chartSnapshots.forEach((chartDoc) => {
-                batch.delete(chartDoc.ref);
-              });
-
-              // 고객 문서 삭제 일괄 등록
+              chartSnapshots.forEach((chartDoc) => { batch.delete(chartDoc.ref); });
               const customerRef = doc(db, 'customers', deleteRequest.id);
               batch.delete(customerRef);
 
-              // 🟢 [비용 최적화] 삭제 묶음(Batch)에 유저 카운터 차감 연산도 함께 포함하여 완벽한 동기화
               if (auth.currentUser?.email) {
                 const userRef = doc(db, 'users', auth.currentUser.email);
                 batch.update(userRef, {
                   customerCount: increment(-1),
-                  chartCount: increment(-deletedChartsCount) // 🚀 연쇄 삭제되는 차트 개수만큼 정밀 차감!
+                  chartCount: increment(-deletedChartsCount)
                 });
               }
 
-              // 원자적(All or Nothing) 실행
               await batch.commit();
-
               setDeleteRequest(null);
               setShowSecondDeleteConfirm(false);
               setFeedback({ message: '고객 정보와 관련 차트가 모두 삭제되었습니다.', tone: 'success' });

@@ -34,10 +34,20 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isTaskOpen, setIsTaskOpen] = useState(true);
   
-  // 신규 모달 상태 관리
+  // 新규 모달 상태 관리
   const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false);
   const [showTemplateConfirm, setShowTemplateConfirm] = useState(false);
   
+  // 새 차트 첫 저장 시 이름 지정을 위한 모달 및 입력창 상태 선언
+  const [showNewChartNameModal, setShowNewChartNameModal] = useState(false);
+  const [newChartNameInput, setNewChartNameInput] = useState('');
+  
+  // 퇴장 모달에서 저장 클릭 시, 명칭 작성 후 순차 퇴장을 처리할 수 있도록 예약 플래그 상태 추가
+  const [isExitingAfterSave, setIsExitingAfterSave] = useState(false);
+
+  // 비동기 상태 갱신이 DOM 트리에 완결되었음을 감지하고 세션을 격발할 동기화 대기용 상태
+  const [isReadyToSave, setIsReadyToSave] = useState(false);
+
   // 지연된 모달 오픈을 위한 상태
   const [delayedActiveMemoId, setDelayedActiveMemoId] = useState(null);
 
@@ -56,6 +66,16 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
   const pullStartY = useRef(null);
   const setViewingRecordRef = useRef(null);
   const setHasUnsavedChangesRef = useRef(null);
+
+  // 연속 신규 저장 시 비동기 훅의 수렴 상태를 대조 판별하기 위한 동적 기준선 명칭 백업 Ref
+  const expectedBallNameRef = useRef('');
+
+  // 메모 버튼 클릭 시 경고창 순서 제어를 위한 독립적 제어 플래그 Refs
+  const memoPendingRef = useRef(false);
+  const isCancellingRef = useRef(false);
+  
+  // 내부 훅의 연속적 모달 중복 트리거를 무력화하기 위한 인터셉트 플래그 Ref
+  const memoWarningApprovedRef = useRef(false);
 
   // 훅 초기화 및 연결
   const historyManager = useHistoryRecords(customer, {
@@ -155,25 +175,55 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
   };
   setHasUnsavedChangesRef.current = sessionManager.setHasUnsavedChanges;
 
-  const handleSave = useCallback(async (...args) => {
-    const isNewChart = !sessionManager.sessionRecordId && !sessionManager.viewingRecord;
-    await sessionManager.handleSave(...args);
-    
-    if (isNewChart && auth.currentUser?.email) {
-      try {
-        await updateDoc(doc(db, 'users', auth.currentUser.email), { chartCount: increment(1) });
-      } catch (e) { console.error("차트 카운트 증가 실패:", e); }
+  const isNewChart = !sessionManager.sessionRecordId && !sessionManager.viewingRecord;
+
+  // 퇴장 모달에서의 저장 요청 여부(isExitConfirmSave)를 정확히 판별하여 저장 양식 모달을 유기적으로 인터셉트 연동
+  const handleSave = useCallback(async (isAutoSave = false) => {
+    const isExitConfirmSave = showExitConfirm && isAutoSave === true;
+
+    if (isNewChart && !showNewChartNameModal && (isAutoSave !== true || isExitConfirmSave)) {
+      // 🎯 [수정 완료] 기존 이름 뒤에 붙어있던 공백+날짜 및 언더바+날짜 접미사 패턴을 정규식으로 완벽히 제거하여 깨끗한 순수 이름만 인풋창에 제안합니다.
+      const defaultName = (sessionManager.ballName || '').replace(/[_\s]\d{6}$/, '').trim();
+      setNewChartNameInput(defaultName);
+      setShowNewChartNameModal(true);
+      
+      if (isExitConfirmSave) {
+        setIsExitingAfterSave(true);
+        setShowExitConfirm(false); 
+      }
+      return false; 
     }
+
+    // 백그라운드 탭 가려짐으로 인한 순수 자동저장 시 기저 엔진 규칙을 저해하지 않도록 정합 가이드 처리
+    if (isNewChart && isAutoSave === true && !isExitConfirmSave && !sessionManager.ballName?.trim()) {
+      if (sessionManager.setBallName) {
+        sessionManager.setBallName('새 지공차트');
+      }
+    }
+
+    await sessionManager.handleSave();
     return true; 
-  }, [sessionManager.handleSave, sessionManager.sessionRecordId, sessionManager.viewingRecord]);
+  }, [isNewChart, showNewChartNameModal, sessionManager, showExitConfirm]);
+
+  // 대기 플래그가 켜졌고, 커스텀 훅의 내부 ballName 상태가 입력 통제된 이름과 완벽히 동기화 수렴한 타이밍을 검증 락킹하여 순차 실행합니다.
+  useEffect(() => {
+    if (isReadyToSave && sessionManager.ballName === expectedBallNameRef.current) {
+      setIsReadyToSave(false);
+      const commitSyncSave = async () => {
+        await sessionManager.handleSave();
+        if (isExitingAfterSave) {
+          setIsExitingAfterSave(false);
+          onBack();
+        }
+      };
+      commitSyncSave();
+    }
+  }, [isReadyToSave, sessionManager.ballName, sessionManager.handleSave, isExitingAfterSave, onBack]);
 
   const handleDeleteRecord = useCallback(async (...args) => {
     try {
       await historyManager.handleDeleteRecord(...args);
-      if (auth.currentUser?.email) {
-        await updateDoc(doc(db, 'users', auth.currentUser.email), { chartCount: increment(-1) });
-      }
-    } catch (e) { console.error("차트 카운트 차감 실패:", e); }
+    } catch (e) { console.error("차트 삭제 실패:", e); }
   }, [historyManager.handleDeleteRecord]);
 
   useEffect(() => {
@@ -184,7 +234,37 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [handleSave]);
 
-  // 메모 클릭 시 줌 강제 리셋 ➔ 스크롤 센터링 ➔ 모달 오픈 (타이머 꼬임 방지 적용)
+  // 경고창 승인 또는 취소 완료 후 후속 제어 이펙트
+  useEffect(() => {
+    if (!sessionManager.showModifyWarning) {
+      if (memoPendingRef.current) {
+        memoPendingRef.current = false;
+        if (!isCancellingRef.current) {
+          memoWarningApprovedRef.current = true;
+          if (sessionManager.setHasUnsavedChanges) {
+            sessionManager.setHasUnsavedChanges(true); 
+          }
+          memoManager.setIsPlacingMemo(true);
+        }
+      }
+      isCancellingRef.current = false;
+    }
+  }, [sessionManager.showModifyWarning, memoManager, sessionManager]);
+
+  // 내부 훅이 setHasUnsavedChanges(true)에 반응하여 두 번째 모달을 연쇄 트리거할 때, 이를 감지해 백그라운드에서 즉시 지우는 이펙트
+  useEffect(() => {
+    if (sessionManager.showModifyWarning && memoWarningApprovedRef.current) {
+      sessionManager.setShowModifyWarning(false);
+    }
+  }, [sessionManager.showModifyWarning, sessionManager]);
+
+  // 메모 배치 상태가 해제되면 차단 플래그 초기화
+  useEffect(() => {
+    if (!memoManager.isPlacingMemo) {
+      memoWarningApprovedRef.current = false;
+    }
+  }, [memoManager.isPlacingMemo]);
+
   useEffect(() => {
     let timeoutId;
 
@@ -222,7 +302,6 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
     return () => clearTimeout(timeoutId); 
   }, [memoManager.activeMemoId, memoManager.activeMemo]);
 
-  // 창 전환/이동 시 강제 1배율 리셋 (타이머 꼬임 방지 적용)
   useEffect(() => {
     let timeoutId;
     const viewportMeta = document.querySelector('meta[name="viewport"]');
@@ -248,16 +327,14 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
     memoManager.isPlacingMemo
   ]);
 
-  // 불러오기 실행 브릿지 함수 (모달 닫기 처리 포함)
   const executeLoad = useCallback((record) => {
     sessionManager.loadRecord(record);
     setIsTimelineModalOpen(false);
     historyManager.setShowHistoryModal(false);
   }, [sessionManager, historyManager]);
 
-  // 모든 불러오기 요청을 가로채서 미저장 상태 검사 (Intercept)
   const requestLoadRecord = useCallback((record) => {
-    if (sessionManager.hasUnsavedChanges) {
+    if (sessionManager.hasUnsavedChanges && !isCancellingRef.current) {
       setPendingLoadTarget(record);
       setShowInterceptModal(true);
     } else {
@@ -265,7 +342,6 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
     }
   }, [sessionManager.hasUnsavedChanges, executeLoad]);
 
-  // 타임라인 클릭 시 로직도 Intercept로 교체
   const handleLoadRecordFromTimeline = (chartId) => {
     const targetRecord = historyManager.history.find(r => r.id === chartId);
     if (targetRecord) {
@@ -289,10 +365,8 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
     );
   }
 
-  const isNewChart = !sessionManager.sessionRecordId && !sessionManager.viewingRecord;
   const currentRecordId = sessionManager.viewingRecord?.id || sessionManager.sessionRecordId;
 
-  // 사전 권한 제어: 신규 차트 작성 중이면서 허용치를 채웠거나 초과했는지 판별
   const isLimitExceeded = isNewChart && maxChartsAllowed !== Infinity && currentChartsCount >= maxChartsAllowed;
 
   return (
@@ -310,19 +384,31 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
 
       <ChartTopBar
         isEditMode={sessionManager.isEditMode}
+        isPlacingMemo={memoManager.isPlacingMemo}
         utilityState={utilityState}
         viewingRecord={sessionManager.viewingRecord}
         userTier={userTier} 
-        onStartMemo={() => memoManager.setIsPlacingMemo(true)}
+        onStartMemo={() => { 
+          if (!sessionManager.isEditMode) {
+            if (memoManager.isPlacingMemo || sessionManager.hasUnsavedChanges || !sessionManager.viewingRecord) {
+              memoManager.setIsPlacingMemo(!memoManager.isPlacingMemo);
+            } else {
+              memoPendingRef.current = true;
+              sessionManager.setShowModifyWarning(true);
+            }
+          }
+        }}
         onBack={handleBackExit} 
         onSave={handleSave}
         onToggleEditMode={() => sessionManager.setIsEditMode(!sessionManager.isEditMode)}
         onToggleUtility={() => setUtilityState(utilityState === 'expanded' ? 'collapsed' : 'expanded')}
         onShowTimeline={() => setIsTimelineModalOpen(true)} 
         onConvertTemplate={() => setShowTemplateConfirm(true)}
+        // 🟢 추가: 새 차트 저장 시 배너 즉시 연동을 위한 Props 추가
+        sessionRecordId={sessionManager.sessionRecordId}
+        ballName={sessionManager.ballName}
       />
 
-      {/* 🟢 [수정] 박스 레이아웃 및 외곽선 구조로 변경완료 (Amber 색상 유지) */}
       {isLimitExceeded && (
         <div className="w-full mt-1.5 mb-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-center text-xs font-bold text-amber-700 animate-fade-in relative z-20 flex items-center justify-center gap-1.5 leading-snug shadow-sm transform-gpu [backface-visibility:hidden]">
           <span>⚠️ 현재 {userTier?.toUpperCase()} 등급의 차트 생성 한도({maxChartsAllowed}개)에 도달하여 새 차트를 추가 저장할 수 없습니다.</span>
@@ -347,8 +433,6 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
         {sessionManager.isEditMode ? (
           <Card className="w-full p-2 pb-6 sm:p-6 sm:pb-8 mt-1 sm:mt-1.5 mb-4 sm:mb-6 relative z-40 overflow-hidden animate-fade-in transform-gpu [backface-visibility:hidden]" data-testid="chart-edit-surface">
             <div ref={formRef} className="relative w-full h-full">
-              {memoManager.renderMemoOverlay('form', formRef)}
-              {memoManager.renderMemos('form', formRef)}
               <ChartInputForm customer={customer} data={sessionManager.chartData} onChange={sessionManager.handleChartDataChange} />
             </div>
           </Card>
@@ -412,7 +496,7 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
         historyConfirm={historyManager.historyConfirm}
         renameRequest={historyManager.renameRequest}
         deleteRequest={historyManager.deleteRequest}
-        showModifyWarning={sessionManager.showModifyWarning}
+        showModifyWarning={sessionManager.showModifyWarning && !memoWarningApprovedRef.current}
         showExitConfirm={showExitConfirm}
         sharePreview={exportManager.sharePreview}
         showDrillingGuide={showDrillingGuide}
@@ -447,7 +531,10 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
         setIsEditMode={sessionManager.setIsEditMode}
         setFeedback={setFeedback}
         
-        loadRecord={requestLoadRecord} 
+        loadRecord={(record) => {
+          isCancellingRef.current = true;
+          requestLoadRecord(record);
+        }} 
         
         handleRenameRecord={historyManager.handleRenameRecord}
         handleDeleteRecord={handleDeleteRecord}
@@ -465,6 +552,73 @@ export default function ChartDetail({ customer, onBack, maxChartsAllowed, curren
         customer={customer}
         onLoadRecord={handleLoadRecordFromTimeline}
       />
+
+      {/* 타이핑한 텍스트와 비활성 날짜를 결합한 뒤, 동기화 플래그(isReadyToSave)를 세우는 안전 가교형 폼 구조 개편 */}
+      {showNewChartNameModal && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              const trimmedName = newChartNameInput.trim() || '새 지공차트';
+
+              // 🎯 [중복 저장 버그 원천 해결] 이 패널에서는 명칭에 날짜를 인위적으로 합성해 붙이지 않고 순수 입력 텍스트만 전송합니다.
+              // 날짜 마감 결합은 현재 앱 내부의 기저 모듈(useChartSession의 handleSave)이 알아서 안전하게 1회만 붙이도록 자율 위임 처리합니다.
+              expectedBallNameRef.current = trimmedName; 
+              if (sessionManager.setBallName) {
+                sessionManager.setBallName(trimmedName);
+              }
+              setShowNewChartNameModal(false);
+              setIsReadyToSave(true); 
+            }}
+            className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl"
+          >
+            <div className="p-6">
+              <h3 className="text-lg font-black text-slate-800 mb-1.5">새 차트 저장 안내</h3>
+              <p className="text-xs text-slate-500 font-semibold mb-4 leading-normal">
+                새로 작성된 차트의 이름을 확인 및 수정해 주세요.
+              </p>
+              <div className="flex items-center w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
+                <input
+                  type="text"
+                  value={newChartNameInput}
+                  onChange={(e) => setNewChartNameInput(e.target.value)}
+                  className="flex-1 bg-transparent border-0 outline-none text-sm font-bold text-slate-800 placeholder-slate-400 focus:ring-0 p-0"
+                  placeholder="공 이름 입력 (예: 코드블랙)"
+                  autoFocus
+                />
+                {/* 🎯 기저 엔진의 실제 표기 서식 규격(공백 후 날짜 수렴)에 부합하도록 노출용 프리뷰도 공백 서식(&nbsp;)으로 일원화 싱크를 맞췄습니다 */}
+                <span className="text-sm font-bold text-slate-400/60 select-none pl-1 pointer-events-none unselectable">
+                  &nbsp;{(() => {
+                    const now = new Date();
+                    const yy = String(now.getFullYear()).slice(-2);
+                    const mm = String(now.getMonth() + 1).padStart(2, '0');
+                    const dd = String(now.getDate()).padStart(2, '0');
+                    return `${yy}${mm}${dd}`;
+                  })()}
+                </span>
+              </div>
+            </div>
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-2">
+              <button 
+                type="button"
+                className="flex-1 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold text-sm active:scale-95 transition-all"
+                onClick={() => {
+                  setShowNewChartNameModal(false);
+                  setIsExitingAfterSave(false);
+                }}
+              >
+                취소
+              </button>
+              <button 
+                type="submit"
+                className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm active:scale-95 transition-all"
+              >
+                저장 / 확인
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {showInterceptModal && pendingLoadTarget && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">

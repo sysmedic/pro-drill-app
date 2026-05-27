@@ -22,7 +22,6 @@ export default function useMemoOverlay({ onDirty }) {
   const dragId = useRef(null); 
   const dragMoved = useRef(false);
   const dragStartPos = useRef({ x: 0, y: 0, memoX: 0, memoY: 0 });
-  // 🟢 [핵심 추가] 드래그를 시작할 때 누른 곳이 손잡이인지, 텍스트인지 기억해두는 변수
   const dragTargetType = useRef(null);
 
   const handleMemoPlace = useCallback((event, section, ref) => {
@@ -55,10 +54,14 @@ export default function useMemoOverlay({ onDirty }) {
       .filter(memo => memo.section === section || (!memo.section && section === 'chart'))
       .map(memo => {
         const isPinned = memo.isPinned;
+        const isDragging = draggingMemoId === memo.id; // 🟢 드레그 진행 여부 판별 변수
         
         const translateClass = isPinned ? '' : '-translate-x-1/2 -translate-y-1/2';
-        const scaleClass = isPinned ? '' : (draggingMemoId === memo.id && dragMoved.current ? 'scale-110' : 'hover:scale-105');
-        const cursorClass = draggingMemoId === memo.id && dragMoved.current ? 'cursor-grabbing' : 'cursor-grab';
+        
+        // 🎯 [수정 완료] 드레그 활성화 중에는 transition 애니메이션을 꺼야 고무줄 지연 없이 부드럽게 마우스를 밀착 추적합니다.
+        const transitionClass = isDragging ? 'transition-none' : 'transition-transform duration-200';
+        const scaleClass = isPinned ? '' : (isDragging && dragMoved.current ? 'scale-110' : 'hover:scale-105');
+        const cursorClass = isDragging && dragMoved.current ? 'cursor-grabbing' : 'cursor-grab';
 
         return (
           <div
@@ -78,7 +81,6 @@ export default function useMemoOverlay({ onDirty }) {
               dragId.current = memo.id; 
               dragMoved.current = false;
               dragStartPos.current = { x: event.clientX, y: event.clientY, memoX: memo.x, memoY: memo.y };
-              // 🟢 클릭 시 누른 부위가 어디인지 정확히 기억해둡니다.
               dragTargetType.current = isHandle ? 'handle' : (isText ? 'text' : null);
               setDraggingMemoId(memo.id);
             }}
@@ -91,7 +93,6 @@ export default function useMemoOverlay({ onDirty }) {
               );
               
               if (distance > 10) {
-                // 🟢 실시간 타겟 검사 대신, 아까 누를 때 '손잡이'를 눌렀었는지만 검사합니다. (에러 원인 완벽 해결)
                 if (isPinned && dragTargetType.current !== 'handle') return;
 
                 dragMoved.current = true;
@@ -118,7 +119,6 @@ export default function useMemoOverlay({ onDirty }) {
                 onDirty();
               } else if (!isPlacingMemo) {
                 if (isPinned) {
-                  // 🟢 모달을 띄울 때도 캡처 꼬임 방지를 위해 저장해둔 기억(dragTargetType)을 사용합니다.
                   if (dragTargetType.current === 'text') {
                     setActiveMemoId(memo.id);
                   }
@@ -129,7 +129,7 @@ export default function useMemoOverlay({ onDirty }) {
 
               dragId.current = null;
               setDraggingMemoId(null);
-              dragTargetType.current = null; // 초기화
+              dragTargetType.current = null; 
             }}
             onPointerCancel={(event) => {
               if (dragId.current !== memo.id) return;
@@ -140,8 +140,9 @@ export default function useMemoOverlay({ onDirty }) {
               dragTargetType.current = null;
             }}
             onClick={(e) => e.stopPropagation()}
-            className={`absolute z-[60] transition-transform ${translateClass} ${scaleClass} ${isPinned ? '' : cursorClass}`}
-            style={{ left: `${memo.x}%`, top: `${memo.y}%`, touchAction: 'pinch-zoom' }}
+            className={`absolute z-[60] ${transitionClass} ${translateClass} ${scaleClass} ${isPinned ? '' : cursorClass}`}
+            // 🎯 [수정 완료] 모바일 스크롤 간섭 및 좌표 이탈 꼬임 현상 완벽 방지를 위해 touchAction을 'none'으로 안전화 제어
+            style={{ left: `${memo.x}%`, top: `${memo.y}%`, touchAction: 'none' }}
           >
             
             {isPinned ? (

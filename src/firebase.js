@@ -1,7 +1,13 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
+// 🟢 [수정 완료] 다중 탭 관리를 위한 persistentMultipleTabManager 임포트 추가
+import { 
+  initializeFirestore, 
+  persistentLocalCache, 
+  persistentMultipleTabManager, 
+  getFirestore 
+} from "firebase/firestore"; 
 import { getFunctions } from 'firebase/functions';
 
 const firebaseConfig = {
@@ -14,28 +20,23 @@ const firebaseConfig = {
   measurementId: "G-4411F1SB00"
 };
 
-// 중복 초기화 방지
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+// 앱 초기화가 이루어지기 전, '진짜 최초 로드 상태(HMR이 아닌 상태)'인지 판별하여 기억합니다.
+const isFirstLoad = getApps().length === 0;
+
+const app = isFirstLoad ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
-export const db = getFirestore(app);
+
+// 🟢 [수정 완료] 최신 규격(localCache) 내부에 다중 탭 관리자(tabManager) 옵션을 결합하여 주입합니다.
+// 최초 로드 시에만 이 고성능 캐시 세팅이 인스턴스에 고정 할당됩니다.
+export const db = isFirstLoad 
+  ? initializeFirestore(app, { 
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+      }) 
+    }) 
+  : getFirestore(app);
+
 export const functions = getFunctions(app);
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
-
-// 🟢 [Vite 핫리로딩 크래시 방지] 최초 1회만 오프라인 지속성을 켜도록 전역 플래그 설정
-if (typeof window !== 'undefined' && !window.__firestore_persistence_initialized__) {
-  window.__firestore_persistence_initialized__ = true; // 플래그 선언
-  
-  try {
-    enableIndexedDbPersistence(db).catch((err) => {
-      if (err.code === 'failed-precondition') {
-        console.log("⚠️ 여러 탭이 열려 있어 오프라인 모드를 켤 수 없습니다.");
-      } else if (err.code === 'unimplemented') {
-        console.log("⚠️ 현재 브라우저가 오프라인 모드를 지원하지 않습니다.");
-      }
-    });
-  } catch (err) {
-    console.warn("⚠️ 오프라인 모드가 이미 활성화되어 건너뜁니다 (HMR).");
-  }
-}

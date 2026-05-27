@@ -36,7 +36,8 @@ export default function BowlerSpecCard({
   };
 
   return (
-    <Card ref={innerRef} className="mt-1 sm:mt-1.5 mb-4 sm:mb-6" constrained elevation="md" gpu layer="content" padding="md">
+    /* 🟢 수정 위치: 음수 마진(-mt-3)을 주어 fixed 상태로 둥둥 떠 있는 네비게이션 바 밑으로 카드를 바짝 끌어올림 */
+    <Card ref={innerRef} className="-mt-1 sm:-mt-2.5 mb-0" constrained elevation="md" gpu layer="content" padding="md">
       {memoOverlay}
       {memosRenderer}
 
@@ -65,7 +66,22 @@ export default function BowlerSpecCard({
           </span>
         </span>
 
-        {!isOpen && (
+        {isOpen ? (
+          <div className="flex flex-1 items-center justify-end animate-fade-in gap-2.5 sm:gap-4 flex-wrap ml-auto px-1 mr-1">
+            <span className="text-[11px] sm:text-xs font-bold text-slate-500 whitespace-nowrap flex items-center gap-1">
+              <span className="text-[10px] bg-slate-200 text-slate-500 px-1 rounded font-black">중약지</span>
+              <span className="text-slate-800 font-extrabold">{chartData.handCondition?.fingerStiffness || '-'}</span>
+            </span>
+            <span className="text-[11px] sm:text-xs font-bold text-slate-500 whitespace-nowrap flex items-center gap-1">
+              <span className="text-[10px] bg-slate-200 text-slate-500 px-1 rounded font-black">엄지</span>
+              <span className="text-slate-800 font-extrabold">{chartData.handCondition?.thumbStiffness || '-'}</span>
+            </span>
+            <span className="text-[11px] sm:text-xs font-bold text-slate-500 whitespace-nowrap flex items-center gap-1">
+              <span className="text-[10px] bg-slate-200 text-slate-500 px-1 rounded font-black">건/습</span>
+              <span className="text-slate-800 font-extrabold">{chartData.handCondition?.moisture || '-'}</span>
+            </span>
+          </div>
+        ) : (
           <span className="flex flex-1 items-center justify-end animate-fade-in overflow-hidden ml-auto px-1">
             {(customerInfo.papX || customerInfo.papY || customerInfo.ballSpeed || customerInfo.rpm) && (
               <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded-md border border-slate-200 shadow-sm inline-block truncate max-w-full">
@@ -86,20 +102,6 @@ export default function BowlerSpecCard({
 
       <div className={`grid transition-[grid-template-rows,opacity,margin] duration-400 ease-in-out relative z-10 ${isOpen ? 'grid-rows-[1fr] opacity-100 mt-3 sm:mt-4' : 'grid-rows-[0fr] opacity-0 mt-0 pointer-events-none'}`}>
         <div className="overflow-hidden min-h-0">
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 mb-3 flex items-center justify-start gap-4 flex-wrap">
-          <span className="text-[11px] sm:text-xs font-bold text-slate-500 whitespace-nowrap flex items-center gap-1.5">
-            <span className="text-[10px] bg-slate-200 text-slate-500 px-1 rounded">중약지 경직도</span>
-            <span className="text-slate-800">{chartData.handCondition?.fingerStiffness || '-'}</span>
-          </span>
-          <span className="text-[11px] sm:text-xs font-bold text-slate-500 whitespace-nowrap flex items-center gap-1.5">
-            <span className="text-[10px] bg-slate-200 text-slate-500 px-1 rounded">엄지 경직도</span>
-            <span className="text-slate-800">{chartData.handCondition?.thumbStiffness || '-'}</span>
-          </span>
-          <span className="text-[11px] sm:text-xs font-bold text-slate-500 whitespace-nowrap flex items-center gap-1.5">
-            <span className="text-[10px] bg-slate-200 text-slate-500 px-1 rounded">건/습</span>
-            <span className="text-slate-800">{chartData.handCondition?.moisture || '-'}</span>
-          </span>
-        </div>
 
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           <InfoSelect
