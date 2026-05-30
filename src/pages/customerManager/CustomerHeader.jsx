@@ -97,7 +97,8 @@ export default function CustomerHeader({
         </div>
 
         <div className="flex items-center gap-1.5">
-          {realNfcSupported && (
+          {/* 🌟 [수정 반영]: 하드웨어 지원뿐만 아니라 등급 권한(onNfcScan)이 주입되었을 때만 스캔 버튼을 노출합니다. */}
+          {realNfcSupported && onNfcScan && (
             <button
               onClick={handleNfcScanWithHardwareCheck}
               className="bg-emerald-200 text-emerald-800 border border-emerald-300 hover:bg-emerald-300 px-4 py-2 rounded-xl font-bold flex items-center gap-1 shadow-md shadow-emerald-100 active:scale-95 transition-all"

@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-// 🟢 레퍼런스 스타일을 반영한 유리 질감 카드 컴포넌트
 const GlassBox = ({ children, onClick, className = '' }) => (
   <div 
     onClick={onClick}
@@ -10,84 +9,252 @@ const GlassBox = ({ children, onClick, className = '' }) => (
   </div>
 );
 
-export default function CustomerHistoryModal({ isOpen, onClose, customer, onLoadRecord }) {
+const formatCreatedTime = (createdAt) => {
+  if (!createdAt) return '';
+  let d;
+  if (typeof createdAt.toDate === 'function') {
+    d = createdAt.toDate();
+  } else if (createdAt instanceof Date) {
+    d = createdAt;
+  } else if (createdAt.seconds) {
+    d = new Date(createdAt.seconds * 1000);
+  } else {
+    d = new Date(createdAt);
+  }
+
+  if (isNaN(d.getTime())) return '';
+
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  let hh = d.getHours();
+  const ampm = hh >= 12 ? '오후' : '오전';
+  hh = hh % 12;
+  hh = hh ? hh : 12;
+  const hhStr = String(hh).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${yyyy}. ${mm}. ${dd}. ${ampm} ${hhStr}:${min}`;
+};
+
+export default function CustomerHistoryModal({ 
+  isOpen, 
+  onClose, 
+  customer, 
+  onLoadRecord,
+  history = [],
+  maxChartsAllowed,
+  currentChartsCount,
+  onRename,
+  onDelete,
+  showLogsOnChart = true,
+  onToggleLogsVisibility
+}) {
+  const [activeTab, setActiveTab] = useState('timeline');
+
   if (!isOpen) return null;
 
-  // 파이어베이스 arrayUnion은 순차적으로 들어가므로, 최신 내역이 위로 오도록 역순(reverse) 정렬
   const logs = customer?.activityLogs ? [...customer.activityLogs].reverse() : [];
 
-  const handleLogClick = (chartId) => {
-    if (!chartId) return;
-    onLoadRecord(chartId); // 해당 차트 불러오기 실행
-    onClose(); // 차트 이동 후 모달 닫기
+  // 🎯 [동일 차트 일관 색상 이식]: 중복 제거된 고유 차트 ID 풀과 부드러운 순환 칼라셋 정밀 수립
+  const uniqueChartIds = Array.from(new Set(logs.map(l => l.chartId).filter(Boolean)));
+  
+  // 🎯 [고도화 반영]: 15개 타임라인 로그 맥스 큐 스펙에 맞춰 15가지 고유 칼라셋으로 정밀 확장 완료
+  const accessoryColors = [
+    'bg-indigo-400',  // 1. 인디고
+    'bg-teal-400',    // 2. 테일
+    'bg-emerald-400', // 3. 에메랄드
+    'bg-amber-400',   // 4. 앰버
+    'bg-rose-400',    // 5. 로즈
+    'bg-sky-400',     // 6. 스카이
+    'bg-fuchsia-400', // 7. 푹시아
+    'bg-orange-400',  // 8. 오렌지
+    'bg-lime-400',    // 9. 라임
+    'bg-violet-400',  // 10. 바이올렛
+    'bg-cyan-400',    // 11. 시안
+    'bg-pink-400',    // 12. 핑크
+    'bg-yellow-400',  // 13. 옐로우
+    'bg-purple-400',  // 14. 퍼플
+    'bg-red-400'      // 15. 레드
+  ];
+
+  const handleSelectRecord = (recordOrId) => {
+    if (!recordOrId) return;
+    onLoadRecord(recordOrId); 
+    onClose(); 
   };
 
   return (
-    // 🟢 1. 전체 배경: 다크 테마 적용 및 z-index 9999
-    <div className="fixed inset-0 z-[9999] bg-slate-900 overflow-y-auto overflow-x-hidden touch-auto animate-fade-in flex flex-col items-center">
+    <div className="fixed inset-0 z-[40] bg-slate-900 overflow-y-auto overflow-x-hidden touch-auto animate-fade-in flex flex-col items-center">
       
-      {/* 🟢 2. 상단 고정 헤더 (블러 효과 및 다크 테마 탑재) */}
-      <div className="sticky top-0 w-full flex justify-between items-center p-3 px-4 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10 safe-top">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
-          타임라인 로그 <span className="text-white/50 font-medium mx-1">-</span> {customer?.name}
-        </h2>
-        <button 
-          onClick={onClose} 
-          className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors focus:outline-none"
-        >
-          ✕
-        </button>
+      {/* 1. 상단 고정 헤더 */}
+      <div className="sticky top-0 w-full flex flex-col z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10 safe-top">
+        <div className="flex justify-between items-center p-3 px-4 gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* 🎯 [인터페이스 단순화 수정]: 중복 타이틀 문구를 과감히 제거하고 오직 회원 이름만 깔끔하게 구성 */}
+            <h2 className="text-lg font-bold text-white flex items-center gap-2 truncate">
+              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse shrink-0"></span>
+              {customer?.name}
+            </h2>
+
+            {activeTab === 'timeline' && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleLogsVisibility?.(!showLogsOnChart); 
+                }}
+                className={`text-[11px] sm:text-xs font-black px-3 py-1 rounded-xl border transition-all active:scale-95 shrink-0 select-none cursor-pointer ${
+                  showLogsOnChart 
+                    ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' 
+                    : 'bg-white/5 text-white/30 border-white/10 hover:bg-white/10'
+                }`}
+              >
+                {/* 🎯 [고도화 반영]: 띄어쓰기 표준 맞춤법 및 요구사항 맞춤 이름 개편 완료 */}
+                첫 화면에서 로그 보기 {showLogsOnChart ? 'ON' : 'OFF'}
+              </button>
+            )}
+          </div>
+
+          <button 
+            onClick={onClose} 
+            className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors focus:outline-none shrink-0"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* 탭 스위치 영역 */}
+        <div className="px-4 pb-3 flex gap-2">
+          <button
+            onClick={() => setActiveTab('timeline')}
+            className={`flex-1 py-2 text-xs font-black rounded-xl transition-all border ${
+              activeTab === 'timeline' 
+              ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' 
+              : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
+            }`}
+          >
+            타임라인 로그
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`flex-1 py-2 text-xs font-black rounded-xl transition-all border ${
+              activeTab === 'history' 
+              ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' 
+              : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
+            }`}
+          >
+            지공 기록 ({history.length})
+          </button>
+        </div>
       </div>
 
-      {/* 🟢 3. 메인 컨텐츠 영역 */}
+      {/* 3. 메인 컨텐츠 영역 */}
       <div className="relative w-full max-w-[600px] flex-1 mt-2 p-4 sm:p-6 pb-20 safe-bottom">
-        {logs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full py-20 text-white/50">
-            <span className="text-4xl mb-4 opacity-50">📭</span>
-            <p className="text-base font-medium">아직 기록된 로그 히스토리가 없습니다.</p>
-          </div>
-        ) : (
-          // 타임라인 세로선 (어두운 배경에 맞게 반투명 흰색 선으로 변경)
-          <div className="relative border-l-2 border-white/10 ml-3 sm:ml-4">
-            {logs.map((log) => (
-              <div 
-                key={log.id} 
-                className="mb-6 ml-5 sm:ml-6 relative group"
-              >
-                {/* 🟢 타임라인 점 (다크테마 컷아웃 효과 적용) */}
-                <span className={`absolute -left-[27px] sm:-left-[31px] top-4 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-[3px] border-slate-900 shadow-sm transition-transform duration-300 group-hover:scale-125 ${
-                  log.actionType === 'CREATE' ? 'bg-indigo-400' : 'bg-teal-400'
-                }`} />
+        
+        {/* 타임라인 로그 탭 컨텐츠 */}
+        {activeTab === 'timeline' && (
+          logs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full py-20 text-white/50">
+              <span className="text-4xl mb-4 opacity-50">📭</span>
+              <p className="text-base font-medium">기록된 타임라인 로그가 없습니다.</p>
+            </div>
+          ) : (
+            <div className="relative border-l-2 border-white/10 ml-3 sm:ml-4">
+              {logs.map((log) => {
+                // 🎯 [동일 차트 원형 아이콘 색상 일치화 연산]
+                const chartColorIndex = uniqueChartIds.indexOf(log.chartId);
+                const circleColorClass = chartColorIndex !== -1 
+                  ? accessoryColors[chartColorIndex % accessoryColors.length] 
+                  : 'bg-slate-400';
 
-                {/* 🟢 글래스모피즘이 적용된 개별 로그 박스 */}
-                <GlassBox onClick={() => handleLogClick(log.chartId)}>
-                  <div className="flex justify-between items-start mb-2 gap-2">
-                    <span className="text-xs sm:text-sm font-black text-indigo-300 bg-white/10 border border-white/10 px-2 py-0.5 rounded-md break-keep uppercase tracking-wider">
-                      {log.ballName}
-                    </span>
-                    <span className="text-[10px] sm:text-xs text-white/50 font-medium whitespace-nowrap pt-1">
-                      {log.date}
-                    </span>
+                return (
+                  <div key={log.id} className="mb-6 ml-5 sm:ml-6 relative group">
+                    {/* 산출된 고유 circleColorClass를 적용하여 스크롤 시 동일 가시성 정렬 확보 */}
+                    <span className={`absolute -left-[27px] sm:-left-[31px] top-4 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-[3px] border-slate-900 shadow-sm transition-transform duration-300 group-hover:scale-125 ${circleColorClass}`} />
+                    <GlassBox onClick={() => handleSelectRecord(log.chartId)}>
+                      <div className="flex justify-between items-start mb-2 gap-2">
+                        <span className="text-xs sm:text-sm font-black text-indigo-300 bg-white/10 border border-white/10 px-2 py-0.5 rounded-md break-keep uppercase tracking-wider">
+                          {log.ballName}
+                        </span>
+                        <span className="text-[10px] sm:text-xs text-white/50 font-medium whitespace-nowrap pt-1">
+                          {log.date}
+                        </span>
+                      </div>
+                      <p className="text-sm sm:text-base text-white/90 font-bold mb-2 leading-snug line-clamp-3">
+                        {log.message}
+                      </p>
+                      {log.layoutInfo && (
+                        <div className="mt-3 text-xs sm:text-sm text-white/70 bg-white/5 p-2.5 rounded-lg border border-white/10 flex items-center gap-2">
+                          <span className="font-bold text-white/40 flex-shrink-0">레이아웃</span> 
+                          <span className="font-medium text-yellow-200/90 truncate">{log.layoutInfo}</span>
+                        </div>
+                      )}
+                    </GlassBox>
                   </div>
-                  
-                  <p className="text-sm sm:text-base text-white/90 font-bold mb-2 leading-snug line-clamp-3">
-                    {log.message}
-                  </p>
-                  
-                  {log.layoutInfo && (
-                    <div className="mt-3 text-xs sm:text-sm text-white/70 bg-white/5 p-2.5 rounded-lg border border-white/10 flex items-center gap-2">
-                      <span className="font-bold text-white/40 flex-shrink-0">레이아웃</span> 
-                      <span className="font-medium text-yellow-200/90 truncate">{log.layoutInfo}</span>
-                    </div>
-                  )}
-                </GlassBox>
+                );
+              })}
+            </div>
+          )
+        )}
+
+        {/* 지공 기록 탭 컨텐츠 */}
+        {activeTab === 'history' && (
+          <div className="flex flex-col gap-4">
+            <div className="px-2 mb-2 flex justify-between items-end">
+              <span className="text-xs font-bold text-white/30 tracking-tight">전체 기록 목록</span>
+              <span className="text-[10px] font-black text-indigo-300 bg-indigo-50/20 px-2 py-1 rounded-lg border border-indigo-500/30">
+                {currentChartsCount} / {maxChartsAllowed === Infinity ? '∞' : maxChartsAllowed} SAVED
+              </span>
+            </div>
+
+            {history.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-white/50">
+                <span className="text-4xl mb-4 opacity-50">📁</span>
+                <p className="text-base font-medium">저장된 지공 기록이 없습니다.</p>
               </div>
-            ))}
+            ) : (
+              history.map((record) => (
+                <GlassBox key={record.id} onClick={() => handleSelectRecord(record)} className="relative group overflow-hidden">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-indigo-300 font-black uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                          RECORD
+                        </span>
+                        <span className="text-[10px] text-white/40 font-bold">{formatCreatedTime(record.createdAt)}</span>
+                      </div>
+                      <h3 className="text-base sm:text-lg font-black text-white mb-1 truncate group-hover:text-indigo-200 transition-colors">
+                        {record.name}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-white/60 font-bold flex items-center gap-1.5">
+                        <span className="text-white/40 font-black">마지막 수정:</span>
+                        <span className="text-indigo-200/90 font-medium">{record.timestamp}</span>
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2 shrink-0 pt-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onRename(record.id, record.name); }}
+                        className="w-9 h-9 flex items-center justify-center bg-white/5 hover:bg-white/20 border border-white/10 rounded-xl text-white/60 hover:text-white transition-all"
+                        title="이름 변경"
+                      >
+                        ✎
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(record.id); }}
+                        className="w-9 h-9 flex items-center justify-center bg-rose-500/10 hover:bg-rose-500/30 border border-rose-500/20 rounded-xl text-rose-400 hover:text-rose-300 transition-all"
+                        title="기록 삭제"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                </GlassBox>
+              ))
+            )}
           </div>
         )}
       </div>
-      
     </div>
   );
 }

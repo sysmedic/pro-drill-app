@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { db, auth } from '../../firebase';
 import { 
-  collection, doc, setDoc, deleteDoc, updateDoc, 
-  query, where, orderBy, serverTimestamp, onSnapshot,
-  getDoc, writeBatch, increment // 🟢 limit 임포트 구문 제거
+  collection, doc, updateDoc, query, where, orderBy, 
+  serverTimestamp, onSnapshot, getDoc, writeBatch, increment
 } from 'firebase/firestore';
 
 export default function useHistoryRecords(customer, { refreshChartCount, setFeedback, onRenameSuccess } = {}) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true); 
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
+  // 💡 모달 위에서 일어나는 액션(이름변경/삭제) 제어 상태만 남기고 중복된 모달 열림 상태는 삭제했습니다.
   const [historyConfirm, setHistoryConfirm] = useState(null);
   const [renameRequest, setRenameRequest] = useState(null);
   const [deleteRequest, setDeleteRequest] = useState(null);
 
+  // 실시간 데이터 구독 (Real-time Sync)
   useEffect(() => {
     if (!auth.currentUser || !customer?.id) {
       setHistory([]);
@@ -24,7 +24,6 @@ export default function useHistoryRecords(customer, { refreshChartCount, setFeed
 
     setLoading(true);
 
-    // 🎯 [수정 완료] limit(20) 제약을 완전히 삭제하여 오래된 지공 기록까지 전수 검색이 가능합니다.
     const q = query(
       collection(db, 'drilling_charts'),
       where('userId', '==', auth.currentUser.uid),
@@ -51,25 +50,29 @@ export default function useHistoryRecords(customer, { refreshChartCount, setFeed
     return () => unsubscribe();
   }, [customer?.id]);
 
-  const loadHistoryForCustomer = useCallback(async () => history, [history]);
-
+  // 차트 기록 저장 (최초 생성일 보존 로직 포함)
   const saveRecord = useCallback(async (record) => {
     if (!auth.currentUser) return { ok: false };
 
     try {
       const chartRef = doc(db, 'drilling_charts', record.id);
-      
       const chartSnap = await getDoc(chartRef);
       const isBrandNew = !chartSnap.exists();
-
       const batch = writeBatch(db);
       
-      batch.set(chartRef, {
+      const saveData = {
         ...record,
         userId: auth.currentUser.uid,
         customerId: customer.id,
-        createdAt: serverTimestamp(), 
-      });
+      };
+
+      if (isBrandNew) {
+        saveData.createdAt = serverTimestamp();
+      } else {
+        saveData.createdAt = chartSnap.data()?.createdAt || serverTimestamp();
+      }
+
+      batch.set(chartRef, saveData);
 
       if (isBrandNew && auth.currentUser?.email) {
         const userRef = doc(db, 'users', auth.currentUser.email);
@@ -84,10 +87,10 @@ export default function useHistoryRecords(customer, { refreshChartCount, setFeed
     }
   }, [customer?.id]);
 
+  // 차트 기록 삭제
   const handleDeleteRecord = useCallback(async (id) => {
     try {
       const batch = writeBatch(db);
-      
       batch.delete(doc(db, 'drilling_charts', id));
 
       if (auth.currentUser?.email) {
@@ -107,6 +110,7 @@ export default function useHistoryRecords(customer, { refreshChartCount, setFeed
     }
   }, [refreshChartCount, setFeedback]);
 
+  // 차트 이름 변경
   const handleRenameRecord = useCallback(async (nextName) => {
     const trimmedName = nextName?.trim();
     if (!trimmedName || !renameRequest) return { ok: false, reason: 'empty' };
@@ -124,10 +128,18 @@ export default function useHistoryRecords(customer, { refreshChartCount, setFeed
     }
   }, [renameRequest, onRenameSuccess, setFeedback]);
 
+  // 💡 중복 데이터 스트림과 무의미한 함수를 완전히 걷어낸 깔끔한 반환값
   return {
-    history, loading, showHistoryModal, setShowHistoryModal,
-    historyConfirm, setHistoryConfirm, renameRequest, setRenameRequest,
-    deleteRequest, setDeleteRequest, loadHistoryForCustomer,
-    saveRecord, handleDeleteRecord, handleRenameRecord,
+    history, 
+    loading, 
+    historyConfirm, 
+    setHistoryConfirm, 
+    renameRequest, 
+    setRenameRequest,
+    deleteRequest, 
+    setDeleteRequest, 
+    saveRecord, 
+    handleDeleteRecord, 
+    handleRenameRecord,
   };
 }

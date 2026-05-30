@@ -1,13 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '../../components/ui/Button.jsx';
-import { ConfirmModal, TextInputModal } from '../../components/ui/Dialogs.jsx';
+import { ConfirmModal } from '../../components/ui/Dialogs.jsx';
 import ModalShell from '../../components/ui/ModalShell.jsx';
-import { ExitConfirmModal, HistoryModal, MemoModal } from './ChartModals.jsx';
+import { ExitConfirmModal, MemoModal } from './ChartModals.jsx';
 import DrillingGuideView from './DrillingGuideView.jsx';
 import SettingsModal from '../customerManager/SettingsModal.jsx';
 
 export default function ChartModalManager({
-  // 제어 상태 변수
   activeMemoId,
   showHistoryModal,
   historyConfirm,
@@ -19,7 +18,6 @@ export default function ChartModalManager({
   showDrillingGuide,
   showSettingsModal,
   
-  // 데이터 변수
   memos,
   history,
   maxChartsAllowed,
@@ -31,9 +29,7 @@ export default function ChartModalManager({
   userTier,
   ballName,
   
-  // 상태 변경 Setter 및 액션 함수
   setMemos,
-  setShowHistoryModal,
   setHistoryConfirm,
   setRenameRequest,
   setDeleteRequest,
@@ -61,8 +57,15 @@ export default function ChartModalManager({
   saveActiveMemoText,
   deleteActiveMemo
 }) {
-  // 🟢 메모 삭제 확인 모달 제어 상태 추가
   const [memoDeleteRequested, setMemoDeleteRequested] = React.useState(false);
+  const [inputName, setInputName] = useState('');
+
+  // 이름 변경 대상 지정 시 입력값 초기 동기화
+  useEffect(() => {
+    if (renameRequest?.currentName) {
+      setInputName(renameRequest.currentName);
+    }
+  }, [renameRequest]);
 
   return (
     <>
@@ -71,16 +74,15 @@ export default function ChartModalManager({
         const activeMemo = memos.find(m => m.id === activeMemoId);
         return (
           <MemoModal
-            // 🟢 이미 내용이 작성된 메모면 "메모", 새로 작성하는 거면 "메모 작성"
             title={activeMemo?.text ? "메모" : "메모 작성"}
             memo={activeMemo}
             onSave={saveActiveMemoText}
-            onDelete={() => setMemoDeleteRequested(true)} // 🟢 내부 ConfirmModal 오픈
+            onDelete={() => setMemoDeleteRequested(true)}
           />
         );
       })()}
 
-      {/* 🟢 앱 내 UI 스타일을 활용한 메모 삭제 확인 모달 */}
+      {/* 메모 삭제 확인 모달 */}
       {memoDeleteRequested && (
         <ConfirmModal
           cancelLabel="취소"
@@ -94,19 +96,6 @@ export default function ChartModalManager({
           }}
           title="메모 삭제"
           titleId="memo-delete-confirm-title"
-        />
-      )}
-
-      {/* 2. 기록 역사 모달 */}
-      {showHistoryModal && (
-        <HistoryModal
-          history={history}
-          maxChartsAllowed={maxChartsAllowed}
-          currentChartsCount={currentChartsCount}
-          onSelect={(record) => setHistoryConfirm(record)}
-          onClose={() => setShowHistoryModal(false)}
-          onDelete={(id) => setDeleteRequest(id)}
-          onRename={(id, currentName) => setRenameRequest({ id, currentName })}
         />
       )}
 
@@ -125,38 +114,85 @@ export default function ChartModalManager({
         />
       )}
 
-      {/* 4. 이름 변경 모달 */}
+      {/* 이름 변경 모달 */}
       {renameRequest && (
-        <TextInputModal
-          confirmLabel="변경"
-          initialValue={renameRequest.currentName || ''}
-          label="새 기록 이름"
-          onCancel={() => setRenameRequest(null)}
-          onConfirm={handleRenameRecord}
-          placeholder="새로운 이름을 입력하세요"
-          title="기록 이름 변경"
-          titleId="history-rename-input-title"
-        />
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleRenameRecord(inputName);
+            }}
+            className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl"
+          >
+            <div className="p-6">
+              <h3 className="text-lg font-black text-slate-800 mb-1.5">기록 이름 변경</h3>
+              <p className="text-xs text-slate-500 font-semibold mb-4 leading-normal">
+                변경할 지공 기록의 이름을 입력해 주세요.
+              </p>
+              <div className="flex items-center w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
+                <input
+                  type="text"
+                  value={inputName}
+                  onChange={(e) => setInputName(e.target.value)}
+                  className="flex-1 bg-transparent border-0 outline-none text-sm font-bold text-slate-800 placeholder-slate-400 focus:ring-0 p-0"
+                  placeholder="새로운 이름을 입력하세요"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-2">
+              <button 
+                type="button"
+                className="flex-1 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold text-sm active:scale-95 transition-all"
+                onClick={() => setRenameRequest(null)}
+              >
+                취소
+              </button>
+              <button 
+                type="submit"
+                className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm active:scale-95 transition-all"
+              >
+                변경
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
-      {/* 5. 삭제 확인 모달 */}
+      {/* 기록 삭제 확인 모달 */}
       {deleteRequest && (
-        <ConfirmModal
-          cancelLabel="취소"
-          confirmLabel="삭제"
-          danger={true}
-          message={"이 기록을 정말 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다."}
-          onCancel={() => setDeleteRequest(null)}
-          onConfirm={() => {
-            handleDeleteRecord(deleteRequest);
-            setDeleteRequest(null);
-          }}
-          title="기록 삭제"
-          titleId="history-delete-confirm-title"
-        />
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
+            <div className="p-6">
+              <h3 className="text-lg font-black text-slate-800 mb-2">기록 삭제</h3>
+              <p className="text-sm text-slate-600 font-medium leading-snug">
+                이 기록을 정말 삭제하시겠습니까?<br/>삭제된 기록은 복구할 수 없습니다.
+              </p>
+            </div>
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-2">
+              <button 
+                type="button"
+                className="flex-1 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold text-sm active:scale-95 transition-all"
+                onClick={() => setDeleteRequest(null)}
+              >
+                취소
+              </button>
+              <button 
+                type="button"
+                className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm active:scale-95 transition-all"
+                onClick={() => {
+                  handleDeleteRecord(deleteRequest);
+                  setDeleteRequest(null);
+                }}
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* 6. 기록 수정 알림 모달 (개편됨) */}
+      {/* 기록 수정 알림 모달 */}
       {showModifyWarning && (
         <ConfirmModal
           title="불러온 차트 기록 변경"
@@ -175,7 +211,7 @@ export default function ChartModalManager({
         />
       )}
 
-      {/* 7. 퇴장 확인 모달 */}
+      {/* 퇴장 확인 모달 */}
       {showExitConfirm && (
         <ExitConfirmModal
           onClose={() => setShowExitConfirm(false)}
@@ -193,7 +229,7 @@ export default function ChartModalManager({
         />
       )}
 
-      {/* 8. 공유 미리보기 모달 */}
+      {/* 공유 미리보기 모달 */}
       {sharePreview && (
         <ModalShell
           bodyClassName="p-5 flex flex-col gap-4 bg-slate-50"
@@ -233,7 +269,7 @@ export default function ChartModalManager({
         </ModalShell>
       )}
 
-      {/* 9. 지공 도면 가이드 뷰 모달 */}
+      {/* 지공 도면 가이드 뷰 모달 */}
       {showDrillingGuide && (
         <DrillingGuideView
           data={chartData}
@@ -246,7 +282,7 @@ export default function ChartModalManager({
         />
       )}
 
-      {/* 10. 세팅 모달 */}
+      {/* 세팅 모달 */}
       {showSettingsModal && (
         <SettingsModal
           onClose={() => setShowSettingsModal(false)}

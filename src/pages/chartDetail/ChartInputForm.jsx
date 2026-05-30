@@ -2,9 +2,18 @@ import { useState, useMemo } from 'react';
 import DisclosureSection from '../../components/ui/DisclosureSection.jsx';
 import KeypadField from '../../components/ui/KeypadField.jsx';
 import SelectField from '../../components/ui/SelectField.jsx';
-import { TextInputModal } from '../../components/ui/Dialogs.jsx';
 import FractionKeypad from './FractionKeypad.jsx';
-import Icon from '../../components/ui/Icon.jsx';
+
+// 🟢 외부 분리 모듈 직통 임포트 연동
+import BevelField from './BevelField.jsx';
+import {
+  PITCH_OPTIONS_32,
+  getBevelOptions,
+  getDynamicOvalOptions,
+  getDefaultHoleCutSize,
+  getDefaultThumbHoleCutSize,
+} from './chartUtils.js';
+
 import {
   FINGER_INSERT_OPTIONS,
   HOLE_OPTIONS,
@@ -32,209 +41,12 @@ const OFFSET_OPTIONS = [
 
 const MANUFACTURER_OPTIONS = ['G & S', '로드필드', '텐스프레임', 'Turbo', 'Master'];
 
-const getGCD = (a, b) => (b === 0 ? a : getGCD(b, a % b));
-const getReducedFraction = (num, den) => {
-  if (num === 0) return '0';
-  const gcd = getGCD(num, den);
-  const reducedNum = num / gcd;
-  const reducedDen = den / gcd;
-  if (reducedDen === 1) return String(reducedNum);
-  if (reducedNum > reducedDen) {
-    const whole = Math.floor(reducedNum / reducedDen);
-    const rem = reducedNum % reducedDen;
-    return `${whole} ${rem}/${reducedDen}`;
-  }
-  return `${reducedNum}/${reducedDen}`;
-};
-const PITCH_OPTIONS_32 = Array.from({ length: 33 }, (_, i) => getReducedFraction(i, 32));
-
-const parseFraction = (str) => {
-  if (!str) return 0;
-  const cleanStr = String(str).split('(')[0].trim();
-  const parts = cleanStr.split(' ');
-  if (parts.length === 2 && parts[1].includes('/')) {
-    const whole = parseFloat(parts[0]);
-    const frac = parts[1].split('/');
-    return whole + (parseFloat(frac[0]) / parseFloat(frac[1]));
-  } else if (parts.length === 1) {
-    if (parts[0].includes('/')) {
-      const frac = parts[0].split('/');
-      return parseFloat(frac[0]) / parseFloat(frac[1]);
-    }
-    return parseFloat(parts[0]);
-  }
-  return 0;
-};
-
-const getDefaultHoleCutSize = (insertSize) => {
-  if (!insertSize) return '31/32';
-  const num = parseFraction(insertSize);
-  if (num >= 55 / 64) return '1 1/32';
-  return '31/32';
-};
-
-const getDefaultThumbHoleCutSize = (slugType, gender) => {
-  const type = String(slugType || '').trim().toUpperCase();
-  if (type.includes('IT')) return '1 3/8';
-  if (type.includes('스위치') || type.includes('조포')) return '1 1/2';
-  if (gender === '여') return '1 1/8';
-  return '1 1/4';
-};
-
-const toFraction64 = (num) => {
-  if (num <= 0) return '';
-  const totalNumerator = Math.round(num * 64);
-  const whole = Math.floor(totalNumerator / 64);
-  const numerator = totalNumerator % 64;
-
-  if (numerator === 0) return String(whole);
-
-  let n = numerator;
-  let d = 64;
-  while (n % 2 === 0 && d % 2 === 0) {
-    n /= 2;
-    d /= 2;
-  }
-
-  if (whole > 0) {
-    return `${whole} ${n}/${d}`;
-  }
-  return `${n}/${d}`;
-};
-
-const getBevelOptions = (holeSize) => {
-  const baseNum = parseFraction(holeSize);
-  if (!baseNum) return [];
-  const maxNum = 1.125; 
-  const options = [];
-  let currentNum = baseNum + 1 / 64;
-  while (Math.round(currentNum * 64) <= Math.round(maxNum * 64)) {
-    options.push(toFraction64(currentNum));
-    currentNum += 1 / 64;
-  }
-  return options;
-};
-
-const getDynamicOvalOptions = (holeSize, defaultOptions) => {
-  const baseNum = parseFraction(holeSize);
-  if (!baseNum) return defaultOptions;
-  const maxNum = 1.25; 
-  const options = [];
-  let currentNum = baseNum;
-  while (Math.round(currentNum * 64) <= Math.round(maxNum * 64)) {
-    options.push(toFraction64(currentNum));
-    currentNum += 1 / 64;
-  }
-  return options;
-};
-
 function ChartSelectField(props) {
   return <SelectField density={FORM_DENSITY} {...props} />;
 }
 
 function ChartKeypadField(props) {
   return <KeypadField density={FORM_DENSITY} {...props} />;
-}
-
-function BevelField({ label, value, onChange, sizeOptions, depthOptions }) {
-  let size = '';
-  let depth = '';
-  if (value) {
-    if (value.includes('|')) {
-      [size, depth] = value.split('|');
-    } else if (value.includes('/')) {
-      const parts = value.split('/');
-      if (parts.length > 2) {
-        depth = parts.pop();
-        size = parts.join('/');
-      } else {
-        [size, depth] = parts;
-      }
-    } else {
-      size = value;
-    }
-  }
-  const [customTarget, setCustomTarget] = useState(null);
-
-  const handleSizeChange = (newSize) => {
-    if (!newSize && !depth) onChange('');
-    else onChange(`${newSize}|${depth}`);
-  };
-
-  const handleDepthChange = (newDepth) => {
-    if (!size && !newDepth) onChange('');
-    else onChange(`${size}|${newDepth}`);
-  };
-
-  const handleSelectChange = (e, type) => {
-    const val = e.target.value;
-    if (val === 'CUSTOM') {
-      setCustomTarget(type);
-    } else {
-      if (type === 'size') handleSizeChange(val);
-      else handleDepthChange(val);
-    }
-  };
-
-  const hasSizeOption = sizeOptions.includes(size);
-  const hasDepthOption = depthOptions.includes(depth);
-
-  return (
-    <>
-      <div className="flex flex-col w-full">
-        <label className="text-xs font-bold text-slate-600 mb-1">{label}</label>
-        <div className="relative flex items-center w-full border border-slate-300 rounded-md bg-white focus-within:ring-2 focus-within:ring-indigo-500 overflow-hidden h-10">
-          <div className="absolute inset-0 flex items-center pointer-events-none">
-            <div className="flex-1 flex items-center justify-center px-1">
-              <span className="text-[16px] sm:text-sm text-black font-semibold truncate">{size}</span>
-              <Icon name="chevronDown" className="text-slate-400 ml-0.5" size={14} />
-            </div>
-            <span className="text-slate-300 font-bold shrink-0">/</span>
-            <div className="flex-1 flex items-center justify-center px-1">
-              <span className="text-[16px] sm:text-sm text-black font-semibold truncate">{depth}</span>
-              <Icon name="chevronDown" className="text-slate-400 ml-0.5" size={14} />
-            </div>
-          </div>
-          <select
-            className="flex-1 w-1/2 h-full opacity-0 cursor-pointer appearance-none outline-none"
-            value={size}
-            onChange={(e) => handleSelectChange(e, 'size')}
-          >
-            <option value=""></option>
-            {sizeOptions.map(o => <option key={o} value={o}>{o}</option>)}
-            {size && !hasSizeOption && <option value={size} hidden>{size}</option>}
-            <option value="CUSTOM">+ 직접 입력</option>
-          </select>
-          <select
-            className="flex-1 w-1/2 h-full opacity-0 cursor-pointer appearance-none outline-none"
-            value={depth}
-            onChange={(e) => handleSelectChange(e, 'depth')}
-          >
-            <option value=""></option>
-            {depthOptions.map(o => <option key={o} value={o}>{o}</option>)}
-            {depth && !hasDepthOption && <option value={depth} hidden>{depth}</option>}
-            <option value="CUSTOM">+ 직접 입력</option>
-          </select>
-        </div>
-      </div>
-      {customTarget && (
-        <TextInputModal
-          confirmLabel="적용"
-          initialValue={customTarget === 'size' ? (hasSizeOption ? '' : size) : (hasDepthOption ? '' : depth)}
-          label={customTarget === 'size' ? '드릴 사이즈 입력' : '깊이 입력'}
-          onCancel={() => setCustomTarget(null)}
-          onConfirm={(val) => {
-            if (customTarget === 'size') handleSizeChange(val);
-            else handleDepthChange(val);
-            setCustomTarget(null);
-          }}
-          placeholder="수치를 직접 입력하세요"
-          title="직접 입력"
-          titleId={`custom-input-${customTarget}`}
-        />
-      )}
-    </>
-  );
 }
 
 export default function ChartInputForm({ data = {}, customer = {}, historyData = [], onChange }) {
@@ -260,7 +72,6 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
 
   const [keypad, setKeypad] = useState({ isOpen: false, field: null, value: '', title: '', mode: 'fraction' });
   
-  // 생성일(createdAt) 기준 마지막 차트 데이터를 정렬하여 인용 추적
   const lastChart = useMemo(() => {
     if (!historyData || historyData.length === 0) return null;
     const sorted = [...historyData].sort((a, b) => {
@@ -271,7 +82,6 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
     return sorted[0];
   }, [historyData]);
 
-  // 중지 피치 정밀도 기본 선택값 로직 (마지막 차트 기준 최적 승계)
   const [pitchPrecision, setPitchPrecision] = useState(() => {
     if (lastChart) {
       const has32nd = (p) => p && [p.up, p.down, p.lat].some(v => v && String(v).includes('/32'));
@@ -283,7 +93,6 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
     return '16';
   });
 
-  // 🟢 [수정] 중지 라디오 상태(pitchPrecision)에 의해 중지, 약지, 엄지 피칭의 드롭다운이 일괄 통합 연동되도록 옵션 단일화
   const filteredPitchOptions = useMemo(() => {
     if (pitchPrecision === '32') return PITCH_OPTIONS_32;
     return PITCH_OPTIONS_32.filter(opt => !opt.includes('/32'));
@@ -487,14 +296,7 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
         </div>
       </div>
 
-      {renderSection('hand', '핸드 컨디션', getHandCondSummary(handCondition), (
-        <div className="grid grid-cols-3 gap-2">
-          <ChartSelectField label="건/습" value={handCondition.moisture} onChange={v => updateCondition('moisture', v)} options={MOISTURE_OPTIONS} />
-          <ChartSelectField label="중약지" value={handCondition.fingerStiffness} onChange={v => updateCondition('fingerStiffness', v)} options={STIFFNESS_OPTIONS} />
-          <ChartSelectField label="엄지" value={handCondition.thumbStiffness} onChange={v => updateCondition('thumbStiffness', v)} options={STIFFNESS_OPTIONS} />
-        </div>
-      ))}
-
+      {/* 1. Bridge 박스 */}
       {renderSection('bridge', 'Bridge', bridge, (
         <div className="flex items-center justify-between gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
           <label className="text-xs font-bold text-slate-600 whitespace-nowrap">브릿지 간격</label>
@@ -511,6 +313,27 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
         </div>
       ))}
 
+      {/* 2. 핸드 컨디션 박스 */}
+      {renderSection('hand', '핸드 컨디션', getHandCondSummary(handCondition), (
+        <div className="grid grid-cols-3 gap-2">
+          <ChartSelectField label="건/습" value={handCondition.moisture} onChange={v => updateCondition('moisture', v)} options={MOISTURE_OPTIONS} />
+          <ChartSelectField label="중약지" value={handCondition.fingerStiffness} onChange={v => updateCondition('fingerStiffness', v)} options={STIFFNESS_OPTIONS} />
+          <ChartSelectField label="엄지" value={handCondition.thumbStiffness} onChange={v => updateCondition('thumbStiffness', v)} options={STIFFNESS_OPTIONS} />
+        </div>
+      ))}
+
+      {/* 3. Span 박스 */}
+      {renderSection('span', 'Span', getSpanSummary(), (
+        <>
+        <div className="mb-2.5"><ChartSelectField label="Span 타입" value={spanType} onChange={v => onChange({ ...data, spanType: v })} options={SPAN_TYPE_OPTIONS} /></div>
+        <div className="grid grid-cols-2 gap-2.5">
+          <ChartKeypadField label="중지 Span" onOpen={() => openKeypad('spanLeft', spanLeft, "중지 Span", 'span')} value={spanLeft} />
+          <ChartKeypadField label="약지 Span" onOpen={() => openKeypad('spanRight', spanRight, "약지 Span", 'span')} value={spanRight} />
+        </div>
+        </>
+      ))}
+
+      {/* 4. 중지 박스 */}
       <DisclosureSection 
         density={FORM_DENSITY} 
         id="first" 
@@ -530,6 +353,7 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
         </>
       </DisclosureSection>
 
+      {/* 5. 약지 박스 */}
       <DisclosureSection 
         density={FORM_DENSITY} 
         id="second" 
@@ -549,20 +373,10 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
         </>
       </DisclosureSection>
 
-      {renderSection('span', 'Span', getSpanSummary(), (
-        <>
-        <div className="mb-2.5"><ChartSelectField label="Span 타입" value={spanType} onChange={v => onChange({ ...data, spanType: v })} options={SPAN_TYPE_OPTIONS} /></div>
-        <div className="grid grid-cols-2 gap-2.5">
-          <ChartKeypadField label="중지 Span" onOpen={() => openKeypad('spanLeft', spanLeft, "중지 Span", 'span')} value={spanLeft} />
-          <ChartKeypadField label="약지 Span" onOpen={() => openKeypad('spanRight', spanRight, "약지 Span", 'span')} value={spanRight} />
-        </div>
-        </>
-      ))}
-
+      {/* 6. 엄지 박스 (최하단) */}
       <div className={`grid transition-[grid-template-rows,opacity] duration-500 ease-in-out ${!isThumbless ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
         <div className="overflow-hidden min-h-0 flex flex-col gap-2.5">
         
-        {/* 🟢 [수정] 엄지 구역: 타이틀바의 라디오 그룹을 완전히 제거하고 순수 레이블 "Thumb" 명칭만 노출하도록 간소화 원복 */}
         <DisclosureSection 
           density={FORM_DENSITY} 
           id="thumb" 
@@ -573,7 +387,6 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
         >
           <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
-            {/* 🟢 [수정] 엄지 피치값 옵션 배열들을 중지의 필터 결과물(filteredPitchOptions)과 직통 연동 */}
             <ChartSelectField label="Forward (▲)" value={thumbPitch.up} onChange={v => updateThumb('up', v)} options={filteredPitchOptions} />
             <ChartSelectField label="Reverse (▼)" value={thumbPitch.down} onChange={v => updateThumb('down', v)} options={filteredPitchOptions} />
             <ChartSelectField label="Left (◀)" value={thumbPitch.left} onChange={v => updateThumb('left', v)} options={filteredPitchOptions} />

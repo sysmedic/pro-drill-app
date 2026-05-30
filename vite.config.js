@@ -1,26 +1,40 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-import basicSsl from '@vitejs/plugin-basic-ssl' // ⭐️ 이 부분이 추가되었습니다!
+import basicSsl from '@vitejs/plugin-basic-ssl'
 
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || '/',
+  
+  // 빌드 시 크롬 개발자 도구에 원본 소스코드가 노출되는 것을 차단합니다.
+  build: {
+    sourcemap: false,
+  },
+  
+  server: {
+    host: true,
+    /* 🎯 [보안 벽 해제]: localtunnel, ngrok 등 외부 포워딩 주소의 호스트 차단 오류 원천 해결 */
+    allowedHosts: true, 
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    },
+  },
+  
   plugins: [
     react(),
-    //basicSsl(), // ⭐️ 안드로이드 PWA 설치를 위한 HTTPS 가짜 인증서 생성
     VitePWA({
-      registerType: 'autoUpdate', // 앱이 업데이트되면 자동으로 새로고침
+      registerType: 'autoUpdate',
       devOptions: {
-        enabled: true // 개발 환경에서도 PWA 테스트 가능하게 켜기
+        enabled: true
       },
       manifest: {
-        name: 'Bowling Chart', // 앱 전체 이름
-        short_name: '지공차트', // 바탕화면 아이콘 아래에 표시될 짧은 이름
+        name: 'Bowling Chart',
+        short_name: '지공차트',
         description: '오프라인 볼링 지공 차트 앱',
         lang: 'ko',
-        theme_color: '#ffffff', // 상단 상태바 색상
+        theme_color: '#ffffff',
         background_color: '#ffffff',
-        display: 'standalone', // 브라우저 주소창을 없애고 진짜 앱처럼 보이게 함
+        display: 'standalone',
         icons: [
           {
             src: '/icon-192.png',

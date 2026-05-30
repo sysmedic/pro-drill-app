@@ -32,6 +32,9 @@ export default function CustomerManagement({
   // 유저 문서 기록 기반의 진짜 전체 고객 숫자를 담아둘 상태를 선언합니다.
   const [totalCount, setTotalCount] = useState(0);
 
+  // 유저 등급 필드를 안전하게 파싱하여 담아둘 상태 변수 선언
+  const [userTier, setUserTier] = useState('basic');
+
   const [customerData, setCustomerData] = useState({ 
     name: '', 
     club: '', 
@@ -50,6 +53,8 @@ export default function CustomerManagement({
     const unsubscribe = onSnapshot(userRef, (snapshot) => {
       if (snapshot.exists()) {
         setTotalCount(snapshot.data().customerCount || 0);
+        // Firestore 내 유저 문서 정보에서 등급 문자열 키 수거
+        setUserTier(snapshot.data().tier || 'basic');
       }
     });
     return () => unsubscribe();
@@ -121,11 +126,14 @@ export default function CustomerManagement({
   };
 
   const filtered = customers.filter(c => c.name.includes(searchQuery) || (c.phone && c.phone.includes(searchQuery)));
-  if (sortType === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name));
 
-  // 🎯 [수정 완료] 초기 미검색 화면뿐만 아니라 검색 매칭 결과에 대해서도 무조건 최상위 30명만 슬라이싱 제어합니다.
-  // 이를 통해 헤비 유저가 흔한 글자나 공백을 쳐서 수백~수천 명이 동시 매칭되더라도 기기 렌더링 부하(DOM Stress)로 인한 렉을 완벽 차단합니다.
+  // 최신 지공/수정일순(Firestore 기본 정렬) 데이터에서 최상위 30명을 "먼저" 선별합니다.
   const displayedCustomers = filtered.slice(0, 30);
+
+  // 선별이 완료된 고정 30명 안에서만 이름순 정렬이 구동되도록 순서를 전환합니다.
+  if (sortType === 'name') {
+    displayedCustomers.sort((a, b) => a.name.localeCompare(b.name));
+  }
 
   return (
     <PageShell bottomPadding="pb-24">
@@ -142,7 +150,9 @@ export default function CustomerManagement({
         sortType={sortType} setSortType={setSortType}
         isAdmin={isAdmin} onOpenAdmin={onOpenAdmin}
         isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} onLogout={onLogout}
-        onNfcScan={onNfcScan}
+        
+        /* 🎯 [등급 기준 교정]: expert 또는 master 등급 이상일 때만 스캔 핸들러를 바인딩하도록 정밀 타격 반영 완료 */
+        onNfcScan={['expert', 'master'].includes(userTier?.toLowerCase()) ? onNfcScan : undefined}
       />
       {/* 리스트 뷰어에도 전체가 아닌 조건부 필터링이 완료된 최적화 데이터 명단(displayedCustomers)을 바인딩합니다. */}
       <CustomerList customers={displayedCustomers} onDelete={(e, c) => { e.stopPropagation(); setDeleteRequest(c); }} onEdit={(e, c) => { e.stopPropagation(); setEditId(c.id); setCustomerData(c); setShowModal(true); }} onSelect={onSelectCustomer} />

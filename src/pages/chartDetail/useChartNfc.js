@@ -50,7 +50,7 @@ export default function useChartNfc({
       const encryptedId = encryptId(sessionRecordId);
       const reader = new NDEFReader();
       
-      await reader.scan({ signal: controller.signal });
+      // 🌟 [최소 수정] 타임아웃 연동을 위해 signal 주입 (불필요한 scan 호출 제거)
       await reader.write({
         records: [
           {
@@ -59,7 +59,7 @@ export default function useChartNfc({
             data: `DRL_APP:${encryptedId}`, 
           },
         ],
-      });
+      }, { signal: controller.signal });
 
       if (timeoutId) clearTimeout(timeoutId);
       setFeedback({ message: '지공 레코드 ID가 암호화되어 태그에 안전하게 기록되었습니다!', tone: 'success' });

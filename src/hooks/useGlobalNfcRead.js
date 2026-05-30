@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { db } from '../firebase'; 
+import { db, auth } from '../firebase'; // 🌟 [최소 수정 1] 현재 유저 인증 정보 확인을 위해 auth 수입 추가
 import { doc, getDoc } from 'firebase/firestore';
 
 const NFC_SECRET_KEY = "DRL_SU_APP_KEY_2026"; 
@@ -47,6 +47,14 @@ export default function useGlobalNfcRead({ onWalletJump, setFeedback }) {
       await reader.scan({ signal: controller.signal });
 
       reader.onreading = async ({ message }) => {
+        // 안테나가 꺼지기 전 찰나의 순간에 중복 실행되는 것을 원천 차단
+        if (controller.signal.aborted) return; 
+
+        // 브라우저의 NFC 수신 인터페이스를 즉시 파괴하여 연결을 끊음
+        reader.onreading = null; 
+
+        controller.abort(); 
+
         if (timeoutId) clearTimeout(timeoutId);
         setIsScanning(false);
 
@@ -76,6 +84,17 @@ export default function useGlobalNfcRead({ onWalletJump, setFeedback }) {
         }
 
         const chartData = chartSnap.data();
+
+        // 🌟 [최소 수정 2]: 보안 필터링 레이어 탑재
+        // 차트를 생성한 소유자(userId)와 현재 로그인한 지공사(auth.currentUser.uid)가 다르면 열기 즉시 차단
+        if (chartData.userId !== auth.currentUser?.uid) {
+          setFeedback?.({ 
+            message: '⚠️ 타인이 등록한 볼 태그이거나 해당 지공 차트에 대한 접근 권한이 없습니다.', 
+            tone: 'danger' 
+          });
+          return;
+        }
+
         const customerId = chartData.customerId;
 
         const customerDocRef = doc(db, 'customers', customerId);

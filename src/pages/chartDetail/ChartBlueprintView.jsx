@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import PageShell from '../../components/layout/PageShell.jsx';
 import Card from '../../components/ui/Card.jsx';
 import Icon from '../../components/ui/Icon.jsx';
@@ -91,7 +91,15 @@ const SingleValueBox = ({ value, title, iconName, labelPosition = 'top' }) => {
   );
 };
 
-export default function ChartBlueprintView({ data = {}, customer = {}, memoOverlay, memosRenderer, innerRef, isMemoActive, onGuideClick }) {
+export default function ChartBlueprintView({ 
+  data = {}, 
+  customer = {}, 
+  memoOverlay, 
+  memosRenderer, 
+  innerRef, 
+  isMemoActive, 
+  onGuideClick
+}) {
   const isThumbless = data?.isThumbless || false;
   const isLeft = data?.handedness === 'left';
   const midPitch = data?.midPitch || {};
@@ -139,44 +147,46 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
   let thumblessDiffColor = 'text-black';
   let showThumblessDiff = false;
 
-  if (isThumbless && data?.spanLeft && data?.spanRight) {
-    const leftF = parseFraction(data.spanLeft);   
-    const rightF = parseFraction(data.spanRight); 
+  if (isThumbless) {
+    const leftF = parseFraction(data?.spanLeft);   
+    const rightF = parseFraction(data?.spanRight); 
     
-    if (leftF > 0 && rightF > 0) {
-      const baseF = isLeft ? rightF : leftF;
-      const compareF = isLeft ? leftF : rightF;
+    const baseF = isLeft ? rightF : leftF;
+    const compareF = isLeft ? leftF : rightF;
 
-      const diffF = baseF - compareF;
-      const diff32 = Math.round(Math.abs(diffF) * 32);
+    const diffF = baseF - compareF;
+    const absDiff32 = Math.round(Math.abs(diffF) * 32);
+    
+    showThumblessDiff = true; 
+    
+    if (absDiff32 === 0) {
+      thumblessDiffDisplay = '=';
+      thumblessDiffColor = 'text-black';
+    } else {
+      let n = absDiff32;
+      let d = 32;
+      const whole = Math.floor(n / d);
+      n = n % d;
       
-      if (diff32 > 0) {
-        showThumblessDiff = true;
-        let n = diff32;
-        let d = 32;
-        const whole = Math.floor(n / d);
-        n = n % d;
-        
-        while (n > 0 && n % 2 === 0 && d % 2 === 0) {
-          n /= 2;
-          d /= 2;
-        }
-        
-        let fracStr = '';
-        if (whole > 0) {
-          fracStr += whole;
-          if (n > 0) fracStr += ` ${n}/${d}`;
-        } else if (n > 0) {
-          fracStr += `${n}/${d}`;
-        }
-        
-        if (baseF > compareF) {
-          thumblessDiffDisplay = `+${fracStr}`;
-          thumblessDiffColor = 'text-black';
-        } else {
-          thumblessDiffDisplay = `-${fracStr}`;
-          thumblessDiffColor = 'text-red-500';
-        }
+      while (n > 0 && n % 2 === 0 && d % 2 === 0) {
+        n /= 2;
+        d /= 2;
+      }
+      
+      let fracStr = '';
+      if (whole > 0) {
+        fracStr += whole;
+        if (n > 0) fracStr += ` ${n}/${d}`;
+      } else if (n > 0) {
+        fracStr += `${n}/${d}`;
+      }
+      
+      if (baseF > compareF) {
+        thumblessDiffDisplay = `+${fracStr}`;
+        thumblessDiffColor = 'text-black';
+      } else {
+        thumblessDiffDisplay = `-${fracStr}`;
+        thumblessDiffColor = 'text-red-500';
       }
     }
   }
@@ -185,6 +195,17 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
 
   return (
     <Card className="overflow-hidden transition-[height] duration-500 animate-fade-in mt-2 mb-2 sm:mb-2" constrained data-testid="chart-blueprint-surface" elevation="md" gpu layer="content" style={{ height: `${activeCanvasHeight * scale}px` }}>
+      {/* 🎯 [순서 정밀 교정]: 3핑거/덤리스 관계없이 상시 스케일링이 작동하도록 핵심 하트비트 애니메이션 정의를 스코프 외부 최상단으로 격리 배치 */}
+      <style>{`
+        @keyframes heartbeat-thump {
+          0%, 100% { transform: scale(1); }
+          10% { transform: scale(1.12); }
+          20% { transform: scale(1); }
+          30% { transform: scale(1.12); }
+          40% { transform: scale(1); }
+        }
+      `}</style>
+
       <div
         ref={innerRef}
         className={`relative shrink-0 select-none ${isMemoActive ? 'touch-none' : 'touch-auto'} transform-gpu`}
@@ -321,7 +342,6 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
                 <Icon name="check" className="text-black" size={15} strokeWidth={3} />
               </div>
             </Abs>
-            {/* 🟢 [버그 수정 완료] 기존 </Nav> 오타를 리액트 JSX 규격에 맞는 정밀 </Abs> 태그로 전면 교정 완료 */}
             <Abs x={spanLeftPos.x} y={spanLeftPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass}`}>{isLeft ? data?.spanRight : data?.spanLeft || ''}</div></Abs>
             <Abs x={spanRightPos.x} y={spanRightPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass}`}>{isLeft ? data?.spanLeft : data?.spanRight || ''}</div></Abs>
             
@@ -383,15 +403,6 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
                     </div>
 
                     <div className="absolute top-[50%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
-                      <style>{`
-                        @keyframes heartbeat-thump {
-                          0%, 100% { transform: scale(1); }
-                          10% { transform: scale(1.12); }
-                          20% { transform: scale(1); }
-                          30% { transform: scale(1.12); }
-                          40% { transform: scale(1); }
-                        }
-                      `}</style>
                       <div className="relative flex items-center justify-center">
                         <div 
                           className="absolute w-[55px] h-[55px] rounded-full bg-indigo-500/30 blur-md animate-pulse pointer-events-none"
@@ -488,11 +499,25 @@ export default function ChartBlueprintView({ data = {}, customer = {}, memoOverl
           </>
         )}
 
-        {/* 덤리스 상태 지정 좌표 X: 170, Y: 270 고정 렌더러 */}
+        {/* 덤리스 상황에서 스판 편차 수치 원형 어그로 버튼 */}
         {isThumbless && showThumblessDiff && (
           <Abs x={170} y={270} z={30}>
-            <div className={`w-[85px] h-[36px] flex items-center justify-center text-[16px] font-bold ${thumblessDiffColor}`}>
-              {thumblessDiffDisplay}
+            <div className="relative flex items-center justify-center">
+              <div 
+                className="absolute w-[55px] h-[55px] rounded-full bg-indigo-500/30 blur-md animate-pulse pointer-events-none"
+                style={{ animationDuration: '2s' }}
+              ></div>
+              <div style={{ animation: 'heartbeat-thump 2s infinite', position: 'relative', zIndex: 10 }}>
+                <button
+                  onClick={onGuideClick}
+                  className="group relative w-[45px] h-[45px] rounded-full bg-white border-[2px] border-indigo-400 flex items-center justify-center shadow-[0_0_12px_rgba(99,102,241,0.2)] transition-all duration-300 hover:scale-110 hover:border-indigo-600 hover:shadow-[0_0_15px_rgba(99,102,241,0.5)] active:scale-95 outline-none cursor-pointer"
+                  title="드릴링 가이드 보기"
+                >
+                  <span className={`text-[13px] font-black tracking-tighter ${thumblessDiffColor}`}>
+                    {thumblessDiffDisplay}
+                  </span>
+                </button>
+              </div>
             </div>
           </Abs>
         )}

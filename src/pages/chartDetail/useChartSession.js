@@ -21,7 +21,6 @@ const createDefaultChartData = ({ handedness = 'right', isThumbless = false } = 
   drillingGuide: { ovalCut: '', ovalCorrection: '0', isDetailedMode: false },
 });
 
-// 타임라인 로그 메시지 생성 로직 분리
 const generateTimelineLogMessage = (isNewSession, currentData, originalData) => {
   if (isNewSession) return currentData.intent?.trim() || '등록된 상담 내용이 없습니다.';
 
@@ -35,13 +34,39 @@ const generateTimelineLogMessage = (isNewSession, currentData, originalData) => 
 
   if (currentLogs.length > originalLogs.length) return currentLogs[currentLogs.length - 1].text;
   if (currentIntentText.trim() !== originalIntentText.trim()) return '상담 내용 및 지공 의도 변경';
+  
+  const currentChart = currentData.chartData || {};
+  const originalChart = originalData?.chartData || {};
+  
+  const currentCustomerInfo = currentData.customerInfo || {};
+  const originalCustomerInfo = originalData?.customerInfo || {};
+
+  const isSpecChanged = 
+    currentChart.isThumbless !== originalChart.isThumbless ||
+    currentChart.bridge !== originalChart.bridge ||
+    currentChart.spanType !== originalChart.spanType ||
+    currentChart.spanLeft !== originalChart.spanLeft ||
+    currentChart.spanRight !== originalChart.spanRight ||
+    currentChart.ovalAngle !== originalChart.ovalAngle ||
+    JSON.stringify(currentChart.midPitch) !== JSON.stringify(originalChart.midPitch) ||
+    JSON.stringify(currentChart.ringPitch) !== JSON.stringify(originalChart.ringPitch) ||
+    JSON.stringify(currentChart.thumbPitch) !== JSON.stringify(originalChart.thumbPitch) ||
+    JSON.stringify(currentChart.thumbOffset) !== JSON.stringify(originalChart.thumbOffset) ||
+    JSON.stringify(currentChart.thumbDetails) !== JSON.stringify(originalChart.thumbDetails) ||
+    JSON.stringify(currentChart.drillingGuide) !== JSON.stringify(originalChart.drillingGuide) ||
+    JSON.stringify(currentCustomerInfo) !== JSON.stringify(originalCustomerInfo);
+
+  if (isSpecChanged) return '차트 세부 수치 업데이트';
+  
   if (currentMemosList.length > originalMemosList.length) return '새로운 메모 추가됨';
-  return '차트 세부 수치 업데이트';
+  return '메모 변경';
 };
 
 export default function useChartSession({
   customer, history, loading, maxChartsAllowed, currentChartsCount,
-  userTier, refreshChartCount, memos, setMemos, saveRecord, setFeedback
+  userTier, refreshChartCount, memos, setMemos, saveRecord, setFeedback,
+  setShowHistoryModal,
+  showLogsOnChart // 🎯 [고도화 반영]: 현재 토글 스위치 설정 상태 추가 주입 수렴
 }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [chartData, setChartData] = useState(() => createDefaultChartData());
@@ -87,12 +112,29 @@ export default function useChartSession({
     const initializeNewCustomer = () => {
       setIsEditMode(true);
       setChartData(createDefaultChartData(profile));
-      setCustomerInfo({ fingerStiff: '', thumbStiff: '', moisture: '', trackFlare: '', tilt: '', papX: '', papY: '', ballSpeed: '', rpm: '' });
+      
+      setCustomerInfo({
+        fingerStiff: customer?.fingerStiff || '',
+        thumbStiff: customer?.thumbStiff || '',
+        moisture: customer?.moisture || '',
+        trackFlare: customer?.trackFlare || '',
+        tilt: customer?.tilt || '',
+        papX: customer?.papX || '',
+        papY: customer?.papY || '',
+        ballSpeed: customer?.ballSpeed || '',
+        rpm: customer?.rpm || ''
+      });
+
       setBallName(''); setLayoutInfo(''); setIntent(''); setMemos([]); setSaveDate('');
       setViewingRecord(null); setSessionRecordId(null); setSessionRecordName(''); setHasWarnedModify(false);
     };
 
     if (history && history.length > 0) {
+      // 🎯 [고도화 반영]: 스위치가 ON(true) 상태일 때만 첫 진입 시 모달을 강제 수립 노출
+      if (typeof setShowHistoryModal === 'function' && showLogsOnChart) {
+        setShowHistoryModal(true);
+      }
+
       const latestRecord = history[0];
       const recordData = latestRecord.data || latestRecord;
 
@@ -100,7 +142,6 @@ export default function useChartSession({
         setChartData({
           ...createDefaultChartData(profile),
           ...recordData.chartData,
-          // 🟢 1. [변경] 마지막 차트의 관리 내용(정비 로그)을 초기화하지 않고 그대로 복사
           maintenanceLogs: recordData.chartData.maintenanceLogs || [], 
           thumbOffset: recordData.chartData.thumbOffset || { left: '', right: '' },
           drillingGuide: recordData.chartData.drillingGuide || { ovalCut: '', ovalCorrection: '0', isDetailedMode: false },
@@ -110,13 +151,11 @@ export default function useChartSession({
       }
       if (recordData.customerInfo) setCustomerInfo(recordData.customerInfo);
 
-      // 🟢 1. [변경] 마지막 차트의 작업 내용(공 이름, 레이아웃, 의도)을 비우지 않고 그대로 로드
       setBallName(recordData.ballName || ''); 
       setLayoutInfo(recordData.layoutInfo || ''); 
       setIntent(recordData.intent || ''); 
       setSaveDate(latestRecord.timestamp || latestRecord.createdAt || '');
       
-      // 🟢 2. [변경] 네비게이션 바에 정보 연동을 위해 마지막 차트의 세션 레코드 정보 주입
       setViewingRecord({ 
         id: latestRecord.id, 
         name: latestRecord.name || '불러온 기록', 
@@ -139,9 +178,8 @@ export default function useChartSession({
     }
 
     setHasUnsavedChanges(false);
-  }, [customerId, loading, history, setMemos, setSessionRecordId, setSessionRecordName, setViewingRecord]);
+  }, [customerId, customer, loading, history, setMemos, setSessionRecordId, setSessionRecordName, setViewingRecord, setShowHistoryModal, showLogsOnChart]);
 
-  // ... 이하 기존 동일 로직 수정 없음 (handleSave, loadRecord, convertToTemplate 등) ...
   useEffect(() => {
     if (hasUnsavedChanges && viewingRecord && !hasWarnedModify) {
       setShowModifyWarning(true);
@@ -209,7 +247,7 @@ export default function useChartSession({
         
         const logMessage = generateTimelineLogMessage(
           isNewSession, 
-          { chartData: finalChartData, intent, memos: finalMemos }, 
+          { chartData: finalChartData, intent, memos: finalMemos, customerInfo }, 
           originalRecord?.data
         );
 
@@ -226,10 +264,13 @@ export default function useChartSession({
         const updatedLogs = [...(customer.activityLogs || []), newTimelineLog];
         if (updatedLogs.length > 15) updatedLogs.splice(0, updatedLogs.length - 15);
 
-        await updateDoc(customerRef, { activityLogs: updatedLogs });
+        await updateDoc(customerRef, { 
+          activityLogs: updatedLogs,
+          ...customerInfo
+        });
       }
     } catch (logError) {
-      console.error('타임라인 로그 업데이트 실패:', logError);
+      console.error('타임라인 로그 및 회원 프로필 업데이트 실패:', logError);
     }
 
     if (isNewSession && refreshChartCount) {
@@ -297,6 +338,18 @@ export default function useChartSession({
       maintenanceLogs: [] 
     }));         
     
+    setCustomerInfo({
+      fingerStiff: customer?.fingerStiff || '',
+      thumbStiff: customer?.thumbStiff || '',
+      moisture: customer?.moisture || '',
+      trackFlare: customer?.trackFlare || '',
+      tilt: customer?.tilt || '',
+      papX: customer?.papX || '',
+      papY: customer?.papY || '',
+      ballSpeed: customer?.ballSpeed || '',
+      rpm: customer?.rpm || ''
+    });
+
     setSaveDate('');
     setViewingRecord(null);
     setSessionRecordId(null);
@@ -304,7 +357,7 @@ export default function useChartSession({
     
     setHasUnsavedChanges(false);
     setHasWarnedModify(false);
-  }, [setMemos, setSessionRecordId, setSessionRecordName, setViewingRecord]);
+  }, [customer, setSessionRecordId, setSessionRecordName, setViewingRecord]);
 
   const handleChartDataChange = useCallback((newData) => {
     setHasUnsavedChanges(true);

@@ -29,6 +29,7 @@ const getMaxChartsAllowed = (tier) => {
 
 export default function App() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedChartId, setSelectedChartId] = useState(null); // 🌟 NFC로 읽어온 차트 ID 저장용 상태 추가
   const [user, setUser] = useState(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [authErrorMsg, setAuthErrorMsg] = useState("");
@@ -62,8 +63,9 @@ export default function App() {
   // 🟢 [초고속 워프 스캔 가동] 공을 대면 고객 정보 조회 후 상세창으로 강제 점프
   const { handleGlobalNfcRead } = useGlobalNfcRead({
     setFeedback,
-    onWalletJump: useCallback((customerData) => {
+    onWalletJump: useCallback((customerData, chartId) => { // 🌟 chartId 파라미터 추가 수령
       setSelectedCustomer(customerData); // 🚀 고객 상태를 변경하여 지공 상세 화면으로 즉시 전환!
+      setSelectedChartId(chartId); // 🌟 읽어온 차트 ID를 상태에 바인딩
     }, [])
   });
 
@@ -163,7 +165,8 @@ export default function App() {
       ) : (
         <ChartDetail
           customer={selectedCustomer}
-          onBack={() => setSelectedCustomer(null)}
+          initialChartId={selectedChartId} // 🌟 상세창 컴포넌트에 타겟 차트 ID 주입
+          onBack={() => { setSelectedCustomer(null); setSelectedChartId(null); }} // 🌟 뒤로가기 시 ID 초기화
           maxChartsAllowed={maxChartsAllowed}
           currentChartsCount={currentChartsCount}
           userTier={userTier}

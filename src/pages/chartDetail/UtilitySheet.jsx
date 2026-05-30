@@ -104,13 +104,8 @@ export default function UtilitySheet({
             </div>
 
             <div className="flex items-center flex-wrap gap-2 w-full pb-1">
-              <Button icon="tools" onClick={(e) => { e.stopPropagation(); if (onStartDrilling) onStartDrilling(); }} size="sm" variant="subtle">드릴링</Button>
-              <Button icon="history" onClick={onShowHistory} size="sm" variant="subtle">저장 기록</Button>
+              {/* 🎯 [중복 청소 완료]: NFC 쓰기 버튼을 완전히 들어내고 오직 공유 버튼만 깔끔하게 보존 */}
               <Button icon="picture" onClick={(e) => { e.stopPropagation(); if (onStartShare) onStartShare(); }} size="sm" variant="subtle">공유</Button>
-
-              {realNfcSupported && (
-                <Button onClick={handleNfcWriteWithHardwareCheck} size="sm" variant="subtle">NFC 쓰기</Button>
-              )}
             </div>
           </div>
         </div>

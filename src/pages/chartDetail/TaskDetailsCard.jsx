@@ -21,6 +21,8 @@ export default function TaskDetailsCard({
   ballName, innerRef, intent, isOpen, layoutInfo,
   memoOverlay, memosRenderer, onBallNameChange, onIntentChange, onLayoutInfoChange, onToggleOpen,
   chartData, onChartDataChange, setHasUnsavedChanges, isNewChart, handleSave, currentRecordId,
+  // 🎯 부모 컴포넌트(ChartDetail)에서 구동할 하드웨어 상태 플래그 및 태깅 핸들러 주입 허용
+  realNfcSupported, onNfcWrite
 }) {
   const [logInput, setLogInput] = useState('');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -68,20 +70,28 @@ export default function TaskDetailsCard({
   };
 
   return (
-    /* 🟢 수정 위치 1: mt-4에서 mt-0으로 변경하여 상단 도면 영역과 빈틈없이 밀착 */
     <Card ref={innerRef} className="mt-0" elevation="md" layer="content" padding="md">
       {memoOverlay}
       {memosRenderer}
 
-      {/* 🟢 수정 위치 2: button 태그를 일반 div로 변경하고, 클릭 이벤트(onToggleOpen)와 우측 체브론 아이콘을 제거하여 아코디언 비활성화 */}
       <div className="flex w-full items-center justify-between select-none relative z-10 rounded-xl text-left">
         <span className="font-black text-slate-800 text-sm sm:text-base pl-1 flex items-center gap-1.5">
           <Icon name="ball" className="text-slate-700" size={20} />
           작업내용
         </span>
+
+        {/* 🎯 [이동 배치 완비]: 유틸바에서 수거한 NFC 쓰기 버튼을 작업내용 타이틀 우측 가장자리에 밀착 배치 */}
+        {realNfcSupported && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); if (onNfcWrite) onNfcWrite(e); }}
+            className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1 shrink-0 cursor-pointer focus:outline-none"
+          >
+            NFC 쓰기
+          </button>
+        )}
       </div>
 
-      {/* 🟢 수정 위치 3: 동적 조건부 아코디언 클래스 조건문들을 걷어내고 상시 노출 상태인 정적 레이아웃(mt-3 sm:mt-4)으로 고정 */}
       <div className="relative z-10 mt-3 sm:mt-4">
         <div className="p-1 -m-1">
           <div className="space-y-4">
@@ -93,7 +103,6 @@ export default function TaskDetailsCard({
             
             <Field as="textarea" controlClassName="text-base text-slate-700 resize-none" label="상담 내용 및 지공 의도" onChange={handleIntentChange} placeholder="특이사항, 지공 변경 이유, 고객 요청사항 등을 자유롭게 기록하세요." rows="3" value={intent} />
             
-            {/* 새 차트가 아닐 때(기존 차트 열람 및 수정 시)에만 관리 내역 영역 표시 */}
             {!isNewChart && (
               <div className="pt-2 space-y-4">
                 
