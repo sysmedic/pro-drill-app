@@ -23,7 +23,14 @@ import useChartNfc from './chartDetail/useChartNfc.js';
 import useViewportControl from './chartDetail/useViewportControl.js';
 import useExitInterceptor from './chartDetail/useExitInterceptor.js';
 
-export default function ChartDetail({ customer, initialChartId, onBack, maxChartsAllowed, currentChartsCount, userTier, refreshChartCount }) {
+// 🌟 [보안 확충]: 비밀번호 분실 시 구글 인증 초기화를 유도하기 위해 auth 도구 수입
+import { auth } from '../firebase';
+import { signOut } from 'firebase/auth';
+
+export default function ChartDetail({ 
+  customer, initialChartId, onBack, maxChartsAllowed, currentChartsCount, userTier, refreshChartCount,
+  onTriggerLock // 🌟 상위 App.jsx로부터 전송받은 락다운 원격 스위치 수령
+}) {
   // UI 상태 관리
   const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false);
   const [utilityState, setUtilityState] = useState('hidden');
@@ -61,6 +68,9 @@ export default function ChartDetail({ customer, initialChartId, onBack, maxChart
   const setViewingRecordRef = useRef(null);
   const setHasUnsavedChangesRef = useRef(null);
 
+  // 차트 도면 트리플 클릭 감지용 Ref 선언
+  const chartClickRef = useRef({ count: 0, lastClick: 0 });
+
   // 메모 버튼 클릭 시 경고창 순서 제어를 위한 독립적 제어 플래그 Refs
   const memoPendingRef = useRef(false);
   const isCancellingRef = useRef(false);
@@ -95,7 +105,7 @@ export default function ChartDetail({ customer, initialChartId, onBack, maxChart
     setMemos: memoManager.setMemos,
     saveRecord: historyManager.saveRecord,
     setFeedback,
-    // 🌟 NFC 진입 시 내부 훅이 기록 모달을 멋대로 강제 팝업시키는 동작을 원천 차단
+    // NFC 진입 시 내부 훅이 기록 모달을 멋대로 강제 팝업시키는 동작을 원천 차단
     setShowHistoryModal: useCallback((show) => {
       if (initialChartId && show === true) return;
       setIsTimelineModalOpen(show);
@@ -118,7 +128,7 @@ export default function ChartDetail({ customer, initialChartId, onBack, maxChart
     setUtilityState,
   });
 
-  // 🌟 NFC로 진입 시 타겟 차트를 무조건 즉시 강제 로드 후 모달 상태 잔상 강제 파괴
+  // NFC로 진입 시 타겟 차트를 무조건 즉시 강제 로드 후 모달 상태 잔상 강제 파괴
   useEffect(() => {
     if (initialChartId && !historyManager.loading && historyManager.history.length > 0) {
       const currentRecordId = sessionManager.viewingRecord?.id || sessionManager.sessionRecordId;
@@ -134,6 +144,62 @@ export default function ChartDetail({ customer, initialChartId, onBack, maxChart
       }
     }
   }, [initialChartId, historyManager.loading, historyManager.history, sessionManager.viewingRecord, sessionManager.sessionRecordId, historyManager]);
+
+  // 화면 꺼짐 방지(Screen Wake Lock) 가동 이펙트
+  useEffect(() => {
+    let wakeLock = null;
+
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.warn('화면 켜짐 유지 가동 실패:', err.message);
+      }
+    };
+
+    requestWakeLock();
+
+    // 브라우저 탭 전환 등으로 안테나가 꺼졌을 때 다시 돌아오면 재요청 처리
+    const handleVisibilityChange = async () => {
+      if (wakeLock !== null && document.visibilityState === 'visible') {
+        await requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLock !== null) {
+        wakeLock.release().then(() => {
+          wakeLock = null;
+        });
+      }
+    };
+  }, []);
+
+  // 🌟 [방식 변경]: 지공 도면 자체를 3번 클릭했을 때 작동하는 잠금 제어 핸들러
+  const handleChartTripleClick = useCallback(() => {
+    // 메모 핀을 꼽는 도중(메모 편집 중)에는 조작에 방해되지 않도록 잠금 작동을 원천 제외합니다.
+    if (memoManager.isPlacingMemo) return;
+
+    const now = Date.now();
+    const { count, lastClick } = chartClickRef.current;
+
+    if (now - lastClick < 350) { 
+      const nextCount = count + 1;
+      if (nextCount >= 3) {
+        chartClickRef.current = { count: 0, lastClick: 0 };
+        if (onTriggerLock) onTriggerLock(); // 🔒 최상단 App.jsx 사생활 보호창 즉시 락다운!
+      } else {
+        chartClickRef.current = { count: nextCount, lastClick: now };
+      }
+    } else {
+      chartClickRef.current = { count: 1, lastClick: now };
+    }
+  }, [onTriggerLock, memoManager.isPlacingMemo]);
 
   // 뷰포트 제어용 훅 연동
   const { forceZoomResetAndExecute } = useViewportControl({
@@ -226,7 +292,7 @@ export default function ChartDetail({ customer, initialChartId, onBack, maxChart
     }
   }, [memoManager.isPlacingMemo]);
 
-  // 🌟 [수정 반영] 라이선스 등급 판별 상수 정의
+  // 라이선스 등급 판별 상수 정의
   const isNfcTier = ['expert', 'master'].includes(userTier?.toLowerCase());
   const currentRecordId = sessionManager.viewingRecord?.id || sessionManager.sessionRecordId;
   const isLimitExceeded = exitInterceptor.isNewChart && maxChartsAllowed !== Infinity && currentChartsCount >= maxChartsAllowed;
@@ -317,15 +383,22 @@ export default function ChartDetail({ customer, initialChartId, onBack, maxChart
             </div>
           </Card>
         ) : (
-          <ChartBlueprintView
-            customer={customer}
-            data={sessionManager.chartData}
-            innerRef={chartRef}
-            memoOverlay={memoManager.renderMemoOverlay('chart', chartRef)}
-            memosRenderer={memoManager.renderMemos('chart', chartRef)}
-            isMemoActive={memoManager.isMemoActive}
-            onGuideClick={() => setShowDrillingGuide(true)}
-          />
+          /* 🌟 [수정 완료]: 인위적인 h-14 공백 마진용 div를 완벽 탈거하여 원본 거리로 롤백하고, 도면 카드 컴포넌트 자체를 트리플 클릭 컨테이너로 묶었습니다. */
+          <div 
+            onClick={handleChartTripleClick}
+            style={{ WebkitTapHighlightColor: 'transparent' }}
+            className="w-full"
+          >
+            <ChartBlueprintView
+              customer={customer}
+              data={sessionManager.chartData}
+              innerRef={chartRef}
+              memoOverlay={memoManager.renderMemoOverlay('chart', chartRef)}
+              memosRenderer={memoManager.renderMemos('chart', chartRef)}
+              isMemoActive={memoManager.isMemoActive}
+              onGuideClick={() => setShowDrillingGuide(true)}
+            />
+          </div>
         )}
 
         {!sessionManager.isEditMode && (
@@ -349,7 +422,7 @@ export default function ChartDetail({ customer, initialChartId, onBack, maxChart
             isNewChart={exitInterceptor.isNewChart}
             handleSave={exitInterceptor.handleSave}
             currentRecordId={currentRecordId} 
-            // 🌟 [수정 반영]: 등급 권한(isNfcTier)이 유효할 때만 NFC 디바이스 지원 상태 및 액션 핸들러 주입
+            // [수정 반영]: 등급 권한(isNfcTier)이 유효할 때만 NFC 디바이스 지원 상태 및 액션 핸들러 주입
             realNfcSupported={isNfcTier && typeof window !== 'undefined' && ('NDEFReader' in window) && localStorage.getItem('nfcUnsupportedDevice') !== 'true'}
             onNfcWrite={isNfcTier ? nfcManager.handleNfcWrite : undefined}
           />
@@ -371,7 +444,7 @@ export default function ChartDetail({ customer, initialChartId, onBack, maxChart
           handleShowTimelineClick(); 
           setUtilityState('collapsed'); 
         }}
-        // 🌟 [수정 반영]: 유틸리티 시트 내 쓰기 바인딩도 등급 조건에 맞춰 분기 처리
+        // [수정 반영]: 유틸리티 시트 내 쓰기 바인딩도 등급 조건에 맞춰 분기 처리
         onStartNfcWrite={isNfcTier ? nfcManager.handleNfcWrite : undefined}
       />
 

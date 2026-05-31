@@ -18,8 +18,8 @@ export default function ChartTopBar({
   ballName,
 }) {
   
-  // 엑스퍼트 등급 이상인지 체크 (expert, pro, master 등)
-  const isPremiumUser = userTier && ['expert', 'pro', 'master', 'admin'].includes(userTier.toLowerCase());
+  // 🌟 [정밀 수정]: 유틸리티 버튼 권한을 오직 expert와 master 등급으로만 제한합니다.
+  const isPremiumUser = userTier && ['expert', 'master'].includes(userTier.toLowerCase());
 
   // 기존 불러오기 기록이 존재하거나 새 차트가 성공적으로 저장(ID 발급)된 모든 경우를 판단
   const isSavedChart = viewingRecord || sessionRecordId;

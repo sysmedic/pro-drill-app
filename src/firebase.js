@@ -28,6 +28,11 @@ const app = isFirstLoad ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
+// 🌟 [정밀 추가]: 로그아웃 후 버튼을 누르면 브라우저의 구글 자동 로그인 세션을 무시하고 무조건 계정 선택 모달을 새로 띄웁니다.
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
 // 🟢 [수정 완료] 최신 규격(localCache) 내부에 다중 탭 관리자(tabManager) 옵션을 결합하여 주입합니다.
 // 최초 로드 시에만 이 고성능 캐시 세팅이 인스턴스에 고정 할당됩니다.
 export const db = isFirstLoad 
