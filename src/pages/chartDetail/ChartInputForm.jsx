@@ -41,6 +41,46 @@ const OFFSET_OPTIONS = [
 
 const MANUFACTURER_OPTIONS = ['G & S', '로드필드', '텐스프레임', 'Turbo', 'Master'];
 
+// 🟢 [이식]: 드릴링 가이드의 오발 컷 연산 정의 함수 정의
+const parseFraction = (str) => {
+  if (!str) return 0;
+  const cleanStr = String(str).split('(')[0].trim();
+  const parts = cleanStr.split(' ');
+  if (parts.length === 2 && parts[1].includes('/')) {
+    const whole = parseFloat(parts[0]);
+    const frac = parts[1].split('/');
+    return whole + (parseFloat(frac[0]) / parseFloat(frac[1]));
+  } else if (parts.length === 1) {
+    if (parts[0].includes('/')) {
+      const frac = parts[0].split('/');
+      return parseFloat(frac[0]) / parseFloat(frac[1]);
+    }
+    return parseFloat(parts[0]);
+  }
+  return 0;
+};
+
+const toFraction64 = (num) => {
+  if (num <= 0) return '';
+  const totalNumerator = Math.round(num * 64);
+  const whole = Math.floor(totalNumerator / 64);
+  const numerator = totalNumerator % 64;
+
+  if (numerator === 0) return String(whole);
+
+  let n = numerator;
+  let d = 64;
+  while (n % 2 === 0 && d % 2 === 0) {
+    n /= 2;
+    d /= 2;
+  }
+
+  if (whole > 0) {
+    return `${whole} ${n}/${d}`;
+  }
+  return `${n}/${d}`;
+};
+
 function ChartSelectField(props) {
   return <SelectField density={FORM_DENSITY} {...props} />;
 }
@@ -66,6 +106,18 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
 
   const bevelOptions = useMemo(() => getBevelOptions(thumbDetails?.holeSize), [thumbDetails?.holeSize]);
   const dynamicOvalOptions = useMemo(() => getDynamicOvalOptions(thumbDetails?.holeSize, OVAL_OPTIONS), [thumbDetails?.holeSize]);
+
+  // 🟢 [이식]: 원홀 기준 드릴 비트(64분법 감산) 선택 옵션 실시간 동적 생성
+  const baseHoleSizeNum = useMemo(() => parseFraction(thumbDetails?.holeSize), [thumbDetails?.holeSize]);
+  const ovalCutOptions = useMemo(() => {
+    if (!baseHoleSizeNum) return [];
+    const options = [];
+    for (let i = 0; i <= 10; i++) {
+      const val = baseHoleSizeNum - (i / 64);
+      if (val > 0) options.push(toFraction64(val));
+    }
+    return options;
+  }, [baseHoleSizeNum]);
 
   const [activeAccordion, setActiveAccordion] = useState(null);
   const toggleAccordion = (id) => setActiveAccordion(prev => prev === id ? null : id);
@@ -400,6 +452,13 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <ChartSelectField allowCustom label="원홀" value={thumbDetails.holeSize} onChange={v => updateThumbDetails('holeSize', v)} options={HOLE_OPTIONS} />
             <ChartSelectField allowCustom label="오발 사이즈" value={thumbDetails.ovalSize} onChange={v => updateThumbDetails('ovalSize', v)} options={dynamicOvalOptions} />
+            <ChartSelectField 
+              allowCustom 
+              label="오발 컷" 
+              value={thumbDetails.ovalCut || thumbDetails.holeSize || ''} 
+              onChange={v => updateThumbDetails('ovalCut', v)} 
+              options={ovalCutOptions} 
+            />
             <ChartKeypadField label="오발 각도" onOpen={() => openKeypad('ovalAngle', ovalAngle, '오발 각도', 'number')} placeholder="" value={ovalAngle} />
             <ChartSelectField allowCustom label="덤 타입" value={thumbDetails.slugType} onChange={v => updateThumbDetails('slugType', v)} options={THUMB_TYPE_OPTIONS} />
             <ChartSelectField allowCustom label="홀컷 사이즈" value={thumbDetails.holeCutSize} onChange={v => updateThumbDetails('holeCutSize', v)} options={THUMB_HOLE_CUT_OPTIONS} />

@@ -37,8 +37,7 @@ export default function ChartModalManager({
   setShowExitConfirm,
   setSharePreview,
   setShareFilename,
-  setShowDrillingGuide,
-  setShowSettingsModal,
+  setShowDrillingGuide, 
   setBallName,
   setLayoutInfo,
   setIntent,
@@ -60,12 +59,24 @@ export default function ChartModalManager({
   const [memoDeleteRequested, setMemoDeleteRequested] = React.useState(false);
   const [inputName, setInputName] = useState('');
 
+  // 드릴링 가이드 변경 추적 및 닫기 확인 모달 제어 상태
+  const [guideChanged, setGuideChanged] = useState(false);
+  const [showGuideCloseConfirm, setShowGuideCloseConfirm] = useState(false);
+
   // 이름 변경 대상 지정 시 입력값 초기 동기화
   useEffect(() => {
     if (renameRequest?.currentName) {
       setInputName(renameRequest.currentName);
     }
   }, [renameRequest]);
+
+  // 가이드 가동 상태 초기화 이펙트 (열릴 때 플래그 리셋)
+  useEffect(() => {
+    if (showDrillingGuide) {
+      setGuideChanged(false);
+      setShowGuideCloseConfirm(false);
+    }
+  }, [showDrillingGuide]);
 
   return (
     <>
@@ -275,11 +286,52 @@ export default function ChartModalManager({
           data={chartData}
           customer={customer}
           onClose={() => {
-            setShowDrillingGuide(false);
-            setIsEditMode(false);
+            if (guideChanged) {
+              setShowGuideCloseConfirm(true);
+            } else {
+              setShowDrillingGuide(false);
+              setIsEditMode(false);
+            }
           }}
-          onGuideStateChange={(drillingGuide) => handleChartDataChange({ ...chartData, drillingGuide })}
+          onGuideStateChange={(drillingGuide, updatedThumbDetails) => {
+            setGuideChanged(true); 
+            const nextData = { ...chartData, drillingGuide };
+            if (updatedThumbDetails) {
+              nextData.thumbDetails = updatedThumbDetails;
+            }
+            handleChartDataChange(nextData);
+          }}
         />
+      )}
+
+      {/* 드릴링 가이드 전용 퇴장 변경 안내 모달 */}
+      {showGuideCloseConfirm && (
+        /* 🟢 [완전 독립화]: 빈 버튼 껍데기나 유령 클릭 여백 흔적이 100% 존재할 수 없는 순수 단일 레이아웃 설계 */
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
+            <div className="p-6">
+              <h3 className="text-lg font-black text-slate-800 mb-2">드릴링 수치 변경</h3>
+              <p className="text-sm text-slate-600 font-medium leading-normal whitespace-pre-line">
+                드릴링 가이드의 수치/옵션이 변경되었습니다.
+                변경된 수치/옵션을 최종 반영하려면 메인 차트에서 '저장'을 진행해 주세요.
+              </p>
+            </div>
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex">
+              <button 
+                type="button"
+                className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm active:scale-95 transition-all shadow-md shadow-indigo-600/10"
+                onClick={() => {
+                  setShowGuideCloseConfirm(false);
+                  setGuideChanged(false);
+                  setShowDrillingGuide(false);
+                  setIsEditMode(false);
+                }}
+              >
+                승인
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* 세팅 모달 */}

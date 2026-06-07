@@ -1,4 +1,3 @@
-import { IconButton } from '../../components/ui/Button.jsx';
 import { useMemo, useEffect } from 'react';
 
 const GlassBox = ({ title, rightElement, children, className = '' }) => (
@@ -74,13 +73,24 @@ export default function DrillingGuideView({ data = {}, customer = {}, onClose, o
   const thumbDetails = data?.thumbDetails || {};
 
   const drillingGuide = data?.drillingGuide || { ovalCut: '', ovalCorrection: '0', isDetailedMode: false };
-  const ovalCut = drillingGuide.ovalCut || '';
   const ovalCorrection = drillingGuide.ovalCorrection || '0';
   const isDetailedMode = drillingGuide.isDetailedMode || false;
 
-  const setOvalCut = (val) => onGuideStateChange && onGuideStateChange({ ...drillingGuide, ovalCut: val });
-  const setOvalCorrection = (val) => onGuideStateChange && onGuideStateChange({ ...drillingGuide, ovalCorrection: val });
-  const setIsDetailedMode = (val) => onGuideStateChange && onGuideStateChange({ ...drillingGuide, isDetailedMode: val });
+  // 차트인풋폼의 "오발 컷"(thumbDetails.ovalCut) 수치를 최우선 기본값으로 동기화
+  const ovalCut = thumbDetails.ovalCut || drillingGuide.ovalCut || '';
+
+  // 오발 컷 변경 시 부모 컴포넌트의 drillingGuide와 thumbDetails 양쪽에 실시간 역반영
+  const setOvalCut = (val) => {
+    if (onGuideStateChange) {
+      onGuideStateChange(
+        { ...drillingGuide, ovalCut: val },
+        { ...thumbDetails, ovalCut: val }
+      );
+    }
+  };
+  
+  const setOvalCorrection = (val) => onGuideStateChange && onGuideStateChange({ ...drillingGuide, ovalCorrection: val }, thumbDetails);
+  const setIsDetailedMode = (val) => onGuideStateChange && onGuideStateChange({ ...drillingGuide, isDetailedMode: val }, thumbDetails);
 
   const firstPitch = isLeft ? ringPitch : midPitch;
   const secondPitch = isLeft ? midPitch : ringPitch;
@@ -186,14 +196,22 @@ export default function DrillingGuideView({ data = {}, customer = {}, onClose, o
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-slate-900 overflow-y-auto overflow-x-hidden touch-auto animate-fade-in flex flex-col items-center">
+    /* 🟢 [교정]: z-[9999] 독점 레이어를 지공 서열에 알맞은 z-[45]로 현실화하여 포탈 기반 ConfirmModal의 정상 상단 노출 확보 */
+    <div className="fixed inset-0 z-[45] bg-slate-900 overflow-y-auto overflow-x-hidden touch-auto animate-fade-in flex flex-col items-center">
       {/* Top Bar */}
       <div className="sticky top-0 w-full flex justify-between items-center p-3 px-4 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10">
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
           드릴링 가이드 <span className="text-white/50 font-medium mx-1">-</span> {customer?.name}
         </h2>
-        <IconButton aria-label="닫기" icon="close" onClick={onClose} size="sm" variant="plain" className="text-white hover:bg-white/10" />
+        <button 
+          type="button" 
+          onClick={onClose} 
+          className="text-white/70 hover:text-white p-2 text-xl font-bold transition-colors outline-none cursor-pointer"
+          aria-label="닫기"
+        >
+          ✕
+        </button>
       </div>
 
       {/* Content Area */}
@@ -308,7 +326,7 @@ export default function DrillingGuideView({ data = {}, customer = {}, onClose, o
               rightElement={
                 <div className="flex items-center gap-3 sm:gap-4">
                   <div className="flex items-center gap-1.5 sm:gap-2">
-                    <span className="text-white/70 text-xs sm:text-sm font-black tracking-widest">오발컷</span>
+                    <span className="text-white/70 text-xs sm:text-sm font-black tracking-widest">오발 컷</span>
                     <select
                       value={ovalCut}
                       onChange={(e) => setOvalCut(e.target.value)}

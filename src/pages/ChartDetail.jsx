@@ -23,13 +23,13 @@ import useChartNfc from './chartDetail/useChartNfc.js';
 import useViewportControl from './chartDetail/useViewportControl.js';
 import useExitInterceptor from './chartDetail/useExitInterceptor.js';
 
-// 🌟 [보안 확충]: 비밀번호 분실 시 구글 인증 초기화를 유도하기 위해 auth 도구 수입
+// [보안 확충]: 비밀번호 분실 시 구글 인증 초기화를 유도하기 위해 auth 도구 수입
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 
 export default function ChartDetail({ 
   customer, initialChartId, onBack, maxChartsAllowed, currentChartsCount, userTier, refreshChartCount,
-  onTriggerLock // 🌟 상위 App.jsx로부터 전송받은 락다운 원격 스위치 수령
+  onTriggerLock // 상위 App.jsx로부터 전송받은 락다운 원격 스위치 수령
 }) {
   // UI 상태 관리
   const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false);
@@ -105,7 +105,6 @@ export default function ChartDetail({
     setMemos: memoManager.setMemos,
     saveRecord: historyManager.saveRecord,
     setFeedback,
-    // NFC 진입 시 내부 훅이 기록 모달을 멋대로 강제 팝업시키는 동작을 원천 차단
     setShowHistoryModal: useCallback((show) => {
       if (initialChartId && show === true) return;
       setIsTimelineModalOpen(show);
@@ -115,7 +114,6 @@ export default function ChartDetail({
 
   const exportManager = useChartExport({
     customer,
-    /* 🎯 [오류 교정]: 객체 리터럴 내부 문법 오타(= 및 중괄호 제거) 정밀 정상화 */
     isEditMode: sessionManager.isEditMode,
     setFeedback,
     setUtilityState
@@ -136,7 +134,7 @@ export default function ChartDetail({
         const targetRecord = historyManager.history.find(r => r.id === initialChartId);
         if (targetRecord) {
           sessionManager.loadRecord(targetRecord);
-          setIsTimelineModalOpen(false); // 모달 활성화 꺼짐 보장
+          setIsTimelineModalOpen(false); 
           if (typeof historyManager?.setShowHistoryModal === 'function') {
             historyManager.setShowHistoryModal(false);
           }
@@ -161,7 +159,6 @@ export default function ChartDetail({
 
     requestWakeLock();
 
-    // 브라우저 탭 전환 등으로 안테나가 꺼졌을 때 다시 돌아오면 재요청 처리
     const handleVisibilityChange = async () => {
       if (wakeLock !== null && document.visibilityState === 'visible') {
         await requestWakeLock();
@@ -180,9 +177,8 @@ export default function ChartDetail({
     };
   }, []);
 
-  // 🌟 [방식 변경]: 지공 도면 자체를 3번 클릭했을 때 작동하는 잠금 제어 핸들러
+  // 지공 도면 자체를 3번 클릭했을 때 작동하는 잠금 제어 핸들러
   const handleChartTripleClick = useCallback(() => {
-    // 메모 핀을 꼽는 도중(메모 편집 중)에는 조작에 방해되지 않도록 잠금 작동을 원천 제외합니다.
     if (memoManager.isPlacingMemo) return;
 
     const now = Date.now();
@@ -192,7 +188,7 @@ export default function ChartDetail({
       const nextCount = count + 1;
       if (nextCount >= 3) {
         chartClickRef.current = { count: 0, lastClick: 0 };
-        if (onTriggerLock) onTriggerLock(); // 🔒 최상단 App.jsx 사생활 보호창 즉시 락다운!
+        if (onTriggerLock) onTriggerLock(); 
       } else {
         chartClickRef.current = { count: nextCount, lastClick: now };
       }
@@ -298,13 +294,13 @@ export default function ChartDetail({
   const isLimitExceeded = exitInterceptor.isNewChart && maxChartsAllowed !== Infinity && currentChartsCount >= maxChartsAllowed;
   
   // 기록창 활성화 플래그 변수
-  // NFC로 들어왔고 아직 세션 매칭 타겟 로드가 안 끝났다면 뷰 렌더링 단에서도 모달 노출 플래그를 무조건 차단
   const isHistoryOpen = (initialChartId && currentRecordId !== initialChartId)
     ? false 
     : (isTimelineModalOpen || historyManager.showHistoryModal);
 
   return (
     <PageShell bottomPadding="pb-40">
+      {/* 🟢 [교정 원상 복구]: 레이아웃Reflow 버그를 초래하던 글로벌 오염 CSS 선택자를 완벽 제거하고 오직 원본 스크롤바 제어식만 보존 */}
       <style>{`
         ::-webkit-scrollbar {
           display: none !important;
@@ -326,8 +322,8 @@ export default function ChartDetail({
         </div>
       )}
 
-      {/* 지공 기록 창이 열려있을 때 상단 네비게이션 바를 숨깁니다. */}
-      {!isHistoryOpen && (
+      {/* 지공 기록창 혹은 드릴링 가이드 중 하나라도 활성화되면 상단 탑바를 영리하게 숨김 */}
+      {!(isHistoryOpen || showDrillingGuide) && (
         <ChartTopBar
           isEditMode={sessionManager.isEditMode}
           isPlacingMemo={memoManager.isPlacingMemo}
@@ -345,7 +341,39 @@ export default function ChartDetail({
             }
           }}
           onBack={exitInterceptor.handleBackExit} 
-          onSave={exitInterceptor.handleSave}
+          onSave={async () => {
+            if (sessionManager.hasUnsavedChanges) {
+              await exitInterceptor.handleSave();
+            } else {
+              // 🟢 [근본 해결 반영]: 글로벌 CSS를 1픽셀도 쓰지 않고, 핑크 배너가 켜지는 고유 시점에만 런타임 타격하는 인라인 분기 주입
+              setFeedback({
+                message: (
+                  <span
+                    ref={(el) => {
+                      if (!el) return;
+                      const toastBox = el.closest('[class*="bg-green"], [class*="bg-emerald"]');
+                      if (toastBox) {
+                        // 1. 수축된 가로폭 레이아웃 명세를 원래의 웅장한 크기로 원상 강제 복구
+                        toastBox.style.setProperty('width', '100%', 'important');
+                        // 2. 오직 이 런타임 순간에만 연한 핑크톤 테마 정밀 도색
+                        toastBox.style.setProperty('background-color', '#fff1f2', 'important');
+                        toastBox.style.setProperty('border-color', '#fecdd3', 'important');
+                        // 3. 내부 텍스트, 자식 아이콘, 디스미스 ✕ 버튼까지 핑크 테마로 통일 일체화
+                        toastBox.querySelectorAll('*').forEach(child => {
+                          child.style.setProperty('color', '#9f1239', 'important');
+                          child.style.setProperty('fill', '#9f1239', 'important');
+                          child.style.setProperty('stroke', '#9f1239', 'important');
+                        });
+                      }
+                    }}
+                  >
+                    저장할 내용이 없습니다.
+                  </span>
+                ),
+                tone: "success" 
+              });
+            }
+          }}
           onToggleEditMode={() => sessionManager.setIsEditMode(!sessionManager.isEditMode)}
           onToggleUtility={() => setUtilityState(utilityState === 'expanded' ? 'collapsed' : 'expanded')}
           onShowTimeline={handleShowTimelineClick}
@@ -383,7 +411,6 @@ export default function ChartDetail({
             </div>
           </Card>
         ) : (
-          /* 🌟 [수정 완료]: 인위적인 h-14 공백 마진용 div를 완벽 탈거하여 원본 거리로 롤백하고, 도면 카드 컴포넌트 자체를 트리플 클릭 컨테이너로 묶었습니다. */
           <div 
             onClick={handleChartTripleClick}
             style={{ WebkitTapHighlightColor: 'transparent' }}
@@ -402,7 +429,6 @@ export default function ChartDetail({
         )}
 
         {!sessionManager.isEditMode && (
-          /* 🎯 [오류 교정]: 컴파일러 해석 충돌을 완전히 피하기 위해 JSX 컴포넌트 외부로 주석 이동 처리 */
           <TaskDetailsCard
             key={currentRecordId ? `record_${currentRecordId}` : `new_chart_${entryKey}`}
             ballName={sessionManager.ballName}
@@ -422,7 +448,6 @@ export default function ChartDetail({
             isNewChart={exitInterceptor.isNewChart}
             handleSave={exitInterceptor.handleSave}
             currentRecordId={currentRecordId} 
-            // [수정 반영]: 등급 권한(isNfcTier)이 유효할 때만 NFC 디바이스 지원 상태 및 액션 핸들러 주입
             realNfcSupported={isNfcTier && typeof window !== 'undefined' && ('NDEFReader' in window) && localStorage.getItem('nfcUnsupportedDevice') !== 'true'}
             onNfcWrite={isNfcTier ? nfcManager.handleNfcWrite : undefined}
           />
@@ -444,7 +469,6 @@ export default function ChartDetail({
           handleShowTimelineClick(); 
           setUtilityState('collapsed'); 
         }}
-        // [수정 반영]: 유틸리티 시트 내 쓰기 바인딩도 등급 조건에 맞춰 분기 처리
         onStartNfcWrite={isNfcTier ? nfcManager.handleNfcWrite : undefined}
       />
 
@@ -572,7 +596,7 @@ export default function ChartDetail({
         </div>
       )}
 
-      {/* 1. 새 차트 저장 및 네이밍 전용 모달 */}
+      {/* 새 차트 저장 및 네이밍 전용 모달 */}
       {exitInterceptor.showNewChartNameModal && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
           <form 
