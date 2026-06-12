@@ -17,7 +17,8 @@ const MEMO_SHAPES = [
   { id: 'star', icon: 'star' },
 ];
 
-export const MemoModal = ({ title, memo, onSave, onDelete }) => {
+// 🟢 [프롭스 수령]: 상위 ChartModalManager가 연산하여 토스한 등급 권한(isBetaTester) 수령
+export const MemoModal = ({ title, memo, onSave, onDelete, isBetaTester }) => {
   const [text, setText] = useState(memo?.text || '');
   const [color, setColor] = useState(memo?.color || 'yellow');
   const [shape, setShape] = useState(memo?.shape || 'memo');
@@ -73,8 +74,8 @@ export const MemoModal = ({ title, memo, onSave, onDelete }) => {
             </div>
             
             <div className="flex justify-center">
-              {/* 버튼명 변경 및 부드러운 인디고 강조 테마 적용 */}
-              {!isPinned && (
+              {/* 🟢 [정밀 UI 가드 결합]: 베타테스터 등급일 때만 버튼을 노출 (일반 유저에게는 100% 원천 은폐) */}
+              {!isPinned && isBetaTester && (
                 <Button 
                   onClick={handlePinAndClose} 
                   size="sm" 
@@ -112,7 +113,7 @@ export const MemoModal = ({ title, memo, onSave, onDelete }) => {
 };
 
 export const HistoryModal = ({ history, onSelect, onClose, onDelete, onRename, maxChartsAllowed, currentChartsCount }) => {
-  // 🎯 [수정 완료] 원래의 (5/20개) 수량 표기 방식으로 회귀하고 흰색 투과도 작은 글씨 스타일(text-white/60 text-xs font-medium) 적용
+  // 🎯 [원형 사수] 원래의 (5/20개) 수량 표기 방식으로 회귀하고 흰색 투과도 작은 글씨 스타일(text-white/60 text-xs font-medium) 적용
   const modalTitle = (
     <span className="flex items-center gap-1">
       저장 기록

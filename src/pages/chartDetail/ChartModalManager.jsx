@@ -83,12 +83,24 @@ export default function ChartModalManager({
       {/* 1. 메모 모달 */}
       {activeMemoId && (() => {
         const activeMemo = memos.find(m => m.id === activeMemoId);
+        
+        // 🟢 [등급 판별 연산 수립]: 일반 등급 유저와 베타테스터(Expert, Master) 분기 가드 설정
+        const isBetaTester = ['expert', 'master'].includes(userTier?.toLowerCase());
+
         return (
           <MemoModal
             title={activeMemo?.text ? "메모" : "메모 작성"}
             memo={activeMemo}
-            onSave={saveActiveMemoText}
             onDelete={() => setMemoDeleteRequested(true)}
+            
+            // 🟢 [UI 통제용 프롭스 전달]: 일반 등급 유저 화면에서 "차트에 고정하기" 버튼 은폐용 가드 토스
+            isBetaTester={isBetaTester}
+            
+            // 🟢 [데이터 오염 원천 방지 2중 가드]: 일반 유저가 우회 저장하더라도 무조건 고정이 해제(false)되도록 안전 설계
+            onSave={(text, color, shape, isPinned) => {
+              const finalPinned = isBetaTester ? isPinned : false;
+              saveActiveMemoText(text, color, shape, finalPinned);
+            }}
           />
         );
       })()}
@@ -306,14 +318,12 @@ export default function ChartModalManager({
 
       {/* 드릴링 가이드 전용 퇴장 변경 안내 모달 */}
       {showGuideCloseConfirm && (
-        /* 🟢 [완전 독립화]: 빈 버튼 껍데기나 유령 클릭 여백 흔적이 100% 존재할 수 없는 순수 단일 레이아웃 설계 */
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
             <div className="p-6">
               <h3 className="text-lg font-black text-slate-800 mb-2">드릴링 수치 변경</h3>
               <p className="text-sm text-slate-600 font-medium leading-normal whitespace-pre-line">
-                드릴링 가이드의 수치/옵션이 변경되었습니다.
-                변경된 수치/옵션을 최종 반영하려면 메인 차트에서 '저장'을 진행해 주세요.
+                드릴링 가이드의 수치/옵션이 변경되었습니다.<br/>변경된 수치/옵션을 최종 반영하려면 메인 차트에서 '저장'을 진행해 주세요.
               </p>
             </div>
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex">

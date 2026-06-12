@@ -1,20 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
+import { doc, updateDoc, query, where, orderBy, serverTimestamp, onSnapshot, getDoc, writeBatch, increment, collection } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
-import { 
-  collection, doc, updateDoc, query, where, orderBy, 
-  serverTimestamp, onSnapshot, getDoc, writeBatch, increment
-} from 'firebase/firestore';
 
 export default function useHistoryRecords(customer, { refreshChartCount, setFeedback, onRenameSuccess } = {}) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true); 
 
-  // 💡 모달 위에서 일어나는 액션(이름변경/삭제) 제어 상태만 남기고 중복된 모달 열림 상태는 삭제했습니다.
   const [historyConfirm, setHistoryConfirm] = useState(null);
   const [renameRequest, setRenameRequest] = useState(null);
   const [deleteRequest, setDeleteRequest] = useState(null);
 
-  // 실시간 데이터 구독 (Real-time Sync)
   useEffect(() => {
     if (!auth.currentUser || !customer?.id) {
       setHistory([]);
@@ -50,7 +45,6 @@ export default function useHistoryRecords(customer, { refreshChartCount, setFeed
     return () => unsubscribe();
   }, [customer?.id]);
 
-  // 차트 기록 저장 (최초 생성일 보존 로직 포함)
   const saveRecord = useCallback(async (record) => {
     if (!auth.currentUser) return { ok: false };
 
@@ -87,7 +81,6 @@ export default function useHistoryRecords(customer, { refreshChartCount, setFeed
     }
   }, [customer?.id]);
 
-  // 차트 기록 삭제
   const handleDeleteRecord = useCallback(async (id) => {
     try {
       const batch = writeBatch(db);
@@ -110,7 +103,6 @@ export default function useHistoryRecords(customer, { refreshChartCount, setFeed
     }
   }, [refreshChartCount, setFeedback]);
 
-  // 차트 이름 변경
   const handleRenameRecord = useCallback(async (nextName) => {
     const trimmedName = nextName?.trim();
     if (!trimmedName || !renameRequest) return { ok: false, reason: 'empty' };
@@ -128,7 +120,6 @@ export default function useHistoryRecords(customer, { refreshChartCount, setFeed
     }
   }, [renameRequest, onRenameSuccess, setFeedback]);
 
-  // 💡 중복 데이터 스트림과 무의미한 함수를 완전히 걷어낸 깔끔한 반환값
   return {
     history, 
     loading, 

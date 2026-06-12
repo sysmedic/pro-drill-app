@@ -78,6 +78,10 @@ export default function ChartDetail({
   // 내부 훅의 연속적 모달 중복 트리거를 무력화하기 위한 인터셉트 플래그 Ref
   const memoWarningApprovedRef = useRef(false);
 
+  // 라이선스 등급 판별 상수 선언
+  const isBetaTester = ['expert', 'master'].includes(userTier?.toLowerCase());
+  const isNfcTier = ['expert', 'master'].includes(userTier?.toLowerCase());
+
   // 훅 초기화 및 연결
   const historyManager = useHistoryRecords(customer, {
     refreshChartCount,
@@ -105,16 +109,18 @@ export default function ChartDetail({
     setMemos: memoManager.setMemos,
     saveRecord: historyManager.saveRecord,
     setFeedback,
+    // useChartSession이 진입 시 자동으로 모달을 열려고 할 때, 일반 등급 유저라면 강제 차단 가드 작동
     setShowHistoryModal: useCallback((show) => {
       if (initialChartId && show === true) return;
+      if (!isBetaTester && show === true) return; 
       setIsTimelineModalOpen(show);
-    }, [initialChartId]),
+    }, [initialChartId, isBetaTester]),
     showLogsOnChart
   });
 
   const exportManager = useChartExport({
     customer,
-    isEditMode: sessionManager.isEditMode,
+    isEditMode: sessionManager.isEditMode, // 🟢 객체 자바스크립트 문법(콜론 및 콤마)으로 정밀 교정 완료
     setFeedback,
     setUtilityState
   });
@@ -288,19 +294,18 @@ export default function ChartDetail({
     }
   }, [memoManager.isPlacingMemo]);
 
-  // 라이선스 등급 판별 상수 정의
-  const isNfcTier = ['expert', 'master'].includes(userTier?.toLowerCase());
   const currentRecordId = sessionManager.viewingRecord?.id || sessionManager.sessionRecordId;
   const isLimitExceeded = exitInterceptor.isNewChart && maxChartsAllowed !== Infinity && currentChartsCount >= maxChartsAllowed;
   
-  // 기록창 활성화 플래그 변수
+  // 베타테스터 등급은 자동팝업 포함 기존 방식 100% 사수, 일반 유저는 오직 수동 오픈 상태(isTimelineModalOpen)로만 사수됨
   const isHistoryOpen = (initialChartId && currentRecordId !== initialChartId)
     ? false 
-    : (isTimelineModalOpen || historyManager.showHistoryModal);
+    : isBetaTester
+      ? (isTimelineModalOpen || historyManager.showHistoryModal)
+      : (isTimelineModalOpen);
 
   return (
     <PageShell bottomPadding="pb-40">
-      {/* 🟢 [교정 원상 복구]: 레이아웃Reflow 버그를 초래하던 글로벌 오염 CSS 선택자를 완벽 제거하고 오직 원본 스크롤바 제어식만 보존 */}
       <style>{`
         ::-webkit-scrollbar {
           display: none !important;
@@ -308,6 +313,19 @@ export default function ChartDetail({
         * {
           scrollbar-width: none !important;
           -ms-overflow-style: none !important;
+        }
+        
+        div[class*="bg-green"]:has(.toast-message-pink),
+        div[class*="bg-emerald"]:has(.toast-message-pink) {
+          background-color: #fff1f2 !important; 
+          border-color: #fecdd3 !important;     
+          color: #9f1239 !important;            
+        }
+        div[class*="bg-green"]:has(.toast-message-pink) *,
+        div[class*="bg-emerald"]:has(.toast-message-pink) * {
+          color: #9f1239 !important;
+          fill: #9f1239 !important;
+          stroke: #9f1239 !important;
         }
       `}</style>
 
@@ -345,31 +363,8 @@ export default function ChartDetail({
             if (sessionManager.hasUnsavedChanges) {
               await exitInterceptor.handleSave();
             } else {
-              // 🟢 [근본 해결 반영]: 글로벌 CSS를 1픽셀도 쓰지 않고, 핑크 배너가 켜지는 고유 시점에만 런타임 타격하는 인라인 분기 주입
               setFeedback({
-                message: (
-                  <span
-                    ref={(el) => {
-                      if (!el) return;
-                      const toastBox = el.closest('[class*="bg-green"], [class*="bg-emerald"]');
-                      if (toastBox) {
-                        // 1. 수축된 가로폭 레이아웃 명세를 원래의 웅장한 크기로 원상 강제 복구
-                        toastBox.style.setProperty('width', '100%', 'important');
-                        // 2. 오직 이 런타임 순간에만 연한 핑크톤 테마 정밀 도색
-                        toastBox.style.setProperty('background-color', '#fff1f2', 'important');
-                        toastBox.style.setProperty('border-color', '#fecdd3', 'important');
-                        // 3. 내부 텍스트, 자식 아이콘, 디스미스 ✕ 버튼까지 핑크 테마로 통일 일체화
-                        toastBox.querySelectorAll('*').forEach(child => {
-                          child.style.setProperty('color', '#9f1239', 'important');
-                          child.style.setProperty('fill', '#9f1239', 'important');
-                          child.style.setProperty('stroke', '#9f1239', 'important');
-                        });
-                      }
-                    }}
-                  >
-                    저장할 내용이 없습니다.
-                  </span>
-                ),
+                message: <span className="toast-message-pink">저장할 내용이 없습니다.</span>,
                 tone: "success" 
               });
             }
@@ -472,9 +467,9 @@ export default function ChartDetail({
         onStartNfcWrite={isNfcTier ? nfcManager.handleNfcWrite : undefined}
       />
 
-      {/* 통합 히스토리 모달 연동 */}
       <CustomerHistoryModal 
         isOpen={isHistoryOpen}
+        userTier={userTier} 
         onClose={() => {
           setIsTimelineModalOpen(false);
           if (typeof historyManager?.setShowHistoryModal === 'function') {
@@ -557,7 +552,6 @@ export default function ChartDetail({
         deleteActiveMemo={memoManager.deleteActiveMemo}
       />
 
-      {/* 기존 차트 수정 중 로그 확인용 선제 경고 모달 */}
       {showLogInterceptModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
@@ -596,7 +590,6 @@ export default function ChartDetail({
         </div>
       )}
 
-      {/* 새 차트 저장 및 네이밍 전용 모달 */}
       {exitInterceptor.showNewChartNameModal && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
           <form 

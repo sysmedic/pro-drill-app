@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const GlassBox = ({ children, onClick, className = '' }) => (
   <div 
@@ -47,18 +47,30 @@ export default function CustomerHistoryModal({
   onRename,
   onDelete,
   showLogsOnChart = true,
-  onToggleLogsVisibility
+  onToggleLogsVisibility,
+  userTier // 🟢 상위 등급 라이선스 수령 통로 수립 완료
 }) {
-  const [activeTab, setActiveTab] = useState('timeline');
+  // 🟢 [베타테스터 연산]: 엑스퍼트, 마스터만 기능을 발견하고 나머지는 숨김 처리
+  const isBetaTester = ['expert', 'master'].includes(userTier?.toLowerCase());
+  
+  // 등급이 베타테스터가 아니면 기본 진입 탭을 무조건 'history'(지공 기록)로 강제 차단
+  const [activeTab, setActiveTab] = useState(isBetaTester ? 'timeline' : 'history');
+
+  // 🟢 [동적 안전 동기화 이펙트]: 모달이 실시간 호출되어 오픈되는 순간 등급별 고정 탭 상태를 정밀 재조정
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(isBetaTester ? 'timeline' : 'history');
+    }
+  }, [isOpen, isBetaTester]);
 
   if (!isOpen) return null;
 
   const logs = customer?.activityLogs ? [...customer.activityLogs].reverse() : [];
 
-  // 🎯 [동일 차트 일관 색상 이식]: 중복 제거된 고유 차트 ID 풀과 부드러운 순환 칼라셋 정밀 수립
+  // [동일 차트 일관 색상 이식]: 중복 제거된 고유 차트 ID 풀과 부드러운 순환 칼라셋 정밀 수립
   const uniqueChartIds = Array.from(new Set(logs.map(l => l.chartId).filter(Boolean)));
   
-  // 🎯 [고도화 반영]: 15개 타임라인 로그 맥스 큐 스펙에 맞춰 15가지 고유 칼라셋으로 정밀 확장 완료
+  // [고도화 반영]: 15개 타임라인 로그 맥스 큐 스펙에 맞춰 15가지 고유 칼라셋으로 정밀 확장 완료
   const accessoryColors = [
     'bg-indigo-400',  // 1. 인디고
     'bg-teal-400',    // 2. 테일
@@ -90,13 +102,13 @@ export default function CustomerHistoryModal({
       <div className="sticky top-0 w-full flex flex-col z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10 safe-top">
         <div className="flex justify-between items-center p-3 px-4 gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            {/* 🎯 [인터페이스 단순화 수정]: 중복 타이틀 문구를 과감히 제거하고 오직 회원 이름만 깔끔하게 구성 */}
+            {/* [인터페이스 단순화 수정]: 중복 타이틀 문구를 과감히 제거하고 오직 회원 이름만 깔끔하게 구성 */}
             <h2 className="text-lg font-bold text-white flex items-center gap-2 truncate">
               <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse shrink-0"></span>
               {customer?.name}
             </h2>
 
-            {activeTab === 'timeline' && (
+            {activeTab === 'timeline' && isBetaTester && (
               <button
                 type="button"
                 onClick={(e) => {
@@ -109,7 +121,6 @@ export default function CustomerHistoryModal({
                     : 'bg-white/5 text-white/30 border-white/10 hover:bg-white/10'
                 }`}
               >
-                {/* 🎯 [고도화 반영]: 띄어쓰기 표준 맞춤법 및 요구사항 맞춤 이름 개편 완료 */}
                 첫 화면에서 로그 보기 {showLogsOnChart ? 'ON' : 'OFF'}
               </button>
             )}
@@ -123,36 +134,38 @@ export default function CustomerHistoryModal({
           </button>
         </div>
 
-        {/* 탭 스위치 영역 */}
-        <div className="px-4 pb-3 flex gap-2">
-          <button
-            onClick={() => setActiveTab('timeline')}
-            className={`flex-1 py-2 text-xs font-black rounded-xl transition-all border ${
-              activeTab === 'timeline' 
-              ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' 
-              : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
-            }`}
-          >
-            타임라인 로그
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`flex-1 py-2 text-xs font-black rounded-xl transition-all border ${
-              activeTab === 'history' 
-              ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' 
-              : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
-            }`}
-          >
-            지공 기록 ({history.length})
-          </button>
-        </div>
+        {/* 🟢 [탭 스위치 차단]: 베타테스터 등급일 때만 상단 탭 버튼 구역을 전개 (일반유저는 탭의 존재를 인지 불가) */}
+        {isBetaTester && (
+          <div className="px-4 pb-3 flex gap-2">
+            <button
+              onClick={() => setActiveTab('timeline')}
+              className={`flex-1 py-2 text-xs font-black rounded-xl transition-all border ${
+                activeTab === 'timeline' 
+                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' 
+                : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
+              }`}
+            >
+              타임라인 로그
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`flex-1 py-2 text-xs font-black rounded-xl transition-all border ${
+                activeTab === 'history' 
+                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' 
+                : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
+              }`}
+            >
+              지공 기록 ({history.length})
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 3. 메인 컨텐츠 영역 */}
       <div className="relative w-full max-w-[600px] flex-1 mt-2 p-4 sm:p-6 pb-20 safe-bottom">
         
         {/* 타임라인 로그 탭 컨텐츠 */}
-        {activeTab === 'timeline' && (
+        {activeTab === 'timeline' && isBetaTester && (
           logs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full py-20 text-white/50">
               <span className="text-4xl mb-4 opacity-50">📭</span>
@@ -161,7 +174,6 @@ export default function CustomerHistoryModal({
           ) : (
             <div className="relative border-l-2 border-white/10 ml-3 sm:ml-4">
               {logs.map((log) => {
-                // 🎯 [동일 차트 원형 아이콘 색상 일치화 연산]
                 const chartColorIndex = uniqueChartIds.indexOf(log.chartId);
                 const circleColorClass = chartColorIndex !== -1 
                   ? accessoryColors[chartColorIndex % accessoryColors.length] 
@@ -169,7 +181,6 @@ export default function CustomerHistoryModal({
 
                 return (
                   <div key={log.id} className="mb-6 ml-5 sm:ml-6 relative group">
-                    {/* 산출된 고유 circleColorClass를 적용하여 스크롤 시 동일 가시성 정렬 확보 */}
                     <span className={`absolute -left-[27px] sm:-left-[31px] top-4 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-[3px] border-slate-900 shadow-sm transition-transform duration-300 group-hover:scale-125 ${circleColorClass}`} />
                     <GlassBox onClick={() => handleSelectRecord(log.chartId)}>
                       <div className="flex justify-between items-start mb-2 gap-2">
