@@ -8,6 +8,7 @@ import SettingsModal from '../customerManager/SettingsModal.jsx';
 
 export default function ChartModalManager({
   activeMemoId,
+  setActiveMemoId, 
   showHistoryModal,
   historyConfirm,
   renameRequest,
@@ -59,18 +60,15 @@ export default function ChartModalManager({
   const [memoDeleteRequested, setMemoDeleteRequested] = React.useState(false);
   const [inputName, setInputName] = useState('');
 
-  // 드릴링 가이드 변경 추적 및 닫기 확인 모달 제어 상태
   const [guideChanged, setGuideChanged] = useState(false);
   const [showGuideCloseConfirm, setShowGuideCloseConfirm] = useState(false);
 
-  // 이름 변경 대상 지정 시 입력값 초기 동기화
   useEffect(() => {
     if (renameRequest?.currentName) {
       setInputName(renameRequest.currentName);
     }
   }, [renameRequest]);
 
-  // 가이드 가동 상태 초기화 이펙트 (열릴 때 플래그 리셋)
   useEffect(() => {
     if (showDrillingGuide) {
       setGuideChanged(false);
@@ -84,22 +82,16 @@ export default function ChartModalManager({
       {activeMemoId && (() => {
         const activeMemo = memos.find(m => m.id === activeMemoId);
         
-        // 🟢 [등급 판별 연산 수립]: 일반 등급 유저와 베타테스터(Expert, Master) 분기 가드 설정
-        const isBetaTester = ['expert', 'master'].includes(userTier?.toLowerCase());
-
         return (
           <MemoModal
             title={activeMemo?.text ? "메모" : "메모 작성"}
             memo={activeMemo}
             onDelete={() => setMemoDeleteRequested(true)}
+            onClose={() => setActiveMemoId(null)} 
             
-            // 🟢 [UI 통제용 프롭스 전달]: 일반 등급 유저 화면에서 "차트에 고정하기" 버튼 은폐용 가드 토스
-            isBetaTester={isBetaTester}
-            
-            // 🟢 [데이터 오염 원천 방지 2중 가드]: 일반 유저가 우회 저장하더라도 무조건 고정이 해제(false)되도록 안전 설계
-            onSave={(text, color, shape, isPinned) => {
-              const finalPinned = isBetaTester ? isPinned : false;
-              saveActiveMemoText(text, color, shape, finalPinned);
+            // 🛠️ [2번 요구사항 반영]: 무조건 true를 보내 고정화시키던 하드코딩 구문을 지우고, 현재 객체의 고정 상태 수치를 그대로 중계 이식했습니다.
+            onSave={(text, color, shape) => {
+              saveActiveMemoText(text, color, shape, activeMemo ? activeMemo.isPinned : true);
             }}
           />
         );
@@ -122,7 +114,7 @@ export default function ChartModalManager({
         />
       )}
 
-      {/* 3. 불러오기 확인 모달 */}
+      {/* 불러오기 확인 모달 */}
       {historyConfirm && (
         <ConfirmModal
           confirmLabel="불러오기"

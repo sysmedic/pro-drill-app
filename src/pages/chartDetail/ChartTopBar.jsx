@@ -1,6 +1,10 @@
+import React, { useState, useEffect } from 'react';
 import TopBarShell from '../../components/layout/TopBarShell.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Icon from '../../components/ui/Icon.jsx';
+
+// ⏱️ [시간 세밀 조정 브릿지]: 교차 주기를 제어하는 ms 단위 변수입니다.
+const ROLLING_INTERVAL = 3000;
 
 export default function ChartTopBar({
   isEditMode,
@@ -18,7 +22,20 @@ export default function ChartTopBar({
   ballName,
 }) {
   
-  // 🌟 [정밀 수정]: 유틸리티 버튼 권한을 오직 expert와 master 등급으로만 제한합니다.
+  // 🔄 [교차 롤링용 상태 수립]: 좁은 모바일 화면을 효율적으로 활용하기 위한 텍스트 교차 플래그
+  const [showAltText, setShowAltText] = useState(false);
+
+  useEffect(() => {
+    if (!viewingRecord && !sessionRecordId) return;
+
+    const interval = setInterval(() => {
+      setShowAltText(prev => !prev);
+    }, ROLLING_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [viewingRecord, sessionRecordId]);
+
+  // 유틸리티 버튼 권한을 오직 expert와 master 등급으로만 제한합니다.
   const isPremiumUser = userTier && ['expert', 'master'].includes(userTier.toLowerCase());
 
   // 기존 불러오기 기록이 존재하거나 새 차트가 성공적으로 저장(ID 발급)된 모든 경우를 판단
@@ -52,7 +69,7 @@ export default function ChartTopBar({
             <Button aria-label="메모" className="max-[420px]:[&>span.leading-none]:hidden" onClick={onStartMemo} size="sm" variant="secondary" icon="memo">메모</Button>
           )}
           
-          {/* 💡 버튼 이름 및 aria-label 명칭 변경: "로그" ➔ "기록" */}
+          {/* 버튼 이름 및 aria-label 명칭 명확화: "로그" ➔ "기록" */}
           {!isEditMode && (
             <Button 
               aria-label="기록" 
@@ -91,8 +108,18 @@ export default function ChartTopBar({
           className="w-full bg-slate-700 hover:bg-slate-600 transition-colors border border-slate-600 hover:border-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 rounded-lg p-2 mt-2 flex items-center justify-center gap-2 text-slate-100 text-xs sm:text-sm shadow-sm animate-fade-in text-left cursor-pointer group"
         >
           <Icon name="history" size={16} className="text-slate-300 shrink-0 group-hover:text-amber-200 transition-colors" />
-          <span className="truncate">
-            현재 <strong className="text-amber-200">{displayName}</strong> <span className="text-slate-300">({displayTimestamp})</span> 기록입니다. <span className="hidden sm:inline text-slate-200 ml-1 font-normal animate-pulse">(클릭하여 새 차트 생성)</span>
+          
+          <span className="truncate text-center w-full transition-all duration-300 ease-in-out">
+            {showAltText ? (
+              /* 🛠️ [수정 완료]: 요구사항에 따라 전두의 💡 이모지를 완전 소거하고 글자색을 text-white로 변경하여 깔끔하게 마감했습니다. */
+              <span className="text-white font-bold animate-fade-in block">
+                클릭하여 새 차트로 만들기
+              </span>
+            ) : (
+              <span className="animate-fade-in block truncate">
+                현재 <strong className="text-amber-200 font-bold">{displayName}</strong> <span className="text-slate-300">({displayTimestamp})</span> 기록입니다.
+              </span>
+            )}
           </span>
         </button>
       )}

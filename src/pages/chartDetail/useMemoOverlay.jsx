@@ -28,9 +28,28 @@ export default function useMemoOverlay({ onDirty }) {
     if (!isPlacingMemo || !ref.current) return;
 
     const rect = ref.current.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    const newMemo = { id: createLocalId('memo'), x, y, text: '', section, color: 'yellow', shape: 'memo', isPinned: false };
+    
+    const initialX = ((event.clientX - rect.left) / rect.width) * 100;
+    const initialY = ((event.clientY - rect.top) / rect.height) * 100;
+    
+    const marginX = (60 / rect.width) * 100;
+    const marginY = (64 / rect.height) * 100;
+
+    const x = Math.max(0, Math.min(100 - marginX, initialX));
+    const y = Math.max(0, Math.min(100 - marginY, initialY));
+    
+    const newMemo = { 
+      id: createLocalId('memo'), 
+      x, 
+      y, 
+      text: '', 
+      section, 
+      color: 'yellow', 
+      shape: 'memo', 
+      isPinned: true, 
+      width: null,
+      height: null
+    };
 
     setMemos(prev => [...prev, newMemo]);
     setIsPlacingMemo(false);
@@ -54,13 +73,10 @@ export default function useMemoOverlay({ onDirty }) {
       .filter(memo => memo.section === section || (!memo.section && section === 'chart'))
       .map(memo => {
         const isPinned = memo.isPinned;
-        const isDragging = draggingMemoId === memo.id; // 🟢 드레그 진행 여부 판별 변수
+        const isDragging = draggingMemoId === memo.id; 
         
-        const translateClass = isPinned ? '' : '-translate-x-1/2 -translate-y-1/2';
-        
-        // 🎯 [수정 완료] 드레그 활성화 중에는 transition 애니메이션을 꺼야 고무줄 지연 없이 부드럽게 마우스를 밀착 추적합니다.
-        const transitionClass = isDragging ? 'transition-none' : 'transition-transform duration-200';
-        const scaleClass = isPinned ? '' : (isDragging && dragMoved.current ? 'scale-110' : 'hover:scale-105');
+        const transitionClass = (isDragging || isPinned) ? 'transition-none' : 'transition-transform duration-200';
+        const scaleClass = isPinned ? '' : (isDragging && dragMoved.current ? 'scale-110' : '');
         const cursorClass = isDragging && dragMoved.current ? 'cursor-grabbing' : 'cursor-grab';
 
         return (
@@ -101,8 +117,13 @@ export default function useMemoOverlay({ onDirty }) {
                 const deltaX = ((event.clientX - dragStartPos.current.x) / rect.width) * 100;
                 const deltaY = ((event.clientY - dragStartPos.current.y) / rect.height) * 100;
 
-                const newX = Math.max(0, Math.min(100, dragStartPos.current.memoX + deltaX));
-                const newY = Math.max(0, Math.min(100, dragStartPos.current.memoY + deltaY));
+                const memoWidth = event.currentTarget.offsetWidth;
+                const memoHeight = event.currentTarget.offsetHeight;
+                const memoWPercent = (memoWidth / rect.width) * 100;
+                const memoHPercent = (memoHeight / rect.height) * 100;
+
+                const newX = Math.max(0, Math.min(100 - memoWPercent, dragStartPos.current.memoX + deltaX));
+                const newY = Math.max(0, Math.min(100 - memoHPercent, dragStartPos.current.memoY + deltaY));
 
                 setMemos(prev => prev.map(item => (
                   item.id === memo.id ? { ...item, x: newX, y: newY } : item
@@ -111,6 +132,16 @@ export default function useMemoOverlay({ onDirty }) {
             }}
             onPointerUp={(event) => {
               event.stopPropagation();
+              
+              if (isPinned) {
+                const w = Math.round(event.currentTarget.offsetWidth);
+                const h = Math.round(event.currentTarget.offsetHeight);
+                if (w !== memo.width || h !== memo.height) {
+                  setMemos(prev => prev.map(m => m.id === memo.id ? { ...m, width: w, height: h } : m));
+                  onDirty();
+                }
+              }
+
               if (dragId.current !== memo.id) return;
 
               try { event.currentTarget.releasePointerCapture(event.pointerId); } catch(e) {}
@@ -140,36 +171,50 @@ export default function useMemoOverlay({ onDirty }) {
               dragTargetType.current = null;
             }}
             onClick={(e) => e.stopPropagation()}
-            className={`absolute z-[60] ${transitionClass} ${translateClass} ${scaleClass} ${isPinned ? '' : cursorClass}`}
-            // 🎯 [수정 완료] 모바일 스크롤 간섭 및 좌표 이탈 꼬임 현상 완벽 방지를 위해 touchAction을 'none'으로 안전화 제어
-            style={{ left: `${memo.x}%`, top: `${memo.y}%`, touchAction: 'none' }}
+            className={`absolute z-[60] origin-top-left ${transitionClass} ${scaleClass} ${isPinned ? 'resize overflow-hidden min-w-[60px] min-h-[64px]' : cursorClass}`}
+            style={{ 
+              left: `${memo.x}%`, 
+              top: `${memo.y}%`, 
+              touchAction: 'none',
+              ...(isPinned ? {
+                width: memo.width ? `${memo.width}px` : undefined,
+                /* 🛠️ [수정 완료]: height 고정 제약을 minHeight로 완화하고 높이를 auto로 개방하여, 텍스트가 조절된 크기보다 많아지면 유동적으로 자동 확장되도록 연동했습니다. */
+                minHeight: memo.height ? `${memo.height}px` : '64px',
+                height: 'auto',
+                maxWidth: `${100 - memo.x}%`,
+                maxHeight: `${100 - memo.y}%`
+              } : {})
+            }}
           >
             
             {isPinned ? (
-              <div className={`${COLOR_CLASSES[memo.color || 'yellow']} rounded-lg shadow-md border flex flex-col pointer-events-auto min-w-[120px] min-h-[64px] resize overflow-hidden opacity-90`}>
+              <div className={`${COLOR_CLASSES[memo.color || 'yellow']} rounded-lg shadow-md border flex flex-col pointer-events-auto w-full h-full opacity-90`}>
                 
                 <div 
                   data-drag-handle="true" 
                   className="flex justify-between items-center bg-black/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] border-b border-black/20 px-2 py-1 shrink-0 cursor-grab active:cursor-grabbing"
                 >
-                  <Icon name={memo.shape || 'memo'} size={12} className="opacity-70 pointer-events-none" />
+                  <Icon name={memo.shape || 'memo'} size={12} className="opacity-70 shrink-0 pointer-events-none" />
+                  
                   <button 
                     type="button"
                     onPointerDown={(e) => e.stopPropagation()} 
+                    onPointerUp={(e) => e.stopPropagation()}
                     onClick={(e) => { 
                       e.stopPropagation();
                       setMemos(prev => prev.map(m => m.id === memo.id ? { ...m, isPinned: false } : m));
                       onDirty();
                     }}
-                    className="text-black/50 hover:text-black/90 font-black px-1.5 rounded-sm hover:bg-black/15 transition-colors pointer-events-auto text-[10px]"
+                    className="text-black/50 hover:text-black/90 px-1.5 -mr-1.5 rounded-sm transition-colors pointer-events-auto flex items-center justify-center shrink-0"
                   >
-                    ✕
+                    <Icon name="minimize-2" size={12} className="pointer-events-none" />
                   </button>
                 </div>
 
+                {/* 🛠️ [수정 완료]: 글자 뭉침 및 잘림을 원천 차단하기 위해 min-h-0과 overflow-hidden 격벽을 해제하여 부모 카드를 밀어내며 자연스럽게 늘어나도록 변경했습니다. */}
                 <div 
                   data-text-area="true" 
-                  className="p-2 text-xs font-bold text-slate-800 whitespace-pre-wrap break-words leading-snug flex-1 min-h-0 overflow-hidden pointer-events-auto cursor-pointer"
+                  className="p-2 text-xs font-bold text-slate-800 whitespace-pre-wrap break-words leading-snug flex-1 pointer-events-auto cursor-pointer"
                 >
                   {memo.text}
                 </div>
@@ -180,8 +225,17 @@ export default function useMemoOverlay({ onDirty }) {
                 <div className={`${COLOR_CLASSES[memo.color || 'yellow']} w-8 h-8 sm:w-10 sm:h-10 rounded-md shadow-md border flex items-center justify-center pointer-events-none opacity-90`}>
                   <Icon name={memo.shape || 'memo'} size={18} />
                 </div>
+                
                 {memo.text && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white/90 px-2 py-0.5 rounded shadow-sm text-[10px] sm:text-xs font-bold text-slate-700 whitespace-nowrap max-w-[100px] overflow-hidden text-ellipsis pointer-events-none">
+                  <div 
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMemos(prev => prev.map(m => m.id === memo.id ? { ...m, isPinned: true } : m));
+                      onDirty();
+                    }}
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white/80 px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold text-slate-700 whitespace-nowrap max-w-[100px] overflow-hidden text-ellipsis pointer-events-auto cursor-pointer"
+                  >
                     {memo.text}
                   </div>
                 )}
@@ -220,6 +274,7 @@ export default function useMemoOverlay({ onDirty }) {
     isPlacingMemo,
     setIsPlacingMemo,
     activeMemoId,
+    setActiveMemoId, 
     activeMemo,
     renderMemoOverlay,
     renderMemos,
