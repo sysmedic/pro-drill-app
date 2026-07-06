@@ -6,10 +6,12 @@ import {
 } from 'firebase/firestore'; 
 import { auth, db } from './firebase'; 
 import { getDeviceId } from './lib/device';
+// 🌟 슈파베이스 인프라 및 모드 스위치 수입
+import { supabase, dbMode } from './supabaseClient'; 
 
 const ADMIN_EMAILS = ["sysmedic@gmail.com"]; 
 
-// 회원 등급별 최대 허용 갯수 정의
+// 회원 등급별 최대 허용 갯수 정의 (원본 유지)
 const getMaxChartsAllowed = (tier) => {
   switch (tier) {
     case 'trial_beta':
@@ -32,10 +34,25 @@ export default function useAppSession() {
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email);
 
-  // 실시간 차트 카운트 함수
+  // 실시간 차트 카운트 함수 (슈파베이스 조회 분기 유지)
   const refreshChartCount = useCallback(async (uid) => {
     if (!uid) return;
     try {
+      // 🌟 슈파베이스 단독 모드일 때 나스 DB 카운트 계측
+      if (dbMode === 'supabase') {
+        const { count, error } = await supabase
+          .from('drilling_charts')
+          .select('*', { count: 'exact', head: true })
+          .eq('userId', uid);
+        
+        if (!error) {
+          setCurrentChartsCount(count || 0);
+          console.log("📊 [Supabase 조회] 현재 전체 차트 수:", count);
+        }
+        return;
+      }
+
+      // 파이어베이스 기본 로직
       const chartsRef = collection(db, 'drilling_charts');
       const q = query(chartsRef, where('userId', '==', uid));
       const snapshot = await getCountFromServer(q);
@@ -55,15 +72,54 @@ export default function useAppSession() {
       try {
         if (currentUser) {
           const deviceId = getDeviceId();
+          // 💡 [오류 완치] 블록 스코프 변수 선언을 분기문보다 최상단으로 조기 격상하여 ReferenceError 원천 차단
+          let currentTier = "trial_beta"; 
+
+          // 🌟 [Supabase 단독 모드 조회 분기]
+          if (dbMode === 'supabase') {
+            const { data: sbUser, error: sbUserErr } = await supabase
+              .from('users')
+              .select('*')
+              .eq('email', currentUser.email)
+              .single();
+
+            if (!sbUserErr && sbUser) {
+              currentTier = sbUser.tier || "trial_beta";
+              
+              setUser({ ...currentUser, tier: currentTier });
+              setUserTier(currentTier);
+              setMaxChartsAllowed(getMaxChartsAllowed(currentTier));
+              await refreshChartCount(currentUser.uid);
+            } else {
+              currentTier = "trial_beta";
+              setUser({ ...currentUser, tier: currentTier });
+              setUserTier(currentTier);
+              setMaxChartsAllowed(getMaxChartsAllowed(currentTier));
+            }
+            setIsAuthChecking(false);
+            return; // 파이어베이스 로직 건너뛰기
+          }
+
+          // 파이어베이스 기본 로직 및 듀얼 적재 레이어
           const userRef = doc(db, 'users', currentUser.email);
           const userSnap = await getDoc(userRef);
 
-          let currentTier = "trial_beta";
+          let finalActiveDevices = [deviceId];
+          let finalMaxDevices = 2;
+          let finalJoinedAtIso = new Date().toISOString();
 
           if (userSnap.exists()) {
             const userData = userSnap.data();
             const { activeDevices = [], maxDevices = 1 } = userData;
             currentTier = userData.tier || "trial_beta";
+            finalActiveDevices = activeDevices;
+            finalMaxDevices = maxDevices;
+
+            if (userData.joinedAt) {
+              finalJoinedAtIso = typeof userData.joinedAt.toDate === 'function' 
+                ? userData.joinedAt.toDate().toISOString() 
+                : new Date(userData.joinedAt).toISOString();
+            }
 
             if (!ADMIN_EMAILS.includes(currentUser.email)) {
               const isKnown = activeDevices.includes(deviceId);
@@ -74,8 +130,34 @@ export default function useAppSession() {
               }
               if (!isKnown) {
                 await updateDoc(userRef, { activeDevices: arrayUnion(deviceId) });
+                finalActiveDevices = [...activeDevices, deviceId];
               }
             }
+            
+            if (dbMode === 'dual') {
+              const shadowPayload = { 
+                ...userData, 
+                activeDevices: finalActiveDevices,
+                joinedAt: finalJoinedAtIso 
+              };
+
+              await supabase
+                .from('users')
+                .upsert({
+                  email: currentUser.email,
+                  uid: currentUser.uid,
+                  displayName: userData.displayName || currentUser.displayName || "인증된 지공사",
+                  status: userData.status || 'active',
+                  tier: currentTier,
+                  customerCount: userData.customerCount || 0,
+                  chartCount: userData.chartCount || 0,
+                  maxDevices: finalMaxDevices,
+                  activeDevices: finalActiveDevices,
+                  joinedAt: finalJoinedAtIso,
+                  user_data: shadowPayload
+                }, { onConflict: 'email' });
+            }
+
             setUser({ ...currentUser, tier: currentTier });
           } else {
             const newUserProfile = {
@@ -88,7 +170,32 @@ export default function useAppSession() {
               maxDevices: 2,
               activeDevices: [deviceId]
             };
+            
             await setDoc(userRef, newUserProfile);
+            
+            if (dbMode === 'dual') {
+              const shadowNewPayload = {
+                ...newUserProfile,
+                joinedAt: finalJoinedAtIso
+              };
+
+              await supabase
+                .from('users')
+                .insert([{
+                  email: currentUser.email,
+                  uid: currentUser.uid,
+                  displayName: newUserProfile.displayName,
+                  status: newUserProfile.status,
+                  tier: newUserProfile.tier,
+                  customerCount: 0,
+                  chartCount: 0,
+                  maxDevices: newUserProfile.maxDevices,
+                  activeDevices: newUserProfile.activeDevices,
+                  joinedAt: finalJoinedAtIso,
+                  user_data: shadowNewPayload
+                }]);
+            }
+
             currentTier = "trial_beta";
             setUser({ ...currentUser, tier: currentTier });
           }

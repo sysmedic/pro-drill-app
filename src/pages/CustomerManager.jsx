@@ -5,11 +5,13 @@ import { db, auth } from '../firebase';
 import { 
   collection, query, where, onSnapshot, addDoc, updateDoc, doc, 
   serverTimestamp, orderBy, getDocs, writeBatch, increment,
-  limit 
+  limit, getDoc
 } from 'firebase/firestore';
 import CustomerHeader from './customerManager/CustomerHeader.jsx';
 import CustomerList from './customerManager/CustomerList.jsx';
 import CustomerFormModal from './customerManager/CustomerFormModal.jsx';
+// 🌟 슈파베이스 클라이언트 및 모드 스위치 수입
+import { supabase, dbMode } from '../supabaseClient'; 
 
 export default function CustomerManagement({ 
   onSelectCustomer, 
@@ -29,10 +31,7 @@ export default function CustomerManagement({
   const [showSecondDeleteConfirm, setShowSecondDeleteConfirm] = useState(false);
   const [editId, setEditId] = useState(null);
   
-  // 유저 문서 기록 기반의 진짜 전체 고객 숫자를 담아둘 상태를 선언합니다.
   const [totalCount, setTotalCount] = useState(0);
-
-  // 유저 등급 필드를 안전하게 파싱하여 담아둘 상태 변수 선언
   const [userTier, setUserTier] = useState('basic');
 
   const [customerData, setCustomerData] = useState({ 
@@ -45,26 +44,65 @@ export default function CustomerManagement({
     styleExtra: '' 
   });
 
-  // 비용 걱정 없는 단 1회성 유저 레코드 카운트 실시간 구독 파이프라인
+  // 비용 걱정 없는 단 1회성 유저 레코드 카운트 실시간 구독 파이프라인 (Supabase 분기 추가)
   useEffect(() => {
     if (!auth.currentUser || !auth.currentUser.email) return;
     
+    // 🌟 Supabase 모드일 때 유저 등급 및 정보 나스에서 로드
+    if (dbMode === 'supabase') {
+      const fetchSbUserStats = async () => {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', auth.currentUser.email)
+          .single();
+
+        if (!error && data) {
+          setTotalCount(data.customerCount || 0);
+          setUserTier(data.tier || 'basic');
+        }
+      };
+      fetchSbUserStats();
+      return;
+    }
+
     const userRef = doc(db, 'users', auth.currentUser.email);
     const unsubscribe = onSnapshot(userRef, (snapshot) => {
       if (snapshot.exists()) {
         setTotalCount(snapshot.data().customerCount || 0);
-        // Firestore 내 유저 문서 정보에서 등급 문자열 키 수거
         setUserTier(snapshot.data().tier || 'basic');
       }
     });
     return () => unsubscribe();
   }, []);
 
-  // 리스트업 되지 않은 전체 고객까지 차별 없이 완벽하게 검색하도록 데이터 파이프라인 최적화 단일화
+  // 고객 명단 로드 파이프라인 (Supabase 분기 추가)
   useEffect(() => {
     if (!auth.currentUser) return;
     
-    // 복합 인덱스 오류를 원천 차단하고 전화번호/이름 중간 글자 검색까지 전체 기저 데이터 대상으로 유연하게 지원하기 위해 유저의 전체 목록을 가져옵니다.
+    // 🌟 Supabase 모드일 때 나스 DB의 customer_data jsonb 통주머니를 인양해와서 바인딩 테스트
+    if (dbMode === 'supabase') {
+      const fetchSbCustomers = async () => {
+        const { data, error } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('userId', auth.currentUser.uid)
+          .order('updatedAt', { ascending: false });
+
+        if (!error && data) {
+          // jsonb 덩어리를 고스란히 복원하여 샴쌍둥이 고유 ID와 완전 결합
+          setCustomers(data.map(row => ({
+            id: row.id,
+            ...row.customer_data
+          })));
+        } else {
+          console.error("Supabase 고객 목록 로드 실패:", error);
+        }
+      };
+      fetchSbCustomers();
+      return;
+    }
+
     const q = query(
       collection(db, 'customers'), 
       where('userId', '==', auth.currentUser.uid), 
@@ -80,9 +118,9 @@ export default function CustomerManagement({
       console.error("고객 목록 로드 실패:", error);
     });
     return () => unsubscribe();
-  }, []); // searchQuery 의존성을 제거하여 무분별한 네트워크 재요청 및 인덱스 누락으로 인한 먹통 현상을 완벽 차단합니다.
+  }, []);
 
-  // 화면 진입 및 주요 모달 전환 시 강제 1배율 리셋
+  // 화면 진입 및 주요 모달 전환 시 강제 1배율 리셋 (원본 유지)
   useEffect(() => {
     let timeoutId;
     const viewportMeta = document.querySelector('meta[name="viewport"]');
@@ -104,33 +142,88 @@ export default function CustomerManagement({
     e.preventDefault();
     if (!customerData.name.trim()) return setFeedback({ message: '이름을 입력하세요.', tone: 'warning' });
     try {
+      const isoTimestamp = new Date().toISOString();
+
       if (editId) {
         await updateDoc(doc(db, 'customers', editId), { ...customerData, updatedAt: serverTimestamp() });
+
+        if (dbMode === 'dual' || dbMode === 'supabase') {
+          const shadowUpdatePayload = { ...customerData, updatedAt: isoTimestamp };
+          await supabase
+            .from('customers')
+            .update({
+              name: customerData.name,
+              phone: customerData.phone,
+              club: customerData.club,
+              gender: customerData.gender,
+              hand: customerData.hand,
+              style: customerData.style,
+              styleExtra: customerData.styleExtra,
+              updatedAt: isoTimestamp,
+              customer_data: shadowUpdatePayload
+            })
+            .eq('id', editId);
+        }
       } else {
-        await addDoc(collection(db, 'customers'), { 
+        const docRef = await addDoc(collection(db, 'customers'), { 
           ...customerData, 
           userId: auth.currentUser.uid, 
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp() 
         });
+        const twinId = docRef.id;
+
+        if (dbMode === 'dual' || dbMode === 'supabase') {
+          const shadowInsertPayload = {
+            ...customerData,
+            userId: auth.currentUser.uid,
+            createdAt: isoTimestamp,
+            updatedAt: isoTimestamp,
+            activityLogs: []
+          };
+
+          await supabase
+            .from('customers')
+            .insert([{
+              id: twinId,
+              userId: auth.currentUser.uid,
+              name: customerData.name,
+              phone: customerData.phone,
+              club: customerData.club,
+              gender: customerData.gender,
+              hand: customerData.hand,
+              style: customerData.style,
+              styleExtra: customerData.styleExtra,
+              createdAt: isoTimestamp,
+              updatedAt: isoTimestamp,
+              customer_data: shadowInsertPayload
+            }]);
+        }
         
         if (auth.currentUser?.email) {
           await updateDoc(doc(db, 'users', auth.currentUser.email), {
             customerCount: increment(1)
           });
+
+          if (dbMode === 'dual' || dbMode === 'supabase') {
+            await supabase
+              .from('users')
+              .update({ customerCount: totalCount + 1 })
+              .eq('email', auth.currentUser.email);
+          }
         }
       }
       setShowModal(false);
       setFeedback({ message: '저장되었습니다.', tone: 'success' });
-    } catch (e) { setFeedback({ message: '실패', tone: 'danger' }); }
+    } catch (e) { 
+      console.error("고객 저장 파이프라인 에러:", e);
+      setFeedback({ message: '실패', tone: 'danger' }); 
+    }
   };
 
   const filtered = customers.filter(c => c.name.includes(searchQuery) || (c.phone && c.phone.includes(searchQuery)));
-
-  // 최신 지공/수정일순(Firestore 기본 정렬) 데이터에서 최상위 30명을 "먼저" 선별합니다.
   const displayedCustomers = filtered.slice(0, 30);
 
-  // 선별이 완료된 고정 30명 안에서만 이름순 정렬이 구동되도록 순서를 전환합니다.
   if (sortType === 'name') {
     displayedCustomers.sort((a, b) => a.name.localeCompare(b.name));
   }
@@ -139,7 +232,6 @@ export default function CustomerManagement({
     <PageShell bottomPadding="pb-24">
       <CustomerHeader
         totalCount={totalCount}
-        // 헤더 내부의 카운트 표기도 현재 필터링되어 화면에 매칭된 실제 고객 숫자로 실시간 정밀 연동합니다.
         currentCount={displayedCustomers.length}
         onAdd={() => { 
           setEditId(null); 
@@ -150,11 +242,8 @@ export default function CustomerManagement({
         sortType={sortType} setSortType={setSortType}
         isAdmin={isAdmin} onOpenAdmin={onOpenAdmin}
         isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} onLogout={onLogout}
-        
-        /* 🎯 [등급 기준 교정]: expert 또는 master 등급 이상일 때만 스캔 핸들러를 바인딩하도록 정밀 타격 반영 완료 */
         onNfcScan={['expert', 'master'].includes(userTier?.toLowerCase()) ? onNfcScan : undefined}
       />
-      {/* 리스트 뷰어에도 전체가 아닌 조건부 필터링이 완료된 최적화 데이터 명단(displayedCustomers)을 바인딩합니다. */}
       <CustomerList customers={displayedCustomers} onDelete={(e, c) => { e.stopPropagation(); setDeleteRequest(c); }} onEdit={(e, c) => { e.stopPropagation(); setEditId(c.id); setCustomerData(c); setShowModal(true); }} onSelect={onSelectCustomer} />
       
       {showModal && (
@@ -193,12 +282,30 @@ export default function CustomerManagement({
               const customerRef = doc(db, 'customers', deleteRequest.id);
               batch.delete(customerRef);
 
+              if (dbMode === 'dual' || dbMode === 'supabase') {
+                await supabase.from('customers').delete().eq('id', deleteRequest.id);
+              }
+
               if (auth.currentUser?.email) {
                 const userRef = doc(db, 'users', auth.currentUser.email);
                 batch.update(userRef, {
                   customerCount: increment(-1),
                   chartCount: increment(-deletedChartsCount)
                 });
+
+                if (dbMode === 'dual' || dbMode === 'supabase') {
+                  const userSnap = await getDoc(userRef);
+                  if (userSnap.exists()) {
+                    const freshData = userSnap.data();
+                    const newCustomerCount = (freshData.customerCount || 0) - 1;
+                    const newChartCount = (freshData.chartCount || 0) - deletedChartsCount;
+
+                    await supabase
+                      .from('users')
+                      .update({ customerCount: newCustomerCount, chartCount: newChartCount })
+                      .eq('email', auth.currentUser.email);
+                  }
+                }
               }
 
               await batch.commit();

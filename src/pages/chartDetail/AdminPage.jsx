@@ -4,12 +4,16 @@ import {
   collection, onSnapshot, doc, updateDoc, query, orderBy, 
   getDocs, where, writeBatch 
 } from 'firebase/firestore';
+// 🌟 슈파베이스 클라이언트 및 모드 스위치 수입
+import { supabase, dbMode } from '../../supabaseClient';
 
 export default function AdminPage({ onBack }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const [isRecalculating, setIsRecalculating] = useState(false);
+  // 🌟 마이그레이션 구동 상태 관리를 위한 신설 상태 변수
+  const [isMigrating, setIsMigrating] = useState(false);
 
   // 활성화된 탭 상태 ('search', 'management', 'charts')
   const [activeTab, setActiveTab] = useState('search');
@@ -22,26 +26,24 @@ export default function AdminPage({ onBack }) {
   // 📊 통계 탭 전용 정렬 기준 상태 ('customer' 또는 'chart')
   const [statsType, setStatsType] = useState('customer');
 
-  // 🟢 마스터 제어실 진입 시 강제 1배율 리셋 (타이머 꼬임 방지 적용)
+  // 🟢 마스터 제어실 진입 시 강제 1배율 리셋 (타이머 꼬임 방지 적용 - 원본 유지)
   useEffect(() => {
     let timeoutId;
     const viewportMeta = document.querySelector('meta[name="viewport"]');
     const unlockedViewport = 'width=device-width, initial-scale=1.0'; 
     
     if (viewportMeta) {
-      // 강제로 1배율로 축소하여 실사이즈 복구
       viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
       
       timeoutId = setTimeout(() => {
-        // 브라우저 렌더링이 안정화될 즈음 다시 확대 가능하도록 원상복구
         viewportMeta.setAttribute('content', unlockedViewport); 
       }, 350);
     }
 
     return () => clearTimeout(timeoutId); 
-  }, []); // 컴포넌트 마운트(진입) 시점에 작동
+  }, []);
 
-  // 1. 사용자 데이터만 단독 실시간 구독 (비용 절감)
+  // 1. 사용자 데이터만 단독 실시간 구독 (비용 절감 - 원본 유지)
   useEffect(() => {
     const q = query(collection(db, 'users'), orderBy('joinedAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -54,7 +56,145 @@ export default function AdminPage({ onBack }) {
     return () => unsubscribe();
   }, []);
 
-  // 🟢 전체 유저 통계 정밀 보정 로직
+  // 🌟 [벌크 업서트 최적화 개정 + 유령 차트 예외 가드 가동 완료]
+  const handleFullMigration = async () => {
+    const confirmMsg = "💾 [과거 데이터 벌크 미러링 이행]\n\n파이어베이스에 축적된 전수 데이터(지공사, 고객, 지공 차트)를 하나의 패킷으로 묶어 슈파베이스로 초고속 고속도로 이주를 시작합니다.\n\n중복 데이터는 안전하게 최신 본으로 덮어씌워집니다. 진행하시겠습니까?";
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsMigrating(true);
+    try {
+      // ---------------------------------------------------------------
+      // 1. users 마스터 벌크 수집 및 적재
+      // ---------------------------------------------------------------
+      const usersSnapshot = await getDocs(collection(db, 'users'));
+      const userRows = [];
+
+      for (const userDoc of usersSnapshot.docs) {
+        const uData = userDoc.data();
+        const emailKey = userDoc.id;
+        let joinedAtIso = new Date().toISOString();
+        if (uData.joinedAt) {
+          joinedAtIso = typeof uData.joinedAt.toDate === 'function' 
+            ? uData.joinedAt.toDate().toISOString() 
+            : new Date(uData.joinedAt).toISOString();
+        }
+        const shadowUserPayload = { ...uData, joinedAt: joinedAtIso };
+
+        userRows.push({
+          email: emailKey,
+          uid: uData.uid || '',
+          displayName: uData.displayName || '인증된 지공사',
+          status: uData.status || 'active',
+          tier: uData.tier || 'standard',
+          customerCount: uData.customerCount || 0,
+          chartCount: uData.chartCount || 0,
+          maxDevices: uData.maxDevices || 2,
+          activeDevices: uData.activeDevices || [],
+          joinedAt: joinedAtIso,
+          user_data: shadowUserPayload
+        });
+      }
+
+      if (userRows.length > 0) {
+        const { error: uErr } = await supabase.from('users').upsert(userRows, { onConflict: 'email' });
+        if (uErr) throw new Error(`지공사 벌크 적재 실패: ${uErr.message}`);
+      }
+
+      // ---------------------------------------------------------------
+      // 2. customers 마스터 벌크 수집 및 적재
+      // ---------------------------------------------------------------
+      const customersSnapshot = await getDocs(collection(db, 'customers'));
+      const customerRows = [];
+      // 🌟 [신설] 나스 DB에 정상 등록될 유효 고객 ID들을 기억할 가드 바스켓
+      const validCustomerIds = new Set(); 
+
+      for (const custDoc of customersSnapshot.docs) {
+        const cData = custDoc.data();
+        const twinCustomerId = custDoc.id;
+        let createdAtIso = new Date().toISOString();
+        let updatedAtIso = new Date().toISOString();
+        if (cData.createdAt) createdAtIso = typeof cData.createdAt.toDate === 'function' ? cData.createdAt.toDate().toISOString() : new Date(cData.createdAt).toISOString();
+        if (cData.updatedAt) updatedAtIso = typeof cData.updatedAt.toDate === 'function' ? cData.updatedAt.toDate().toISOString() : new Date(cData.updatedAt).toISOString();
+
+        const shadowCustomerPayload = { ...cData, id: twinCustomerId, createdAt: createdAtIso, updatedAt: updatedAtIso };
+
+        customerRows.push({
+          id: twinCustomerId,
+          userId: cData.userId || '',
+          name: cData.name || '미지정 고객',
+          phone: cData.phone || '',
+          club: cData.club || '',
+          gender: cData.gender || '',
+          hand: cData.hand || '',
+          style: cData.style || '',
+          styleExtra: cData.styleExtra || '',
+          createdAt: createdAtIso,
+          updatedAt: updatedAtIso,
+          customer_data: shadowCustomerPayload
+        });
+
+        // 유효 고객 ID 목록에 추가
+        validCustomerIds.add(twinCustomerId);
+      }
+
+      if (customerRows.length > 0) {
+        const { error: cErr } = await supabase.from('customers').upsert(customerRows, { onConflict: 'id' });
+        if (cErr) throw new Error(`고객 벌크 적재 실패: ${cErr.message}`);
+      }
+
+      // ---------------------------------------------------------------
+      // 3. drilling_charts 마스터 벌크 수집 및 적재
+      // ---------------------------------------------------------------
+      const chartsSnapshot = await getDocs(collection(db, 'drilling_charts'));
+      const chartRows = [];
+
+      for (const chartDoc of chartsSnapshot.docs) {
+        const chData = chartDoc.data();
+        const twinChartId = chartDoc.id;
+
+        // 🌟 [오류 완치 가드] 이 차트가 가리키는 부모 고객 ID가 현재 고객 목록에 없다면 유령 데이터이므로 적재 대상에서 패스!
+        if (chData.customerId && !validCustomerIds.has(chData.customerId)) {
+          console.warn(`[유령 차트 패스] 부모 고객이 존재하지 않는 유령 지공 도면을 스킵했습니다. 차트 ID: ${twinChartId}, 부모 ID: ${chData.customerId}`);
+          continue; 
+        }
+
+        let createdAtIso = new Date().toISOString();
+        let updatedAtIso = new Date().toISOString();
+        if (chData.createdAt) createdAtIso = typeof chData.createdAt.toDate === 'function' ? chData.createdAt.toDate().toISOString() : new Date(chData.createdAt).toISOString();
+        if (chData.updatedAt) updatedAtIso = typeof chData.updatedAt.toDate === 'function' ? chData.updatedAt.toDate().toISOString() : new Date(chData.updatedAt).toISOString();
+
+        const shadowChartPayload = { ...chData, id: twinChartId, createdAt: createdAtIso, updatedAt: updatedAtIso };
+
+        chartRows.push({
+          id: twinChartId,
+          userId: chData.userId || '',
+          customerId: chData.customerId || '',
+          name: chData.name || '미지정 레이아웃 차트',
+          timestamp: chData.timestamp || createdAtIso,
+          ball_name: chData.ballName || chData.ball_name || '',
+          intent: chData.intent || '',
+          layout_info: chData.layoutInfo || chData.layout_info || '',
+          createdAt: createdAtIso,
+          updatedAt: updatedAtIso,
+          chart_data: shadowChartPayload
+        });
+      }
+
+      if (chartRows.length > 0) {
+        const { error: chErr } = await supabase.from('drilling_charts').upsert(chartRows, { onConflict: 'id' });
+        if (chErr) throw new Error(`지공차트 벌크 적재 실패: ${chErr.message}`);
+      }
+
+      alert("🎉 [벌크 미러링 대성공] 유령 데이터를 완벽하게 격리하고 전수 백필에 성공했습니다!");
+    } catch (err) {
+      console.error(err);
+      alert(`❌ 벌크 미러링 실패: ${err.message}`);
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
+  // 🟢 전체 유저 통계 정밀 보정 로직 (Dual-Write 확장 통합)
   const handleRecalibrateStats = async () => {
     const confirmMsg = "⚠️ [위험] 서버에 등록된 모든 지공사의 고객 및 차트 데이터를 직접 전수조사하여 통계를 강제 교정합니다.\n\n정말로 진행하시겠습니까?";
     if (!window.confirm(confirmMsg)) return;
@@ -65,7 +205,6 @@ export default function AdminPage({ onBack }) {
       let opCount = 0;
 
       for (const u of users) {
-        // UID 필드가 없는 비정상 유저 데이터는 스킵
         if (!u.uid) {
           console.warn(`[스킵] UID가 없는 유저 문서 발견: ${u.id}`);
           continue; 
@@ -73,28 +212,42 @@ export default function AdminPage({ onBack }) {
 
         console.log(`[계측 시작] 유저 UID: ${u.uid} (문서 ID: ${u.id})`);
 
-        // 🔴 [수정됨] u.id(이메일)가 아닌 u.uid(고유 Auth ID)로 검색
         const custQ = query(collection(db, 'customers'), where('userId', '==', u.uid));
         const custSnap = await getDocs(custQ);
         const realCustomerCount = custSnap.size;
 
-        // 🔴 [수정됨] u.id(이메일)가 아닌 u.uid(고유 Auth ID)로 검색
         const chartQ = query(collection(db, 'drilling_charts'), where('userId', '==', u.uid));
         const chartSnap = await getDocs(chartQ);
         const realChartCount = chartSnap.size;
 
         console.log(`👉 결과 - 고객: ${realCustomerCount}, 차트: ${realChartCount}`);
 
-        // DB에 값을 업데이트할 때는 문서 ID(이메일)를 찾아가야 하므로 u.id 사용
         const userRef = doc(db, 'users', u.id);
         batch.set(userRef, { 
           customerCount: realCustomerCount, 
           chartCount: realChartCount 
         }, { merge: true });
 
+        // [보정-Dual] 슈파베이스 통계 칼럼 및 jsonb 주머니 동시 정밀 정형 업데이트
+        if (dbMode === 'dual') {
+          let joinedAtIso = new Date().toISOString();
+          if (u.joinedAt) {
+            joinedAtIso = typeof u.joinedAt.toDate === 'function' ? u.joinedAt.toDate().toISOString() : new Date(u.joinedAt).toISOString();
+          }
+          const freshShadowUser = { ...u, customerCount: realCustomerCount, chartCount: realChartCount, joinedAt: joinedAtIso };
+
+          await supabase
+            .from('users')
+            .update({
+              customerCount: realCustomerCount,
+              chartCount: realChartCount,
+              user_data: freshShadowUser
+            })
+            .eq('email', u.id);
+        }
+
         opCount++;
 
-        // 파이어스토어 배치 제한(최대 500개) 방어 
         if (opCount >= 400) {
           await batch.commit();
           batch = writeBatch(db);
@@ -115,12 +268,12 @@ export default function AdminPage({ onBack }) {
     }
   };
 
-  // 등급 정책
+  // 등급 정책 (원본 유지)
   const deviceMapping = {
     trial_beta: 2, beta: 2, standard: 1, pro: 2, expert: 3, master: 5 
   };
 
-  // 로컬 고속 검색/필터/정렬 로직
+  // 로컬 고속 검색/필터/정렬 로직 (원본 유지)
   const filteredUsers = useMemo(() => {
     let result = users.filter(u => {
       const matchesSearch = (u.displayName || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -151,15 +304,50 @@ export default function AdminPage({ onBack }) {
     } catch (e) { return '날짜 오류'; }
   };
 
+  // 라이선스 랭크 격상 제어 (Dual-Write 구현)
   const handleChangeTier = async (id, newTier) => {
     try {
+      // 1. 파이어베이스 교정
       await updateDoc(doc(db, 'users', id), { tier: newTier, maxDevices: deviceMapping[newTier] });
+      
+      // 2. 슈파베이스 듀얼 싱크 및 jsonb 주머니 데이터 정밀 가공 후 업데이트
+      if (dbMode === 'dual') {
+        const targeted = users.find(u => u.id === id);
+        if (targeted) {
+          let joinedAtIso = new Date().toISOString();
+          if (targeted.joinedAt) joinedAtIso = typeof targeted.joinedAt.toDate === 'function' ? targeted.joinedAt.toDate().toISOString() : new Date(targeted.joinedAt).toISOString();
+          const freshShadow = { ...targeted, tier: newTier, maxDevices: deviceMapping[newTier], joinedAt: joinedAtIso };
+
+          await supabase
+            .from('users')
+            .update({ tier: newTier, maxDevices: deviceMapping[newTier], user_data: freshShadow })
+            .eq('email', id);
+        }
+      }
     } catch (e) { alert("변경 실패"); }
   };
 
+  // 기기 한도 수동 조절 제어 (Dual-Write 구현)
   const handleUpdateLimit = async (id, currentMax, delta) => {
     try {
-      await updateDoc(doc(db, 'users', id), { maxDevices: Math.max(0, (currentMax || 0) + delta) });
+      const nextMax = Math.max(0, (currentMax || 0) + delta);
+      // 1. 파이어베이스 교정
+      await updateDoc(doc(db, 'users', id), { maxDevices: nextMax });
+
+      // 2. 슈파베이스 듀얼 싱크
+      if (dbMode === 'dual') {
+        const targeted = users.find(u => u.id === id);
+        if (targeted) {
+          let joinedAtIso = new Date().toISOString();
+          if (targeted.joinedAt) joinedAtIso = typeof targeted.joinedAt.toDate === 'function' ? targeted.joinedAt.toDate().toISOString() : new Date(targeted.joinedAt).toISOString();
+          const freshShadow = { ...targeted, maxDevices: nextMax, joinedAt: joinedAtIso };
+
+          await supabase
+            .from('users')
+            .update({ maxDevices: nextMax, user_data: freshShadow })
+            .eq('email', id);
+        }
+      }
     } catch (e) { alert("조절 실패"); }
   };
 
@@ -181,7 +369,15 @@ export default function AdminPage({ onBack }) {
           <h1 className="text-xl font-black flex items-center gap-2">
             <span className="text-indigo-600">🛡️</span> 마스터 제어실
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {/* 🌟 원클릭 전수 미러링 마이그레이션 실행 단추 탑재 */}
+            <button 
+              onClick={handleFullMigration} 
+              disabled={isMigrating}
+              className={`text-xs font-bold px-4 py-2 rounded-lg transition-all ${isMigrating ? 'bg-emerald-300 text-white cursor-wait' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 active:scale-95'}`}
+            >
+              {isMigrating ? '💾 미러링 백필 중...' : '💾 과거 데이터 강제 미러링'}
+            </button>
             <button 
               onClick={handleRecalibrateStats} 
               disabled={isRecalculating}
@@ -195,7 +391,7 @@ export default function AdminPage({ onBack }) {
           </div>
         </div>
 
-        {/* 상단 내비게이션 탭 바 */}
+        {/* 상단 내비게이션 탭 바 (원본 유지) */}
         <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-100 mb-4 gap-1">
           {['search', 'management', 'charts'].map((tab) => (
             <button
@@ -212,7 +408,7 @@ export default function AdminPage({ onBack }) {
           ))}
         </div>
 
-        {/* 차트 통계 전용 이원화 정렬 스위칭 바 */}
+        {/* 차트 통계 전용 이원화 정렬 스위칭 바 (원본 유지) */}
         {activeTab === 'charts' && (
           <div className="flex bg-slate-200/60 p-1 rounded-xl mb-4 max-w-[240px] gap-1 text-[11px] font-bold">
             <button 
@@ -230,7 +426,7 @@ export default function AdminPage({ onBack }) {
           </div>
         )}
 
-        {/* 제어바 */}
+        {/* 제어바 (원본 유지) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
           <input 
             type="text" placeholder="이름 또는 이메일 검색..." value={searchTerm}
@@ -320,9 +516,31 @@ export default function AdminPage({ onBack }) {
                             </span>
                           </td>
                           <td className="p-4 text-right space-x-2">
-                            <button onClick={async () => { if(window.confirm("초기화?")) await updateDoc(doc(db, 'users', u.id), { activeDevices: [] }); }}
+                            {/* 기기 바인딩 초기화 단추 (Dual-Write 구현) */}
+                            <button onClick={async () => { 
+                              if(window.confirm("초기화?")) {
+                                await updateDoc(doc(db, 'users', u.id), { activeDevices: [] });
+                                if (dbMode === 'dual') {
+                                  let joinedAtIso = new Date().toISOString();
+                                  if (u.joinedAt) joinedAtIso = typeof u.joinedAt.toDate === 'function' ? u.joinedAt.toDate().toISOString() : new Date(u.joinedAt).toISOString();
+                                  const freshShadow = { ...u, activeDevices: [], joinedAt: joinedAtIso };
+                                  await supabase.from('users').update({ activeDevices: [], user_data: freshShadow }).eq('email', u.id);
+                                }
+                              }
+                            }}
                               className="p-2 bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg></button>
-                            <button onClick={async () => { const next = u.status === 'active' ? 'blocked' : 'active'; await updateDoc(doc(db, 'users', u.id), { status: next }); }}
+                            
+                            {/* 유저 정상/차단 토글 단추 (Dual-Write 구현) */}
+                            <button onClick={async () => { 
+                              const next = u.status === 'active' ? 'blocked' : 'active'; 
+                              await updateDoc(doc(db, 'users', u.id), { status: next });
+                              if (dbMode === 'dual') {
+                                let joinedAtIso = new Date().toISOString();
+                                if (u.joinedAt) joinedAtIso = typeof u.joinedAt.toDate === 'function' ? u.joinedAt.toDate().toISOString() : new Date(u.joinedAt).toISOString();
+                                const freshShadow = { ...u, status: next, joinedAt: joinedAtIso };
+                                await supabase.from('users').update({ status: next, user_data: freshShadow }).eq('email', u.id);
+                              }
+                            }}
                               className={`p-2 rounded-lg transition-all ${u.status === 'active' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}`}>{u.status === 'active' ? '차단' : '해제'}</button>
                           </td>
                         </>
@@ -353,7 +571,7 @@ export default function AdminPage({ onBack }) {
                         </>
                       )}
 
-                      {/* [TAB 3] 차트 통계 */}
+                      {/* [TAB 3] 차트 통계 (원본 유지) */}
                       {activeTab === 'charts' && (
                         <>
                           <td className="p-4 text-center">
