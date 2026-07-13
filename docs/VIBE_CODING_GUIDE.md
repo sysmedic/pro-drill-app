@@ -4,16 +4,21 @@
 
 ## 프로젝트 요약
 
-이 앱은 볼링 지공사가 모바일/PWA 환경에서 고객별 지공 차트, 작업 기록, 메모를 오프라인으로 관리하는 React 앱이다. 데이터는 현재 브라우저 `localStorage`에 저장된다.
+이 앱은 볼링 지공사가 모바일/PWA 환경에서 고객별 지공 차트, 작업 기록, 메모를 온라인으로 관리하는 React 앱이다. 데이터는 환경변수 `VITE_DB_MODE` 설정(`firebase` | `supabase` | `dual`)에 따라 파이어베이스(Firestore) 및 슈파베이스(Supabase)에 저장 및 동기화된다. 
 
 ## 현재 구조
 
-- `src/App.jsx`: 고객 목록 화면과 차트 상세 화면 사이의 최상위 전환을 담당한다.
-- `src/pages/CustomerManager.jsx`: 고객 목록, 고객 생성/수정/삭제 흐름을 조율하는 화면 컨테이너다.
+- `src/firebase.js`: 파이어베이스 앱 초기화, Firestore 다중 탭 캐시 영속성 관리(`persistentLocalCache`, `persistentMultipleTabManager`), 구글 인증(`Google Auth`) 관련 설정을 포함한다.
+- `src/supabaseClient.js`: Supabase 클라이언트 정의 및 `dbMode` 환경변수를 로드한다.
+- `src/useAppSession.js`: Firebase Auth와 연동하여 세션을 유지하고, `dbMode`에 따라 유저 등급(`tier`) 및 디바이스 제한 관리, 차트 수 한도(`maxChartsAllowed`)를 Firestore 또는 Supabase에서 체크한다.
+- `src/App.jsx`: 고객 목록 화면과 차트 상세 화면 사이의 최상위 전환 및 인증 상태에 따른 로그인/차단 레이어를 조율한다.
+- `src/AppLocker.jsx`: 허용 범위를 초과하는 다중 기기 접속 차단 화면을 제공한다.
+- `src/pages/CustomerManager.jsx`: 고객 목록, 검색, 고객 생성/수정/삭제 흐름을 처리하며 `dbMode`에 따라 Firestore/Supabase와 양방향 동기화(dual 모드 포함)를 조율하는 컨테이너다.
 - `src/pages/customerManager/`: 고객 목록 화면의 헤더, 리스트, 고객 폼 모달 컴포넌트가 있다.
-- `src/pages/ChartDetail.jsx`: 차트 상세 화면의 상태, 저장, 메모, 히스토리, 나가기 확인 흐름을 조율하는 화면 컨테이너다.
+- `src/pages/ChartDetail.jsx`: 차트 상세 화면의 상태, 저장, 메모 핀 배치, 히스토리, 나가기 확인 흐름을 조율하는 화면 컨테이너다.
 - `src/pages/chartDetail/`: 차트 상단바, 볼러 스펙, 작업내용, 도면, 입력폼, 모달, 유틸 바텀시트 컴포넌트가 있다.
-- `src/lib/`: 저장키, 고객 스키마, 차트 히스토리 저장 같은 데이터 계약 코드가 있다.
+- `src/services/`: 인증 서비스 및 파이어베이스 저장 등 DB 관련 비즈니스 로직 서비스를 제공한다.
+- `src/lib/`: 고객 스키마 유효성 검증 및 장치 식별(`device.js`), ID 생성(`ids.js`), 로컬 폴백용 스토리지 규약 코드가 있다.
 - `test/`: Node 내장 테스트 기반 단위/계약 테스트가 있다.
 - `e2e/`: Playwright 기반 실제 브라우저 플로우 테스트가 있다.
 - `docs/`: AI 작업 컨텍스트, UI 가이드, 요청 템플릿, CI/CD, 세션 상태, 바이브코딩 요청 가이드가 있다.
@@ -48,7 +53,7 @@ npm run prompt:data
 CI/E2E/배포 작업이면 docs/CI_CD.md도 읽어줘.
 작업 전에는 git status --short --branch로 변경분을 확인하고, 변경 범위를 짧게 말해줘.
 작업 후에는 npm run check 결과, 필요한 경우 npm run e2e 또는 npm run check:e2e 결과, docs/SESSION_STATE.md 갱신 내용을 알려줘.
-기존 localStorage 데이터와 저장키를 깨지 않게 작업해줘.
+VITE_DB_MODE에 따른 firebase, supabase, dual 분기 처리 계약과 DB 스키마 구조를 깨지 않게 작업해줘.
 ```
 
 ## 좋은 요청 형식
@@ -57,7 +62,7 @@ CI/E2E/배포 작업이면 docs/CI_CD.md도 읽어줘.
 
 1. 목표: 사용자가 어떤 화면에서 무엇을 할 수 있어야 하는지 적는다.
 2. 범위: 건드려도 되는 파일이나 영역을 적는다.
-3. 금지 조건: 저장키, 기존 데이터, 모바일 레이아웃처럼 깨지면 안 되는 것을 적는다.
+3. 금지 조건: Firestore 컬렉션 및 Supabase 테이블 스키마 계약, `dbMode` 분기 처리, 모바일 레이아웃처럼 깨지면 안 되는 것을 적는다.
 4. 디자인 기준: UI 작업은 `docs/UI_GUIDE.md`를 따르게 한다.
 5. 완료 기준: 화면 동작, 테스트, 문서 갱신 조건을 적는다.
 6. 검증 명령: 기본은 `npm run check`, 화면 흐름 변경은 `npm run check:e2e`를 요구한다.
@@ -79,19 +84,19 @@ docs/UI_GUIDE.md의 기존 slate/indigo 색상, 카드, 입력 기준을 따라�
 요청하지 않은 버튼이나 새 흐름은 추가하지 말고, 완료 후 npm run check를 실행해줘.
 ```
 
-저장 구조 변경:
+저장 구조 및 DB 분기 변경:
 
 ```text
-차트 히스토리 저장 로직을 정리하고 싶어.
-먼저 src/lib/chartHistoryStorage.js와 관련 테스트를 읽고 현재 localStorage 키 마이그레이션을 설명해줘.
-기존 chart_history_v8_${customer.id}, chart_history_v7_${customer.name}, chart_history_${customer.name} 데이터를 읽을 수 있어야 해.
-변경 후 npm run check와 필요한 마이그레이션 테스트를 추가해줘.
+고객 저장 시 Supabase 테이블 적재 프로세스를 보강하고 싶어.
+먼저 src/pages/CustomerManager.jsx의 handleSaveCustomer 함수와 supabaseClient.js를 읽고 dual 모드 및 supabase 단독 모드에서의 적재 흐름을 설명해줘.
+고객 테이블 구조를 깨지 않고, supabase 에러 발생 시 예외 처리를 보강해줘.
+변경 후 npm run check와 로컬 단위 테스트 결과를 리포트해줘.
 ```
 
-실제 브라우저 플로우 추가:
+실체 브라우저 플로우 추가:
 
 ```text
-Playwright E2E에 히스토리 불러오기 흐름을 추가해줘.
+Playwright E2E에 신규 고객 등록 및 Firebase/Supabase 모의 데이터 검증 흐름을 추가해줘.
 e2e/app-flow.spec.js와 필요한 테스트 유틸 범위에서 작업하고, production dist를 대상으로 검증하는 현재 구조는 유지해줘.
 완료 후 npm run check:e2e를 실행해줘.
 ```
@@ -118,7 +123,7 @@ src/pages/ChartDetail.jsx와 src/pages/chartDetail/* 범위에서 작업해줘.
 동시에 여러 에이전트를 쓴다면 파일 소유권을 먼저 나눈다. 같은 파일을 여러 에이전트가 고치게 하면 충돌과 되돌림이 쉽게 생긴다.
 
 - UI 에이전트: `src/pages/**`, `src/index.css`, `tailwind.config.js`
-- 데이터 에이전트: `src/lib/**`, `test/*Storage.test.js`, `test/customerSchema.test.js`
+- 데이터/DB 에이전트: `src/firebase.js`, `src/supabaseClient.js`, `src/services/**`, `src/lib/**`, `test/**Storage.test.js`
 - E2E/CI 에이전트: `e2e/**`, `playwright.config.js`, `.github/workflows/**`, `scripts/serve-dist.mjs`
 - 문서/Git 에이전트: `README.md`, `GEMINI.md`, `docs/**`, `.gitignore`
 
@@ -126,12 +131,11 @@ src/pages/ChartDetail.jsx와 src/pages/chartDetail/* 범위에서 작업해줘.
 
 ## 절대 깨면 안 되는 계약
 
-- 기존 고객 데이터와 차트 히스토리를 읽을 수 있어야 한다.
+- `VITE_DB_MODE` 설정(`firebase`, `supabase`, `dual`)에 따른 데이터 적재 분기 처리가 올바르게 수행되어야 한다.
+- Firestore 컬렉션(`customers`, `drilling_charts`, `users`) 스키마 및 Supabase 테이블 스키마 계약을 깨트려서는 안 된다.
+- 다중 기기 동시 접속 제한 및 허용 세션 한도(`maxDevices`, `activeDevices`) 판정 계약이 작동해야 한다.
 - 요청받지 않은 메인 화면 UI, 버튼, 사용자 흐름을 추가하지 않는다.
 - UI 변경은 `docs/UI_GUIDE.md`의 색상, 카드, 버튼, 모달 기준을 따른다.
-- `localStorage["bowling_customers"]` 고객 목록 키를 함부로 바꾸지 않는다.
-- `chart_history_v8_${customer.id}`를 새 저장 기준으로 유지한다.
-- 기존 `chart_history_v7_${customer.name}`와 `chart_history_${customer.name}`는 마이그레이션 대상으로 계속 읽는다.
 - 고객의 사용 손은 도면 방향에 반영되어야 한다.
 - 덤리스/투핸드 스타일은 엄지 영역 표시 여부에 반영되어야 한다.
 - 모바일 폭 `540px` 기준으로 주요 화면이 깨지면 안 된다.
@@ -144,6 +148,6 @@ src/pages/ChartDetail.jsx와 src/pages/chartDetail/* 범위에서 작업해줘.
 - 변경 의도와 실제 변경 파일이 일치한다.
 - `npm run check`가 통과한다.
 - 실제 화면 흐름을 바꿨다면 `npm run e2e` 또는 `npm run check:e2e`가 통과한다.
-- 저장 구조를 바꿨다면 마이그레이션 테스트가 있다.
+- DB 저장 구조를 바꿨다면 이에 상응하는 테스트가 보강되어야 한다.
 - AI 작업 맥락이 바뀌었다면 `docs/SESSION_STATE.md`가 갱신되어 있다.
 - 새 세션 복구에 필요한 내용이면 `GEMINI.md`, `docs/PROJECT_CONTEXT.md`, `docs/CI_CD.md`, `README.md` 중 필요한 문서에 연결되어 있다.

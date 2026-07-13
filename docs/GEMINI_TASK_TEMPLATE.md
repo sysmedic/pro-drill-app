@@ -32,7 +32,8 @@ CI/E2E/배포 작업이면 docs/CI_CD.md도 읽어줘.
 
 수정 금지:
 - 요청하지 않은 새 버튼/새 화면/새 사용자 흐름 추가 금지
-- localStorage 키와 기존 고객/히스토리 데이터 구조 변경 금지
+- Firestore 컬렉션/Supabase 테이블 스키마 및 dbMode 분기 계약 변경 금지
+- 다중 기기 세션 한도 초과 락(AppLocker) 및 회원 등급 권한 판정 로직 변경 금지
 - 관련 없는 리팩터링, 파일 이동, 새 라이브러리 추가 금지
 - 새 색상 팔레트, 새 버튼 타입, 새 모달 패턴 추가 금지
 - native alert/confirm/prompt 추가 금지
@@ -65,7 +66,7 @@ CI/E2E/배포 작업이면 docs/CI_CD.md도 읽어줘.
 - [필요한 하위 컴포넌트]
 
 수정 금지:
-- 데이터 저장 로직 변경 금지
+- 데이터 저장 및 DB 로직 변경 금지
 - 새 기능 추가 금지
 - alert/confirm/prompt 추가 금지
 
@@ -77,24 +78,25 @@ CI/E2E/배포 작업이면 docs/CI_CD.md도 읽어줘.
 - npm run check
 ```
 
-## 데이터/저장 로직 템플릿
+## 데이터/DB 로직 템플릿
 
 ```text
-[저장 로직 문제]를 고쳐줘.
+[저장/동기화/세션 로직 문제]를 고쳐줘.
 
 먼저 읽을 파일:
-- src/lib/storageKeys.js
-- src/lib/chartHistoryStorage.js
-- test/chartHistoryStorage.test.js
+- src/firebase.js
+- src/supabaseClient.js
+- src/useAppSession.js
+- src/services/chartService.js
+- src/pages/CustomerManager.jsx (또는 ChartDetail.jsx의 저장 부분)
 
 반드시 유지:
-- localStorage["bowling_customers"]
-- chart_history_v8_${customer.id}
-- chart_history_v7_${customer.name}
-- chart_history_${customer.name}
+- VITE_DB_MODE에 따른 firebase, supabase, dual 분기 처리 계약
+- Firestore 컬렉션(users, customers, drilling_charts) 및 Supabase 테이블 스키마 계약
+- 다중 기기 세션 한도 판정 및 AppLocker 진입 계약
 
 완료 기준:
-- 기존 데이터 마이그레이션 테스트 유지 또는 추가
+- 저장 성공/실패 여부가 화면 State와 올바르게 싱크됨
 - npm run check 통과
 ```
 
@@ -109,7 +111,7 @@ Playwright E2E에 [구체적인 사용자 흐름]을 추가해줘.
 
 유지:
 - production dist를 대상으로 검증하는 현재 구조
-- 기존 고객 생성/차트 저장 테스트
+- 기존 고객 생성/차트 저장 테스트 및 IME 조합 입력 검증 흐름
 
 검증:
 - npm run check:e2e

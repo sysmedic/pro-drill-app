@@ -11,6 +11,7 @@
 
 ## 최근 변경
 
+- 파이어베이스(Firebase) 및 슈파베이스(Supabase) 온라인 데이터 적재 아키텍처에 맞게 최상위 하네스 문서 `GEMINI.md`와 `docs/` 내의 전체 안내 문서들(`PROJECT_CONTEXT.md`, `VIBE_CODING_GUIDE.md`, `CI_CD.md`, `GEMINI_TASK_TEMPLATE.md`, `UI_GUIDE.md`)을 최신 정보로 모두 갱신했다.
 - AI 컨텍스트 하네스 문서와 컨텍스트 팩 생성 스크립트를 추가했다.
 - CI에서 사용할 `npm run check` 명령을 추가했다.
 - GitHub Actions CI와 GitHub Pages 배포 워크플로를 추가했다.
