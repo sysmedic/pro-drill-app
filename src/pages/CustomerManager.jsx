@@ -1,28 +1,25 @@
 import { useState, useEffect } from 'react';
 import PageShell from '../components/layout/PageShell.jsx';
 import { ConfirmModal, FeedbackToast } from '../components/ui/Dialogs.jsx';
-import { db, auth } from '../firebase'; 
-import { 
-  collection, query, where, onSnapshot, addDoc, updateDoc, doc, 
-  serverTimestamp, orderBy, getDocs, writeBatch, increment,
-  limit, getDoc
-} from 'firebase/firestore';
 import CustomerHeader from './customerManager/CustomerHeader.jsx';
 import CustomerList from './customerManager/CustomerList.jsx';
 import CustomerFormModal from './customerManager/CustomerFormModal.jsx';
-// 🌟 슈파베이스 클라이언트 및 모드 스위치 수입
-import { supabase, dbMode } from '../supabaseClient'; 
+import { loadCustomers, saveCustomers } from '../lib/customerStorage.js';
+import { createLocalId } from '../lib/ids.js';
+import { autoSyncOnChange } from '../lib/syncService.js'; // ☁️ 실시간 백업 트리거 임포트
+import SettingsModal from './customerManager/SettingsModal.jsx'; // ⚙️ 설정 모달 임포트
+import { isLicenseCertified } from '../lib/userLicenseManager.js';
 
 export default function CustomerManagement({ 
   onSelectCustomer, 
-  isAdmin, 
-  onOpenAdmin, 
-  isMenuOpen, 
-  setIsMenuOpen, 
   onLogout,
-  onNfcScan
+  onNfcScan,
+  graceInfo
 }) {
-  const [customers, setCustomers] = useState([]);
+  const [customers, setCustomers] = useState(() => {
+    const result = loadCustomers();
+    return result instanceof Promise ? [] : result;
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [sortType, setSortType] = useState('latest');
   const [feedback, setFeedback] = useState(null);
@@ -30,9 +27,10 @@ export default function CustomerManagement({
   const [showModal, setShowModal] = useState(false);
   const [showSecondDeleteConfirm, setShowSecondDeleteConfirm] = useState(false);
   const [editId, setEditId] = useState(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   
   const [totalCount, setTotalCount] = useState(0);
-  const [userTier, setUserTier] = useState('basic');
+  const userTier = 'master'; // 로컬 전용이므로 master로 고정
 
   const [customerData, setCustomerData] = useState({ 
     name: '', 
@@ -44,80 +42,22 @@ export default function CustomerManagement({
     styleExtra: '' 
   });
 
-  // 비용 걱정 없는 단 1회성 유저 레코드 카운트 실시간 구독 파이프라인 (Supabase 분기 추가)
+  // 로컬 카운트 관리
   useEffect(() => {
-    if (!auth.currentUser || !auth.currentUser.email) return;
-    
-    // 🌟 Supabase 모드일 때 유저 등급 및 정보 나스에서 로드
-    if (dbMode === 'supabase') {
-      const fetchSbUserStats = async () => {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('email', auth.currentUser.email)
-          .single();
+    setTotalCount(customers.length);
+  }, [customers]);
 
-        if (!error && data) {
-          setTotalCount(data.customerCount || 0);
-          setUserTier(data.tier || 'basic');
-        }
-      };
-      fetchSbUserStats();
-      return;
-    }
-
-    const userRef = doc(db, 'users', auth.currentUser.email);
-    const unsubscribe = onSnapshot(userRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setTotalCount(snapshot.data().customerCount || 0);
-        setUserTier(snapshot.data().tier || 'basic');
+  // 고객 명단 로드
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const list = await loadCustomers();
+        setCustomers(list);
+      } catch (err) {
+        console.error("IndexedDB 고객 로드 실패:", err);
       }
-    });
-    return () => unsubscribe();
-  }, []);
-
-  // 고객 명단 로드 파이프라인 (Supabase 분기 추가)
-  useEffect(() => {
-    if (!auth.currentUser) return;
-    
-    // 🌟 Supabase 모드일 때 나스 DB의 customer_data jsonb 통주머니를 인양해와서 바인딩 테스트
-    if (dbMode === 'supabase') {
-      const fetchSbCustomers = async () => {
-        const { data, error } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('userId', auth.currentUser.uid)
-          .order('updatedAt', { ascending: false });
-
-        if (!error && data) {
-          // jsonb 덩어리를 고스란히 복원하여 샴쌍둥이 고유 ID와 완전 결합
-          setCustomers(data.map(row => ({
-            id: row.id,
-            ...row.customer_data
-          })));
-        } else {
-          console.error("Supabase 고객 목록 로드 실패:", error);
-        }
-      };
-      fetchSbCustomers();
-      return;
-    }
-
-    const q = query(
-      collection(db, 'customers'), 
-      where('userId', '==', auth.currentUser.uid), 
-      orderBy('updatedAt', 'desc')
-    );
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setCustomers(snapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data({ serverTimestamps: 'estimate' }) 
-      })));
-    }, (error) => {
-      console.error("고객 목록 로드 실패:", error);
-    });
-    return () => unsubscribe();
+    };
+    fetchCustomers();
   }, []);
 
   // 화면 진입 및 주요 모달 전환 시 강제 1배율 리셋 (원본 유지)
@@ -137,86 +77,42 @@ export default function CustomerManagement({
     return () => clearTimeout(timeoutId); 
   }, [showModal, deleteRequest, showSecondDeleteConfirm]);
 
-  // 고객 저장/수정 함수
+  // 고객 저장/수정 함수 (오프라인 로컬 처리)
   const handleSaveCustomer = async (e) => {
     e.preventDefault();
     if (!customerData.name.trim()) return setFeedback({ message: '이름을 입력하세요.', tone: 'warning' });
     try {
       const isoTimestamp = new Date().toISOString();
+      let updatedCustomers = [...customers];
 
       if (editId) {
-        await updateDoc(doc(db, 'customers', editId), { ...customerData, updatedAt: serverTimestamp() });
-
-        if (dbMode === 'dual' || dbMode === 'supabase') {
-          const shadowUpdatePayload = { ...customerData, updatedAt: isoTimestamp };
-          await supabase
-            .from('customers')
-            .update({
-              name: customerData.name,
-              phone: customerData.phone,
-              club: customerData.club,
-              gender: customerData.gender,
-              hand: customerData.hand,
-              style: customerData.style,
-              styleExtra: customerData.styleExtra,
-              updatedAt: isoTimestamp,
-              customer_data: shadowUpdatePayload
-            })
-            .eq('id', editId);
-        }
+        updatedCustomers = updatedCustomers.map(c => 
+          c.id === editId 
+            ? { ...c, ...customerData, updatedAt: isoTimestamp } 
+            : c
+        );
       } else {
-        const docRef = await addDoc(collection(db, 'customers'), { 
-          ...customerData, 
-          userId: auth.currentUser.uid, 
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp() 
-        });
-        const twinId = docRef.id;
-
-        if (dbMode === 'dual' || dbMode === 'supabase') {
-          const shadowInsertPayload = {
-            ...customerData,
-            userId: auth.currentUser.uid,
-            createdAt: isoTimestamp,
-            updatedAt: isoTimestamp,
-            activityLogs: []
-          };
-
-          await supabase
-            .from('customers')
-            .insert([{
-              id: twinId,
-              userId: auth.currentUser.uid,
-              name: customerData.name,
-              phone: customerData.phone,
-              club: customerData.club,
-              gender: customerData.gender,
-              hand: customerData.hand,
-              style: customerData.style,
-              styleExtra: customerData.styleExtra,
-              createdAt: isoTimestamp,
-              updatedAt: isoTimestamp,
-              customer_data: shadowInsertPayload
-            }]);
-        }
-        
-        if (auth.currentUser?.email) {
-          await updateDoc(doc(db, 'users', auth.currentUser.email), {
-            customerCount: increment(1)
-          });
-
-          if (dbMode === 'dual' || dbMode === 'supabase') {
-            await supabase
-              .from('users')
-              .update({ customerCount: totalCount + 1 })
-              .eq('email', auth.currentUser.email);
-          }
-        }
+        const newCustomer = {
+          ...customerData,
+          id: createLocalId(),
+          userId: 'local_driller', 
+          createdAt: isoTimestamp,
+          updatedAt: isoTimestamp 
+        };
+        updatedCustomers.unshift(newCustomer);
       }
-      setShowModal(false);
-      setFeedback({ message: '저장되었습니다.', tone: 'success' });
+
+      const success = await saveCustomers(updatedCustomers);
+      if (success) {
+        setCustomers(updatedCustomers);
+        setShowModal(false);
+        setFeedback({ message: '저장되었습니다.', tone: 'success' });
+        autoSyncOnChange(); // ☁️ 변경사항 자동 백업 트리거
+      } else {
+        setFeedback({ message: '저장 실패', tone: 'danger' });
+      }
     } catch (e) { 
-      console.error("고객 저장 파이프라인 에러:", e);
+      console.error("고객 저장 에러:", e);
       setFeedback({ message: '실패', tone: 'danger' }); 
     }
   };
@@ -240,10 +136,30 @@ export default function CustomerManagement({
         }}
         searchQuery={searchQuery} setSearchQuery={setSearchQuery}
         sortType={sortType} setSortType={setSortType}
-        isAdmin={isAdmin} onOpenAdmin={onOpenAdmin}
-        isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} onLogout={onLogout}
+        onLogout={onLogout}
+        onOpenSettings={() => setShowSettingsModal(true)}
         onNfcScan={['expert', 'master'].includes(userTier?.toLowerCase()) ? onNfcScan : undefined}
       />
+      
+      {/* [라이선스 알림]: 라이선스 미인증 상태이고 유예 기간이 30일 이하로 남았을 때 상단 경고 배너 기동 */}
+      {!isLicenseCertified() && graceInfo && graceInfo.daysLeft <= 30 && (
+        <div className="mx-2 mb-3 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-800 animate-fade-in relative z-20 shadow-sm leading-relaxed select-none">
+          <div className="flex items-start gap-2">
+            <span className="shrink-0 leading-none text-amber-600 font-black">[알림]</span>
+            <div className="font-bold">
+              인증 유예 기간이 <span className="text-amber-600 font-extrabold text-sm underline">D-{graceInfo.daysLeft}일</span> 남았습니다. 
+              지속적인 지공 관리와 안전한 구글 드라이브 백업을 위해 라이선스 인증을 완료해 주세요.
+            </div>
+          </div>
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="w-full sm:w-auto shrink-0 bg-amber-600 text-white hover:bg-amber-700 px-3.5 py-2 rounded-xl font-extrabold transition-all active:scale-95 text-center shadow-md shadow-amber-100"
+          >
+            인증하기
+          </button>
+        </div>
+      )}
+
       <CustomerList customers={displayedCustomers} onDelete={(e, c) => { e.stopPropagation(); setDeleteRequest(c); }} onEdit={(e, c) => { e.stopPropagation(); setEditId(c.id); setCustomerData(c); setShowModal(true); }} onSelect={onSelectCustomer} />
       
       {showModal && (
@@ -272,46 +188,21 @@ export default function CustomerManagement({
           onCancel={() => { setDeleteRequest(null); setShowSecondDeleteConfirm(false); }}
           onConfirm={async () => {
             try {
-              const batch = writeBatch(db);
-              const chartsRef = collection(db, 'drilling_charts');
-              const q = query(chartsRef, where('customerId', '==', deleteRequest.id));
-              const chartSnapshots = await getDocs(q);
-              const deletedChartsCount = chartSnapshots.size;
+              const { deleteChartHistory } = await import('../lib/chartHistoryStorage.js');
+              await deleteChartHistory(deleteRequest);
 
-              chartSnapshots.forEach((chartDoc) => { batch.delete(chartDoc.ref); });
-              const customerRef = doc(db, 'customers', deleteRequest.id);
-              batch.delete(customerRef);
+              const updatedCustomers = customers.filter(c => c.id !== deleteRequest.id);
+              const success = await saveCustomers(updatedCustomers);
 
-              if (dbMode === 'dual' || dbMode === 'supabase') {
-                await supabase.from('customers').delete().eq('id', deleteRequest.id);
+              if (success) {
+                setCustomers(updatedCustomers);
+                setDeleteRequest(null);
+                setShowSecondDeleteConfirm(false);
+                setFeedback({ message: '고객 정보와 관련 차트가 모두 삭제되었습니다.', tone: 'success' });
+                autoSyncOnChange(); // ☁️ 변경사항 자동 백업 트리거
+              } else {
+                setFeedback({ message: '삭제 실패', tone: 'danger' });
               }
-
-              if (auth.currentUser?.email) {
-                const userRef = doc(db, 'users', auth.currentUser.email);
-                batch.update(userRef, {
-                  customerCount: increment(-1),
-                  chartCount: increment(-deletedChartsCount)
-                });
-
-                if (dbMode === 'dual' || dbMode === 'supabase') {
-                  const userSnap = await getDoc(userRef);
-                  if (userSnap.exists()) {
-                    const freshData = userSnap.data();
-                    const newCustomerCount = (freshData.customerCount || 0) - 1;
-                    const newChartCount = (freshData.chartCount || 0) - deletedChartsCount;
-
-                    await supabase
-                      .from('users')
-                      .update({ customerCount: newCustomerCount, chartCount: newChartCount })
-                      .eq('email', auth.currentUser.email);
-                  }
-                }
-              }
-
-              await batch.commit();
-              setDeleteRequest(null);
-              setShowSecondDeleteConfirm(false);
-              setFeedback({ message: '고객 정보와 관련 차트가 모두 삭제되었습니다.', tone: 'success' });
             } catch (error) {
               console.error("삭제 중 오류:", error);
               setFeedback({ message: '삭제 작업 중 오류가 발생했습니다.', tone: 'danger' });
@@ -320,6 +211,10 @@ export default function CustomerManagement({
           title="최종 삭제 확인"
           titleId="final-delete-confirm-title"
         />
+      )}
+
+      {showSettingsModal && (
+        <SettingsModal onClose={() => setShowSettingsModal(false)} onFeedback={setFeedback} />
       )}
 
       <FeedbackToast message={feedback?.message} onDismiss={() => setFeedback(null)} tone={feedback?.tone} />

@@ -1,3 +1,4 @@
+/* global NDEFReader */
 import { useCallback, useState } from 'react';
 import { db, auth } from '../firebase'; // 🌟 [최소 수정 1] 현재 유저 인증 정보 확인을 위해 auth 수입 추가
 import { doc, getDoc } from 'firebase/firestore';
@@ -12,7 +13,7 @@ const decryptId = (encodedText) => {
       result += String.fromCharCode(decoded.charCodeAt(i) ^ NFC_SECRET_KEY.charCodeAt(i % NFC_SECRET_KEY.length));
     }
     return result;
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -89,7 +90,7 @@ export default function useGlobalNfcRead({ onWalletJump, setFeedback }) {
         // 차트를 생성한 소유자(userId)와 현재 로그인한 지공사(auth.currentUser.uid)가 다르면 열기 즉시 차단
         if (chartData.userId !== auth.currentUser?.uid) {
           setFeedback?.({ 
-            message: '⚠️ 타인이 등록한 볼 태그이거나 해당 지공 차트에 대한 접근 권한이 없습니다.', 
+            message: '타인이 등록한 볼 태그이거나 해당 지공 차트에 대한 접근 권한이 없습니다.', 
             tone: 'danger' 
           });
           return;

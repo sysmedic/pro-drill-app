@@ -177,10 +177,8 @@ export default function useMemoOverlay({ onDirty }) {
               top: `${memo.y}%`, 
               touchAction: 'none',
               ...(isPinned ? {
-                width: memo.width ? `${memo.width}px` : undefined,
-                /* 🛠️ [수정 완료]: height 고정 제약을 minHeight로 완화하고 높이를 auto로 개방하여, 텍스트가 조절된 크기보다 많아지면 유동적으로 자동 확장되도록 연동했습니다. */
-                minHeight: memo.height ? `${memo.height}px` : '64px',
-                height: 'auto',
+                width: memo.width ? `${memo.width}px` : '150px',
+                height: memo.height ? `${memo.height}px` : '90px',
                 maxWidth: `${100 - memo.x}%`,
                 maxHeight: `${100 - memo.y}%`
               } : {})
@@ -188,7 +186,7 @@ export default function useMemoOverlay({ onDirty }) {
           >
             
             {isPinned ? (
-              <div className={`${COLOR_CLASSES[memo.color || 'yellow']} rounded-lg shadow-md border flex flex-col pointer-events-auto w-full h-full opacity-90`}>
+              <div className={`${COLOR_CLASSES[memo.color || 'yellow']} rounded-lg shadow-md border flex flex-col pointer-events-auto w-full h-full opacity-90 overflow-hidden`}>
                 
                 <div 
                   data-drag-handle="true" 
@@ -211,10 +209,9 @@ export default function useMemoOverlay({ onDirty }) {
                   </button>
                 </div>
 
-                {/* 🛠️ [수정 완료]: 글자 뭉침 및 잘림을 원천 차단하기 위해 min-h-0과 overflow-hidden 격벽을 해제하여 부모 카드를 밀어내며 자연스럽게 늘어나도록 변경했습니다. */}
                 <div 
                   data-text-area="true" 
-                  className="p-2 text-xs font-bold text-slate-800 whitespace-pre-wrap break-words leading-snug flex-1 pointer-events-auto cursor-pointer"
+                  className="p-2 text-xs font-bold text-slate-800 whitespace-pre-wrap break-words leading-snug flex-1 overflow-y-auto pointer-events-auto cursor-pointer min-h-0"
                 >
                   {memo.text}
                 </div>

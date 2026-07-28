@@ -28,9 +28,9 @@ export default defineConfig({
         enabled: true
       },
       manifest: {
-        name: 'Bowling Chart',
-        short_name: '지공차트',
-        description: '오프라인 볼링 지공 차트 앱',
+        name: 'ProDrill',
+        short_name: 'ProDrill',
+        description: '프로페셔널 지공 매니저 ProDrill',
         lang: 'ko',
         theme_color: '#ffffff',
         background_color: '#ffffff',

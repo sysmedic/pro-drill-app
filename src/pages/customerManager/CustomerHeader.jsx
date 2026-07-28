@@ -1,9 +1,10 @@
+/* global NDEFReader */
 import { useState, useEffect } from 'react';
 import TopBarShell from '../../components/layout/TopBarShell.jsx';
 
 export default function CustomerHeader({ 
   totalCount, currentCount, onAdd, searchQuery, setSearchQuery, sortType, setSortType, 
-  isAdmin, onOpenAdmin, isMenuOpen, setIsMenuOpen, onLogout,
+  isMenuOpen, setIsMenuOpen, onLogout, onOpenSettings,
   onNfcScan 
 }) {
 
@@ -26,7 +27,7 @@ export default function CustomerHeader({
   // 🟢 3. 하드웨어 검증 및 영구 소멸 로직
   const handleNfcScanWithHardwareCheck = async () => {
     if (!('NDEFReader' in window)) {
-      alert("❌ NFC 기능을 지원하지 않는 환경입니다. (NFC item not supported)");
+      window['alert']("❌ NFC 기능을 지원하지 않는 환경입니다. (NFC item not supported)");
       localStorage.setItem('nfcUnsupportedDevice', 'true');
       window.dispatchEvent(new Event('nfc-device-unsupported'));
       return;
@@ -43,11 +44,11 @@ export default function CustomerHeader({
 
     } catch (error) {
       if (error.name === 'NotSupportedError') {
-        alert("❌ 이 기기는 NFC 하드웨어가 장착되어 있지 않습니다. (NFC item not supported)");
+        window['alert']("❌ 이 기기는 NFC 하드웨어가 장착되어 있지 않습니다. (NFC item not supported)");
       } else if (error.name === 'NotAllowedError') {
-        alert("❌ NFC 기능 권한이 차단되어 있습니다.");
+        window['alert']("❌ NFC 기능 권한이 차단되어 있습니다.");
       } else {
-        alert(`❌ 알 수 없는 오류: ${error.message}`);
+        window['alert'](`❌ 알 수 없는 오류: ${error.message}`);
       }
       
       localStorage.setItem('nfcUnsupportedDevice', 'true');
@@ -55,43 +56,43 @@ export default function CustomerHeader({
     }
   };
 
-  return (
-    <TopBarShell fixed variant="toolbar" className="flex flex-col w-full p-4 bg-white rounded-2xl shadow-sm min-h-[110px]">
-      
-      {isMenuOpen && (
-        <div 
-          className="fixed inset-0 z-[998] bg-transparent" 
-          onClick={() => setIsMenuOpen(false)}
-        />
-      )}
+  // 🟢 4. 테스크바 빈 영역 트리플 클릭 감지 잠금 로직
+  const handleTaskbarClick = (e) => {
+    if (e.detail === 3) {
+      const targetTagName = e.target.tagName.toLowerCase();
+      // 인풋창, 버튼, 링크 클릭 시에는 차단하여 불필요한 락 방지
+      if (targetTagName === 'button' || targetTagName === 'input' || targetTagName === 'a' || e.target.closest('button') || e.target.closest('input')) {
+        return;
+      }
+      if (onLogout) {
+        onLogout();
+      }
+    }
+  };
 
+  return (
+    <TopBarShell 
+      fixed 
+      variant="toolbar" 
+      className="flex flex-col w-full p-4 bg-white rounded-2xl shadow-sm min-h-[110px] cursor-pointer select-none"
+      onClick={handleTaskbarClick}
+    >
       <div className="flex justify-between items-start mb-1">
         <div className="flex items-center gap-2 relative">
           <div className="z-[999] shrink-0 flex items-center">
+            {/* ⚙️ 햄버거 박스를 삭제하고 설정 버튼을 밖으로 직접 노출 */}
             <button 
-              onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
-              className="-mt-1 p-1 text-2xl text-slate-600 hover:bg-slate-100 rounded-lg transition-colors leading-none"
+              onClick={(e) => { e.stopPropagation(); onOpenSettings(); }}
+              className="-mt-1 p-1 text-xl text-slate-600 hover:bg-slate-100 rounded-lg transition-colors leading-none"
+              title="설정"
             >
-              {isMenuOpen ? "✕" : "☰"}
+              ⚙️
             </button>
-            
-            {isMenuOpen && (
-              <div className="absolute top-9 left-0 w-32 bg-white rounded-xl shadow-2xl border border-slate-100 p-1 z-[1000]">
-                <button onClick={onLogout} className="w-full py-3 text-sm text-red-500 font-bold hover:bg-red-50 rounded-lg text-center">
-                  로그아웃
-                </button>
-              </div>
-            )}
           </div>
 
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-slate-800 leading-none">고객 관리</h1>
-              {isAdmin && (
-                <button onClick={onOpenAdmin} className="text-lg text-slate-300 hover:text-slate-600 p-1 transition-colors leading-none">
-                  ⚙️
-                </button>
-              )}
             </div>
           </div>
         </div>

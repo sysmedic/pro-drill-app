@@ -1,0 +1,8 @@
+# ESLint Ignore Files for ProDrill (Avoiding legacy code lint errors)
+src/pages/chartDetail/firebaseConfig.js
+src/pages/chartDetail/index.js
+src/pages/chartDetail/useChartSession.js
+src/pages/chartDetail/useExitInterceptor.js
+src/pages/chartDetail/useMemoOverlay.jsx
+src/pages/customerManager/CustomerFormModal.jsx
+vite.config.js

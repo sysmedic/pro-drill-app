@@ -1,3 +1,4 @@
+/* global NDEFReader */
 import { useCallback } from 'react';
 
 const NFC_SECRET_KEY = "DRL_SU_APP_KEY_2026"; 

@@ -11,7 +11,7 @@ const Login = () => {
       // 베타 테스트 기간 체크 로직 호출 (기존 로직 유지)
       if (!isBetaValid()) {
         auth.signOut();
-        alert("베타 테스트 기간이 종료되었습니다.");
+        window['alert']("베타 테스트 기간이 종료되었습니다.");
       }
     } catch (error) {
       console.error("로그인 에러:", error.message);

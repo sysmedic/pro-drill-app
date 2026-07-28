@@ -20,6 +20,7 @@ export default function ChartTopBar({
   onConvertTemplate,
   sessionRecordId,
   ballName,
+  onTriggerLock,
 }) {
   
   // 🔄 [교차 롤링용 상태 수립]: 좁은 모바일 화면을 효율적으로 활용하기 위한 텍스트 교차 플래그
@@ -51,18 +52,37 @@ export default function ChartTopBar({
     return `${yy}${mm}${dd}`;
   })();
 
+  // 🟢 트리플 클릭 감지 시 화면 잠금 가동 로직
+  const handleTaskbarClick = (e) => {
+    if (e.detail === 3) {
+      const targetTagName = e.target.tagName.toLowerCase();
+      // 버튼, 입력창, 링크, SVG 아이콘 클릭 시에는 오잠금 방지 가드
+      if (targetTagName === 'button' || targetTagName === 'input' || targetTagName === 'a' || e.target.closest('button') || e.target.closest('input')) {
+        return;
+      }
+      if (onTriggerLock) {
+        onTriggerLock();
+      }
+    }
+  };
+
   return (
-    <TopBarShell fixed variant="toolbar" className="flex flex-col w-full">
+    <TopBarShell 
+      fixed 
+      variant="toolbar" 
+      className="flex flex-col w-full cursor-pointer select-none"
+      onClick={handleTaskbarClick}
+    >
       <div className="flex justify-between items-center w-full gap-2">
         <div className="flex gap-1.5 sm:gap-2 shrink-0">
           <Button aria-label="뒤로" className="max-[420px]:[&>span.leading-none]:hidden" icon="back" onClick={onBack} size="sm" variant="secondary">뒤로</Button>
           
-          {/* 유틸 버튼 (엑스퍼트 이상 등급 제한) */}
-          {!isEditMode && isPremiumUser && (
+          {/* 유틸 버튼 (임시 비활성화 처리) */}
+          {/* {!isEditMode && isPremiumUser && (
             <Button aria-expanded={utilityState === 'expanded'} aria-label="유틸리티" className="max-[420px]:[&>span.leading-none]:hidden" icon="tools" onClick={onToggleUtility} size="sm" variant="secondary">
               유틸
             </Button>
-          )}
+          )} */}
           
           {/* 메모 버튼 */}
           {!isEditMode && (

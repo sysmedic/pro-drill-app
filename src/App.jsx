@@ -1,25 +1,30 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import CustomerManager from './pages/CustomerManager.jsx';
 import ChartDetail from './pages/ChartDetail.jsx';
-import AdminPage from './pages/chartDetail/AdminPage.jsx';
 import { FeedbackToast } from './components/ui/Dialogs.jsx'; 
 import AppLocker from './AppLocker.jsx'; // 🔒 사생활 보호 게이트키퍼 컴포넌트
 import useAppSession from './useAppSession.js'; // 🌟 신설된 세션 커스텀 훅 수입
+import { autoSyncOnLaunch, registerVisibilitySync } from './lib/syncService.js'; // ☁️ 자동 동기화 허브 임포트
+import { initFirstLaunchTime, calculateGracePeriod, certifyUserEmail } from './lib/userLicenseManager.js';
 
-// 📍 최소한의 로그인 구동 도구만 유지
-import { auth, googleProvider } from './firebase'; 
-import { signInWithPopup, signOut } from 'firebase/auth';
+// 📍 오프라인 수동 잠금 제어를 위해 락 기능 브릿징 유지
 import useGlobalNfcRead from './hooks/useGlobalNfcRead.js'; 
 
 export default function App() {
   // 1. 순수한 UI 네비게이션 및 잠금 제어 상태만 깔끔하게 잔존
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [selectedChartId, setSelectedChartId] = useState(null); 
-  const [isAppLocked, setIsAppLocked] = useState(true);
-  const [showAdminPage, setShowAdminPage] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAppLocked, setIsAppLocked] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !!localStorage.getItem('drilling_app_pin_code');
+  });
   const [feedback, setFeedback] = useState(null); 
 
+  // 🟢 [라이선스 보안 제어 상태 선언]
+  const [graceInfo, setGraceInfo] = useState(() => calculateGracePeriod());
+  const [showLicenseGate, setShowLicenseGate] = useState(false);
+  const [licenseChecking, setLicenseChecking] = useState(false);
+  const [licenseError, setLicenseError] = useState('');
   // 2. 수백 줄의 복잡한 백엔드 세션 통신 로직을 단 한 줄로 완벽 수령
   const session = useAppSession();
 
@@ -37,52 +42,126 @@ export default function App() {
     setIsAppLocked(true);
   }, []);
 
+  // 🌟 [라이선스 및 자동 동기화 라이프사이클]: 최초 마운트 시 기동일 체크 및 동기화 기동
+  useEffect(() => {
+    initFirstLaunchTime();
+    const info = calculateGracePeriod();
+    setGraceInfo(info);
+    if (info.isExpired) {
+      setShowLicenseGate(true);
+    }
+
+    autoSyncOnLaunch(setFeedback);
+    const unregister = registerVisibilitySync();
+    return () => {
+      if (typeof unregister === 'function') unregister();
+    };
+  }, [setFeedback]);
+
   // 인증 확인 중 화면 제어
   if (session.isAuthChecking) return <div className="flex min-h-screen items-center justify-center bg-slate-200 font-bold">인증 확인 중...</div>;
 
-  // 비로그인 시 구글 로그인 폼 안내 제어
-  if (!session.user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-200 p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm text-center">
-          <h1 className="text-2xl font-bold text-slate-800 mb-6 italic">Drilling Support</h1>
-          {session.authErrorMsg && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-6 whitespace-pre-wrap font-medium">{session.authErrorMsg}</div>}
-          <button onClick={() => signInWithPopup(auth, googleProvider)} className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold w-full active:scale-95 transition-transform">구글 계정으로 시작하기</button>
-        </div>
-      </div>
-    );
-  }
+  // 무인증 로컬 진입이므로 로그인 화면 분기 생략
 
-  // 관리자 대시보드 강제 라우팅 제어
-  if (showAdminPage && session.isAdmin) return <AdminPage onBack={() => setShowAdminPage(false)} />;
+  // 비로그인 시 구글 로그인 폼 안내 제어
+
+  // 🟢 구글 화이트리스트 로그인 연동 검증
+  const handleLicenseGateVerify = async () => {
+    setLicenseChecking(true);
+    setLicenseError('');
+    try {
+      const { initGoogleApi, signInGoogle, getGoogleUserEmail } = await import('./lib/googleDriveBackup.js');
+      await initGoogleApi();
+      await signInGoogle(true);
+      const email = await getGoogleUserEmail();
+      
+      if (!email) {
+        setLicenseError('구글 계정으로부터 이메일 정보를 읽어올 수 없습니다.');
+        setLicenseChecking(false);
+        return;
+      }
+      
+      const success = await certifyUserEmail(email);
+      if (success) {
+        setFeedback({ message: '정식 지공사 라이선스 인증이 완료되었습니다!', tone: 'success' });
+        const updatedInfo = calculateGracePeriod();
+        setGraceInfo(updatedInfo);
+        setShowLicenseGate(false);
+        
+        // 인증에 성공하면 클라우드 동기화 즉시 재시작
+        autoSyncOnLaunch(setFeedback);
+      } else {
+        setLicenseError(
+          <span>
+            허용되지 않은 계정입니다: ({email})<br />
+            정식 등록된 Gmail로 로그인하시거나, <span className="block mt-1"><a href="mailto:sysmedic@gmail.com" className="text-indigo-600 hover:text-indigo-800 underline font-black">관리자 등록 문의 (sysmedic@gmail.com)</a></span>
+          </span>
+        );
+      }
+    } catch (err) {
+      console.error("게이트 인증 오류:", err);
+      if (err.message === 'REQUIRED_SCOPES_MISSING') {
+        setLicenseError('구글 로그인 동의 화면에서 [Google 드라이브 권한] 체크박스를 반드시 직접 체크(허용)해 주셔야 라이선스 인증 연동이 가능합니다.');
+      } else {
+        setLicenseError('구글 로그인 연동 중 오류가 발생했습니다. 네트워크 상태를 확인해 주세요.');
+      }
+    } finally {
+      setLicenseChecking(false);
+    }
+  };
 
   return (
     <div className="bg-slate-200 min-h-screen w-full relative">
-      {/* 기존 하위 컴포넌트 매핑 구역: session 내부 데이터로 완벽하고 안전하게 브릿징 연결 */}
-      {!selectedCustomer ? (
-        <CustomerManager 
-          isAdmin={session.isAdmin}
-          onOpenAdmin={() => setShowAdminPage(true)}
-          onSelectCustomer={setSelectedCustomer}
-          isMenuOpen={isMenuOpen}
-          setIsMenuOpen={setIsMenuOpen}
-          onLogout={() => signOut(auth)}
-          onNfcScan={handleGlobalNfcRead} 
-        />
+      {/* 🔒 90일 유예 기간 만료 시 전면 강제 차단 화면 렌더링 */}
+      {showLicenseGate ? (
+        <div className="fixed inset-0 z-[11000] bg-slate-900 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border border-slate-800 animate-fade-in">
+            <span className="text-5xl block mb-4">⚙️</span>
+            <h2 className="text-xl font-black text-slate-800 mb-2">ProDrill 라이선스 만료</h2>
+            <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+              90일 무료 사용 유예 기간이 완료되었습니다.<br />
+              지속적인 지공 차트 기록 및 안전한 백업을 위해 정식 등록된 구글 계정으로 연동 인증을 완료해 주세요.
+            </p>
+            
+            {licenseError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-left text-xs font-bold text-red-600 leading-snug">
+                {licenseError}
+              </div>
+            )}
+            
+            <button
+              onClick={handleLicenseGateVerify}
+              disabled={licenseChecking}
+              className="w-full bg-indigo-600 text-white hover:bg-indigo-700 py-3.5 rounded-xl text-sm font-extrabold shadow-lg shadow-indigo-100 transition-all active:scale-[0.98] disabled:opacity-50"
+            >
+              {licenseChecking ? '구글 로그인 인증 중...' : '🔑 구글 이메일 인증하기'}
+            </button>
+          </div>
+        </div>
       ) : (
-        <ChartDetail
-          customer={selectedCustomer}
-          initialChartId={selectedChartId} 
-          onBack={() => { setSelectedCustomer(null); setSelectedChartId(null); }} 
-          maxChartsAllowed={session.maxChartsAllowed}
-          currentChartsCount={session.currentChartsCount}
-          userTier={session.userTier}
-          refreshChartCount={() => session.refreshChartCount(session.user.uid)}
-          onTriggerLock={handleTriggerLock} 
-        />
+        /* 기존 하위 컴포넌트 매핑 구역 */
+        !selectedCustomer ? (
+          <CustomerManager 
+            onSelectCustomer={setSelectedCustomer}
+            onLogout={handleTriggerLock}
+            onNfcScan={handleGlobalNfcRead} 
+            graceInfo={graceInfo}
+          />
+        ) : (
+          <ChartDetail
+            customer={selectedCustomer}
+            initialChartId={selectedChartId} 
+            onBack={() => { setSelectedCustomer(null); setSelectedChartId(null); }} 
+            maxChartsAllowed={session.maxChartsAllowed}
+            currentChartsCount={session.currentChartsCount}
+            userTier={session.userTier}
+            refreshChartCount={() => session.refreshChartCount(session.user.uid)}
+            onTriggerLock={handleTriggerLock} 
+          />
+        )
       )}
 
-      {/* 🌟 [오류 완치]: 어떤 화면이나 잠금창 자식 요소에도 절대 파묻히지 않도록 최상위 z-[10000] 격벽 레이어를 확실하게 복귀시켰습니다. */}
+      {/* 🌟 [오류 완치] */}
       <div className="fixed inset-0 pointer-events-none z-[10000]">
         <FeedbackToast message={feedback?.message} onDismiss={() => setFeedback(null)} title={feedback?.title} tone={feedback?.tone} />
       </div>

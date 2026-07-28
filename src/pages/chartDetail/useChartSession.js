@@ -1,10 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getCustomerChartProfile } from '../../lib/customerSchema.js';
 import { createLocalId } from '../../lib/ids.js';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase'; 
-// 🌟 슈파베이스 클라이언트 및 모드 스위치 수입
-import { supabase, dbMode } from '../../supabaseClient'; 
+import { loadCustomers, saveCustomers } from '../../lib/customerStorage.js'; 
 
 const createDefaultChartData = ({ handedness = 'right', isThumbless = false } = {}) => ({
   isThumbless,
@@ -239,7 +236,6 @@ export default function useChartSession({
 
     try {
       if (customerId) {
-        const customerRef = doc(db, 'customers', customerId);
         const logAmpm = nowObj.getHours() >= 12 ? '오후' : '오전';
         const logHour = nowObj.getHours() % 12 || 12;
         const customTimelineTimestamp = `${nowObj.getFullYear()}년 ${mm}월 ${dd}일 ${logAmpm} ${logHour}시`;
@@ -253,7 +249,7 @@ export default function useChartSession({
         );
 
         const newTimelineLog = {
-          id: `log_${Date.now()}`,
+          id: `log_${new Date().getTime()}`,
           date: customTimelineTimestamp,
           chartId: recordId,
           ballName: finalRecordName, 
@@ -265,54 +261,23 @@ export default function useChartSession({
         const updatedLogs = [...(customer.activityLogs || []), newTimelineLog];
         if (updatedLogs.length > 15) updatedLogs.splice(0, updatedLogs.length - 15);
 
-        // [1] 파이어베이스 마스터 고객 문서 업데이트 (단독모드 아닐 때만)
-        if (dbMode !== 'supabase') {
-          await updateDoc(customerRef, { 
-            activityLogs: updatedLogs,
-            ...customerInfo
-          });
-        }
-
-        // [2-Dual] 듀얼 모드일 때 슈파베이스 고객 마스터 데이터 동시 싱크 및 통주머니 스냅샷 갱신
-        if (dbMode === 'dual' || dbMode === 'supabase') {
-          const isoNowString = nowObj.toISOString();
-          
-          // 💡 [오류 완치] customer 마스터의 가입일시 파이어베이스 Timestamp 토큰을 ISO 문자열로 안전 파싱 디톡스
-          let finalCustomerCreatedAtIso = isoNowString;
-          if (customer?.createdAt) {
-            finalCustomerCreatedAtIso = typeof customer.createdAt.toDate === 'function'
-              ? customer.createdAt.toDate().toISOString()
-              : new Date(customer.createdAt).toISOString();
+        // 💡 [로컬 IndexedDB 고객 데이터 업데이트]
+        const allCustomers = await loadCustomers();
+        const updatedCustomers = allCustomers.map(c => {
+          if (c.id === customerId) {
+            return {
+              ...c,
+              activityLogs: updatedLogs,
+              ...customerInfo,
+              updatedAt: nowObj.toISOString()
+            };
           }
+          return c;
+        });
 
-          const shadowCustomerPayload = {
-            ...customer,
-            activityLogs: updatedLogs,
-            ...customerInfo,
-            createdAt: finalCustomerCreatedAtIso,
-            updatedAt: isoNowString
-          };
+        await saveCustomers(updatedCustomers);
 
-          // 💡 [오류 완치] PostgREST 패치 누락 방지를 위해 마스터 루트 컬럼들과 함께 명시적으로 동시 주입
-          const { error: supabaseCustErr } = await supabase
-            .from('customers')
-            .update({
-              name: customer.name || '미지정 고객',
-              phone: customer.phone || '',
-              club: customer.club || '',
-              gender: customer.gender || '',
-              hand: customer.hand || '',
-              style: customer.style || '',
-              styleExtra: customer.styleExtra || '',
-              updatedAt: isoNowString,
-              customer_data: shadowCustomerPayload // 타임라인 로그가 포함된 100% 원형 보존 주머니 갱신
-            })
-            .eq('id', customerId);
-
-          if (supabaseCustErr) throw supabaseCustErr;
-        }
-
-        // [오류 완치 - 메모리 즉시 동기화]
+        // 메모리 즉시 동기화
         if (customer) {
           customer.activityLogs = updatedLogs;
           Object.assign(customer, customerInfo); 
@@ -387,17 +352,8 @@ export default function useChartSession({
       maintenanceLogs: [] 
     }));         
     
-    setCustomerInfo({
-      fingerStiff: customer?.fingerStiff || '',
-      thumbStiff: customer?.thumbStiff || '',
-      moisture: customer?.moisture || '',
-      trackFlare: customer?.trackFlare || '',
-      tilt: customer?.tilt || '',
-      papX: customer?.papX || '',
-      papY: customer?.papY || '',
-      ballSpeed: customer?.ballSpeed || '',
-      rpm: customer?.rpm || ''
-    });
+    // 💡 [수정 완료]: 새 차트 생성 시 현재 화면에 입력된 볼러 정보(RPM, 구속, PAP, 트랙플레어 등)를 유지
+    setCustomerInfo(prev => ({ ...prev }));
 
     setSaveDate('');
     setViewingRecord(null);

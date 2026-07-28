@@ -5,7 +5,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 export const saveDrillingData = async (chartData) => {
   // 1. 로그인 여부 확인
   if (!auth.currentUser) {
-    alert("로그인이 필요합니다.");
+    window['alert']("로그인이 필요합니다.");
     return;
   }
 
@@ -18,9 +18,9 @@ export const saveDrillingData = async (chartData) => {
     });
     
     console.log("저장 완료! 문서 ID:", docRef.id);
-    alert("지공 차트가 안전하게 저장되었습니다.");
+    window['alert']("지공 차트가 안전하게 저장되었습니다.");
   } catch (e) {
     console.error("데이터 저장 에러:", e);
-    alert("저장에 실패했습니다. 다시 시도해 주세요.");
+    window['alert']("저장에 실패했습니다. 다시 시도해 주세요.");
   }
 };

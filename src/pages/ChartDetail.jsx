@@ -14,6 +14,7 @@ import UtilitySheet from './chartDetail/UtilitySheet.jsx';
 import ChartModalManager from './chartDetail/ChartModalManager.jsx'; 
 
 import CustomerHistoryModal from './chartDetail/CustomerHistoryModal.jsx';
+import AiRecommendationModal from './chartDetail/AiRecommendationModal.jsx'; // 🤖 AI 추천 모달 임포트
 
 import useChartSession from './chartDetail/useChartSession.js'; 
 import useChartExport from './chartDetail/useChartExport.js'; 
@@ -23,9 +24,7 @@ import useChartNfc from './chartDetail/useChartNfc.js';
 import useViewportControl from './chartDetail/useViewportControl.js';
 import useExitInterceptor from './chartDetail/useExitInterceptor.js';
 
-// [보안 확충]: 비밀번호 분실 시 구글 인증 초기화를 유도하기 위해 auth 도구 수입
-import { auth } from '../firebase';
-import { signOut } from 'firebase/auth';
+// [보안 확충]: 로컬 락 스위치는 상위 구조를 활용하므로 auth 제거
 
 export default function ChartDetail({ 
   customer, initialChartId, onBack, maxChartsAllowed, currentChartsCount, userTier, refreshChartCount,
@@ -41,6 +40,7 @@ export default function ChartDetail({
   const [isTaskOpen, setIsTaskOpen] = useState(true);
   const [showTemplateConfirm, setShowTemplateConfirm] = useState(false);
   const [showLogInterceptModal, setShowLogInterceptModal] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false); // 🤖 AI 추천 모달 오픈 상태값
   
   // 로컬스토리지에서 이전에 저장된 설정을 역직렬화하여 초기값 브릿징
   const [showLogsOnChart, setShowLogsOnChart] = useState(() => {
@@ -57,7 +57,7 @@ export default function ChartDetail({
   const [delayedActiveMemoId, setDelayedActiveMemoId] = useState(null);
 
   // 찌꺼기 방지용 고유 키
-  const [entryKey, setEntryKey] = useState(Date.now());
+  const [entryKey, setEntryKey] = useState(new Date().getTime());
   
   // Refs
   const chartRef = useRef(null);
@@ -149,6 +149,64 @@ export default function ChartDetail({
     }
   }, [initialChartId, historyManager.loading, historyManager.history, sessionManager.viewingRecord, sessionManager.sessionRecordId, historyManager]);
 
+  // 🤖 AI 추천 및 2LS 변환 핸들러 신설
+  const handleSelectRecommendation = useCallback(({ layout, intentSummary, condition }) => {
+    sessionManager.setLayoutInfo(layout);
+    const prefix = sessionManager.intent ? `${sessionManager.intent}\n` : '';
+    sessionManager.setIntent(`${prefix}[AI 추천(${condition}): ${intentSummary}]`);
+    sessionManager.setHasUnsavedChanges(true);
+    setFeedback({ message: 'AI 레이아웃 및 추천 의도가 적용되었습니다.', tone: 'success' });
+  }, [sessionManager.intent, sessionManager.setLayoutInfo, sessionManager.setIntent, sessionManager.setHasUnsavedChanges]);
+
+  const handleManual2LsConvert = useCallback(async () => {
+    const { getApiKey, convertLayoutTo2LS, convert2LSToDualAngle } = await import('../lib/openaiService.js');
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      setFeedback({ message: '변환 연산을 위해 Gemini API Key를 먼저 설정해주세요. (시스템 설정⚙️ 혹은 AI 추천 모달)', tone: 'warning' });
+      setShowAiModal(true);
+      return;
+    }
+
+    if (!sessionManager.layoutInfo) return;
+
+    const has2lsPrefix = sessionManager.layoutInfo.includes('(2LS)');
+    setFeedback({ message: has2lsPrefix ? 'Dual Angle 변환 진행 중...' : '2LS 변환 진행 중...', tone: 'info' });
+    try {
+      if (has2lsPrefix) {
+        // 2LS -> Dual Angle 역변환 (스펙 반영)
+        const res = await convert2LSToDualAngle({
+          currentLayout: sessionManager.layoutInfo,
+          bowler: customer,
+          spec: sessionManager.customerInfo
+        });
+        if (res && res.dualAngle) {
+          sessionManager.setLayoutInfo(res.dualAngle);
+          const prefix = sessionManager.intent ? `${sessionManager.intent}\n` : '';
+          sessionManager.setIntent(`${prefix}[Dual 변환 적용: ${res.reason}]`);
+          sessionManager.setHasUnsavedChanges(true);
+          setFeedback({ message: 'Dual Angle 레이아웃으로 변환 완료!', tone: 'success' });
+        }
+      } else {
+        // Dual Angle -> 2LS 변환 (스펙 반영)
+        const res = await convertLayoutTo2LS({
+          currentLayout: sessionManager.layoutInfo,
+          bowler: customer,
+          spec: sessionManager.customerInfo
+        });
+        if (res && res.twoLS) {
+          sessionManager.setLayoutInfo(res.twoLS);
+          const prefix = sessionManager.intent ? `${sessionManager.intent}\n` : '';
+          sessionManager.setIntent(`${prefix}[2LS 변환 적용: ${res.reason}]`);
+          sessionManager.setHasUnsavedChanges(true);
+          setFeedback({ message: '2LS 레이아웃으로 변환 완료!', tone: 'success' });
+        }
+      }
+    } catch (err) {
+      console.error("수동 변환 에러:", err);
+      setFeedback({ message: '변환에 실패했습니다. 형식 및 네트워크를 확인해 주세요.', tone: 'danger' });
+    }
+  }, [sessionManager.layoutInfo, customer, sessionManager.customerInfo, sessionManager.intent, sessionManager.setLayoutInfo, sessionManager.setIntent, sessionManager.setHasUnsavedChanges]);
+
   // 화면 꺼짐 방지(Screen Wake Lock) 가동 이펙트
   useEffect(() => {
     let wakeLock = null;
@@ -187,7 +245,7 @@ export default function ChartDetail({
   const handleChartTripleClick = useCallback(() => {
     if (memoManager.isPlacingMemo) return;
 
-    const now = Date.now();
+    const now = new Date().getTime();
     const { count, lastClick } = chartClickRef.current;
 
     if (now - lastClick < 350) { 
@@ -246,7 +304,7 @@ export default function ChartDetail({
   }, [sessionManager.hasUnsavedChanges, exitInterceptor, setIsTimelineModalOpen, customer?.activityLogs]);
 
   useEffect(() => {
-    setEntryKey(Date.now());
+    setEntryKey(new Date().getTime());
     exitInterceptor.wipeCleanSlate(); 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customer]);
@@ -375,12 +433,13 @@ export default function ChartDetail({
           onConvertTemplate={() => setShowTemplateConfirm(true)}
           sessionRecordId={sessionManager.sessionRecordId}
           ballName={sessionManager.ballName}
+          onTriggerLock={onTriggerLock}
         />
       )}
 
       {isLimitExceeded && (
         <div className="w-full mt-1.5 mb-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-center text-xs font-bold text-amber-700 animate-fade-in relative z-20 flex items-center justify-center gap-1.5 leading-snug shadow-sm transform-gpu [backface-visibility:hidden]">
-          <span>⚠️ 현재 {userTier?.toUpperCase()} 등급의 차트 생성 한도({maxChartsAllowed}개)에 도달하여 새 차트를 추가 저장할 수 없습니다.</span>
+          <span>현재 {userTier?.toUpperCase()} 등급의 차트 생성 한도({maxChartsAllowed}개)에 도달하여 새 차트를 추가 저장할 수 없습니다.</span>
         </div>
       )}
 
@@ -392,7 +451,7 @@ export default function ChartDetail({
             customerInfo={sessionManager.customerInfo}
             innerRef={specRef}
             isOpen={isDetailOpen}
-            memoOverlay={memoManager.renderMemoOverlay('spec', specRef)}
+            memoOverlay={null}
             memosRenderer={memoManager.renderMemos('spec', specRef)}
             onCustomerInfoChange={sessionManager.updateCustomerInfo}
             onToggleOpen={() => setIsDetailOpen(!isDetailOpen)}
@@ -431,7 +490,7 @@ export default function ChartDetail({
             intent={sessionManager.intent}
             layoutInfo={sessionManager.layoutInfo}
             isOpen={isTaskOpen}
-            memoOverlay={memoManager.renderMemoOverlay('task', taskRef)}
+            memoOverlay={null}
             memosRenderer={memoManager.renderMemos('task', taskRef)}
             onBallNameChange={sessionManager.updateWorkField(sessionManager.setBallName)}
             onIntentChange={sessionManager.updateWorkField(sessionManager.setIntent)}
@@ -445,6 +504,8 @@ export default function ChartDetail({
             currentRecordId={currentRecordId} 
             realNfcSupported={isNfcTier && typeof window !== 'undefined' && ('NDEFReader' in window) && localStorage.getItem('nfcUnsupportedDevice') !== 'true'}
             onNfcWrite={isNfcTier ? nfcManager.handleNfcWrite : undefined}
+            onTriggerAiRecommend={() => setShowAiModal(true)}
+            onTrigger2LsConvert={handleManual2LsConvert}
           />
         )}
       </div>
@@ -665,6 +726,15 @@ export default function ChartDetail({
           onCancel={() => setShowTemplateConfirm(false)}
         />
       )}
+
+      <AiRecommendationModal
+        isOpen={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        bowler={customer}
+        spec={sessionManager.customerInfo}
+        ballName={sessionManager.ballName}
+        onSelectRecommendation={handleSelectRecommendation}
+      />
 
       <FeedbackToast message={feedback?.message} onDismiss={() => setFeedback(null)} title={feedback?.title} tone={feedback?.tone} />
     </PageShell>

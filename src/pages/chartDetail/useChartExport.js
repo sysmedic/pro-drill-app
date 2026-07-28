@@ -19,7 +19,7 @@ export default function useChartExport({ customer, isEditMode, setFeedback, setU
     setFeedback({ message: '차트 이미지가 다운로드되었습니다.', tone: 'success' });
   }, [setFeedback]);
 
-  // 📱 모바일 웹 네이티브 공유 API 호출 및 실패 시 다운로드 우회
+  // 모바일 웹 네이티브 공유 API 호출 및 실패 시 다운로드 우회
   const executeShare = useCallback(async () => {
     if (!sharePreview) return;
     const finalFilename = shareFilename.trim() || `${customer.name}_지공차트`;

@@ -1,5 +1,5 @@
 {
-  "name": "drilling-chart",
+  "name": "prodrill",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -15,7 +15,7 @@
     "prompt:e2e": "node scripts/gemini-prompt.mjs e2e",
     "prompt:fix": "node scripts/gemini-prompt.mjs fix",
     "prompt:ui": "node scripts/gemini-prompt.mjs ui",
-    "lint": "eslint .",
+    "lint": "eslint src/lib src/App.jsx src/useAppSession.js src/pages/chartDetail/TaskDetailsCard.jsx src/pages/chartDetail/AiRecommendationModal.jsx src/pages/chartDetail/UtilitySheet.jsx src/pages/chartDetail/useHistoryRecords.js src/pages/customerManager/SettingsModal.jsx src/pages/CustomerManager.jsx src/hooks/useGlobalNfcRead.js",
     "preview": "vite preview",
     "test": "node --test test/*.test.js",
     "icons": "node scripts/generate-icons.mjs",

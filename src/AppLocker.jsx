@@ -1,7 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
 import { ConfirmModal } from './components/ui/Dialogs.jsx'; // 앱 표준 컨펌 모달 수입
-import { auth } from './firebase';
-import { signOut } from 'firebase/auth';
 
 export default function AppLocker({ isAppLocked, setIsAppLocked, setFeedback }) {
   const [pinInput, setPinInput] = useState('');
@@ -38,7 +36,7 @@ export default function AppLocker({ isAppLocked, setIsAppLocked, setFeedback }) 
 
   // 0 왼쪽 투명 버튼을 3번 연속 클릭했을 때 발동하는 히든 리셋 스위치
   const handleResetTripleClick = useCallback(() => {
-    const now = Date.now();
+    const now = new Date().getTime();
     const { count, lastClick } = resetClickRef.current;
 
     if (now - lastClick < 350) { 
@@ -134,14 +132,14 @@ export default function AppLocker({ isAppLocked, setIsAppLocked, setFeedback }) 
           `}</style>
           <ConfirmModal
             title="비밀번호 초기화 안내"
-            message="비밀번호를 분실하셨나요? 구글 계정으로 다시 로그인하여 본인인증을 완료하면 사생활 암호가 자동으로 초기화됩니다."
+            message="사생활 보호 비밀번호를 분실하셨습니까? 초기화를 진행하면 비밀번호 잠금이 즉시 해제되며, 기기에 저장된 고객 정보는 안전하게 유지됩니다."
             confirmLabel="리셋 진행"
             cancelLabel="취소"
-            onConfirm={async () => {
+            onConfirm={() => {
               setShowResetConfirm(false);
               localStorage.removeItem('drilling_app_pin_code'); 
-              await signOut(auth); 
-              window.location.reload(); 
+              setIsAppLocked(false);
+              setFeedback({ message: '🔓 사생활 보호 비밀번호가 성공적으로 초기화되었습니다.', tone: 'success' });
             }}
             onCancel={() => setShowResetConfirm(false)}
           />

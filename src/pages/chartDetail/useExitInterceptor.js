@@ -106,7 +106,9 @@ export default function useExitInterceptor({
   const executeLoad = useCallback((record) => {
     sessionManager.loadRecord(record);
     setIsTimelineModalOpen(false);
-    historyManager.setShowHistoryModal(false);
+    if (historyManager && typeof historyManager.setShowHistoryModal === 'function') {
+      historyManager.setShowHistoryModal(false);
+    }
   }, [sessionManager, historyManager, setIsTimelineModalOpen]);
 
   // 차트 불러오기 요청 인터셉트 구문
