@@ -24,8 +24,6 @@
     "check:e2e": "npm run check && npm run e2e"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4",
-    "firebase": "^12.13.0",
     "html-to-image": "^1.11.13",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"

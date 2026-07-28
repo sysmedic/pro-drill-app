@@ -11,6 +11,10 @@
 
 ## 최근 변경
 
+- 더 이상 필요하지 않은 온라인 데이터베이스(Firebase 및 Supabase) 관련 설정 및 소스 코드(functions/, .firebase/, firebase.json, supabaseClient.js, authService.js, chartService.js, Login.jsx 등 총 13개 항목)를 완전히 삭제 정리했다.
+- `package.json`의 `dependencies`에서 `firebase` 및 `@supabase/supabase-js` 패키지 의존성을 제거했다.
+- `src/hooks/useGlobalNfcRead.js`의 NFC 스캔 점프 로직을 Firebase 원격 조회 방식에서 로컬 DB(IndexedDB 및 LocalStorage) 순회 검색 방식으로 리팩토링하여 Firebase SDK 의존성을 완전히 걷어냈다.
+- 프로젝트 하네스 문서(`GEMINI.md`) 및 전체 기술 아키텍처 문서들(`PROJECT_CONTEXT.md`, `VIBE_CODING_GUIDE.md`, `CI_CD.md`)에서 Firebase/Supabase 설명을 제거하고 로컬 전용 구동 모드에 맞춰 대대적으로 갱신했다.
 - 파이어베이스(Firebase) 및 슈파베이스(Supabase) 온라인 데이터 적재 아키텍처에 맞게 최상위 하네스 문서 `GEMINI.md`와 `docs/` 내의 전체 안내 문서들(`PROJECT_CONTEXT.md`, `VIBE_CODING_GUIDE.md`, `CI_CD.md`, `GEMINI_TASK_TEMPLATE.md`, `UI_GUIDE.md`)을 최신 정보로 모두 갱신했다.
 - AI 컨텍스트 하네스 문서와 컨텍스트 팩 생성 스크립트를 추가했다.
 - CI에서 사용할 `npm run check` 명령을 추가했다.

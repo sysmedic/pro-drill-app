@@ -1,7 +1,7 @@
 /* global NDEFReader */
 import { useCallback, useState } from 'react';
-import { db, auth } from '../firebase'; // 🌟 [최소 수정 1] 현재 유저 인증 정보 확인을 위해 auth 수입 추가
-import { doc, getDoc } from 'firebase/firestore';
+import { loadCustomers } from '../lib/customerStorage.js';
+import { loadChartHistory } from '../lib/chartHistoryStorage.js';
 
 const NFC_SECRET_KEY = "DRL_SU_APP_KEY_2026"; 
 
@@ -76,37 +76,25 @@ export default function useGlobalNfcRead({ onWalletJump, setFeedback }) {
           return;
         }
 
-        const chartDocRef = doc(db, 'drilling_charts', chartId);
-        const chartSnap = await getDoc(chartDocRef);
+        // 로컬 DB (IndexedDB / LocalStorage)에서 chartId를 순회 검색
+        const customers = await loadCustomers();
+        let chartData = null;
+        let customerData = null;
 
-        if (!chartSnap.exists()) {
-          setFeedback?.({ message: '서버에 등록되지 않았거나 삭제된 지공 기록입니다.', tone: 'warning' });
-          return;
+        for (const customer of customers) {
+          const history = await loadChartHistory(customer);
+          const found = history.find(record => record.id === chartId);
+          if (found) {
+            chartData = found;
+            customerData = customer;
+            break;
+          }
         }
 
-        const chartData = chartSnap.data();
-
-        // 🌟 [최소 수정 2]: 보안 필터링 레이어 탑재
-        // 차트를 생성한 소유자(userId)와 현재 로그인한 지공사(auth.currentUser.uid)가 다르면 열기 즉시 차단
-        if (chartData.userId !== auth.currentUser?.uid) {
-          setFeedback?.({ 
-            message: '타인이 등록한 볼 태그이거나 해당 지공 차트에 대한 접근 권한이 없습니다.', 
-            tone: 'danger' 
-          });
+        if (!chartData) {
+          setFeedback?.({ message: '로컬 기기에 등록되지 않았거나 삭제된 지공 기록입니다.', tone: 'warning' });
           return;
         }
-
-        const customerId = chartData.customerId;
-
-        const customerDocRef = doc(db, 'customers', customerId);
-        const customerSnap = await getDoc(customerDocRef);
-
-        if (!customerSnap.exists()) {
-          setFeedback?.({ message: '연동된 고객 정보가 존재하지 않습니다.', tone: 'warning' });
-          return;
-        }
-
-        const customerData = { id: customerSnap.id, ...customerSnap.data() };
 
         setFeedback?.({ 
           message: `[${customerData.name}] 고객님의 해당 차트로 점프합니다!`, 

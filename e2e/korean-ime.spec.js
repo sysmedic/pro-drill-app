@@ -40,7 +40,39 @@ test('Korean composition input remains intact in modal fields', async ({ page })
   const customerName = '홍길동';
 
   await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(async () => {
+    localStorage.clear();
+    await new Promise((resolve) => {
+      const request = indexedDB.open('ProDrillDB', 1);
+      request.onsuccess = (event) => {
+        const db = event.target.result;
+        try {
+          const storeNames = Array.from(db.objectStoreNames);
+          const targets = ['customers', 'chartHistories'].filter(name => storeNames.includes(name));
+          if (targets.length === 0) {
+            db.close();
+            resolve();
+            return;
+          }
+          const transaction = db.transaction(targets, 'readwrite');
+          targets.forEach(name => transaction.objectStore(name).clear());
+          transaction.oncomplete = () => {
+            db.close();
+            resolve();
+          };
+          transaction.onerror = () => {
+            db.close();
+            resolve();
+          };
+        } catch {
+          db.close();
+          resolve();
+        }
+      };
+      request.onerror = () => resolve();
+      request.onblocked = () => resolve();
+    });
+  });
   await page.reload();
   await expect(page.getByRole('heading', { name: /고객 관리/ })).toBeVisible();
 

@@ -4,7 +4,7 @@
 
 작업자가 AI 도구를 바꿔도 최소 품질 기준을 동일하게 유지한다. PR 또는 main push마다 test/lint/build와 실제 브라우저 E2E를 확인하고, main 브랜치는 정적 산출물을 GitHub Pages로 배포할 수 있게 한다. 
 
-온라인 DB 연동 구조(파이어베이스 & Supabase) 도입에 따라, 로컬 품질 검증과 CI 환경에서 필요한 DB 연동 및 환경 변수 파이프라인 설계를 명확히 규정한다.
+로컬 데이터베이스(IndexedDB / LocalStorage) 및 구글 드라이브 백업 구조 도입에 따라, 로컬 품질 검증과 CI 환경에서 필요한 환경 변수 파이프라인 설계를 명확히 규정한다.
 
 ## 로컬 품질 게이트
 
@@ -31,14 +31,12 @@ npm run check:e2e
 
 ## 환경 변수 (Environment Variables)
 
-프로젝트 빌드 및 E2E 테스트 과정에서 온라인 API 호출이 이루어지므로, 아래의 환경 변수 설정 상태를 확인해야 한다.
+프로젝트 빌드 및 E2E 테스트 과정에서 온라인 API 호출이 모의 처리되거나 제외되지만, 정상 구동을 위해 다음 환경 변수가 구성되어야 한다.
 
-- `VITE_DB_MODE`: DB 저장 제어 모드 (`firebase` | `supabase` | `dual`)
-- `VITE_SUPABASE_URL`: Supabase 프로젝트 API URL
-- `VITE_SUPABASE_ANON_KEY`: Supabase 익명 API 키
-
-> [!NOTE]
-> CI 환경(`ci.yml`)에서는 목(Mock) 데이터 또는 테스트용 에뮬레이터 환경을 타깃으로 삼거나, 테스트용 공개 환경 변수를 설정하여 빌드 및 E2E가 중단되지 않도록 구성해야 한다.
+- `VITE_DB_MODE`: DB 저장 제어 모드 (`local` 고정)
+- `VITE_GOOGLE_CLIENT_ID`: 구글 드라이브 백업용 OAuth2 클라이언트 ID
+- `VITE_GOOGLE_API_KEY`: 구글 드라이브 백업용 API 키
+- `VITE_OPENAI_API_KEY`: AI 지공 추천 기능용 OpenAI API Key
 
 ## GitHub Actions
 
@@ -68,7 +66,6 @@ npm run check:e2e
 
 ## 추후 확장
 
-- **Firebase Local Emulator 연동**: CI/E2E 테스트 시 실제 Firebase 네트워크 호출을 지양하고, 로컬 에뮬레이터를 기동하여 완결된 테스트 환경 구축.
-- **Supabase DB 마이그레이션 자동화**: PR 생성 시 DB Schema 마이그레이션 변경분이 있는지 Supabase CLI를 활용해 스키마 유효성 검사 적용.
+- **구글 드라이브 API 모킹 완결**: CI/E2E 테스트 시 실제 Google API 네트워크 호출을 완벽하게 모킹하여 완결된 테스트 환경 구축.
 - **Lighthouse/PWA Audit**: 웹 성능 및 PWA 호환 수준을 검출하는 LightHouse CI 빌드 태스크 연동.
 - **디자인 회귀 테스트**: Playwright screenshot baseline 비교를 통한 UI 레이아웃 회귀 방지.

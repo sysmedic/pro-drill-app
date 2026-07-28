@@ -80,7 +80,7 @@ export default function useExitInterceptor({
 
   // 명칭 변경 감지 후 동기식 순차 결합 저장 이펙트
   useEffect(() => {
-    if (isReadyToSave && sessionManager.ballName === expectedBallNameRef.current) {
+    if (isReadyToSave) {
       setIsReadyToSave(false);
       const commitSyncSave = async () => {
         await sessionManager.handleSave();
@@ -91,7 +91,7 @@ export default function useExitInterceptor({
       };
       commitSyncSave();
     }
-  }, [isReadyToSave, sessionManager.ballName, sessionManager.handleSave, isExitingAfterSave, onBack]);
+  }, [isReadyToSave, sessionManager.handleSave, isExitingAfterSave, onBack]);
 
   // 백그라운드 전환 시 자동 저장 처리 이펙트
   useEffect(() => {

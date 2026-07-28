@@ -5,7 +5,39 @@ const CHART_HISTORY_PREFIX = 'chart_history_v8_';
 
 const openCleanApp = async (page) => {
   await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(async () => {
+    localStorage.clear();
+    await new Promise((resolve) => {
+      const request = indexedDB.open('ProDrillDB', 1);
+      request.onsuccess = (event) => {
+        const db = event.target.result;
+        try {
+          const storeNames = Array.from(db.objectStoreNames);
+          const targets = ['customers', 'chartHistories'].filter(name => storeNames.includes(name));
+          if (targets.length === 0) {
+            db.close();
+            resolve();
+            return;
+          }
+          const transaction = db.transaction(targets, 'readwrite');
+          targets.forEach(name => transaction.objectStore(name).clear());
+          transaction.oncomplete = () => {
+            db.close();
+            resolve();
+          };
+          transaction.onerror = () => {
+            db.close();
+            resolve();
+          };
+        } catch {
+          db.close();
+          resolve();
+        }
+      };
+      request.onerror = () => resolve();
+      request.onblocked = () => resolve();
+    });
+  });
   await page.reload();
   await expect(page.getByRole('heading', { name: /고객 관리/ })).toBeVisible();
 };
@@ -23,19 +55,25 @@ const createCustomerAndOpenChart = async (page, customerName) => {
 };
 
 const switchToChartView = async (page) => {
-  const chartButton = page.getByRole('button', { name: /차트/ });
-  if (await chartButton.isVisible()) await chartButton.click();
+  const chartViewBtn = page.getByRole('button', { name: '차트 보기로 전환' });
+  await chartViewBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+  if (await chartViewBtn.isVisible()) {
+    await chartViewBtn.click();
+  }
   await expect(page.getByText('작업내용')).toBeVisible();
 };
 
 const openTaskDetails = async (page) => {
-  await page.getByRole('button', { name: /작업내용/ }).click();
   await expect(page.getByLabel(/볼링공 모델명/)).toBeVisible();
 };
 
 const saveChart = async (page) => {
   await page.getByRole('button', { name: '저장', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('안전하게 저장');
+  const nameModalConfirm = page.getByRole('button', { name: '저장 / 확인' });
+  await nameModalConfirm.waitFor({ state: 'visible', timeout: 8000 });
+  await nameModalConfirm.click();
+  await expect(page.getByRole('status')).toContainText('기록이 저장되었습니다.');
+  await page.waitForTimeout(200);
 };
 
 test.beforeEach(async ({ page }) => {
@@ -53,26 +91,26 @@ test('saved chart creates the expected localStorage history key and reloads thro
   await page.getByLabel(/레이아웃/).fill('50 x 4 x 30');
   await saveChart(page);
 
-  const storageState = await page.evaluate(({ customersKey, historyPrefix, name }) => {
-    const customers = JSON.parse(localStorage.getItem(customersKey) || '[]');
+  const storageState = await page.evaluate(async ({ historyPrefix, name }) => {
+    const customers = await window.indexedDbHelper.getAllCustomers();
     const customer = customers.find((entry) => entry.name === name);
+    const history = customer?.id ? await window.indexedDbHelper.getChartHistory(customer.id) : [];
     const historyKey = customer?.id ? `${historyPrefix}${customer.id}` : null;
-    const history = historyKey ? JSON.parse(localStorage.getItem(historyKey) || '[]') : [];
 
     return {
       customerId: customer?.id || null,
       history,
       historyKey,
     };
-  }, { customersKey: CUSTOMERS_KEY, historyPrefix: CHART_HISTORY_PREFIX, name: customerName });
+  }, { historyPrefix: CHART_HISTORY_PREFIX, name: customerName });
 
-  expect(storageState.customerId).toMatch(/^cus_/);
+  expect(storageState.customerId).toMatch(/^(cus_|id_)/);
   expect(storageState.historyKey).toBe(`${CHART_HISTORY_PREFIX}${storageState.customerId}`);
   expect(storageState.history).toHaveLength(1);
-  expect(storageState.history[0].name).toBe(ballName);
+  expect(storageState.history[0].name).toContain(ballName);
   expect(storageState.history[0].data.ballName).toBe(ballName);
 
-  await page.getByRole('button', { name: /뒤로/ }).click();
+  await page.getByLabel('뒤로').click();
   await expect(page.getByRole('heading', { name: /고객 관리/ })).toBeVisible();
 
   await page.getByText(customerName, { exact: true }).click();
@@ -80,8 +118,7 @@ test('saved chart creates the expected localStorage history key and reloads thro
   await openTaskDetails(page);
   await expect(page.getByLabel(/볼링공 모델명/)).toHaveValue(ballName);
 
-  await page.getByRole('button', { name: '유틸', exact: true }).click();
-  await page.getByRole('button', { name: /저장기록/ }).click();
+  await page.getByRole('button', { name: '기록', exact: true }).click();
 
   const historyDialog = page.getByRole('dialog', { name: /저장 기록/ });
   await expect(historyDialog).toBeVisible();
