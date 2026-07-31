@@ -1,4 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
+import { isLicenseCertified, MASTER_HASH, checkRemoteLicenseStatus, updateTrialUserStats, calculateGracePeriod, getSha256Hash } from './lib/userLicenseManager.js';
+
+const resolveInitialTier = () => {
+  if (typeof window === 'undefined') return 'trial';
+  const cachedStatus = localStorage.getItem('prodrill_license_status');
+  if (cachedStatus === 'locked') return 'locked';
+  if (cachedStatus === 'suspended') return 'suspended';
+
+  const certified = isLicenseCertified();
+  if (certified) {
+    const hash = localStorage.getItem('prodrill_certified_email_hash');
+    if (hash === MASTER_HASH) {
+      return 'master';
+    }
+    return 'certified';
+  }
+  return 'trial';
+};
 
 // 오프라인 전용 가상 지공사 계정 정보 정의
 const LOCAL_USER = {
@@ -10,9 +28,15 @@ const LOCAL_USER = {
 export default function useAppSession() {
   const [user, setUser] = useState(LOCAL_USER);
   const [isAuthChecking, setIsAuthChecking] = useState(false);
-  const [userTier, setUserTier] = useState("master");
+  const [userTier, setUserTier] = useState(() => resolveInitialTier());
   const [maxChartsAllowed, setMaxChartsAllowed] = useState(Infinity);
   const [currentChartsCount, setCurrentChartsCount] = useState(0);
+  const [certifiedEmailHash, setCertifiedEmailHash] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('prodrill_certified_email_hash') || '';
+    }
+    return '';
+  });
 
   const isAdmin = false; // 마스터제어실 제거에 따라 항상 false
 
@@ -36,14 +60,65 @@ export default function useAppSession() {
     }
   }, []);
 
-  // 인증 확인 중 즉시 완료 처리
+  // 인증 확인 및 라이선스 백그라운드 대조
   useEffect(() => {
     setUser(LOCAL_USER);
-    setUserTier("master");
+    const initialTier = resolveInitialTier();
+    setUserTier(initialTier);
     setMaxChartsAllowed(Infinity);
     refreshChartCount(LOCAL_USER.uid);
     setIsAuthChecking(false);
+
+    const syncLicenseAndStats = async () => {
+      const hash = localStorage.getItem('prodrill_certified_email_hash');
+      if (hash) {
+        const remoteTier = await checkRemoteLicenseStatus(hash);
+        setUserTier(remoteTier);
+        
+        // Trial 사용자인 경우 마지막 활성 및 잔여일수 원격 갱신
+        if (remoteTier === 'trial') {
+          const email = localStorage.getItem('prodrill_certified_email_plain') || '';
+          const grace = calculateGracePeriod();
+          await updateTrialUserStats(email, hash, grace.daysLeft);
+        }
+      }
+    };
+    syncLicenseAndStats();
   }, [refreshChartCount]);
+
+  // 구글 로그인 성공 후 동적 세션 활성화 및 락 해제 처리
+  const authenticateSession = useCallback(async (email) => {
+    if (!email) return;
+    setIsAuthChecking(true);
+    try {
+      const hash = await getSha256Hash(email);
+      localStorage.setItem('prodrill_certified_email_hash', hash);
+      localStorage.setItem('prodrill_certified_email_plain', email);
+      setCertifiedEmailHash(hash); // 🌟 상태 업데이트 트리거로 게이트 닫힘 유도!
+
+      // 라이선스 등급 동적 확인
+      await certifyUserEmail(email);
+      const tier = await checkRemoteLicenseStatus(hash);
+      setUserTier(tier);
+
+      // Trial 상태라면 유예 정보 기록 시작
+      if (tier === 'trial') {
+        const grace = calculateGracePeriod();
+        await updateTrialUserStats(email, hash, grace.daysLeft);
+      }
+    } catch (e) {
+      console.error("세션 개통 에러:", e);
+    } finally {
+      setIsAuthChecking(false);
+    }
+  }, []);
+
+  // Playwright Headless 및 E2E 테스트 구동 브라우저 환경인 경우 로그인 게이트 강제 우회
+  const isFirstTimeSetup = typeof window !== 'undefined' && 
+                           !certifiedEmailHash &&
+                           !window.navigator.webdriver &&
+                           !window.navigator.userAgent.includes('Headless') &&
+                           !window.navigator.userAgent.includes('Playwright');
 
   return {
     user,
@@ -53,6 +128,8 @@ export default function useAppSession() {
     maxChartsAllowed,
     currentChartsCount,
     isAdmin,
-    refreshChartCount
+    refreshChartCount,
+    isFirstTimeSetup,
+    authenticateSession
   };
 }

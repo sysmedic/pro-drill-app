@@ -114,19 +114,58 @@ export default function ChartModalManager({
         />
       )}
 
-      {/* 불러오기 확인 모달 */}
+      {/* 기록 불러오기 확인 모달 (ProDrill AI 설정 모달 디자인 기준 일치화) */}
       {historyConfirm && (
-        <ConfirmModal
-          confirmLabel="불러오기"
-          message={`${historyConfirm.timestamp} 기록을 불러오시겠습니까?`}
-          onCancel={() => setHistoryConfirm(null)}
-          onConfirm={() => {
-            loadRecord(historyConfirm);
-            setHistoryConfirm(null);
-          }}
+        <ModalShell
+          onClose={() => setHistoryConfirm(null)}
+          size="sm"
           title="기록 불러오기"
           titleId="history-load-confirm-title"
-        />
+        >
+          <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
+            {/* 설명 단락 */}
+            <p className="text-xs text-slate-500 leading-relaxed pl-1">
+              선택한 지공 기록 데이터를 현재 편집 화면으로 불러옵니다.
+            </p>
+
+            {/* 설정 영역 컨테이너 (클라우드 설정 모달 기준 일치화) */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">{"\uD83D\uDCE5"}</span>
+                <h3 className="text-sm font-black text-slate-800">지공 기록 불러오기 확인</h3>
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  선택하신 지공 기록을 화면에 로드합니다. 기록을 불러오면 <strong>현재 화면에서 편집 중이던 임시 수치 및 정보는 모두 덮어씌워져 삭제</strong>됩니다. 이 지공 기록을 불러오시겠습니까?<br /><br />
+                  • <strong>기록 이름:</strong> <span className="text-indigo-600 font-extrabold">{historyConfirm.name || '불러온 기록'}</span><br />
+                  • <strong>저장 일시:</strong> <span className="text-slate-700 font-extrabold">{historyConfirm.timestamp}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* 액션 버튼 영역 */}
+            <div className="flex justify-end gap-2 pt-2">
+              <button 
+                onClick={() => setHistoryConfirm(null)} 
+                type="button"
+                className="py-2 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-slate-700 text-sm font-black transition-colors active:scale-95 text-center"
+              >
+                취소
+              </button>
+              <Button 
+                onClick={() => {
+                  loadRecord(historyConfirm);
+                  setHistoryConfirm(null);
+                }}
+                size="sm"
+                variant="primary"
+              >
+                불러오기
+              </Button>
+            </div>
+          </div>
+        </ModalShell>
       )}
 
       {/* 이름 변경 모달 */}
@@ -207,23 +246,63 @@ export default function ChartModalManager({
         </div>
       )}
 
-      {/* 기록 수정 알림 모달 */}
+      {/* 불러온 차트 기록 변경 확인 모달 (ProDrill AI 설정 모달 디자인 기준 일치화) */}
       {showModifyWarning && (
-        <ConfirmModal
-          title="불러온 차트 기록 변경"
-          message={"불러온 차트의 내용이 변경됩니다. 이대로 저장하면 기존 기록이 완전히 덮어씌워집니다. 계속하시겠습니까?\n\n(※ 새로운 차트로 생성하려면 '취소'를 누른 후 상단의 기록 배너를 클릭해 주세요.)"}
-          confirmLabel="내용 변경"
-          cancelLabel="취소"
-          danger={true}
-          onConfirm={() => {
-            setShowModifyWarning(false);
-          }}
-          onCancel={() => {
-            const originalRecord = history.find(r => r.id === viewingRecord.id);
+        <ModalShell
+          onClose={() => {
+            const originalRecord = history.find(r => r.id === viewingRecord?.id);
             if (originalRecord) loadRecord(originalRecord);
             setShowModifyWarning(false);
           }}
-        />
+          size="sm"
+          title={"\u26A0\uFE0F 불러온 차트 기록 변경"}
+        >
+          <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
+            {/* 설명 단락 */}
+            <p className="text-xs text-slate-500 leading-relaxed pl-1">
+              불러온 차트 기록의 수정 사항을 덮어씌울지 여부를 결정합니다.
+            </p>
+
+            {/* 경고 영역 컨테이너 (AI 설정 모달 디자인 기준 일치화) */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">{"\u26A0\uFE0F"}</span>
+                <h3 className="text-sm font-black text-slate-800">지공 차트 덮어쓰기 경고</h3>
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  불러온 차트의 내용이 변경됩니다. 이대로 저장하면 기존 기록이 완전히 덮어씌워집니다. 계속하시겠습니까?<br /><br />
+                  <span className="text-rose-600 font-bold">※ 새로운 차트로 생성하려면 '취소'를 누른 후 상단의 기록 배너를 클릭해 주세요.</span>
+                </p>
+              </div>
+            </div>
+
+            {/* 액션 버튼 영역 */}
+            <div className="flex justify-end gap-2 pt-2">
+              <button 
+                onClick={() => {
+                  const originalRecord = history.find(r => r.id === viewingRecord?.id);
+                  if (originalRecord) loadRecord(originalRecord);
+                  setShowModifyWarning(false);
+                }} 
+                type="button"
+                className="py-2 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-slate-700 text-sm font-black transition-colors active:scale-95 text-center"
+              >
+                취소
+              </button>
+              <Button 
+                onClick={() => {
+                  setShowModifyWarning(false);
+                }}
+                size="sm"
+                variant="primary"
+              >
+                내용 변경
+              </Button>
+            </div>
+          </div>
+        </ModalShell>
       )}
 
       {/* 퇴장 확인 모달 */}

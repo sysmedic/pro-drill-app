@@ -12,7 +12,6 @@ export default function useExitInterceptor({
   const [showNewChartNameModal, setShowNewChartNameModal] = useState(false);
   const [newChartNameInput, setNewChartNameInput] = useState('');
   const [isExitingAfterSave, setIsExitingAfterSave] = useState(false);
-  const [isReadyToSave, setIsReadyToSave] = useState(false);
   const [pendingLoadTarget, setPendingLoadTarget] = useState(null);
   const [showInterceptModal, setShowInterceptModal] = useState(false);
 
@@ -78,20 +77,7 @@ export default function useExitInterceptor({
     return true; 
   }, [isNewChart, showNewChartNameModal, sessionManager, showExitConfirm]);
 
-  // 명칭 변경 감지 후 동기식 순차 결합 저장 이펙트
-  useEffect(() => {
-    if (isReadyToSave) {
-      setIsReadyToSave(false);
-      const commitSyncSave = async () => {
-        await sessionManager.handleSave();
-        if (isExitingAfterSave) {
-          setIsExitingAfterSave(false);
-          onBack();
-        }
-      };
-      commitSyncSave();
-    }
-  }, [isReadyToSave, sessionManager.handleSave, isExitingAfterSave, onBack]);
+
 
   // 백그라운드 전환 시 자동 저장 처리 이펙트
   useEffect(() => {
@@ -144,8 +130,6 @@ export default function useExitInterceptor({
     setNewChartNameInput,
     isExitingAfterSave,
     setIsExitingAfterSave,
-    isReadyToSave,
-    setIsReadyToSave,
     pendingLoadTarget,
     setPendingLoadTarget,
     showInterceptModal,

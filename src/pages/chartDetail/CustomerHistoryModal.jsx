@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { calculateGracePeriod } from '../../lib/userLicenseManager.js';
 
 const GlassBox = ({ children, onClick, className = '' }) => (
   <div 
@@ -38,6 +39,7 @@ const formatCreatedTime = (createdAt) => {
 
 export default function CustomerHistoryModal({ 
   isOpen, 
+  isManualOpen = false, // 💡 [진입 분기]: 수동(기록 버튼 클릭) 및 자동(고객카드 클릭) 경로 식별 추가
   onClose, 
   customer, 
   onLoadRecord,
@@ -50,18 +52,17 @@ export default function CustomerHistoryModal({
   onToggleLogsVisibility,
   userTier // 🟢 상위 등급 라이선스 수령 통로 수립 완료
 }) {
-  // 🟢 [베타테스터 연산]: 엑스퍼트, 마스터만 기능을 발견하고 나머지는 숨김 처리
-  const isBetaTester = ['expert', 'master'].includes(userTier?.toLowerCase());
-  
-  // 등급이 베타테스터가 아니면 기본 진입 탭을 무조건 'history'(지공 기록)로 강제 차단
-  const [activeTab, setActiveTab] = useState(isBetaTester ? 'timeline' : 'history');
+  // 🟢 [기본 진입 분기]: 모든 사용자에게 개방됨. 수동 진입은 'history', 자동 진입은 'timeline' 우선
+  const [activeTab, setActiveTab] = useState(() => {
+    return isManualOpen ? 'history' : 'timeline';
+  });
 
-  // 🟢 [동적 안전 동기화 이펙트]: 모달이 실시간 호출되어 오픈되는 순간 등급별 고정 탭 상태를 정밀 재조정
+  // 🟢 [동적 안전 동기화 이펙트]: 모달이 실시간 호출되어 오픈되는 순간 진입 방식에 따른 기본 탭 정밀 재조정
   useEffect(() => {
     if (isOpen) {
-      setActiveTab(isBetaTester ? 'timeline' : 'history');
+      setActiveTab(isManualOpen ? 'history' : 'timeline');
     }
-  }, [isOpen, isBetaTester]);
+  }, [isOpen, isManualOpen]);
 
   if (!isOpen) return null;
 
@@ -96,7 +97,11 @@ export default function CustomerHistoryModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[40] bg-slate-900 overflow-y-auto overflow-x-hidden touch-auto animate-fade-in flex flex-col items-center">
+    <div 
+      role="dialog"
+      aria-label="저장 기록"
+      className="fixed inset-0 z-[40] bg-slate-900 overflow-y-auto overflow-x-hidden touch-auto animate-fade-in flex flex-col items-center"
+    >
       
       {/* 1. 상단 고정 헤더 */}
       <div className="sticky top-0 w-full flex flex-col z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10 safe-top">
@@ -107,23 +112,6 @@ export default function CustomerHistoryModal({
               <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse shrink-0"></span>
               {customer?.name}
             </h2>
-
-            {activeTab === 'timeline' && isBetaTester && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleLogsVisibility?.(!showLogsOnChart); 
-                }}
-                className={`text-[11px] sm:text-xs font-black px-3 py-1 rounded-xl border transition-all active:scale-95 shrink-0 select-none cursor-pointer ${
-                  showLogsOnChart 
-                    ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' 
-                    : 'bg-white/5 text-white/30 border-white/10 hover:bg-white/10'
-                }`}
-              >
-                첫 화면에서 로그 보기 {showLogsOnChart ? 'ON' : 'OFF'}
-              </button>
-            )}
           </div>
 
           <button 
@@ -134,38 +122,36 @@ export default function CustomerHistoryModal({
           </button>
         </div>
 
-        {/* 🟢 [탭 스위치 차단]: 베타테스터 등급일 때만 상단 탭 버튼 구역을 전개 (일반유저는 탭의 존재를 인지 불가) */}
-        {isBetaTester && (
-          <div className="px-4 pb-3 flex gap-2">
-            <button
-              onClick={() => setActiveTab('timeline')}
-              className={`flex-1 py-2 text-xs font-black rounded-xl transition-all border ${
-                activeTab === 'timeline' 
-                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' 
-                : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
-              }`}
-            >
-              타임라인 로그
-            </button>
-            <button
-              onClick={() => setActiveTab('history')}
-              className={`flex-1 py-2 text-xs font-black rounded-xl transition-all border ${
-                activeTab === 'history' 
-                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' 
-                : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
-              }`}
-            >
-              지공 기록 ({history.length})
-            </button>
-          </div>
-        )}
+        {/* 상단 탭 버튼 구역을 항상 노출 */}
+        <div className="px-4 pb-3 flex gap-2">
+          <button
+            onClick={() => setActiveTab('timeline')}
+            className={`flex-1 py-2 text-xs font-black rounded-xl transition-all border ${
+              activeTab === 'timeline' 
+              ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' 
+              : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
+            }`}
+          >
+            타임라인 로그
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`flex-1 py-2 text-xs font-black rounded-xl transition-all border ${
+              activeTab === 'history' 
+              ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' 
+              : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
+            }`}
+          >
+            지공 기록 ({history.length})
+          </button>
+        </div>
       </div>
 
       {/* 3. 메인 컨텐츠 영역 */}
       <div className="relative w-full max-w-[600px] flex-1 mt-2 p-4 sm:p-6 pb-20 safe-bottom">
         
         {/* 타임라인 로그 탭 컨텐츠 */}
-        {activeTab === 'timeline' && isBetaTester && (
+        {activeTab === 'timeline' && (
           logs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full py-20 text-white/50">
               <span className="text-4xl mb-4 opacity-50">📭</span>

@@ -4,6 +4,7 @@ import PageShell from '../components/layout/PageShell.jsx';
 import Card from '../components/ui/Card.jsx';
 import Button from '../components/ui/Button.jsx';
 import { FeedbackToast, ConfirmModal } from '../components/ui/Dialogs.jsx';
+import ModalShell from '../components/ui/ModalShell.jsx';
 
 import BowlerSpecCard from './chartDetail/BowlerSpecCard.jsx';
 import ChartBlueprintView from './chartDetail/ChartBlueprintView.jsx';
@@ -23,8 +24,7 @@ import useMemoOverlay from './chartDetail/useMemoOverlay.jsx';
 import useChartNfc from './chartDetail/useChartNfc.js';
 import useViewportControl from './chartDetail/useViewportControl.js';
 import useExitInterceptor from './chartDetail/useExitInterceptor.js';
-
-// [보안 확충]: 로컬 락 스위치는 상위 구조를 활용하므로 auth 제거
+import { calculateGracePeriod, isLicenseCertified } from '../lib/userLicenseManager.js';
 
 export default function ChartDetail({ 
   customer, initialChartId, onBack, maxChartsAllowed, currentChartsCount, userTier, refreshChartCount,
@@ -41,6 +41,7 @@ export default function ChartDetail({
   const [showTemplateConfirm, setShowTemplateConfirm] = useState(false);
   const [showLogInterceptModal, setShowLogInterceptModal] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false); // 🤖 AI 추천 모달 오픈 상태값
+  const [isAutoModalOpen, setIsAutoModalOpen] = useState(false); // 💡 자동 팝업 전용 모달 오픈 상태값
   
   // 로컬스토리지에서 이전에 저장된 설정을 역직렬화하여 초기값 브릿징
   const [showLogsOnChart, setShowLogsOnChart] = useState(() => {
@@ -79,8 +80,10 @@ export default function ChartDetail({
   const memoWarningApprovedRef = useRef(false);
 
   // 라이선스 등급 판별 상수 선언
-  const isBetaTester = ['expert', 'master'].includes(userTier?.toLowerCase());
-  const isNfcTier = ['expert', 'master'].includes(userTier?.toLowerCase());
+  const graceInfo = calculateGracePeriod();
+  const isGraceExpired = graceInfo.isExpired || graceInfo.daysLeft <= 30;
+  const isBetaTester = ['master', 'certified'].includes(userTier?.toLowerCase()) || (userTier?.toLowerCase() === 'trial' && !isGraceExpired);
+  const isNfcTier = ['master', 'certified'].includes(userTier?.toLowerCase());
 
   // 훅 초기화 및 연결
   const historyManager = useHistoryRecords(customer, {
@@ -109,12 +112,11 @@ export default function ChartDetail({
     setMemos: memoManager.setMemos,
     saveRecord: historyManager.saveRecord,
     setFeedback,
-    // useChartSession이 진입 시 자동으로 모달을 열려고 할 때, 일반 등급 유저라면 강제 차단 가드 작동
+    // useChartSession이 진입 시 자동으로 모달을 열려고 할 때, 자동 팝업 전용 상태(isAutoModalOpen)를 갱신
     setShowHistoryModal: useCallback((show) => {
       if (initialChartId && show === true) return;
-      if (!isBetaTester && show === true) return; 
-      setIsTimelineModalOpen(show);
-    }, [initialChartId, isBetaTester]),
+      setIsAutoModalOpen(show);
+    }, [initialChartId]),
     showLogsOnChart
   });
 
@@ -279,11 +281,21 @@ export default function ChartDetail({
     ]
   });
 
+  const handleBackWithExpiredGuidance = useCallback(() => {
+    if (!isLicenseCertified() && graceInfo && graceInfo.isExpired) {
+      setFeedback({ 
+        message: '💡 Trial 무료 체험 기간이 만료되어 정식 등록이 필요합니다. 클라우드 설정 메뉴에서 라이선스를 연동하실 수 있습니다.', 
+        tone: 'warning' 
+      });
+    }
+    onBack();
+  }, [onBack, graceInfo, setFeedback]);
+
   // 퇴장 처리 및 팝업 가로채기 엔진 연동
   const exitInterceptor = useExitInterceptor({
     sessionManager,
     historyManager,
-    onBack,
+    onBack: handleBackWithExpiredGuidance,
     forceZoomResetAndExecute,
     setFeedback,
     setIsTimelineModalOpen
@@ -298,7 +310,6 @@ export default function ChartDetail({
         setShowLogInterceptModal(true);
       }
     } else {
-      if (!customer?.activityLogs || customer.activityLogs.length === 0) return;
       setIsTimelineModalOpen(true);
     }
   }, [sessionManager.hasUnsavedChanges, exitInterceptor, setIsTimelineModalOpen, customer?.activityLogs]);
@@ -306,6 +317,8 @@ export default function ChartDetail({
   useEffect(() => {
     setEntryKey(new Date().getTime());
     exitInterceptor.wipeCleanSlate(); 
+    setIsTimelineModalOpen(false);
+    setIsAutoModalOpen(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customer]);
 
@@ -355,12 +368,10 @@ export default function ChartDetail({
   const currentRecordId = sessionManager.viewingRecord?.id || sessionManager.sessionRecordId;
   const isLimitExceeded = exitInterceptor.isNewChart && maxChartsAllowed !== Infinity && currentChartsCount >= maxChartsAllowed;
   
-  // 베타테스터 등급은 자동팝업 포함 기존 방식 100% 사수, 일반 유저는 오직 수동 오픈 상태(isTimelineModalOpen)로만 사수됨
+  // 모든 등급의 사용자에 대해 자동팝업 및 수동오픈 100% 개방
   const isHistoryOpen = (initialChartId && currentRecordId !== initialChartId)
     ? false 
-    : isBetaTester
-      ? (isTimelineModalOpen || historyManager.showHistoryModal)
-      : (isTimelineModalOpen);
+    : (isTimelineModalOpen || isAutoModalOpen);
 
   return (
     <PageShell bottomPadding="pb-40">
@@ -408,7 +419,11 @@ export default function ChartDetail({
           userTier={userTier} 
           onStartMemo={() => { 
             if (!sessionManager.isEditMode) {
-              if (memoManager.isPlacingMemo || sessionManager.hasUnsavedChanges || !sessionManager.viewingRecord) {
+              if (memoManager.isPlacingMemo || sessionManager.hasUnsavedChanges || !sessionManager.viewingRecord || sessionManager.hasWarnedModify) {
+                if (!memoManager.isPlacingMemo && !sessionManager.isEditMode) {
+                  memoWarningApprovedRef.current = true;
+                  sessionManager.setHasUnsavedChanges(true);
+                }
                 memoManager.setIsPlacingMemo(!memoManager.isPlacingMemo);
               } else {
                 memoPendingRef.current = true;
@@ -530,12 +545,11 @@ export default function ChartDetail({
 
       <CustomerHistoryModal 
         isOpen={isHistoryOpen}
+        isManualOpen={isTimelineModalOpen} // 💡 [진입 분기]: 수동 오픈 여부를 모달 내부로 전달
         userTier={userTier} 
         onClose={() => {
           setIsTimelineModalOpen(false);
-          if (typeof historyManager?.setShowHistoryModal === 'function') {
-            historyManager.setShowHistoryModal(false);
-          }
+          setIsAutoModalOpen(false);
         }}
         customer={customer}
         history={historyManager.history}
@@ -546,11 +560,11 @@ export default function ChartDetail({
         onLoadRecord={(recordOrId) => {
           isCancellingRef.current = true;
           if (recordOrId && typeof recordOrId === 'object' && recordOrId.id) {
-            sessionManager.loadRecord(recordOrId);
+            historyManager.setHistoryConfirm(recordOrId);
           } else {
             const targetRecord = historyManager.history.find(r => r.id === recordOrId);
             if (targetRecord) {
-              sessionManager.loadRecord(targetRecord);
+              historyManager.setHistoryConfirm(targetRecord);
             }
           }
         }}
@@ -614,47 +628,66 @@ export default function ChartDetail({
       />
 
       {showLogInterceptModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
-            <div className="p-6">
-              <h3 className="text-lg font-black text-slate-800 mb-2">저장 여부 확인</h3>
-              <p className="text-sm text-slate-600 font-medium leading-snug">
-                변경 중인 내용을 저장하시겠습니까?
-              </p>
+        <ModalShell
+          onClose={() => setShowLogInterceptModal(false)}
+          size="sm"
+          title={"\uD83D\uDCCB 저장 여부 확인"}
+          zClassName="z-[200]"
+        >
+          <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
+            {/* 설명 단락 */}
+            <p className="text-xs text-slate-500 leading-relaxed pl-1">
+              변경 중인 내용을 저장하고 이동할지 여부를 결정합니다.
+            </p>
+
+            {/* 경고 영역 컨테이너 (AI 설정 모달 디자인 기준 일치화) */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">{"\u26A0\uFE0F"}</span>
+                <h3 className="text-sm font-black text-slate-800">미저장 변경 사항 경고</h3>
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  현재 작성 중인 지공 차트에 저장되지 않은 변경 사항이 있습니다. 저장 후 기록 목록을 조회하시겠습니까?
+                </p>
+              </div>
             </div>
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-2">
+
+            {/* 액션 버튼 영역 */}
+            <div className="flex justify-end gap-2 pt-2">
               <button 
-                type="button"
-                className="flex-1 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold text-sm active:scale-95 transition-all"
                 onClick={() => {
                   setShowLogInterceptModal(false);
                   if (customer?.activityLogs && customer.activityLogs.length > 0) {
                     setIsTimelineModalOpen(true);
                   }
-                }}
-              >
-                취소
-              </button>
-              <button 
+                }} 
                 type="button"
-                className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm active:scale-95 transition-all"
+                className="py-2 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-slate-700 text-sm font-black transition-colors active:scale-95 text-center"
+              >
+                취소 (저장 없이 이동)
+              </button>
+              <Button 
                 onClick={async () => {
                   setShowLogInterceptModal(false);
                   await exitInterceptor.handleSave();
                   setIsTimelineModalOpen(true);
                 }}
+                size="sm"
+                variant="primary"
               >
-                저장
-              </button>
+                저장 후 이동
+              </Button>
             </div>
           </div>
-        </div>
+        </ModalShell>
       )}
 
       {exitInterceptor.showNewChartNameModal && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
           <form 
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               const trimmedName = exitInterceptor.newChartNameInput.trim() || '차트';
               exitInterceptor.expectedBallNameRef.current = trimmedName; 
@@ -662,7 +695,13 @@ export default function ChartDetail({
                 sessionManager.setBallName(trimmedName);
               }
               exitInterceptor.setShowNewChartNameModal(false);
-              exitInterceptor.setIsReadyToSave(true); 
+              
+              // 핫라인을 통해 직접 비동기 순차 실행
+              await sessionManager.handleSave(trimmedName);
+              if (exitInterceptor.isExitingAfterSave) {
+                exitInterceptor.setIsExitingAfterSave(false);
+                onBack();
+              }
             }}
             className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl"
           >

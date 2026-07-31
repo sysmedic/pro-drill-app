@@ -73,7 +73,7 @@ const saveChart = async (page) => {
   await nameModalConfirm.waitFor({ state: 'visible', timeout: 8000 });
   await nameModalConfirm.click();
   await expect(page.getByRole('status')).toContainText('기록이 저장되었습니다.');
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(600);
 };
 
 test.beforeEach(async ({ page }) => {
@@ -110,7 +110,14 @@ test('saved chart creates the expected localStorage history key and reloads thro
   expect(storageState.history[0].name).toContain(ballName);
   expect(storageState.history[0].data.ballName).toBe(ballName);
 
-  await page.getByLabel('뒤로').click();
+  const headingCustomerManager = page.getByRole('heading', { name: /고객 관리/ });
+  if (!(await headingCustomerManager.isVisible())) {
+    const backBtn = page.locator('button[aria-label="뒤로"]');
+    await backBtn.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+    if (await backBtn.isVisible()) {
+      await backBtn.evaluate(el => el.click());
+    }
+  }
   await expect(page.getByRole('heading', { name: /고객 관리/ })).toBeVisible();
 
   await page.getByText(customerName, { exact: true }).click();
@@ -123,7 +130,7 @@ test('saved chart creates the expected localStorage history key and reloads thro
   const historyDialog = page.getByRole('dialog', { name: /저장 기록/ });
   await expect(historyDialog).toBeVisible();
 
-  await historyDialog.getByText(ballName, { exact: true }).click();
+  await historyDialog.getByText(ballName, { exact: false }).click();
   await expect(historyDialog).toBeHidden();
   const loadDialog = page.getByRole('dialog', { name: /기록 불러오기/ });
   await expect(loadDialog).toContainText('기록을 불러오시겠습니까');

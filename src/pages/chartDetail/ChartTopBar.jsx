@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import TopBarShell from '../../components/layout/TopBarShell.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Icon from '../../components/ui/Icon.jsx';
+import { calculateGracePeriod } from '../../lib/userLicenseManager.js';
 
 // ⏱️ [시간 세밀 조정 브릿지]: 교차 주기를 제어하는 ms 단위 변수입니다.
 const ROLLING_INTERVAL = 3000;
@@ -36,8 +37,17 @@ export default function ChartTopBar({
     return () => clearInterval(interval);
   }, [viewingRecord, sessionRecordId]);
 
-  // 유틸리티 버튼 권한을 오직 expert와 master 등급으로만 제한합니다.
-  const isPremiumUser = userTier && ['expert', 'master'].includes(userTier.toLowerCase());
+  // 프리미엄 사용 권한을 master, certified 등급 또는 Trial 유예 경고 전 사용자로 허용합니다.
+  const isPremiumUser = (() => {
+    if (!userTier) return false;
+    const ut = userTier.toLowerCase();
+    if (['master', 'certified'].includes(ut)) return true;
+    if (ut === 'trial') {
+      const graceInfo = calculateGracePeriod();
+      return !graceInfo.isExpired && graceInfo.daysLeft > 30;
+    }
+    return false;
+  })();
 
   // 기존 불러오기 기록이 존재하거나 새 차트가 성공적으로 저장(ID 발급)된 모든 경우를 판단
   const isSavedChart = viewingRecord || sessionRecordId;
@@ -86,14 +96,14 @@ export default function ChartTopBar({
           
           {/* 메모 버튼 */}
           {!isEditMode && (
-            <Button aria-label="메모" className="max-[420px]:[&>span.leading-none]:hidden" onClick={onStartMemo} size="sm" variant="secondary" icon="memo">메모</Button>
+            <Button aria-label="메모" onClick={onStartMemo} size="sm" variant="secondary" icon="memo">메모</Button>
           )}
           
           {/* 버튼 이름 및 aria-label 명칭 명확화: "로그" ➔ "기록" */}
           {!isEditMode && (
             <Button 
               aria-label="기록" 
-              className="max-[420px]:[&>span.leading-none]:hidden text-indigo-700 bg-indigo-50 border-indigo-200 hover:bg-indigo-100" 
+              className="text-indigo-700 bg-indigo-50 border-indigo-200 hover:bg-indigo-100" 
               onClick={onShowTimeline} 
               size="sm" 
               variant="secondary" 

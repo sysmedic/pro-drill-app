@@ -100,7 +100,7 @@ export const initGoogleApi = () => {
 };
 
 // 2. 구글 로그인 및 토큰 획득
-export const signInGoogle = (forceNew = false) => {
+export const signInGoogle = (forceNew = false, isLoginGateOnly = false) => {
   return new Promise((resolve, reject) => {
     if (!tokenClient) {
       reject(new Error('TOKEN_CLIENT_NOT_INITIALIZED'));
@@ -130,23 +130,38 @@ export const signInGoogle = (forceNew = false) => {
       }
 
       const grantedScopes = response.scope || '';
-      const hasDrive = grantedScopes.includes('https://www.googleapis.com/auth/drive.file');
       const hasEmail = grantedScopes.includes('https://www.googleapis.com/auth/userinfo.email') || grantedScopes.includes('email');
 
-      if (!hasDrive || !hasEmail) {
-        reject(new Error('REQUIRED_SCOPES_MISSING'));
-        return;
+      if (isLoginGateOnly) {
+        if (!hasEmail) {
+          reject(new Error('REQUIRED_SCOPES_MISSING'));
+          return;
+        }
+      } else {
+        const hasDrive = grantedScopes.includes('https://www.googleapis.com/auth/drive.file');
+        if (!hasDrive || !hasEmail) {
+          reject(new Error('REQUIRED_SCOPES_MISSING'));
+          return;
+        }
+        localStorage.setItem('prodrill_google_scopes_version', 'v2_email_included');
       }
 
       accessToken = response.access_token;
       localStorage.setItem('prodrill_google_access_token', accessToken);
       localStorage.setItem('prodrill_google_token_expiry', String(new Date().getTime() + (response.expires_in * 1000)));
-      localStorage.setItem('prodrill_google_scopes_version', 'v2_email_included');
       gapi.client.setToken({ access_token: accessToken });
       resolve(accessToken);
     };
     
-    tokenClient.requestAccessToken({ prompt: 'consent' });
+    if (isLoginGateOnly) {
+      // 🔒 최초 가동 시 구글 403 access_denied(Testing 모드 차단)를 예방하기 위해 드라이브 권한 제외 최소 이메일 권한만 호출!
+      tokenClient.requestAccessToken({ 
+        scope: 'https://www.googleapis.com/auth/userinfo.email',
+        prompt: 'consent' 
+      });
+    } else {
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+    }
   });
 };
 

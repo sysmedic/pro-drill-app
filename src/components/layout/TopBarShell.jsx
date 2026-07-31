@@ -36,7 +36,8 @@ export default function TopBarShell({ children, className = '', fixed = false, v
 
     const element = barRef.current;
     const updateHeight = () => {
-      setMeasuredHeight(Math.ceil(element.getBoundingClientRect().height));
+      const nextHeight = Math.ceil(element.getBoundingClientRect().height);
+      setMeasuredHeight(prev => prev === nextHeight ? prev : nextHeight);
     };
 
     updateHeight();

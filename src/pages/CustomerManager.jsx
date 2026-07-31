@@ -8,13 +8,18 @@ import { loadCustomers, saveCustomers } from '../lib/customerStorage.js';
 import { createLocalId } from '../lib/ids.js';
 import { autoSyncOnChange } from '../lib/syncService.js'; // ☁️ 실시간 백업 트리거 임포트
 import SettingsModal from './customerManager/SettingsModal.jsx'; // ⚙️ 설정 모달 임포트
+import GeneralSettingsModal from './customerManager/GeneralSettingsModal.jsx'; // ⚙️ 기본 설정 모달 임포트
+import BackupSettingsModal from './customerManager/BackupSettingsModal.jsx'; // 🗂️ 로컬 백업 모달 임포트
+import AiSettingsModal from './customerManager/AiSettingsModal.jsx'; // 🤖 AI 설정 모달 임포트
+import AdminSettingsModal from './customerManager/AdminSettingsModal.jsx'; // 👑 마스터 제어실 모달 임포트
 import { isLicenseCertified } from '../lib/userLicenseManager.js';
 
 export default function CustomerManagement({ 
   onSelectCustomer, 
   onLogout,
   onNfcScan,
-  graceInfo
+  graceInfo,
+  userTier
 }) {
   const [customers, setCustomers] = useState(() => {
     const result = loadCustomers();
@@ -28,9 +33,12 @@ export default function CustomerManagement({
   const [showSecondDeleteConfirm, setShowSecondDeleteConfirm] = useState(false);
   const [editId, setEditId] = useState(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showEnvironmentSettingsModal, setShowEnvironmentSettingsModal] = useState(false);
+  const [showBackupSettingsModal, setShowBackupSettingsModal] = useState(false);
+  const [showAiSettingsModal, setShowAiSettingsModal] = useState(false);
+  const [showAdminSettingsModal, setShowAdminSettingsModal] = useState(false);
   
   const [totalCount, setTotalCount] = useState(0);
-  const userTier = 'master'; // 로컬 전용이므로 master로 고정
 
   const [customerData, setCustomerData] = useState({ 
     name: '', 
@@ -75,7 +83,7 @@ export default function CustomerManagement({
     }
 
     return () => clearTimeout(timeoutId); 
-  }, [showModal, deleteRequest, showSecondDeleteConfirm]);
+  }, [showModal, deleteRequest, showSecondDeleteConfirm, showEnvironmentSettingsModal, showBackupSettingsModal, showAiSettingsModal, showAdminSettingsModal]);
 
   // 고객 저장/수정 함수 (오프라인 로컬 처리)
   const handleSaveCustomer = async (e) => {
@@ -138,29 +146,84 @@ export default function CustomerManagement({
         sortType={sortType} setSortType={setSortType}
         onLogout={onLogout}
         onOpenSettings={() => setShowSettingsModal(true)}
-        onNfcScan={['expert', 'master'].includes(userTier?.toLowerCase()) ? onNfcScan : undefined}
+        onOpenEnvironmentSettings={() => setShowEnvironmentSettingsModal(true)}
+        onOpenAiSettings={() => {
+          const isAiAllowed = ['master', 'certified'].includes(userTier?.toLowerCase()) || (graceInfo && !graceInfo.isExpired && graceInfo.daysLeft > 30);
+          if (!isAiAllowed) {
+            setFeedback({ message: '유예 기간이 30일 이하로 남아 정식 라이선스 인증이 필요한 기능입니다.', tone: 'warning' });
+          } else {
+            setShowAiSettingsModal(true);
+          }
+        }}
+        onOpenBackupSettings={() => {
+          const isBackupAllowed = ['master', 'certified'].includes(userTier?.toLowerCase());
+          if (!isBackupAllowed) {
+            setFeedback({ message: '인증된 라이선스 등급 사용자만 수동 백업 기능을 사용할 수 있습니다.', tone: 'warning' });
+          } else {
+            setShowBackupSettingsModal(true);
+          }
+        }}
+        onOpenAdminSettings={() => setShowAdminSettingsModal(true)}
+        userTier={userTier}
+        isAiAllowed={['master', 'certified'].includes(userTier?.toLowerCase()) || (graceInfo && !graceInfo.isExpired && graceInfo.daysLeft > 30)}
+        isBackupAllowed={['master', 'certified'].includes(userTier?.toLowerCase())}
+        onNfcScan={['master', 'certified'].includes(userTier?.toLowerCase()) ? onNfcScan : undefined}
       />
       
-      {/* [라이선스 알림]: 라이선스 미인증 상태이고 유예 기간이 30일 이하로 남았을 때 상단 경고 배너 기동 */}
-      {!isLicenseCertified() && graceInfo && graceInfo.daysLeft <= 30 && (
-        <div className="mx-2 mb-3 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-800 animate-fade-in relative z-20 shadow-sm leading-relaxed select-none">
-          <div className="flex items-start gap-2">
-            <span className="shrink-0 leading-none text-amber-600 font-black">[알림]</span>
-            <div className="font-bold">
-              인증 유예 기간이 <span className="text-amber-600 font-extrabold text-sm underline">D-{graceInfo.daysLeft}일</span> 남았습니다. 
-              지속적인 지공 관리와 안전한 구글 드라이브 백업을 위해 라이선스 인증을 완료해 주세요.
+      {/* [라이선스 알림]: 라이선스 미인증 상태일 때 단계별 경고 배너 기동 */}
+      {!isLicenseCertified() && graceInfo && (
+        graceInfo.isExpired ? (
+          /* 1) 만료 완료 배너 (빨간색) */
+          <div className="mx-2 mb-3 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-red-800 animate-fade-in relative z-20 shadow-sm leading-relaxed select-none">
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 leading-none text-red-600 font-black">[알림]</span>
+              <div className="font-bold text-left">
+                Trial 무료 이용 기간이 만료되었습니다. 지속적인 지공 관리와 안전한 구글 드라이브 백업을 이용하시려면 정식 라이선스를 등록해 주세요.
+              </div>
             </div>
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="w-full sm:w-auto shrink-0 bg-red-600 text-white hover:bg-red-700 px-3.5 py-2 rounded-xl font-extrabold transition-all active:scale-95 text-center shadow-md shadow-red-100"
+            >
+              인증하기
+            </button>
           </div>
-          <button
-            onClick={() => setShowSettingsModal(true)}
-            className="w-full sm:w-auto shrink-0 bg-amber-600 text-white hover:bg-amber-700 px-3.5 py-2 rounded-xl font-extrabold transition-all active:scale-95 text-center shadow-md shadow-amber-100"
-          >
-            인증하기
-          </button>
-        </div>
+        ) : (
+          /* 2) 만료 전 30일 경고 배너 (노란색) */
+          graceInfo.daysLeft <= 30 && (
+            <div className="mx-2 mb-3 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-800 animate-fade-in relative z-20 shadow-sm leading-relaxed select-none">
+              <div className="flex items-start gap-2">
+                <span className="shrink-0 leading-none text-amber-600 font-black">[알림]</span>
+                <div className="font-bold text-left">
+                  인증 유예 기간이 <span className="text-amber-600 font-extrabold text-sm underline">D-{graceInfo.daysLeft}일</span> 남았습니다. 
+                  지속적인 지공 관리와 안전한 구글 드라이브 백업을 위해 라이선스 인증을 완료해 주세요.
+                </div>
+              </div>
+              <button
+                onClick={() => setShowSettingsModal(true)}
+                className="w-full sm:w-auto shrink-0 bg-amber-600 text-white hover:bg-amber-700 px-3.5 py-2 rounded-xl font-extrabold transition-all active:scale-95 text-center shadow-md shadow-amber-100"
+              >
+                인증하기
+              </button>
+            </div>
+          )
+        )
       )}
 
-      <CustomerList customers={displayedCustomers} onDelete={(e, c) => { e.stopPropagation(); setDeleteRequest(c); }} onEdit={(e, c) => { e.stopPropagation(); setEditId(c.id); setCustomerData(c); setShowModal(true); }} onSelect={onSelectCustomer} />
+      <CustomerList 
+        customers={displayedCustomers} 
+        onDelete={(e, c) => { e.stopPropagation(); setDeleteRequest(c); }} 
+        onEdit={(e, c) => { e.stopPropagation(); setEditId(c.id); setCustomerData(c); setShowModal(true); }} 
+        onSelect={(customer) => {
+          if (!isLicenseCertified() && graceInfo && graceInfo.isExpired) {
+            setFeedback({ 
+              message: '💡 Trial 무료 체험 기간이 만료되어 정식 등록이 필요합니다. 클라우드 설정 메뉴에서 라이선스를 연동하실 수 있습니다.', 
+              tone: 'warning' 
+            });
+          }
+          onSelectCustomer(customer);
+        }} 
+      />
       
       {showModal && (
         <CustomerFormModal customerData={customerData} editId={editId} onChange={setCustomerData} onClose={() => setShowModal(false)} onSubmit={handleSaveCustomer} />
@@ -215,6 +278,22 @@ export default function CustomerManagement({
 
       {showSettingsModal && (
         <SettingsModal onClose={() => setShowSettingsModal(false)} onFeedback={setFeedback} />
+      )}
+
+      {showEnvironmentSettingsModal && (
+        <GeneralSettingsModal onClose={() => setShowEnvironmentSettingsModal(false)} onFeedback={setFeedback} />
+      )}
+
+      {showBackupSettingsModal && (
+        <BackupSettingsModal onClose={() => setShowBackupSettingsModal(false)} onFeedback={setFeedback} />
+      )}
+
+      {showAiSettingsModal && (
+        <AiSettingsModal onClose={() => setShowAiSettingsModal(false)} onFeedback={setFeedback} />
+      )}
+
+      {showAdminSettingsModal && (
+        <AdminSettingsModal onClose={() => setShowAdminSettingsModal(false)} onFeedback={setFeedback} />
       )}
 
       <FeedbackToast message={feedback?.message} onDismiss={() => setFeedback(null)} tone={feedback?.tone} />

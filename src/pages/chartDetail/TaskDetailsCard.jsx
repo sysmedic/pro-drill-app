@@ -26,6 +26,7 @@ export default function TaskDetailsCard({
   // 🤖 AI 추천 및 2LS 변환용 프롭 추가
   onTriggerAiRecommend, onTrigger2LsConvert
 }) {
+  const showNfcWriteButton = false;
   const [logInput, setLogInput] = useState('');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [targetLogId, setTargetLogId] = useState(null);
@@ -92,7 +93,7 @@ export default function TaskDetailsCard({
             🤖 AI 추천
           </button>
 
-          {realNfcSupported && (
+          {showNfcWriteButton && realNfcSupported && (
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); if (onNfcWrite) onNfcWrite(e); }}

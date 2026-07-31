@@ -3,6 +3,7 @@ import CustomerManager from './pages/CustomerManager.jsx';
 import ChartDetail from './pages/ChartDetail.jsx';
 import { FeedbackToast } from './components/ui/Dialogs.jsx'; 
 import AppLocker from './AppLocker.jsx'; // 🔒 사생활 보호 게이트키퍼 컴포넌트
+import LoginGate from './components/auth/LoginGate.jsx'; // 🔑 로그인 의무 게이트 수입
 import useAppSession from './useAppSession.js'; // 🌟 신설된 세션 커스텀 훅 수입
 import { autoSyncOnLaunch, registerVisibilitySync } from './lib/syncService.js'; // ☁️ 자동 동기화 허브 임포트
 import { initFirstLaunchTime, calculateGracePeriod, certifyUserEmail } from './lib/userLicenseManager.js';
@@ -42,14 +43,71 @@ export default function App() {
     setIsAppLocked(true);
   }, []);
 
+  // 🔒 앱 내 빈 화면/바탕화면 전역 3회 연속 클릭 시 화면 잠그기 실행 핸들러
+  useEffect(() => {
+    let clickCount = 0;
+    let lastClickTime = 0;
+
+    const handleGlobalBackgroundClick = (e) => {
+      // 🤖 E2E 자동화 테스트 환경에서는 락 오작동 및 포커싱 버블링 간섭을 막기 위해 감지를 우회함
+      if (navigator.webdriver || window.isPlaywright) {
+        return;
+      }
+      // 🔒 사용자가 설정에서 화면잠금 기능을 비활성화한 경우 잠금 트리거 차단
+      const isLockTriggerEnabled = localStorage.getItem('drilling_lock_trigger_enabled') !== 'false';
+      if (!isLockTriggerEnabled) {
+        return;
+      }
+      const targetTagName = e.target.tagName.toLowerCase();
+
+      // 버튼, 입력창, 링크, 선택창, 다이얼로그, 메모 핀 등 상호작용 가능한 요소는 카운트 제외 및 초기화
+      if (
+        targetTagName === 'button' ||
+        targetTagName === 'input' ||
+        targetTagName === 'textarea' ||
+        targetTagName === 'select' ||
+        targetTagName === 'a' ||
+        e.target.closest('button') ||
+        e.target.closest('input') ||
+        e.target.closest('textarea') ||
+        e.target.closest('select') ||
+        e.target.closest('a') ||
+        e.target.closest('.modal-content') ||
+        e.target.closest('[role="dialog"]') ||
+        e.target.closest('.memo-pin') ||
+        e.target.closest('.interactive-chart-element')
+      ) {
+        clickCount = 0;
+        return;
+      }
+
+      const now = new Date().getTime();
+      if (now - lastClickTime < 350) {
+        clickCount += 1;
+        if (clickCount >= 3) {
+          clickCount = 0;
+          lastClickTime = 0;
+          handleTriggerLock();
+        } else {
+          lastClickTime = now;
+        }
+      } else {
+        clickCount = 1;
+        lastClickTime = now;
+      }
+    };
+
+    document.addEventListener('click', handleGlobalBackgroundClick);
+    return () => {
+      document.removeEventListener('click', handleGlobalBackgroundClick);
+    };
+  }, [handleTriggerLock]);
+
   // 🌟 [라이선스 및 자동 동기화 라이프사이클]: 최초 마운트 시 기동일 체크 및 동기화 기동
   useEffect(() => {
     initFirstLaunchTime();
     const info = calculateGracePeriod();
     setGraceInfo(info);
-    if (info.isExpired) {
-      setShowLicenseGate(true);
-    }
 
     autoSyncOnLaunch(setFeedback);
     const unregister = registerVisibilitySync();
@@ -146,6 +204,7 @@ export default function App() {
             onLogout={handleTriggerLock}
             onNfcScan={handleGlobalNfcRead} 
             graceInfo={graceInfo}
+            userTier={session.userTier}
           />
         ) : (
           <ChartDetail
@@ -165,6 +224,31 @@ export default function App() {
       <div className="fixed inset-0 pointer-events-none z-[10000]">
         <FeedbackToast message={feedback?.message} onDismiss={() => setFeedback(null)} title={feedback?.title} tone={feedback?.tone} />
       </div>
+
+      {/* 🔒 가역적 킬스위치 원격 강제 잠금 오버레이 */}
+      {session.userTier === 'locked' && (
+        <div className="fixed inset-0 z-[12000] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 select-none">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border border-slate-200 animate-fade-in">
+            <span className="text-5xl block mb-4">{"\uD83D\uDEA8"}</span>
+            <h2 className="text-xl font-black text-slate-800 mb-2">ProDrill 앱 잠금 알림</h2>
+            <p className="text-xs text-slate-500 mb-6 leading-relaxed text-left sm:text-center">
+              본 기기의 라이선스가 **원격 잠금(임시 정지)** 상태로 전환되었습니다.<br /><br />
+              기존 지공 차트 및 고객 정보는 유실 없이 안전하게 보존되어 있으며, 잠금 해제를 원하실 경우 마스터 관리자에게 문의해 주세요.
+            </p>
+            <div className="text-[10px] text-slate-400 font-mono">
+              Status: LOCKED (Kill Switch Active)
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔑 최초 가동 시 구글 로그인 의무 확인 게이트 */}
+      {session.isFirstTimeSetup && (
+        <LoginGate 
+          onSuccess={session.authenticateSession} 
+          onFeedback={setFeedback} 
+        />
+      )}
 
       {/* 🔒 사생활 보호 게이트키퍼 컴포넌트 */}
       <AppLocker 

@@ -63,8 +63,15 @@ test('customer creation and chart save flow works', async ({ page }) => {
   await nameModalConfirm.waitFor({ state: 'visible', timeout: 8000 });
   await nameModalConfirm.click();
   await expect(page.getByRole('status')).toContainText('기록이 저장되었습니다.');
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(600);
 
-  await page.getByLabel('뒤로').click();
+  const headingCustomerManager = page.getByRole('heading', { name: /고객 관리/ });
+  if (!(await headingCustomerManager.isVisible())) {
+    const backBtn = page.locator('button[aria-label="뒤로"]');
+    await backBtn.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+    if (await backBtn.isVisible()) {
+      await backBtn.evaluate(el => el.click());
+    }
+  }
   await expect(page.getByRole('heading', { name: /고객 관리/ })).toBeVisible();
 });

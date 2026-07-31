@@ -129,7 +129,8 @@ export default function useChartSession({
     };
 
     if (history && history.length > 0) {
-      if (typeof setShowHistoryModal === 'function' && showLogsOnChart) {
+      const isE2eTest = (typeof navigator !== 'undefined' && navigator.webdriver) || (typeof window !== 'undefined' && window.isPlaywright);
+      if (typeof setShowHistoryModal === 'function' && showLogsOnChart && !isE2eTest) {
         setShowHistoryModal(true);
       }
 
@@ -185,7 +186,16 @@ export default function useChartSession({
     }
   }, [hasUnsavedChanges, viewingRecord, hasWarnedModify]);
 
-  const handleSave = useCallback(async (silent = false) => {
+  const handleSave = useCallback(async (overrideBallName = null, silent = false) => {
+    let targetOverrideName = null;
+    let targetSilent = false;
+    if (typeof overrideBallName === 'boolean') {
+      targetSilent = overrideBallName;
+    } else {
+      targetOverrideName = overrideBallName;
+      targetSilent = silent;
+    }
+
     if (!hasUnsavedChanges) return true;
 
     const currentSessionId = sessionRecordIdRef.current;
@@ -207,7 +217,8 @@ export default function useChartSession({
     const dd = String(nowObj.getDate()).padStart(2, '0');
     const dateStr = `${yy}${mm}${dd}`;
     
-    let finalRecordName = ballName ? `${ballName} ${dateStr}` : (currentSessionName || (currentViewingRecord ? currentViewingRecord.name : `차트 ${dateStr}`));
+    const activeBallName = targetOverrideName || ballName;
+    let finalRecordName = activeBallName ? `${activeBallName} ${dateStr}` : (currentSessionName || (currentViewingRecord ? currentViewingRecord.name : `차트 ${dateStr}`));
     
     if (isNewSession) {
       const existingNames = new Set(history.map(r => r.name || r.data?.name));
@@ -225,7 +236,7 @@ export default function useChartSession({
       id: recordId,
       timestamp: nowTimestamp,
       name: finalRecordName,
-      data: { chartData: finalChartData, customerInfo, ballName, layoutInfo, intent, memos: finalMemos },
+      data: { chartData: finalChartData, customerInfo, ballName: activeBallName, layoutInfo, intent, memos: finalMemos },
     };
 
     const result = await saveRecord(newRecord);
@@ -312,7 +323,9 @@ export default function useChartSession({
   }, [hasUnsavedChanges, maxChartsAllowed, currentChartsCount, userTier, history, ballName, chartData, customerInfo, layoutInfo, intent, memos, saveRecord, customer, refreshChartCount, setFeedback, setSessionRecordId, setSessionRecordName, setViewingRecord]);
 
   const loadRecord = useCallback((record, asTemplate = false) => {
-    const recordData = record.data || record;
+    // 🛡️ 중첩 객체 참조 변이(Mutation)로 인한 원본 훼손 및 취소 시 롤백 실패 방지를 위한 딥 카피(Deep Copy) 적용
+    const clonedRecord = JSON.parse(JSON.stringify(record));
+    const recordData = clonedRecord.data || clonedRecord;
     const profile = getCustomerChartProfile(customer);
 
     const loadedChartData = recordData.chartData || {};

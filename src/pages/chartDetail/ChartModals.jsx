@@ -74,8 +74,8 @@ export const MemoModal = ({ title, memo, onSave, onDelete, isBetaTester }) => {
             </div>
             
             <div className="flex justify-center">
-              {/* 🟢 [정밀 UI 가드 결합]: 베타테스터 등급일 때만 버튼을 노출 (일반 유저에게는 100% 원천 은폐) */}
-              {!isPinned && isBetaTester && (
+              {/* 모든 사용자가 메모를 차트에 고정할 수 있도록 개방 */}
+              {!isPinned && (
                 <Button 
                   onClick={handlePinAndClose} 
                   size="sm" 
@@ -157,14 +157,53 @@ export const HistoryModal = ({ history, onSelect, onClose, onDelete, onRename, m
 };
 
 export const ExitConfirmModal = ({ onClose, onSaveAndExit, onExitWithoutSave }) => (
-  <ModalShell bodyClassName="p-5 flex flex-col gap-4 bg-slate-50" icon="warning" onClose={onClose} size="sm" title="주의" titleId="exit-confirm-title" zClassName="z-[150]">
-    <p className="text-sm font-bold text-slate-700 text-center">
-      저장되지 않은 변경 사항이 있습니다.<br />어떻게 하시겠습니까?
-    </p>
-    <div className="flex flex-col gap-2 mt-2">
-      <Button className="w-full" onClick={onSaveAndExit} size="lg" variant="primary">저장하고 나가기</Button>
-      <Button className="w-full" onClick={onExitWithoutSave} size="lg" variant="danger">저장하지 않고 나가기</Button>
-      <Button className="w-full" onClick={onClose} size="lg" variant="secondary">취소</Button>
+  <ModalShell 
+    onClose={onClose} 
+    size="sm" 
+    title={"\u26A0\uFE0F 주의"} 
+    titleId="exit-confirm-title" 
+    zClassName="z-[150]"
+  >
+    <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
+      {/* 설명 단락 */}
+      <p className="text-xs text-slate-500 leading-relaxed pl-1">
+        현재 작성 중인 지공 차트에 저장되지 않은 변경 사항이 감지되었습니다.
+      </p>
+
+      {/* 경고 영역 컨테이너 (AI 설정 모달 디자인 기준 일치화) */}
+      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+        <div className="flex items-center gap-1.5">
+          <span className="text-base">{"\u26A0\uFE0F"}</span>
+          <h3 className="text-sm font-black text-slate-800">이탈 경고</h3>
+        </div>
+        
+        <div className="space-y-2">
+          <p className="text-[11px] text-slate-500 leading-normal">
+            작업 중인 지공 데이터를 저장하지 않고 이탈하시면 수정한 변경 사항이 모두 유실됩니다. 어떻게 진행하시겠습니까?
+          </p>
+        </div>
+      </div>
+
+      {/* 액션 버튼 영역 */}
+      <div className="flex flex-col gap-2 pt-2">
+        <Button className="w-full" onClick={onSaveAndExit} size="sm" variant="primary">
+          저장하고 나가기
+        </Button>
+        <button 
+          onClick={onExitWithoutSave}
+          type="button"
+          className="w-full py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black transition-colors active:scale-95 text-center"
+        >
+          저장하지 않고 나가기
+        </button>
+        <button 
+          onClick={onClose} 
+          type="button"
+          className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-slate-700 text-xs font-black transition-colors active:scale-95 text-center"
+        >
+          취소하고 편집 계속하기
+        </button>
+      </div>
     </div>
   </ModalShell>
 );

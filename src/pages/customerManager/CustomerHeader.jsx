@@ -4,9 +4,21 @@ import TopBarShell from '../../components/layout/TopBarShell.jsx';
 
 export default function CustomerHeader({ 
   totalCount, currentCount, onAdd, searchQuery, setSearchQuery, sortType, setSortType, 
-  isMenuOpen, setIsMenuOpen, onLogout, onOpenSettings,
-  onNfcScan 
+  isMenuOpen, setIsMenuOpen, onLogout, onOpenSettings, onOpenEnvironmentSettings,
+  onOpenAiSettings, onOpenBackupSettings, onOpenAdminSettings, userTier, isAiAllowed, isBackupAllowed, onNfcScan 
 }) {
+  const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isHamburgerOpen) return;
+    const handleOutsideClick = () => {
+      setIsHamburgerOpen(false);
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [isHamburgerOpen]);
 
   // 🟢 1. 앱을 켤 때 영구 기억 장소(localStorage)를 검사하여 버튼 노출 여부 결정
   const [realNfcSupported, setRealNfcSupported] = useState(() => {
@@ -79,15 +91,78 @@ export default function CustomerHeader({
     >
       <div className="flex justify-between items-start mb-1">
         <div className="flex items-center gap-2 relative">
-          <div className="z-[999] shrink-0 flex items-center">
-            {/* ⚙️ 햄버거 박스를 삭제하고 설정 버튼을 밖으로 직접 노출 */}
+          <div className="z-[999] shrink-0 flex items-center relative">
+            {/* ☰ 햄버거 박스로 복원 */}
             <button 
-              onClick={(e) => { e.stopPropagation(); onOpenSettings(); }}
+              onClick={(e) => { e.stopPropagation(); setIsHamburgerOpen(!isHamburgerOpen); }}
               className="-mt-1 p-1 text-xl text-slate-600 hover:bg-slate-100 rounded-lg transition-colors leading-none"
-              title="설정"
+              title="메뉴"
+              aria-label="메뉴"
             >
-              ⚙️
+              ☰
             </button>
+
+            {/* 드롭다운 오버레이 */}
+            {isHamburgerOpen && (
+              <div className="absolute left-0 top-8 z-[1000] w-40 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 flex flex-col animate-fade-in">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsHamburgerOpen(false);
+                    onOpenEnvironmentSettings();
+                  }}
+                  className="px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-1.5"
+                >
+                  ⚙️ 환경 설정
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsHamburgerOpen(false);
+                    onOpenSettings();
+                  }}
+                  className="px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-1.5"
+                >
+                  ☁️ 클라우드 설정
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsHamburgerOpen(false);
+                    onOpenAiSettings();
+                  }}
+                  className={`px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-1.5 ${
+                    !isAiAllowed ? 'opacity-40' : ''
+                  }`}
+                >
+                  🤖 ProDrill AI 설정
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsHamburgerOpen(false);
+                    onOpenBackupSettings();
+                  }}
+                  className={`px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-1.5 ${
+                    !isBackupAllowed ? 'opacity-40' : ''
+                  }`}
+                >
+                  🗂️ 로컬 백업
+                </button>
+                {userTier?.toLowerCase() === 'master' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsHamburgerOpen(false);
+                      onOpenAdminSettings();
+                    }}
+                    className="px-4 py-2.5 text-xs font-black text-indigo-700 hover:bg-indigo-50 transition-colors text-left flex items-center gap-1.5 border-t border-slate-100"
+                  >
+                    {"\uD83D\uDC51"} 마스터 제어실
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
@@ -98,8 +173,8 @@ export default function CustomerHeader({
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* 🌟 [수정 반영]: 하드웨어 지원뿐만 아니라 등급 권한(onNfcScan)이 주입되었을 때만 스캔 버튼을 노출합니다. */}
-          {realNfcSupported && onNfcScan && (
+          {/* 🌟 [수정 반영]: NFC 스캔 버튼 임시 비활성화 가드 처리 */}
+          {false && realNfcSupported && onNfcScan && (
             <button
               onClick={handleNfcScanWithHardwareCheck}
               className="bg-emerald-200 text-emerald-800 border border-emerald-300 hover:bg-emerald-300 px-4 py-2 rounded-xl font-bold flex items-center gap-1 shadow-md shadow-emerald-100 active:scale-95 transition-all"

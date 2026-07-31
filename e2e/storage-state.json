@@ -1,0 +1,26 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://127.0.0.1:4173",
+      "localStorage": [
+        {
+          "name": "prodrill_certified_email_hash",
+          "value": "05311b63528f338bd7fa5d67c765f2a5ea9e0d30360236668eb2cc477ae51024"
+        },
+        {
+          "name": "prodrill_certified_email_plain",
+          "value": "sysmedic@gmail.com"
+        },
+        {
+          "name": "prodrill_license_certified",
+          "value": "true"
+        },
+        {
+          "name": "prodrill_license_status",
+          "value": "active"
+        }
+      ]
+    }
+  ]
+}
