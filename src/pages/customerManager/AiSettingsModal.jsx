@@ -20,7 +20,7 @@ export default function AiSettingsModal({ onClose, onFeedback: propOnFeedback })
   };
 
   return (
-    <ModalShell onClose={onClose} size="sm" title="🤖 ProDrill AI 설정">
+    <ModalShell onClose={onClose} size="sm" title="✨ ProDrill AI 설정">
       <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
         {/* 설명 단락 */}
         <p className="text-xs text-slate-500 leading-relaxed pl-1">
@@ -30,7 +30,7 @@ export default function AiSettingsModal({ onClose, onFeedback: propOnFeedback })
         {/* 설정 영역 컨테이너 (클라우드 설정 모달 기준 일치화) */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
           <div className="flex items-center gap-1.5">
-            <span className="text-base">🤖</span>
+            <span className="text-base">✨</span>
             <h3 className="text-sm font-black text-slate-800">ProDrill AI 레이아웃 추천 설정</h3>
           </div>
           

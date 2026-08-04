@@ -4,8 +4,8 @@ import TopBarShell from '../../components/layout/TopBarShell.jsx';
 
 export default function CustomerHeader({ 
   totalCount, currentCount, onAdd, searchQuery, setSearchQuery, sortType, setSortType, 
-  isMenuOpen, setIsMenuOpen, onLogout, onOpenSettings, onOpenEnvironmentSettings,
-  onOpenAiSettings, onOpenBackupSettings, onOpenAdminSettings, userTier, isAiAllowed, isBackupAllowed, onNfcScan 
+  onLogout, onOpenSettings, onOpenEnvironmentSettings,
+  onOpenAiSettings, onOpenBackupSettings, onOpenAdminSettings, onCheckUpdate, userTier, isAiAllowed, isBackupAllowed, onNfcScan 
 }) {
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
 
@@ -119,23 +119,23 @@ export default function CustomerHeader({
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsHamburgerOpen(false);
-                    onOpenSettings();
-                  }}
-                  className="px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-1.5"
-                >
-                  ☁️ 클라우드 설정
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsHamburgerOpen(false);
                     onOpenAiSettings();
                   }}
                   className={`px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-1.5 ${
                     !isAiAllowed ? 'opacity-40' : ''
                   }`}
                 >
-                  🤖 ProDrill AI 설정
+                  ✨ ProDrill AI
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsHamburgerOpen(false);
+                    onOpenSettings();
+                  }}
+                  className="px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-1.5"
+                >
+                  ☁️ 클라우드
                 </button>
                 <button
                   onClick={(e) => {
@@ -147,7 +147,7 @@ export default function CustomerHeader({
                     !isBackupAllowed ? 'opacity-40' : ''
                   }`}
                 >
-                  🗂️ 로컬 백업
+                  🗂️ 백업
                 </button>
                 {userTier?.toLowerCase() === 'master' && (
                   <button
@@ -158,9 +158,19 @@ export default function CustomerHeader({
                     }}
                     className="px-4 py-2.5 text-xs font-black text-indigo-700 hover:bg-indigo-50 transition-colors text-left flex items-center gap-1.5 border-t border-slate-100"
                   >
-                    {"\uD83D\uDC51"} 마스터 제어실
+                    {"\uD83D\uDC51"} 제어실
                   </button>
                 )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsHamburgerOpen(false);
+                    if (onCheckUpdate) onCheckUpdate();
+                  }}
+                  className="px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-1.5 border-t border-slate-100"
+                >
+                  🔄 업데이트
+                </button>
               </div>
             )}
           </div>
@@ -173,8 +183,7 @@ export default function CustomerHeader({
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* 🌟 [수정 반영]: NFC 스캔 버튼 임시 비활성화 가드 처리 */}
-          {false && realNfcSupported && onNfcScan && (
+          {realNfcSupported && onNfcScan && (
             <button
               onClick={handleNfcScanWithHardwareCheck}
               className="bg-emerald-200 text-emerald-800 border border-emerald-300 hover:bg-emerald-300 px-4 py-2 rounded-xl font-bold flex items-center gap-1 shadow-md shadow-emerald-100 active:scale-95 transition-all"

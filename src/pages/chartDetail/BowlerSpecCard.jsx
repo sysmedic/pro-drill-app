@@ -9,7 +9,7 @@ const InfoSelect = ({ label, value, options, onChange }) => (
     <select
       value={value || ''}
       onChange={e => onChange(e.target.value)}
-      className={`appearance-none bg-transparent w-full text-center text-[13px] sm:text-sm font-black outline-none cursor-pointer ${value ? 'text-black' : 'text-slate-400'}`}
+      className={`appearance-none bg-transparent w-full text-center text-base font-bold outline-none cursor-pointer ${value ? 'text-black' : 'text-slate-400'}`}
       style={{ textAlignLast: 'center' }}
     >
       <option value="" disabled hidden>선택</option>
@@ -121,7 +121,7 @@ export default function BowlerSpecCard({
             <span className="text-[9px] sm:text-[10px] text-black font-bold mb-0.5 tracking-tighter pointer-events-none">RPM</span>
             <button
               type="button"
-              className="w-full bg-transparent text-center text-base font-black text-black outline-none min-h-[24px] flex items-center justify-center"
+              className="w-full bg-transparent text-center text-base font-bold text-black outline-none min-h-[24px] flex items-center justify-center"
               onClick={() => openKeypad('rpm', customerInfo.rpm, 'RPM', [], 'number')}
             >
               {customerInfo.rpm || <span className="text-slate-400 font-normal">입력</span>}
@@ -131,7 +131,7 @@ export default function BowlerSpecCard({
             <span className="text-[9px] sm:text-[10px] text-black font-bold mb-0.5 tracking-tighter pointer-events-none">구속 (km/h)</span>
             <button
               type="button"
-              className="w-full bg-transparent text-center text-base font-black text-black outline-none min-h-[24px] flex items-center justify-center"
+              className="w-full bg-transparent text-center text-base font-bold text-black outline-none min-h-[24px] flex items-center justify-center"
               onClick={() => openKeypad('ballSpeed', customerInfo.ballSpeed, '구속 (km/h)', [], 'number')}
             >
               {customerInfo.ballSpeed || <span className="text-slate-400 font-normal">입력</span>}
@@ -142,7 +142,7 @@ export default function BowlerSpecCard({
             <span className="text-[9px] sm:text-[10px] text-black font-bold mb-0.5 tracking-tighter pointer-events-none">PAP (Over)</span>
             <button
               type="button"
-              className="w-full bg-transparent text-center text-base font-black text-black outline-none min-h-[24px] flex items-center justify-center"
+              className="w-full bg-transparent text-center text-base font-bold text-black outline-none min-h-[24px] flex items-center justify-center"
               onClick={() => openKeypad('papX', customerInfo.papX, 'PAP (Over)')}
             >
               {customerInfo.papX || <span className="text-slate-400 font-normal">입력</span>}
@@ -153,7 +153,7 @@ export default function BowlerSpecCard({
             <span className="text-[9px] sm:text-[10px] text-black font-bold mb-0.5 tracking-tighter pointer-events-none">PAP (Up/Down)</span>
             <button
               type="button"
-              className="w-full bg-transparent text-center text-base font-black text-black outline-none min-h-[24px] flex items-center justify-center"
+              className="w-full bg-transparent text-center text-base font-bold text-black outline-none min-h-[24px] flex items-center justify-center"
               onClick={() => openKeypad('papY', customerInfo.papY, 'PAP (Up/Down)', ['Up', 'Down'])}
             >
               {customerInfo.papY || <span className="text-slate-400 font-normal">입력</span>}

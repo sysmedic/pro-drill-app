@@ -5,6 +5,7 @@ import Card from '../components/ui/Card.jsx';
 import Button from '../components/ui/Button.jsx';
 import { FeedbackToast, ConfirmModal } from '../components/ui/Dialogs.jsx';
 import ModalShell from '../components/ui/ModalShell.jsx';
+import Icon from '../components/ui/Icon.jsx';
 
 import BowlerSpecCard from './chartDetail/BowlerSpecCard.jsx';
 import ChartBlueprintView from './chartDetail/ChartBlueprintView.jsx';
@@ -16,6 +17,7 @@ import ChartModalManager from './chartDetail/ChartModalManager.jsx';
 
 import CustomerHistoryModal from './chartDetail/CustomerHistoryModal.jsx';
 import AiRecommendationModal from './chartDetail/AiRecommendationModal.jsx'; // 🤖 AI 추천 모달 임포트
+import ConvertProcessModal from './chartDetail/ConvertProcessModal.jsx'; // 🔄 변환 과정 모달 임포트
 
 import useChartSession from './chartDetail/useChartSession.js'; 
 import useChartExport from './chartDetail/useChartExport.js'; 
@@ -36,11 +38,14 @@ export default function ChartDetail({
   const [showDrillingGuide, setShowDrillingGuide] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [feedback, setFeedback] = useState(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(() => localStorage.getItem('expandBowlerSpec') === 'true');
   const [isTaskOpen, setIsTaskOpen] = useState(true);
   const [showTemplateConfirm, setShowTemplateConfirm] = useState(false);
   const [showLogInterceptModal, setShowLogInterceptModal] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false); // 🤖 AI 추천 모달 오픈 상태값
+  const [showConvertModal, setShowConvertModal] = useState(false); // 🔄 변환 과정 모달 오픈 상태값
+  const [isConvertingProcess, setIsConvertingProcess] = useState(false); // 변환 연산 진행 중 상태
+  const [convertResultData, setConvertResultData] = useState(null); // 변환 연산 결과 데이터
   const [isAutoModalOpen, setIsAutoModalOpen] = useState(false); // 💡 자동 팝업 전용 모달 오픈 상태값
   
   // 로컬스토리지에서 이전에 저장된 설정을 역직렬화하여 초기값 브릿징
@@ -81,8 +86,6 @@ export default function ChartDetail({
 
   // 라이선스 등급 판별 상수 선언
   const graceInfo = calculateGracePeriod();
-  const isGraceExpired = graceInfo.isExpired || graceInfo.daysLeft <= 30;
-  const isBetaTester = ['master', 'certified'].includes(userTier?.toLowerCase()) || (userTier?.toLowerCase() === 'trial' && !isGraceExpired);
   const isNfcTier = ['master', 'certified'].includes(userTier?.toLowerCase());
 
   // 훅 초기화 및 연결
@@ -134,6 +137,8 @@ export default function ChartDetail({
     setUtilityState,
   });
 
+
+
   // NFC로 진입 시 타겟 차트를 무조건 즉시 강제 로드 후 모달 상태 잔상 강제 파괴
   useEffect(() => {
     if (initialChartId && !historyManager.loading && historyManager.history.length > 0) {
@@ -171,43 +176,76 @@ export default function ChartDetail({
 
     if (!sessionManager.layoutInfo) return;
 
-    const has2lsPrefix = sessionManager.layoutInfo.includes('(2LS)');
-    setFeedback({ message: has2lsPrefix ? 'Dual Angle 변환 진행 중...' : '2LS 변환 진행 중...', tone: 'info' });
+    const fromLayout = sessionManager.layoutInfo;
+    const has2lsPrefix = fromLayout.includes('(2LS)');
+    const convertType = has2lsPrefix ? 'Dual Angle 변환' : '2LS 변환';
+    
+    // 볼러 스펙 요약 문구 생성
+    const specParts = [];
+    if (sessionManager.customerInfo?.papX || sessionManager.customerInfo?.papY) {
+      specParts.push(`PAP ${sessionManager.customerInfo?.papX || '0'}" ${sessionManager.customerInfo?.papY || ''}`.trim());
+    }
+    if (sessionManager.customerInfo?.tilt) specParts.push(`틸트: ${sessionManager.customerInfo.tilt}`);
+    if (sessionManager.customerInfo?.trackFlare) specParts.push(`플레어: ${sessionManager.customerInfo.trackFlare}`);
+    const specSummary = specParts.join(' / ') || '기본 표준 스펙 적용';
+
+    setShowConvertModal(true);
+    setIsConvertingProcess(true);
+    setConvertResultData(null);
+
     try {
       if (has2lsPrefix) {
-        // 2LS -> Dual Angle 역변환 (스펙 반영)
+        // 2LS -> Dual Angle 역변환
         const res = await convert2LSToDualAngle({
-          currentLayout: sessionManager.layoutInfo,
+          currentLayout: fromLayout,
           bowler: customer,
           spec: sessionManager.customerInfo
         });
         if (res && res.dualAngle) {
-          sessionManager.setLayoutInfo(res.dualAngle);
-          const prefix = sessionManager.intent ? `${sessionManager.intent}\n` : '';
-          sessionManager.setIntent(`${prefix}[Dual 변환 적용: ${res.reason}]`);
-          sessionManager.setHasUnsavedChanges(true);
-          setFeedback({ message: 'Dual Angle 레이아웃으로 변환 완료!', tone: 'success' });
+          setConvertResultData({
+            fromLayout,
+            toLayout: res.dualAngle,
+            convertType,
+            reason: res.reason || '볼러의 PAP 수치 및 틸트를 반영하여 Dual Angle 호환 수치를 정확하게 산출했습니다.',
+            specSummary
+          });
         }
       } else {
-        // Dual Angle -> 2LS 변환 (스펙 반영)
+        // Dual Angle -> 2LS 변환
         const res = await convertLayoutTo2LS({
-          currentLayout: sessionManager.layoutInfo,
+          currentLayout: fromLayout,
           bowler: customer,
           spec: sessionManager.customerInfo
         });
         if (res && res.twoLS) {
-          sessionManager.setLayoutInfo(res.twoLS);
-          const prefix = sessionManager.intent ? `${sessionManager.intent}\n` : '';
-          sessionManager.setIntent(`${prefix}[2LS 변환 적용: ${res.reason}]`);
-          sessionManager.setHasUnsavedChanges(true);
-          setFeedback({ message: '2LS 레이아웃으로 변환 완료!', tone: 'success' });
+          setConvertResultData({
+            fromLayout,
+            toLayout: res.twoLS,
+            convertType,
+            reason: res.reason || '볼러의 PAP 수치 및 틸트를 반영하여 Storm 2LS 지공 공식 수치를 정확하게 산출했습니다.',
+            specSummary
+          });
         }
       }
     } catch (err) {
       console.error("수동 변환 에러:", err);
       setFeedback({ message: '변환에 실패했습니다. 형식 및 네트워크를 확인해 주세요.', tone: 'danger' });
+      setShowConvertModal(false);
+    } finally {
+      setIsConvertingProcess(false);
     }
-  }, [sessionManager.layoutInfo, customer, sessionManager.customerInfo, sessionManager.intent, sessionManager.setLayoutInfo, sessionManager.setIntent, sessionManager.setHasUnsavedChanges]);
+  }, [sessionManager.layoutInfo, customer, sessionManager.customerInfo]);
+
+  // 변환 과정 모달에서 지공사가 [차트에 변환값 적용] 버튼 클릭 시 확정 대입
+  const handleApplyConvertedLayout = useCallback(() => {
+    if (!convertResultData) return;
+    sessionManager.setLayoutInfo(convertResultData.toLayout);
+    const prefix = sessionManager.intent ? `${sessionManager.intent}\n` : '';
+    sessionManager.setIntent(`${prefix}[${convertResultData.convertType} 적용: ${convertResultData.reason}]`);
+    sessionManager.setHasUnsavedChanges(true);
+    setShowConvertModal(false);
+    setFeedback({ message: `${convertResultData.convertType} 레이아웃 적용 완료!`, tone: 'success' });
+  }, [convertResultData, sessionManager.intent, sessionManager.setLayoutInfo, sessionManager.setIntent, sessionManager.setHasUnsavedChanges]);
 
   // 화면 꺼짐 방지(Screen Wake Lock) 가동 이펙트
   useEffect(() => {
@@ -300,6 +338,9 @@ export default function ChartDetail({
     setFeedback,
     setIsTimelineModalOpen
   });
+  const { expectedBallNameRef } = exitInterceptor;
+
+
 
   const handleShowTimelineClick = useCallback(async () => {
     if (sessionManager.hasUnsavedChanges) {
@@ -474,9 +515,15 @@ export default function ChartDetail({
         )}
 
         {sessionManager.isEditMode ? (
-          <Card className="w-full p-2 pb-6 sm:p-6 sm:pb-8 mt-1 sm:mt-1.5 mb-4 sm:mb-6 relative z-40 overflow-hidden animate-fade-in transform-gpu [backface-visibility:hidden]" data-testid="chart-edit-surface">
+          <Card className="w-full p-2 pb-2 sm:p-3 sm:pb-4 mt-0.5 mb-1.5 sm:mb-2 relative z-40 overflow-hidden animate-fade-in transform-gpu [backface-visibility:hidden]" data-testid="chart-edit-surface">
             <div ref={formRef} className="relative w-full h-full">
-              <ChartInputForm customer={customer} data={sessionManager.chartData} onChange={sessionManager.handleChartDataChange} />
+              <ChartInputForm 
+                customer={customer} 
+                data={sessionManager.chartData} 
+                onChange={sessionManager.handleChartDataChange}
+                customerInfo={sessionManager.customerInfo}
+                onCustomerInfoChange={sessionManager.updateCustomerInfo}
+              />
             </div>
           </Card>
         ) : (
@@ -685,12 +732,20 @@ export default function ChartDetail({
       )}
 
       {exitInterceptor.showNewChartNameModal && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
+        <ModalShell
+          isOpen={exitInterceptor.showNewChartNameModal}
+          onClose={() => {
+            exitInterceptor.setShowNewChartNameModal(false);
+            exitInterceptor.setIsExitingAfterSave(false);
+          }}
+          size="sm"
+          title="💾 새 차트 저장 안내"
+        >
           <form 
             onSubmit={async (e) => {
               e.preventDefault();
               const trimmedName = exitInterceptor.newChartNameInput.trim() || '차트';
-              exitInterceptor.expectedBallNameRef.current = trimmedName; 
+              expectedBallNameRef.current = trimmedName; 
               if (sessionManager.setBallName) {
                 sessionManager.setBallName(trimmedName);
               }
@@ -703,23 +758,29 @@ export default function ChartDetail({
                 onBack();
               }
             }}
-            className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl"
+            className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto"
           >
-            <div className="p-6">
-              <h3 className="text-lg font-black text-slate-800 mb-1.5">새 차트 저장 안내</h3>
-              <p className="text-xs text-slate-500 font-semibold mb-4 leading-normal">
-                새로 작성된 차트의 이름을 확인 및 수정해 주세요.
+            {/* 설정 영역 컨테이너 (시스템 표준 모달 스킨 일치화) */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              <div className="flex items-center gap-1.5">
+                <Icon name="ball" className="text-slate-700" size={18} />
+                <h3 className="text-sm font-black text-slate-800">볼링공 모델명 / 차트 이름</h3>
+              </div>
+              
+              <p className="text-[11px] font-bold text-slate-500 leading-normal">
+                새로 작성할 지공 차트의 공 이름과 식별 날짜를 확인 및 수정해 주세요.
               </p>
-              <div className="flex items-center w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
+
+              <div className="flex items-center w-full px-3 py-2.5 border border-slate-200 rounded-xl bg-white focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
                 <input
                   type="text"
                   value={exitInterceptor.newChartNameInput}
                   onChange={(e) => exitInterceptor.setNewChartNameInput(e.target.value)}
-                  className="flex-1 bg-transparent border-0 outline-none text-sm font-bold text-slate-800 placeholder-slate-400 focus:ring-0 p-0"
+                  className="flex-1 bg-transparent border-0 outline-none text-xs font-bold text-slate-800 placeholder-slate-400 focus:ring-0 p-0"
                   placeholder="공 이름 입력 (예: 코드블랙)"
                   autoFocus
                 />
-                <span className="text-sm font-bold text-slate-400/60 select-none pl-1 pointer-events-none unselectable">
+                <span className="text-xs font-bold text-slate-400/60 select-none pl-1 pointer-events-none unselectable">
                   &nbsp;{(() => {
                     const now = new Date();
                     const yy = String(now.getFullYear()).slice(-2);
@@ -730,10 +791,12 @@ export default function ChartDetail({
                 </span>
               </div>
             </div>
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-2">
+
+            {/* 액션 버튼 영역 (시스템 다른 모달과 100% 동일 규격) */}
+            <div className="flex justify-end gap-2 pt-2">
               <button 
                 type="button"
-                className="flex-1 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold text-sm active:scale-95 transition-all"
+                className="py-2 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-slate-700 text-sm font-black transition-colors active:scale-95 text-center"
                 onClick={() => {
                   exitInterceptor.setShowNewChartNameModal(false);
                   exitInterceptor.setIsExitingAfterSave(false);
@@ -741,21 +804,22 @@ export default function ChartDetail({
               >
                 취소
               </button>
-              <button 
+              <Button 
                 type="submit"
-                className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm active:scale-95 transition-all"
+                size="sm"
+                variant="primary"
               >
                 저장 / 확인
-              </button>
+              </Button>
             </div>
           </form>
-        </div>
+        </ModalShell>
       )}
 
       {showTemplateConfirm && (
         <ConfirmModal
           title="새 차트 만들기"
-          message="현재 기록의 지공 수치를 바탕으로 새로운 차트를 작성하시겠습니까? (기존 메모는 유지되며 공 이름, 작업내용, 관리내역은 초기화됩니다.)"
+          message="현재 기록을 바탕으로 새로운 차트를 작성하시겠습니까? (기존 메모는 유지되며 공 이름, 작업내용, 관리내역은 초기화됩니다.)"
           confirmLabel="확인"
           cancelLabel="취소"
           onConfirm={() => {
@@ -773,6 +837,14 @@ export default function ChartDetail({
         spec={sessionManager.customerInfo}
         ballName={sessionManager.ballName}
         onSelectRecommendation={handleSelectRecommendation}
+      />
+
+      <ConvertProcessModal
+        isOpen={showConvertModal}
+        onClose={() => setShowConvertModal(false)}
+        isConverting={isConvertingProcess}
+        convertData={convertResultData}
+        onApply={handleApplyConvertedLayout}
       />
 
       <FeedbackToast message={feedback?.message} onDismiss={() => setFeedback(null)} title={feedback?.title} tone={feedback?.tone} />

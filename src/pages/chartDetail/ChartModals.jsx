@@ -17,8 +17,7 @@ const MEMO_SHAPES = [
   { id: 'star', icon: 'star' },
 ];
 
-// 🟢 [프롭스 수령]: 상위 ChartModalManager가 연산하여 토스한 등급 권한(isBetaTester) 수령
-export const MemoModal = ({ title, memo, onSave, onDelete, isBetaTester }) => {
+export const MemoModal = ({ title, memo, onSave, onDelete }) => {
   const [text, setText] = useState(memo?.text || '');
   const [color, setColor] = useState(memo?.color || 'yellow');
   const [shape, setShape] = useState(memo?.shape || 'memo');
@@ -165,11 +164,6 @@ export const ExitConfirmModal = ({ onClose, onSaveAndExit, onExitWithoutSave }) 
     zClassName="z-[150]"
   >
     <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
-      {/* 설명 단락 */}
-      <p className="text-xs text-slate-500 leading-relaxed pl-1">
-        현재 작성 중인 지공 차트에 저장되지 않은 변경 사항이 감지되었습니다.
-      </p>
-
       {/* 경고 영역 컨테이너 (AI 설정 모달 디자인 기준 일치화) */}
       <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
         <div className="flex items-center gap-1.5">

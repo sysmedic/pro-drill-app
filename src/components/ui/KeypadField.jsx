@@ -3,7 +3,7 @@ import { cn } from './classNames.js';
 
 const buttonClasses = {
   default: 'h-[46px] w-full border border-slate-300 rounded-lg bg-white p-2.5 text-base font-semibold text-black text-left focus:outline-none focus:ring-2 focus:ring-indigo-500',
-  compact: 'h-10 w-full border border-slate-300 rounded-md bg-white px-2 py-1.5 text-[16px] sm:text-sm font-semibold text-black text-left focus:outline-none focus:ring-2 focus:ring-indigo-500',
+  compact: 'h-10 w-full border border-slate-300 rounded-md bg-white px-2 py-1.5 text-sm font-semibold text-black text-left focus:outline-none focus:ring-2 focus:ring-indigo-500',
 };
 
 const labelClasses = {

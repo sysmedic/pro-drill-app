@@ -9,7 +9,6 @@ import SettingsModal from '../customerManager/SettingsModal.jsx';
 export default function ChartModalManager({
   activeMemoId,
   setActiveMemoId, 
-  showHistoryModal,
   historyConfirm,
   renameRequest,
   deleteRequest,
@@ -21,16 +20,11 @@ export default function ChartModalManager({
   
   memos,
   history,
-  maxChartsAllowed,
-  currentChartsCount,
   viewingRecord,
   shareFilename,
   chartData,
   customer,
-  userTier,
-  ballName,
   
-  setMemos,
   setHistoryConfirm,
   setRenameRequest,
   setDeleteRequest,
@@ -39,12 +33,7 @@ export default function ChartModalManager({
   setSharePreview,
   setShareFilename,
   setShowDrillingGuide, 
-  setBallName,
-  setLayoutInfo,
-  setIntent,
-  setViewingRecord,
-  setSessionRecordId,
-  setSessionRecordName,
+  setShowSettingsModal,
   setIsEditMode,
   setFeedback,
   loadRecord,
@@ -123,11 +112,6 @@ export default function ChartModalManager({
           titleId="history-load-confirm-title"
         >
           <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
-            {/* 설명 단락 */}
-            <p className="text-xs text-slate-500 leading-relaxed pl-1">
-              선택한 지공 기록 데이터를 현재 편집 화면으로 불러옵니다.
-            </p>
-
             {/* 설정 영역 컨테이너 (클라우드 설정 모달 기준 일치화) */}
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
               <div className="flex items-center gap-1.5">
@@ -168,82 +152,120 @@ export default function ChartModalManager({
         </ModalShell>
       )}
 
-      {/* 이름 변경 모달 */}
+      {/* 이름 변경 모달 (ProDrill AI 설정 모달 디자인 기준 일치화) */}
       {renameRequest && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
+        <ModalShell
+          onClose={() => setRenameRequest(null)}
+          size="sm"
+          title={"\u270F\uFE0F 기록 이름 변경"}
+          zClassName="z-[200]"
+        >
           <form 
             onSubmit={(e) => {
               e.preventDefault();
               handleRenameRecord(inputName);
             }}
-            className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl"
+            className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto"
           >
-            <div className="p-6">
-              <h3 className="text-lg font-black text-slate-800 mb-1.5">기록 이름 변경</h3>
-              <p className="text-xs text-slate-500 font-semibold mb-4 leading-normal">
-                변경할 지공 기록의 이름을 입력해 주세요.
-              </p>
-              <div className="flex items-center w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
+            {/* 설명 단락 */}
+            <p className="text-xs text-slate-500 leading-relaxed pl-1">
+              변경할 지공 기록의 이름을 입력해 주세요.
+            </p>
+
+            {/* 설정 영역 컨테이너 (AI 설정 모달 디자인 기준 일치화) */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">{"\u270F\uFE0F"}</span>
+                <h3 className="text-sm font-black text-slate-800">지공 기록 이름 수정</h3>
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  새로운 지공 기록 명칭을 입력하신 후 [이름 변경] 버튼을 눌러주세요.
+                </p>
                 <input
                   type="text"
                   value={inputName}
                   onChange={(e) => setInputName(e.target.value)}
-                  className="flex-1 bg-transparent border-0 outline-none text-sm font-bold text-slate-800 placeholder-slate-400 focus:ring-0 p-0"
+                  className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:ring-1 focus:ring-indigo-500 outline-none transition-all font-bold text-slate-800"
                   placeholder="새로운 이름을 입력하세요"
                   autoFocus
                 />
               </div>
             </div>
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-2">
+
+            {/* 액션 버튼 영역 */}
+            <div className="flex justify-end gap-2 pt-2">
               <button 
+                onClick={() => setRenameRequest(null)} 
                 type="button"
-                className="flex-1 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold text-sm active:scale-95 transition-all"
-                onClick={() => setRenameRequest(null)}
+                className="py-2 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-slate-700 text-sm font-black transition-colors active:scale-95 text-center"
               >
                 취소
               </button>
-              <button 
+              <Button 
                 type="submit"
-                className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm active:scale-95 transition-all"
+                size="sm"
+                variant="primary"
               >
-                변경
-              </button>
+                이름 변경
+              </Button>
             </div>
           </form>
-        </div>
+        </ModalShell>
       )}
 
-      {/* 기록 삭제 확인 모달 */}
+      {/* 기록 삭제 확인 모달 (ProDrill AI 설정 모달 디자인 기준 일치화) */}
       {deleteRequest && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
-            <div className="p-6">
-              <h3 className="text-lg font-black text-slate-800 mb-2">기록 삭제</h3>
-              <p className="text-sm text-slate-600 font-medium leading-snug">
-                이 기록을 정말 삭제하시겠습니까?<br/>삭제된 기록은 복구할 수 없습니다.
-              </p>
+        <ModalShell
+          onClose={() => setDeleteRequest(null)}
+          size="sm"
+          title="🗑️ 기록 삭제"
+          zClassName="z-[200]"
+        >
+          <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
+            {/* 설명 단락 */}
+            <p className="text-xs text-slate-500 leading-relaxed pl-1">
+              선택하신 지공 기록을 삭제합니다.
+            </p>
+
+            {/* 경고 영역 컨테이너 (AI 설정 모달 디자인 기준 일치화) */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">{"\u26A0\uFE0F"}</span>
+                <h3 className="text-sm font-black text-slate-800">기록 삭제 경고</h3>
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  이 지공 기록을 정말 삭제하시겠습니까?<br />
+                  <strong className="text-rose-600 font-bold">※ 삭제된 지공 기록 데이터는 복구할 수 없습니다.</strong>
+                </p>
+              </div>
             </div>
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-2">
+
+            {/* 액션 버튼 영역 */}
+            <div className="flex justify-end gap-2 pt-2">
               <button 
+                onClick={() => setDeleteRequest(null)} 
                 type="button"
-                className="flex-1 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold text-sm active:scale-95 transition-all"
-                onClick={() => setDeleteRequest(null)}
+                className="py-2 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-slate-700 text-sm font-black transition-colors active:scale-95 text-center"
               >
                 취소
               </button>
-              <button 
-                type="button"
-                className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm active:scale-95 transition-all"
+              <Button 
                 onClick={() => {
                   handleDeleteRecord(deleteRequest);
                   setDeleteRequest(null);
                 }}
+                size="sm"
+                variant="danger"
               >
                 삭제
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
+        </ModalShell>
       )}
 
       {/* 불러온 차트 기록 변경 확인 모달 (ProDrill AI 설정 모달 디자인 기준 일치화) */}
@@ -255,14 +277,9 @@ export default function ChartModalManager({
             setShowModifyWarning(false);
           }}
           size="sm"
-          title={"\u26A0\uFE0F 불러온 차트 기록 변경"}
+          title={"\u26A0\uFE0F 차트 기록 변경"}
         >
           <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
-            {/* 설명 단락 */}
-            <p className="text-xs text-slate-500 leading-relaxed pl-1">
-              불러온 차트 기록의 수정 사항을 덮어씌울지 여부를 결정합니다.
-            </p>
-
             {/* 경고 영역 컨테이너 (AI 설정 모달 디자인 기준 일치화) */}
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
               <div className="flex items-center gap-1.5">

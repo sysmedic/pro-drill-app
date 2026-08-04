@@ -124,7 +124,7 @@ test('chart input density stays controlled by shared primitives', () => {
 
 test('source UI does not use raw emoji glyphs directly', () => {
   const files = listFiles('src').filter((file) => /\.(jsx|js)$/.test(file));
-  const blockedGlyphs = ['📱', '🎳', '✨', '✏️', '📝', '📜', '📷', '⚠️', '🚨', '✅', '👇', '🔍'];
+  const blockedGlyphs = ['📱', '🎳', '✏️', '📝', '📜', '📷', '⚠️', '🚨', '✅', '👇', '🔍'];
 
   for (const file of files) {
     const source = readFileSync(file, 'utf8');

@@ -83,17 +83,8 @@ export default function TaskDetailsCard({
           작업내용
         </span>
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* 🤖 AI 레이아웃 추천 버튼 신설 */}
-          <button
-            type="button"
-            onClick={onTriggerAiRecommend}
-            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-700 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1 cursor-pointer focus:outline-none shadow-md shadow-indigo-100"
-          >
-            🤖 AI 추천
-          </button>
-
-          {showNfcWriteButton && realNfcSupported && (
+        {showNfcWriteButton && realNfcSupported && (
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); if (onNfcWrite) onNfcWrite(e); }}
@@ -101,8 +92,8 @@ export default function TaskDetailsCard({
             >
               NFC 쓰기
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="relative z-10 mt-3 sm:mt-4">
@@ -111,17 +102,32 @@ export default function TaskDetailsCard({
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="볼링공 모델명 / 작업" onChange={e => onBallNameChange(e.target.value)} placeholder="예: 페이즈 4" type="text" value={ballName} />
-              <div className="relative w-full">
-                <Field label="레이아웃 (Dual Angle 등)" onChange={e => onLayoutInfoChange(e.target.value)} placeholder="예: 50 x 4 x 30" type="text" value={layoutInfo} />
-                {layoutInfo && (layoutInfo.includes('x') || layoutInfo.includes('X') || layoutInfo.includes('*') || layoutInfo.includes('-')) && (
-                  <button
-                    type="button"
-                    onClick={onTrigger2LsConvert}
-                    className="absolute right-2 top-1 hover:bg-slate-100 active:bg-slate-200 border border-slate-200 text-[10px] font-bold text-slate-600 px-1.5 py-0.5 rounded-lg active:scale-95 transition-all outline-none cursor-pointer"
-                  >
-                    {layoutInfo.includes('(2LS)') ? 'Dual 변환' : '2LS 변환'}
-                  </button>
-                )}
+              
+              <div className="relative w-full flex flex-col">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-slate-700">레이아웃 (Dual Angle 등)</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={onTriggerAiRecommend}
+                      className="px-2 py-0.5 bg-indigo-100/80 hover:bg-indigo-200 text-indigo-900 border border-indigo-200 rounded-md text-[11px] font-bold transition-all active:scale-95 flex items-center gap-1 cursor-pointer outline-none shadow-xs"
+                    >
+                      ✨ AI 추천
+                    </button>
+                    {layoutInfo && (layoutInfo.includes('x') || layoutInfo.includes('X') || layoutInfo.includes('*') || layoutInfo.includes('-')) && (
+                      <button
+                        type="button"
+                        onClick={onTrigger2LsConvert}
+                        className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-md text-[11px] font-bold transition-all active:scale-95 flex items-center gap-1 cursor-pointer outline-none shadow-xs"
+                      >
+                        🔄 {layoutInfo.includes('(2LS)') ? 'Dual 변환' : '2LS 변환'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="relative w-full">
+                  <Field label="" onChange={e => onLayoutInfoChange(e.target.value)} placeholder="예: 50 x 4 x 30" type="text" value={layoutInfo} />
+                </div>
               </div>
             </div>
             

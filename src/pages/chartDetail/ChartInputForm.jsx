@@ -89,7 +89,14 @@ function ChartKeypadField(props) {
   return <KeypadField density={FORM_DENSITY} {...props} />;
 }
 
-export default function ChartInputForm({ data = {}, customer = {}, historyData = [], onChange }) {
+export default function ChartInputForm({ 
+  data = {}, 
+  customer = {}, 
+  customerInfo = {}, 
+  onCustomerInfoChange = (() => {}), 
+  historyData = [], 
+  onChange 
+}) {
   const isThumbless = data?.isThumbless || false;
   const handedness = data?.handedness || 'right';
   const handCondition = data?.handCondition || {};
@@ -119,8 +126,14 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
     return options;
   }, [baseHoleSizeNum]);
 
-  const [activeAccordion, setActiveAccordion] = useState(null);
-  const toggleAccordion = (id) => setActiveAccordion(prev => prev === id ? null : id);
+  const [openAccordions, setOpenAccordions] = useState(() => {
+    const expandAll = localStorage.getItem('expandInputAccordions') === 'true';
+    if (expandAll) {
+      return { bridge: true, hand: true, bowlerSpec: true, span: true, first: true, second: true, thumb: true };
+    }
+    return {};
+  });
+  const toggleAccordion = (id) => setOpenAccordions(prev => ({ ...prev, [id]: !prev[id] }));
 
   const [keypad, setKeypad] = useState({ isOpen: false, field: null, value: '', title: '', mode: 'fraction' });
   
@@ -159,7 +172,10 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
   };
 
   const handleKeypadConfirm = (newValue) => {
-    if (keypad.field?.startsWith('thumbDetails.')) {
+    if (keypad.field?.startsWith('customerInfo.')) {
+      const key = keypad.field.split('.')[1];
+      onCustomerInfoChange(p => ({ ...p, [key]: newValue }));
+    } else if (keypad.field?.startsWith('thumbDetails.')) {
       const key = keypad.field.split('.')[1];
       onChange({ ...data, thumbDetails: { ...thumbDetails, [key]: newValue } });
     } else {
@@ -253,6 +269,16 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
     return p.length > 0 ? p.join(' / ') : '';
   };
 
+  const getBowlerSpecSummary = (info = {}) => {
+    const p = [];
+    if (info.trackFlare) p.push(`플레어 ${info.trackFlare}`);
+    if (info.tilt) p.push(`틸트 ${info.tilt}`);
+    if (info.rpm) p.push(`${info.rpm}r`);
+    if (info.ballSpeed) p.push(`${info.ballSpeed}k`);
+    if (info.papX || info.papY) p.push(`PAP ${info.papX || '-'}:${info.papY || '-'}`);
+    return p.length > 0 ? p.join(' / ') : '';
+  };
+
   const getFingerSummary = (pitch) => {
     if (!pitch) return '';
     const parts = [];
@@ -294,7 +320,7 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
   };
 
   const renderSection = (id, title, summary, children) => (
-    <DisclosureSection density={FORM_DENSITY} id={id} isOpen={activeAccordion === id} onToggle={() => toggleAccordion(id)} summary={summary} title={title}>
+    <DisclosureSection density={FORM_DENSITY} id={id} isOpen={!!openAccordions[id]} onToggle={() => toggleAccordion(id)} summary={summary} title={title}>
       {children}
     </DisclosureSection>
   );
@@ -339,31 +365,46 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
   };
 
   return (
-    <div className="w-full flex flex-col gap-2.5 pb-6">
-      <div className="relative flex items-center justify-center p-2.5 bg-slate-50 rounded-lg shadow-sm border border-slate-200 min-h-[50px]">
-        <div className="absolute left-3 flex items-center"><h3 className="font-bold text-base text-indigo-900 shrink-0 whitespace-nowrap">{isLeft ? '왼손' : '오른손'}</h3></div>
-        <div className="flex bg-slate-200 rounded-md p-1 border border-slate-300">
-          <button className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-md transition-colors ${!isThumbless ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => onChange({ ...data, isThumbless: false })}>쓰리핑거</button>
-          <button className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-md transition-colors ${isThumbless ? 'bg-white shadow text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => onChange({ ...data, isThumbless: true })}>덤리스</button>
+    <div className="w-full flex flex-col gap-2 pb-1.5">
+      {/* 0. 투구 스타일 박스 (사용손 / 쓰리핑거 · 덤리스) */}
+      <div className="w-full flex items-center justify-between px-3 py-2.5 bg-indigo-50/40 border border-indigo-300 shadow-sm rounded-lg">
+        <h3 className="font-bold text-base text-indigo-900 shrink-0">
+          {isLeft ? '왼손' : '오른손'}
+        </h3>
+        <div className="flex bg-slate-200/80 rounded-md p-1 border border-slate-300/80">
+          <button 
+            type="button"
+            className={`px-3 py-1 text-xs sm:text-sm font-extrabold rounded transition-colors ${!isThumbless ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`} 
+            onClick={() => onChange({ ...data, isThumbless: false })}
+          >
+            쓰리핑거
+          </button>
+          <button 
+            type="button"
+            className={`px-3 py-1 text-xs sm:text-sm font-extrabold rounded transition-colors ${isThumbless ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`} 
+            onClick={() => onChange({ ...data, isThumbless: true })}
+          >
+            덤리스
+          </button>
         </div>
       </div>
 
-      {/* 1. Bridge 박스 */}
-      {renderSection('bridge', 'Bridge', bridge, (
-        <div className="flex items-center justify-between gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-          <label className="text-xs font-bold text-slate-600 whitespace-nowrap">브릿지 간격</label>
-          <ChartSelectField
-            aria-label="브릿지 간격"
-            allowCustom
-            className="max-w-[200px]"
-            customPrompt="브릿지 수치를 직접 입력하세요:"
-            label=""
-            options={['1/8', '3/16', '1/4']}
-            value={bridge || ''}
-            onChange={(v) => onChange({ ...data, bridge: v })}
-          />
-        </div>
-      ))}
+      {/* 1. Bridge 박스 (핑거선택박스와 100% 동일한 수평 한 줄 레이아웃 및 외곽선 스킨) */}
+      <div className="w-full flex items-center justify-between px-3 py-2.5 bg-indigo-50/40 border border-indigo-300 shadow-sm rounded-lg">
+        <h3 className="font-bold text-base text-indigo-900 shrink-0">
+          Bridge
+        </h3>
+        <ChartSelectField
+          aria-label="브릿지 간격"
+          allowCustom
+          className="max-w-[180px] sm:max-w-[200px]"
+          customPrompt="브릿지 수치를 직접 입력하세요:"
+          label=""
+          options={['1/8', '3/16', '1/4']}
+          value={bridge || ''}
+          onChange={(v) => onChange({ ...data, bridge: v })}
+        />
+      </div>
 
       {/* 2. 핸드 컨디션 박스 */}
       {renderSection('hand', '핸드 컨디션', getHandCondSummary(handCondition), (
@@ -371,6 +412,44 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
           <ChartSelectField label="건/습" value={handCondition.moisture} onChange={v => updateCondition('moisture', v)} options={MOISTURE_OPTIONS} />
           <ChartSelectField label="중약지" value={handCondition.fingerStiffness} onChange={v => updateCondition('fingerStiffness', v)} options={STIFFNESS_OPTIONS} />
           <ChartSelectField label="엄지" value={handCondition.thumbStiffness} onChange={v => updateCondition('thumbStiffness', v)} options={STIFFNESS_OPTIONS} />
+        </div>
+      ))}
+
+      {/* 2.5 볼러 스펙 박스 */}
+      {renderSection('bowlerSpec', '볼러 스펙', getBowlerSpecSummary(customerInfo), (
+        <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+          <ChartSelectField 
+            label="트랙 플레어" 
+            value={customerInfo.trackFlare || ''} 
+            onChange={v => onCustomerInfoChange(p => ({ ...p, trackFlare: v }))} 
+            options={["High", "Medium", "Low"]} 
+          />
+          <ChartSelectField 
+            label="틸트" 
+            value={customerInfo.tilt || ''} 
+            onChange={v => onCustomerInfoChange(p => ({ ...p, tilt: v }))} 
+            options={["Low", "Medium", "High"]} 
+          />
+          <ChartKeypadField 
+            label="RPM" 
+            onOpen={() => openKeypad('customerInfo.rpm', customerInfo.rpm, 'RPM', 'number')} 
+            value={customerInfo.rpm || ''} 
+          />
+          <ChartKeypadField 
+            label="구속 (km/h)" 
+            onOpen={() => openKeypad('customerInfo.ballSpeed', customerInfo.ballSpeed, '구속 (km/h)', 'number')} 
+            value={customerInfo.ballSpeed || ''} 
+          />
+          <ChartKeypadField 
+            label="PAP (Over)" 
+            onOpen={() => openKeypad('customerInfo.papX', customerInfo.papX, 'PAP (Over)')} 
+            value={customerInfo.papX || ''} 
+          />
+          <ChartKeypadField 
+            label="PAP (Up/Down)" 
+            onOpen={() => openKeypad('customerInfo.papY', customerInfo.papY, 'PAP (Up/Down)')} 
+            value={customerInfo.papY || ''} 
+          />
         </div>
       ))}
 
@@ -389,10 +468,10 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
       <DisclosureSection 
         density={FORM_DENSITY} 
         id="first" 
-        isOpen={activeAccordion === 'first'} 
+        isOpen={!!openAccordions['first']} 
         onToggle={() => toggleAccordion('first')} 
         summary={getFingerSummary(midPitch)} 
-        title={renderMidTitleBar(activeAccordion === 'first')}
+        title={renderMidTitleBar(!!openAccordions['first'])}
       >
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={midPitch.up} onChange={v => updateMid('up', v)} options={filteredPitchOptions} /><ChartSelectField label="Forward (▼)" value={midPitch.down} onChange={v => updateMid('down', v)} options={filteredPitchOptions} /><ChartSelectField label="Lateral" value={midPitch.lat} onChange={v => updateMid('lat', v)} options={filteredPitchOptions} /><ChartSelectField label="Lateral 방향" value={midPitch.latDir} onChange={v => updateMid('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
@@ -409,7 +488,7 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
       <DisclosureSection 
         density={FORM_DENSITY} 
         id="second" 
-        isOpen={activeAccordion === 'second'} 
+        isOpen={!!openAccordions['second']} 
         onToggle={() => toggleAccordion('second')} 
         summary={getFingerSummary(ringPitch)} 
         title={secondLabel}
@@ -432,10 +511,10 @@ export default function ChartInputForm({ data = {}, customer = {}, historyData =
         <DisclosureSection 
           density={FORM_DENSITY} 
           id="thumb" 
-          isOpen={activeAccordion === 'thumb'} 
+          isOpen={!!openAccordions['thumb']} 
           onToggle={() => toggleAccordion('thumb')} 
           summary={getThumbSummary(thumbPitch, thumbDetails, ovalAngle, thumbOffset)} 
-          title="Thumb"
+          title="엄지 (Thumb)"
         >
           <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">

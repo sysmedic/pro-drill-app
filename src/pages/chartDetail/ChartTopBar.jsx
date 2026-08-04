@@ -1,22 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import TopBarShell from '../../components/layout/TopBarShell.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Icon from '../../components/ui/Icon.jsx';
-import { calculateGracePeriod } from '../../lib/userLicenseManager.js';
 
 // ⏱️ [시간 세밀 조정 브릿지]: 교차 주기를 제어하는 ms 단위 변수입니다.
 const ROLLING_INTERVAL = 3000;
 
 export default function ChartTopBar({
   isEditMode,
-  utilityState,
   viewingRecord,
-  userTier,
   onBack,
   onStartMemo,
   onSave,
   onToggleEditMode,
-  onToggleUtility,
   onShowTimeline,
   onConvertTemplate,
   sessionRecordId,
@@ -36,18 +32,6 @@ export default function ChartTopBar({
 
     return () => clearInterval(interval);
   }, [viewingRecord, sessionRecordId]);
-
-  // 프리미엄 사용 권한을 master, certified 등급 또는 Trial 유예 경고 전 사용자로 허용합니다.
-  const isPremiumUser = (() => {
-    if (!userTier) return false;
-    const ut = userTier.toLowerCase();
-    if (['master', 'certified'].includes(ut)) return true;
-    if (ut === 'trial') {
-      const graceInfo = calculateGracePeriod();
-      return !graceInfo.isExpired && graceInfo.daysLeft > 30;
-    }
-    return false;
-  })();
 
   // 기존 불러오기 기록이 존재하거나 새 차트가 성공적으로 저장(ID 발급)된 모든 경우를 판단
   const isSavedChart = viewingRecord || sessionRecordId;
@@ -85,7 +69,7 @@ export default function ChartTopBar({
     >
       <div className="flex justify-between items-center w-full gap-2">
         <div className="flex gap-1.5 sm:gap-2 shrink-0">
-          <Button aria-label="뒤로" className="max-[420px]:[&>span.leading-none]:hidden" icon="back" onClick={onBack} size="sm" variant="secondary">뒤로</Button>
+          <Button aria-label="고객관리" className="max-[420px]:[&>span.leading-none]:hidden" icon="back" onClick={onBack} size="sm" variant="secondary">고객관리</Button>
           
           {/* 유틸 버튼 (임시 비활성화 처리) */}
           {/* {!isEditMode && isPremiumUser && (
@@ -131,7 +115,7 @@ export default function ChartTopBar({
       </div>
       
       {/* 하단 기록 배너 */}
-      {isSavedChart && (
+      {!isEditMode && isSavedChart && (
         <button 
           type="button"
           onClick={onConvertTemplate}

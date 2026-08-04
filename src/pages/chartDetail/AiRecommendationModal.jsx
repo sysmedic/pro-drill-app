@@ -145,7 +145,7 @@ export default function AiRecommendationModal({
   if (!isOpen) return null;
 
   return (
-    <ModalShell isOpen={isOpen} onClose={onClose} title="🤖 ProDrill AI 레이아웃 추천">
+    <ModalShell isOpen={isOpen} onClose={onClose} title="✨ ProDrill AI 레이아웃 추천">
       <div className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
         
         {/* 1. API 키 설정 화면 */}

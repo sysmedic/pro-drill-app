@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import PageShell from '../components/layout/PageShell.jsx';
-import { ConfirmModal, FeedbackToast } from '../components/ui/Dialogs.jsx';
+import { FeedbackToast } from '../components/ui/Dialogs.jsx';
+import Button from '../components/ui/Button.jsx';
+import ModalShell from '../components/ui/ModalShell.jsx';
 import CustomerHeader from './customerManager/CustomerHeader.jsx';
 import CustomerList from './customerManager/CustomerList.jsx';
 import CustomerFormModal from './customerManager/CustomerFormModal.jsx';
@@ -13,6 +15,7 @@ import BackupSettingsModal from './customerManager/BackupSettingsModal.jsx'; // 
 import AiSettingsModal from './customerManager/AiSettingsModal.jsx'; // 🤖 AI 설정 모달 임포트
 import AdminSettingsModal from './customerManager/AdminSettingsModal.jsx'; // 👑 마스터 제어실 모달 임포트
 import { isLicenseCertified } from '../lib/userLicenseManager.js';
+import { checkForAppUpdate } from '../lib/pwaUpdate.js';
 
 export default function CustomerManagement({ 
   onSelectCustomer, 
@@ -164,6 +167,7 @@ export default function CustomerManagement({
           }
         }}
         onOpenAdminSettings={() => setShowAdminSettingsModal(true)}
+        onCheckUpdate={() => checkForAppUpdate(setFeedback)}
         userTier={userTier}
         isAiAllowed={['master', 'certified'].includes(userTier?.toLowerCase()) || (graceInfo && !graceInfo.isExpired && graceInfo.daysLeft > 30)}
         isBackupAllowed={['master', 'certified'].includes(userTier?.toLowerCase())}
@@ -229,51 +233,126 @@ export default function CustomerManagement({
         <CustomerFormModal customerData={customerData} editId={editId} onChange={setCustomerData} onClose={() => setShowModal(false)} onSubmit={handleSaveCustomer} />
       )}
 
-      {/* 1차 삭제 확인 모달 */}
+      {/* 1차 삭제 확인 모달 (ProDrill AI 설정 모달 디자인 기준 일치화) */}
       {deleteRequest && !showSecondDeleteConfirm && (
-        <ConfirmModal
-          confirmLabel="삭제"
-          danger={true}
-          message={`${deleteRequest.name}님을 삭제할까요?`}
-          onCancel={() => { setDeleteRequest(null); setShowSecondDeleteConfirm(false); }}
-          onConfirm={() => setShowSecondDeleteConfirm(true)}
-          title="고객 삭제 확인"
+        <ModalShell
+          onClose={() => { setDeleteRequest(null); setShowSecondDeleteConfirm(false); }}
+          size="sm"
+          title="🗑️ 고객 삭제 확인"
           titleId="first-delete-confirm-title"
-        />
+          zClassName="z-[150]"
+        >
+          <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
+            {/* 설명 단락 */}
+            <p className="text-xs text-slate-500 leading-relaxed pl-1">
+              선택하신 고객 정보 삭제 절차를 진행합니다.
+            </p>
+
+            {/* 경고 영역 컨테이너 (AI 설정 모달 디자인 기준 일치화) */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">{"\u26A0\uFE0F"}</span>
+                <h3 className="text-sm font-black text-slate-800">고객 삭제 안내</h3>
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  <strong className="text-slate-800 font-extrabold">{deleteRequest.name}</strong> 님을 고객 목록에서 삭제하시겠습니까?
+                </p>
+              </div>
+            </div>
+
+            {/* 액션 버튼 영역 */}
+            <div className="flex justify-end gap-2 pt-2">
+              <button 
+                onClick={() => { setDeleteRequest(null); setShowSecondDeleteConfirm(false); }}
+                type="button"
+                className="py-2 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-slate-700 text-sm font-black transition-colors active:scale-95 text-center"
+              >
+                취소
+              </button>
+              <Button 
+                onClick={() => setShowSecondDeleteConfirm(true)}
+                size="sm"
+                variant="danger"
+              >
+                다음 단계
+              </Button>
+            </div>
+          </div>
+        </ModalShell>
       )}
 
-      {/* 2차 삭제 확인 모달 */}
+      {/* 2차 삭제 확인 모달 (ProDrill AI 설정 모달 디자인 기준 일치화) */}
       {deleteRequest && showSecondDeleteConfirm && (
-        <ConfirmModal
-          confirmLabel="영구 삭제"
-          danger={true}
-          message={`정말로 ${deleteRequest.name}님을 영구 삭제하시겠습니까?\n이 고객과 연결된 모든 지공 차트도 함께 삭제됩니다.`}
-          onCancel={() => { setDeleteRequest(null); setShowSecondDeleteConfirm(false); }}
-          onConfirm={async () => {
-            try {
-              const { deleteChartHistory } = await import('../lib/chartHistoryStorage.js');
-              await deleteChartHistory(deleteRequest);
-
-              const updatedCustomers = customers.filter(c => c.id !== deleteRequest.id);
-              const success = await saveCustomers(updatedCustomers);
-
-              if (success) {
-                setCustomers(updatedCustomers);
-                setDeleteRequest(null);
-                setShowSecondDeleteConfirm(false);
-                setFeedback({ message: '고객 정보와 관련 차트가 모두 삭제되었습니다.', tone: 'success' });
-                autoSyncOnChange(); // ☁️ 변경사항 자동 백업 트리거
-              } else {
-                setFeedback({ message: '삭제 실패', tone: 'danger' });
-              }
-            } catch (error) {
-              console.error("삭제 중 오류:", error);
-              setFeedback({ message: '삭제 작업 중 오류가 발생했습니다.', tone: 'danger' });
-            }
-          }}
-          title="최종 삭제 확인"
+        <ModalShell
+          onClose={() => { setDeleteRequest(null); setShowSecondDeleteConfirm(false); }}
+          size="sm"
+          title={"\uD83D\uDEA8 최종 영구 삭제 확인"}
           titleId="final-delete-confirm-title"
-        />
+          zClassName="z-[150]"
+        >
+          <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
+            {/* 설명 단락 */}
+            <p className="text-xs text-slate-500 leading-relaxed pl-1">
+              고객 데이터 및 연결된 모든 지공 차트 기록의 최종 영구 파기 단계입니다.
+            </p>
+
+            {/* 경고 영역 컨테이너 (AI 설정 모달 디자인 기준 일치화) */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">{"\uD83D\uDEA8"}</span>
+                <h3 className="text-sm font-black text-slate-800">영구 파기 경고</h3>
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  정말로 <strong className="text-slate-800 font-extrabold">{deleteRequest.name}</strong> 님을 영구 삭제하시겠습니까?<br /><br />
+                  <strong className="text-rose-600 font-bold">※ 이 고객과 연결된 모든 지공 차트 기록도 함께 영구 삭제되며 복구할 수 없습니다.</strong>
+                </p>
+              </div>
+            </div>
+
+            {/* 액션 버튼 영역 */}
+            <div className="flex justify-end gap-2 pt-2">
+              <button 
+                onClick={() => { setDeleteRequest(null); setShowSecondDeleteConfirm(false); }}
+                type="button"
+                className="py-2 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-slate-700 text-sm font-black transition-colors active:scale-95 text-center"
+              >
+                취소
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const { deleteChartHistory } = await import('../lib/chartHistoryStorage.js');
+                    await deleteChartHistory(deleteRequest);
+
+                    const updatedCustomers = customers.filter(c => c.id !== deleteRequest.id);
+                    const success = await saveCustomers(updatedCustomers);
+
+                    if (success) {
+                      setCustomers(updatedCustomers);
+                      setDeleteRequest(null);
+                      setShowSecondDeleteConfirm(false);
+                      setFeedback({ message: '고객 정보와 관련 차트가 모두 삭제되었습니다.', tone: 'success' });
+                      autoSyncOnChange(); // ☁️ 변경사항 자동 백업 트리거
+                    } else {
+                      setFeedback({ message: '삭제 실패', tone: 'danger' });
+                    }
+                  } catch (error) {
+                    console.error("삭제 중 오류:", error);
+                    setFeedback({ message: '삭제 작업 중 오류가 발생했습니다.', tone: 'danger' });
+                  }
+                }}
+                type="button"
+                className="py-2 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-black transition-colors active:scale-95 text-center shadow-md shadow-rose-600/10"
+              >
+                영구 삭제
+              </button>
+            </div>
+          </div>
+        </ModalShell>
       )}
 
       {showSettingsModal && (
