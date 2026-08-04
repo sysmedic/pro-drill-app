@@ -5,8 +5,8 @@ import PageShell from './PageShell.jsx';
 const { FIXED_SURFACE_WIDTH_CLASS, LAYER_CLASS } = PageShell.tokens;
 
 const variantClasses = {
-  pageHeader: 'bg-white/95 backdrop-blur-sm rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200 border-b-[4px] border-b-slate-300',
-  toolbar: 'bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200',
+  pageHeader: 'bg-slate-50/95 backdrop-blur-md rounded-xl shadow-sm border border-slate-400',
+  toolbar: 'bg-slate-50/95 backdrop-blur-md rounded-xl shadow-sm border border-slate-400',
 };
 
 const layoutClasses = {

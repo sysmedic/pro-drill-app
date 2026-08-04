@@ -64,7 +64,7 @@ export default function ChartTopBar({
     <TopBarShell 
       fixed 
       variant="toolbar" 
-      className="flex flex-col w-full cursor-pointer select-none"
+      className="flex flex-col cursor-pointer select-none"
       onClick={handleTaskbarClick}
     >
       <div className="flex justify-between items-center w-full gap-2">

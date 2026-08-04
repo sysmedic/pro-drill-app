@@ -44,14 +44,15 @@ export default function BowlerSpecCard({
       <button
         type="button"
         aria-expanded={isOpen}
-        className="flex w-full items-center justify-between select-none relative z-10 gap-2 rounded-xl text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+        className="flex flex-col sm:flex-row w-full items-start sm:items-center justify-between select-none relative z-10 gap-1.5 sm:gap-2 rounded-xl text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
         onClick={onToggleOpen}
       >
-        <span className="flex items-center gap-2 shrink-0">
-          <span className="text-xl sm:text-2xl font-black text-slate-800 flex items-center flex-wrap gap-1.5">
+        {/* 1행: 고객 이름 및 라벨 (좌) & 화살표 버튼 (모바일 우측) */}
+        <div className="flex items-center justify-between w-full sm:w-auto shrink-0 gap-2">
+          <span className="text-xl sm:text-2xl font-black text-slate-800 flex items-center flex-wrap gap-1.5 min-w-0">
             {customer.name}
             {(customer.gender || customer.hand || customer.style || customer.style2) && (
-              <span className="text-slate-500">
+              <span className="text-slate-500 text-sm sm:text-base font-bold">
                 {customer.gender && (
                   <>
                     <span className={customer.gender === '남' ? 'text-blue-400' : customer.gender === '여' ? 'text-red-400' : ''}>
@@ -64,10 +65,16 @@ export default function BowlerSpecCard({
               </span>
             )}
           </span>
-        </span>
 
+          {/* 모바일 전용 화살표 아이콘 */}
+          <span className="sm:hidden flex items-center justify-center w-7 h-7 rounded-full bg-slate-50 text-slate-400 shrink-0">
+            <Icon name="chevronDown" className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} size={15} strokeWidth={3} />
+          </span>
+        </div>
+
+        {/* 2행(모바일 전용 앞단/왼쪽 정렬) / 1행 우측(데스크톱) */}
         {isOpen ? (
-          <div className="flex flex-1 items-center justify-end animate-fade-in gap-2.5 sm:gap-4 flex-wrap ml-auto px-1 mr-1">
+          <div className="flex items-center justify-start sm:justify-end animate-fade-in gap-3 sm:gap-4 w-full sm:w-auto mt-1.5 sm:mt-0 pt-1.5 sm:pt-0 border-t border-slate-100/80 sm:border-t-0 whitespace-nowrap overflow-x-auto px-0.5">
             <span className="text-[11px] sm:text-xs font-bold text-slate-500 whitespace-nowrap flex items-center gap-1">
               <span className="text-[10px] bg-slate-200 text-slate-500 px-1 rounded font-black">중약지</span>
               <span className="text-slate-800 font-extrabold">{chartData.handCondition?.fingerStiffness || '-'}</span>
@@ -82,7 +89,7 @@ export default function BowlerSpecCard({
             </span>
           </div>
         ) : (
-          <span className="flex flex-1 items-center justify-end animate-fade-in overflow-hidden ml-auto px-1">
+          <span className="flex items-center justify-start sm:justify-end animate-fade-in overflow-hidden w-full sm:w-auto mt-1 sm:mt-0 pt-1 sm:pt-0 border-t border-slate-100/80 sm:border-t-0">
             {(customerInfo.papX || customerInfo.papY || customerInfo.ballSpeed || customerInfo.rpm) && (
               <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded-md border border-slate-200 shadow-sm inline-block truncate max-w-full">
                 {customerInfo.papX || customerInfo.papY ? <span>{customerInfo.papX || '-'} : {customerInfo.papY || '-'}</span> : null}
@@ -95,7 +102,8 @@ export default function BowlerSpecCard({
           </span>
         )}
 
-        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 transition-colors shrink-0">
+        {/* 데스크톱 전용 화살표 아이콘 */}
+        <span className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 transition-colors shrink-0 ml-auto">
           <Icon name="chevronDown" className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} size={16} strokeWidth={3} />
         </span>
       </button>

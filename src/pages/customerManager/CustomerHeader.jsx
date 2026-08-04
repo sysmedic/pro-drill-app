@@ -85,8 +85,8 @@ export default function CustomerHeader({
   return (
     <TopBarShell 
       fixed 
-      variant="toolbar" 
-      className="flex flex-col w-full p-4 bg-white rounded-2xl shadow-sm min-h-[110px] cursor-pointer select-none"
+      variant="pageHeader" 
+      className="flex flex-col min-h-[110px] cursor-pointer select-none"
       onClick={handleTaskbarClick}
     >
       <div className="flex justify-between items-start mb-1">

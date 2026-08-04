@@ -129,7 +129,7 @@ export default function CustomerManagement({
   };
 
   const filtered = customers.filter(c => c.name.includes(searchQuery) || (c.phone && c.phone.includes(searchQuery)));
-  const displayedCustomers = filtered.slice(0, 30);
+  const displayedCustomers = filtered.slice(0, 100);
 
   if (sortType === 'name') {
     displayedCustomers.sort((a, b) => a.name.localeCompare(b.name));
