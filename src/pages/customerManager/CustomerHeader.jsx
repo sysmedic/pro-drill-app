@@ -1,10 +1,10 @@
-/* global NDEFReader */
 import { useState, useEffect } from 'react';
 import TopBarShell from '../../components/layout/TopBarShell.jsx';
 
 export default function CustomerHeader({ 
   totalCount, currentCount, onAdd, searchQuery, setSearchQuery, sortType, setSortType, 
   onLogout, onOpenSettings, onOpenEnvironmentSettings,
+  // eslint-disable-next-line no-unused-vars
   onOpenAiSettings, onOpenBackupSettings, onOpenAdminSettings, onCheckUpdate, userTier, isAiAllowed, isBackupAllowed, onNfcScan 
 }) {
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
@@ -20,14 +20,13 @@ export default function CustomerHeader({
     };
   }, [isHamburgerOpen]);
 
-  // 🟢 1. 앱을 켤 때 영구 기억 장소(localStorage)를 검사하여 버튼 노출 여부 결정
+  /* 🟢 NFC 스캔 버튼 임시 비활성화 처리
   const [realNfcSupported, setRealNfcSupported] = useState(() => {
     if (typeof window === 'undefined') return false;
     if (localStorage.getItem('nfcUnsupportedDevice') === 'true') return false;
     return 'NDEFReader' in window;
   });
 
-  // 🟢 2. [양방향 실시간 동기화] 다른 컴포넌트(UtilitySheet)에서 NFC 미지원이 감지되면 즉시 함께 숨김
   useEffect(() => {
     const handleNfcUnsupportedEvent = () => {
       setRealNfcSupported(false);
@@ -36,7 +35,6 @@ export default function CustomerHeader({
     return () => window.removeEventListener('nfc-device-unsupported', handleNfcUnsupportedEvent);
   }, []);
 
-  // 🟢 3. 하드웨어 검증 및 영구 소멸 로직
   const handleNfcScanWithHardwareCheck = async () => {
     if (!('NDEFReader' in window)) {
       window['alert']("❌ NFC 기능을 지원하지 않는 환경입니다. (NFC item not supported)");
@@ -67,6 +65,7 @@ export default function CustomerHeader({
       window.dispatchEvent(new Event('nfc-device-unsupported'));
     }
   };
+  */
 
   // 🟢 4. 테스크바 빈 영역 트리플 클릭 감지 잠금 로직
   const handleTaskbarClick = (e) => {
@@ -183,14 +182,15 @@ export default function CustomerHeader({
         </div>
 
         <div className="flex items-center gap-1.5">
-          {realNfcSupported && onNfcScan && (
+          {/* 🏷️ 스캔 버튼 임시 비활성화 처리 */}
+          {/* {realNfcSupported && onNfcScan && (
             <button
               onClick={handleNfcScanWithHardwareCheck}
               className="bg-emerald-200 text-emerald-800 border border-emerald-300 hover:bg-emerald-300 px-4 py-2 rounded-xl font-bold flex items-center gap-1 shadow-md shadow-emerald-100 active:scale-95 transition-all"
             >
               <span className="text-lg">🏷️</span> 스캔
             </button>
-          )}
+          )} */}
 
           <button 
             onClick={onAdd}
