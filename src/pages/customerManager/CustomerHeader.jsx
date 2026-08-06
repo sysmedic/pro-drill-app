@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import TopBarShell from '../../components/layout/TopBarShell.jsx';
+import { signOutGoogle, isGoogleSignedIn } from '../../lib/googleDriveBackup.js';
 
 export default function CustomerHeader({ 
   totalCount, currentCount, onAdd, searchQuery, setSearchQuery, sortType, setSortType, 
@@ -88,29 +89,29 @@ export default function CustomerHeader({
       className="flex flex-col min-h-[110px] cursor-pointer select-none"
       onClick={handleTaskbarClick}
     >
-      <div className="flex justify-between items-start mb-1">
-        <div className="flex items-center gap-2 relative">
+      <div className="flex justify-between items-center mb-1.5 h-10">
+        <div className="flex items-center gap-1.5 relative">
           <div className="z-[999] shrink-0 flex items-center relative">
-            {/* ☰ 햄버거 박스로 복원 */}
+            {/* ☰ 햄버거 박스 (시작점 일치 -ml-1, 위쪽 이동 -mt-1.5 [1과 2 정중앙], 크기 10%+ 확대 w-10 h-10 text-2xl) */}
             <button 
               onClick={(e) => { e.stopPropagation(); setIsHamburgerOpen(!isHamburgerOpen); }}
-              className="-mt-1 p-1 text-xl text-slate-600 hover:bg-slate-100 rounded-lg transition-colors leading-none"
+              className="w-10 h-10 -ml-1 -mt-1.5 text-2xl text-slate-600 hover:bg-slate-100 rounded-xl transition-colors flex items-center justify-center leading-none"
               title="메뉴"
               aria-label="메뉴"
             >
               ☰
             </button>
 
-            {/* 드롭다운 오버레이 */}
+            {/* 드롭다운 오버레이 (10%+ 스케일업 & 좌측 이격 튜닝: left-2, pl-5, pr-4, w-48) */}
             {isHamburgerOpen && (
-              <div className="absolute left-0 top-8 z-[1000] w-40 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 flex flex-col animate-fade-in">
+              <div className="absolute left-2 top-11 z-[1000] w-48 bg-white border border-slate-200 rounded-2xl shadow-2xl py-2.5 flex flex-col animate-fade-in">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsHamburgerOpen(false);
                     onOpenEnvironmentSettings();
                   }}
-                  className="px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-1.5"
+                  className="pl-5 pr-4 py-3 text-sm font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-2.5"
                 >
                   ⚙️ 환경 설정
                 </button>
@@ -120,7 +121,7 @@ export default function CustomerHeader({
                     setIsHamburgerOpen(false);
                     onOpenAiSettings();
                   }}
-                  className={`px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-1.5 ${
+                  className={`pl-5 pr-4 py-3 text-sm font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-2.5 ${
                     !isAiAllowed ? 'opacity-40' : ''
                   }`}
                 >
@@ -132,32 +133,32 @@ export default function CustomerHeader({
                     setIsHamburgerOpen(false);
                     onOpenSettings();
                   }}
-                  className="px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-1.5"
+                  className="pl-5 pr-4 py-3 text-sm font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-2.5"
                 >
-                  ☁️ 클라우드
+                  ☁️ 클라우드 백업
                 </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsHamburgerOpen(false);
-                    onOpenBackupSettings();
-                  }}
-                  className={`px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-1.5 ${
-                    !isBackupAllowed ? 'opacity-40' : ''
-                  }`}
-                >
-                  🗂️ 백업
-                </button>
-                {userTier?.toLowerCase() === 'master' && (
+                {(isBackupAllowed || ['master', 'admin', 'pro'].includes(userTier?.toLowerCase())) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsHamburgerOpen(false);
+                      onOpenBackupSettings();
+                    }}
+                    className="pl-5 pr-4 py-3 text-sm font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-2.5 border-t border-slate-100"
+                  >
+                    🗂️ 로컬 백업
+                  </button>
+                )}
+                {['master', 'admin'].includes(userTier?.toLowerCase()) && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsHamburgerOpen(false);
                       onOpenAdminSettings();
                     }}
-                    className="px-4 py-2.5 text-xs font-black text-indigo-700 hover:bg-indigo-50 transition-colors text-left flex items-center gap-1.5 border-t border-slate-100"
+                    className="pl-5 pr-4 py-3 text-sm font-black text-indigo-700 hover:bg-indigo-50 transition-colors text-left flex items-center gap-2.5 border-t border-slate-100"
                   >
-                    {"\uD83D\uDC51"} 제어실
+                    {"\uD83C\uDF9B"} 제어실
                   </button>
                 )}
                 <button
@@ -166,51 +167,61 @@ export default function CustomerHeader({
                     setIsHamburgerOpen(false);
                     if (onCheckUpdate) onCheckUpdate();
                   }}
-                  className="px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-1.5 border-t border-slate-100"
+                  className="pl-5 pr-4 py-3 text-sm font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-2.5 border-t border-slate-100"
                 >
                   🔄 업데이트
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsHamburgerOpen(false);
+                    signOutGoogle();
+                    try {
+                      localStorage.removeItem('prodrill_certified_email_hash');
+                      localStorage.removeItem('prodrill_certified_email_plain');
+                      localStorage.removeItem('prodrill_license_status');
+                      localStorage.removeItem('prodrill_first_time_setup_done');
+                      localStorage.removeItem('prodrill_google_access_token');
+                      localStorage.removeItem('prodrill_google_token_expiry');
+                    } catch { /* ignore */ }
+                    if (onLogout) onLogout();
+                    setTimeout(() => {
+                      window.location.reload();
+                    }, 100);
+                  }}
+                  className="pl-5 pr-4 py-3 text-sm font-black text-rose-600 hover:bg-rose-50 transition-colors text-left flex items-center gap-2.5 border-t border-slate-100"
+                >
+                  {"\uD83D\uDEAA"} 로그아웃
                 </button>
               </div>
             )}
           </div>
 
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-800 leading-none">고객 관리</h1>
-            </div>
+          <div className="flex items-center">
+            <h1 className="text-xl font-bold text-slate-800 leading-none">고객 관리</h1>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* 🏷️ 스캔 버튼 임시 비활성화 처리 */}
-          {/* {realNfcSupported && onNfcScan && (
-            <button
-              onClick={handleNfcScanWithHardwareCheck}
-              className="bg-emerald-200 text-emerald-800 border border-emerald-300 hover:bg-emerald-300 px-4 py-2 rounded-xl font-bold flex items-center gap-1 shadow-md shadow-emerald-100 active:scale-95 transition-all"
-            >
-              <span className="text-lg">🏷️</span> 스캔
-            </button>
-          )} */}
-
           <button 
             onClick={onAdd}
-            className="bg-indigo-200 text-indigo-800 border border-indigo-300 hover:bg-indigo-300 px-4 py-2 rounded-xl font-bold flex items-center gap-1 shadow-md shadow-indigo-100 active:scale-95 transition-all"
+            className="bg-indigo-200 text-indigo-800 border border-indigo-300 hover:bg-indigo-300 px-4 h-9 rounded-xl font-bold flex items-center gap-1 shadow-md shadow-indigo-100 active:scale-95 transition-all"
           >
-            <span className="text-xl">+</span> 신규
+            <span className="text-xl leading-none">+</span> 신규
           </button>
         </div>
       </div>
 
-      {/* 🟢 [스타일 통일 반영]: 겉 감싸는 태그의 테일윈드 클래스를 font-bold text-slate-500으로 단일화하여 문장 전체 톤을 완벽하게 맞췄습니다. */}
-      <div className="font-bold text-slate-500 text-[11px] mb-4 pl-9">
-        전체 고객 {totalCount}명 중 {searchQuery.trim() ? '검색한' : '최근 등록/수정된'} {currentCount}명
+      {/* 🟢 [스타일 및 시작점 일치 반영]: 검색 상자 시작점과 수직 라인을 일치시켰습니다 (pl-0.5). */}
+      <div className="font-bold text-slate-500 text-[11px] mb-3.5 pl-0.5">
+        전체 고객 {totalCount}명 중 {(searchQuery || '').trim() ? '검색한' : '최근 등록/수정된'} {currentCount}명
       </div>
 
       <div className="flex gap-2">
         <div className="relative flex-1">
           <input
             type="text"
-            placeholder="이름 또는 연락처 검색..."
+            placeholder="이름 / 연락처 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 pr-10 text-base focus:ring-2 focus:ring-indigo-500 transition-all outline-none"

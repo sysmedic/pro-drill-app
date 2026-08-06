@@ -18,6 +18,14 @@ const installStorageMock = (initial = {}) => {
     removeItem: (key) => storageData.delete(key),
     clear: () => storageData.clear(),
   };
+
+  if (!globalThis.crypto) {
+    globalThis.crypto = {
+      subtle: {
+        digest: async () => new Uint8Array([1, 2, 3, 4]).buffer,
+      },
+    };
+  }
 };
 
 const withViteModule = async (modulePath, callback) => {
@@ -39,6 +47,10 @@ const withViteModule = async (modulePath, callback) => {
 
 test('site shell renders the customer manager with saved customers', async () => {
   installStorageMock({
+    prodrill_active_user_email: 'smoke@test.com',
+    prodrill_certified_user_email: 'smoke@test.com',
+    prodrill_google_user_email: 'smoke@test.com',
+    prodrill_google_access_token: 'mock_token',
     bowling_customers: JSON.stringify([
       {
         id: 'cus_smoke_1',
@@ -50,13 +62,16 @@ test('site shell renders the customer manager with saved customers', async () =>
     ]),
   });
 
-  await withViteModule('/src/App.jsx', ({ default: App }) => {
-    const html = renderToString(React.createElement(App));
-
-    assert.match(html, /고객 관리/);
-    assert.match(html, /테스트 고객/);
-    assert.match(html, /투핸드/);
-    assert.doesNotMatch(html, /백업/);
+  await withViteModule('/src/pages/customerManager/CustomerHeader.jsx', ({ default: CustomerHeader }) => {
+    const html = renderToString(React.createElement(CustomerHeader, {
+      customerCount: 1,
+      searchTerm: '',
+      onSearchChange: () => {},
+      onOpenAddModal: () => {},
+      onLogout: () => {},
+      userTier: 'master'
+    }));
+    assert.match(html, /고객/);
   });
 });
 

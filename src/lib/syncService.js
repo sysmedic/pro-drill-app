@@ -1,34 +1,63 @@
 import { loadCustomers, saveCustomers } from './customerStorage.js';
 import { getChartHistory, saveLocalChartHistory } from './indexedDbConnector.js';
-import { uploadBackupData, downloadBackupData, findBackupFile, isGoogleSignedIn, initGoogleApi } from './googleDriveBackup.js';
-import { isLicenseCertified } from './userLicenseManager.js';
+import { uploadBackupData, downloadBackupData, findBackupFile, isGoogleSignedIn, initGoogleApi, getGoogleUserEmail } from './googleDriveBackup.js';
+import { isLicenseCertified, isSyncAllowed } from './userLicenseManager.js';
+import { generateSignature, verifyBackupPackage } from './encryption.js';
 
 // 디바운스 타이머 캐시
 let debounceTimer = null;
 
-// 1. 앱 내 모든 데이터 패키징 (IndexedDB -> JSON)
-export const packAppData = async () => {
+// 1. 앱 내 모든 데이터 패키징 (IndexedDB -> JSON + 전자서명 + 소유자 격리)
+export const packAppData = async (ownerEmailOverride = null) => {
   try {
     const customers = await loadCustomers();
     const chartHistories = {};
 
-    for (const customer of customers) {
+    let ownerEmail = ownerEmailOverride;
+    if (!ownerEmail && isGoogleSignedIn()) {
+      try {
+        ownerEmail = await getGoogleUserEmail();
+      } catch (e) {
+        console.warn("구글 사용자 이메일 획득 실패 (서명 제외 구동):", e);
+      }
+    }
+
+    // 🛡️ 소유자 데이터 격리: 타인의 createdByEmail이 명시된 차트는 백업 수집 대상에서 완전히 제외
+    const normalizedOwnerEmail = (ownerEmail || '').trim().toLowerCase();
+    const filteredCustomers = customers.filter(c => {
+      if (!c.createdByEmail || !normalizedOwnerEmail) return true;
+      return c.createdByEmail.trim().toLowerCase() === normalizedOwnerEmail;
+    });
+
+    for (const customer of filteredCustomers) {
       if (customer.id) {
         const history = await getChartHistory(customer.id);
         if (Array.isArray(history) && history.length > 0) {
-          chartHistories[customer.id] = history;
+          const filteredHistory = history.filter(h => {
+            if (!h.createdByEmail || !normalizedOwnerEmail) return true;
+            return h.createdByEmail.trim().toLowerCase() === normalizedOwnerEmail;
+          });
+          if (filteredHistory.length > 0) {
+            chartHistories[customer.id] = filteredHistory;
+          }
         }
       }
     }
 
+    const dataPayload = {
+      customers: filteredCustomers,
+      chartHistories
+    };
+
+    const signature = generateSignature(dataPayload, ownerEmail);
+
     return {
       appId: 'ProDrill',
       exportedAt: new Date().toISOString(),
+      ownerEmail: ownerEmail || '',
+      signature,
       version: 1,
-      data: {
-        customers,
-        chartHistories
-      }
+      data: dataPayload
     };
   } catch (error) {
     console.error("데이터 패키징 에러:", error);
@@ -37,9 +66,23 @@ export const packAppData = async () => {
 };
 
 // 2. 패키지 데이터 로컬 IndexedDB에 언팩 & 지능형 병합 (Merge)
-export const unpackAppData = async (payload, mode = 'merge') => {
+export const unpackAppData = async (payload, mode = 'merge', expectedEmail = null) => {
   if (!payload || payload.appId !== 'ProDrill') {
     throw new Error('INVALID_BACKUP_FORMAT');
+  }
+
+  // 🛡️ 소유자 1:1 대조 및 HMAC 위변조 전자서명 검증
+  const verification = verifyBackupPackage(payload, expectedEmail);
+  if (!verification.valid) {
+    if (verification.reason === 'OWNER_MISMATCH') {
+      const err = new Error('BACKUP_OWNER_MISMATCH');
+      err.ownerEmail = verification.ownerEmail;
+      throw err;
+    }
+    if (verification.reason === 'TAMPERED_DATA') {
+      throw new Error('BACKUP_TAMPERED_DATA');
+    }
+    throw new Error('INVALID_BACKUP_SIGNATURE');
   }
 
   const { customers: incomingCustomers = [], chartHistories: incomingHistories = {} } = payload.data || {};
@@ -113,9 +156,23 @@ export const unpackAppData = async (payload, mode = 'merge') => {
 
 // 3. 구글 드라이브로 백업 실행
 export const performBackup = async () => {
-  if (!isLicenseCertified()) {
+  if (!isSyncAllowed()) {
     throw new Error('LICENSE_NOT_CERTIFIED');
   }
+
+  // 🛡️ [안전장치]: 앱 세션 계정과 구글 연동 계정이 다르면 백업 차단
+  const activeAppEmail = localStorage.getItem('prodrill_active_user_email') || '';
+  if (isGoogleSignedIn()) {
+    try {
+      const googleEmail = await getGoogleUserEmail();
+      if (activeAppEmail && googleEmail && activeAppEmail.toLowerCase() !== googleEmail.toLowerCase()) {
+        throw new Error('ACCOUNT_MISMATCH');
+      }
+    } catch (err) {
+      if (err.message === 'ACCOUNT_MISMATCH') throw err;
+    }
+  }
+
   try {
     const payload = await packAppData();
     await uploadBackupData(payload);
@@ -131,12 +188,21 @@ export const performBackup = async () => {
 
 // 4. 구글 드라이브로부터 복원(가져오기) 실행
 export const performRestore = async (mode = 'merge') => {
-  if (!isLicenseCertified()) {
+  if (!isSyncAllowed()) {
     throw new Error('LICENSE_NOT_CERTIFIED');
   }
   try {
+    let currentEmail = null;
+    if (isGoogleSignedIn()) {
+      try {
+        currentEmail = await getGoogleUserEmail();
+      } catch (e) {
+        console.warn("구글 사용자 이메일 획득 실패:", e);
+      }
+    }
+
     const payload = await downloadBackupData();
-    await unpackAppData(payload, mode);
+    await unpackAppData(payload, mode, currentEmail);
     
     if (payload.exportedAt) {
       localStorage.setItem('prodrill_last_backup_time', payload.exportedAt);
@@ -161,9 +227,10 @@ export const autoSyncOnLaunch = async (setFeedback) => {
     return;
   }
 
-  // 사용자가 설정에서 자동 동기화를 껐거나, 라이선스가 아직 미인증 상태라면 클라우드 동기화 스킵
+  // 사용자가 명시적으로 로그아웃했거나, 자동 동기화를 껐거나, 동기화 권한이 없다면 스킵
+  const isLoggedOut = typeof window !== 'undefined' && localStorage.getItem('prodrill_user_logged_out') === 'true';
   const autoSyncEnabled = localStorage.getItem('prodrill_auto_sync_enabled') !== 'false';
-  if (!autoSyncEnabled || !isLicenseCertified()) return;
+  if (isLoggedOut || !autoSyncEnabled || !isSyncAllowed()) return;
 
   try {
     await initGoogleApi();

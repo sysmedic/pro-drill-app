@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { initGoogleApi, signInGoogle, getGoogleUserEmail } from '../../lib/googleDriveBackup.js';
+import { initGoogleApi, signInGoogle, getGoogleUserEmail, findBackupFile } from '../../lib/googleDriveBackup.js';
+import { performRestore } from '../../lib/syncService.js';
 import Button from '../ui/Button.jsx';
 
 export default function LoginGate({ onSuccess, onFeedback }) {
@@ -15,11 +16,10 @@ export default function LoginGate({ onSuccess, onFeedback }) {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      // 1. Google API 초기화 (이미 완료되었으면 즉각 바이패스)
-      await initGoogleApi();
-      
-      // 2. 구글 OAuth 로그인 팝업 트리거 (isLoginGateOnly = true 지정하여 403 차단 우회)
-      await signInGoogle(true, true);
+      // ⚡ iOS 사파리 팝업 차단 방지: 사전 초기화 확인 후 즉각 구글 로그인 팝업 트리거
+      await initGoogleApi().catch(() => {});
+      await signInGoogle(true, false);
+      localStorage.removeItem('prodrill_user_logged_out');
       
       // 3. 로그인된 사용자 이메일 획득
       const email = await getGoogleUserEmail();
@@ -27,13 +27,18 @@ export default function LoginGate({ onSuccess, onFeedback }) {
         throw new Error('이메일 정보를 가져올 수 없습니다.');
       }
       
-      // 4. 성공 콜백 전파
+      // 4. 성공 콜백 즉시 전파 및 0ms 초고속 새로고침 (고스트 100% 소멸 & 1회 원스톱 완료)
       await onSuccess(email);
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
     } catch (error) {
       console.error("최초 로그인 게이트 에러:", error);
       let errorMsg = '구글 로그인 중 오류가 발생했습니다. 네트워크 상태를 확인하세요.';
       
-      if (error.message === 'GOOGLE_API_KEYS_MISSING') {
+      if (error.message === 'IOS_POPUP_BLOCKED_OR_TIMED_OUT') {
+        errorMsg = 'iOS 사파리에서 팝업이 차단되었습니다. [설정 > Safari > 팝업 차단]을 해제하시거나 다시 시도해 주세요.';
+      } else if (error.message === 'GOOGLE_API_KEYS_MISSING') {
         errorMsg = '구글 API 키 설정이 누락되었습니다. 개발자 환경 변수를 설정해 주세요.';
       } else if (error.message === 'NETWORK_OFFLINE') {
         errorMsg = '네트워크 연결이 끊겨 오프라인 상태입니다. 온라인으로 연결해 주세요.';

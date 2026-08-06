@@ -3,6 +3,8 @@ import Button from '../../components/ui/Button.jsx';
 import { ConfirmModal } from '../../components/ui/Dialogs.jsx';
 import ModalShell from '../../components/ui/ModalShell.jsx';
 import { packAppData, unpackAppData } from '../../lib/syncService.js';
+import { verifyBackupPackage } from '../../lib/encryption.js';
+import { isGoogleSignedIn, getGoogleUserEmail } from '../../lib/googleDriveBackup.js';
 
 export default function BackupSettingsModal({ onClose, onFeedback: propOnFeedback }) {
   const onFeedback = propOnFeedback || (() => {});
@@ -28,18 +30,49 @@ export default function BackupSettingsModal({ onClose, onFeedback: propOnFeedbac
     }
   };
 
-  // 2. [수동 비상 복원] - 파일 파싱
-  const handleLocalFileChange = (e) => {
+  // 2. [수동 비상 복원] - 파일 파싱 및 소유자/위변조 서명 검증
+  const handleLocalFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    let currentEmail = '';
+    if (isGoogleSignedIn()) {
+      try {
+        currentEmail = await getGoogleUserEmail();
+      } catch (err) {
+        console.warn("구글 사용자 이메일 획득 실패:", err);
+      }
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
         const data = JSON.parse(event.target.result);
         if (!data || data.appId !== 'ProDrill') {
-          throw new Error('Invalid format');
+          throw new Error('INVALID_FORMAT');
         }
+
+        // 🛡️ 소유자 대조 및 위변조 서명 2중 검증
+        const verification = verifyBackupPackage(data, currentEmail);
+        if (!verification.valid) {
+          if (verification.reason === 'OWNER_MISMATCH') {
+            onFeedback({ 
+              message: `\u26A0\uFE0F 소유자 불일치: 해당 백업 파일의 소유자(${verification.ownerEmail || '타인'})와 현재 로그인된 계정이 다릅니다.`, 
+              tone: 'danger' 
+            });
+            return;
+          }
+          if (verification.reason === 'TAMPERED_DATA') {
+            onFeedback({ 
+              message: '\u274C 위변조 차단: 백업 파일의 내용이나 이메일 주소가 변조되었습니다. 복원이 차단되었습니다.', 
+              tone: 'danger' 
+            });
+            return;
+          }
+          onFeedback({ message: '잘못된 백업 파일 서명입니다.', tone: 'danger' });
+          return;
+        }
+
         setRestoreData(data);
       } catch {
         onFeedback({ message: '잘못된 ProDrill 백업 파일 형식입니다.', tone: 'danger' });
@@ -52,20 +85,30 @@ export default function BackupSettingsModal({ onClose, onFeedback: propOnFeedbac
   const executeLocalRestore = async () => {
     if (!restoreData) return;
     try {
-      await unpackAppData(restoreData, 'overwrite');
+      let currentEmail = '';
+      if (isGoogleSignedIn()) {
+        try { currentEmail = await getGoogleUserEmail(); } catch (e) { console.warn(e); }
+      }
+      await unpackAppData(restoreData, 'overwrite', currentEmail);
       onFeedback({ message: '데이터 로컬 파일 복원 완료!', tone: 'success' });
       setTimeout(() => {
         window.location.reload();
       }, 1000);
-    } catch {
-      onFeedback({ message: '로컬 데이터 복원 중 오류가 발생했습니다.', tone: 'danger' });
+    } catch (e) {
+      if (e.message === 'BACKUP_OWNER_MISMATCH') {
+        onFeedback({ message: '\u26A0\uFE0F 타인 계정의 백업 파일은 복원할 수 없습니다.', tone: 'danger' });
+      } else if (e.message === 'BACKUP_TAMPERED_DATA') {
+        onFeedback({ message: '\u274C 위변조가 감지된 백업 파일입니다.', tone: 'danger' });
+      } else {
+        onFeedback({ message: '로컬 데이터 복원 중 오류가 발생했습니다.', tone: 'danger' });
+      }
       setRestoreData(null);
     }
   };
 
   return (
     <>
-      <ModalShell onClose={onClose} size="sm" title="🗂️ ProDrill 로컬 백업">
+      <ModalShell onClose={onClose} size="sm" title="🗂️ 로컬 백업">
         <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
           {/* 설명 단락 */}
           <p className="text-xs text-slate-500 leading-relaxed pl-1">
@@ -76,7 +119,7 @@ export default function BackupSettingsModal({ onClose, onFeedback: propOnFeedbac
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
             <div className="space-y-2">
               <h4 className="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                📥 JSON 파일로 내보내기
+                📥 파일로 내보내기
               </h4>
               <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
                 현재 기기에 저장된 모든 지공 차트 및 고객 정보 데이터를 하나의 백업용 파일로 패킹하여 보관합니다.

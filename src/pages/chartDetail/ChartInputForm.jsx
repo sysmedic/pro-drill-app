@@ -163,12 +163,12 @@ export default function ChartInputForm({
     return PITCH_OPTIONS_32.filter(opt => !opt.includes('/32'));
   }, [pitchPrecision]);
 
-  const openKeypad = (field, value, title, mode = 'fraction') => {
+  const openKeypad = (field, value, title, extraKeys = [], mode = 'fraction') => {
     let initialValue = value;
     if (!value && (field === 'spanLeft' || field === 'spanRight')) {
       initialValue = field === 'spanLeft' ? spanRight : spanLeft;
     }
-    setKeypad({ isOpen: true, field, value: initialValue, title, mode });
+    setKeypad({ isOpen: true, field, value: initialValue, title, extraKeys, mode });
   };
 
   const handleKeypadConfirm = (newValue) => {
@@ -331,13 +331,13 @@ export default function ChartInputForm({
     }
 
     return (
-      <div className="flex items-center justify-between w-full pr-4 text-left">
-        <span className="font-bold">{firstLabel}</span>
+      <div className="flex items-center justify-between w-full pr-4 text-left gap-6 sm:gap-8">
+        <span className="font-bold shrink-0 mr-4 sm:mr-6">{firstLabel}</span>
         <div 
-          className="flex items-center gap-4 bg-slate-100 p-1 rounded-md border border-slate-200"
+          className="flex items-center gap-3.5 sm:gap-5 ml-auto"
           onClick={(e) => e.stopPropagation()} 
         >
-          <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer px-1.5 py-0.5 rounded">
+          <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
             <input 
               type="radio" 
               name="pitchPrecision" 
@@ -346,9 +346,9 @@ export default function ChartInputForm({
               onChange={() => setPitchPrecision('16')}
               className="text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer" 
             />
-            16분 단위
+            16분
           </label>
-          <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer px-1.5 py-0.5 rounded">
+          <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
             <input 
               type="radio" 
               name="pitchPrecision" 
@@ -357,7 +357,7 @@ export default function ChartInputForm({
               onChange={() => setPitchPrecision('32')}
               className="text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer" 
             />
-            32분 단위
+            32분
           </label>
         </div>
       </div>
@@ -409,9 +409,9 @@ export default function ChartInputForm({
       {/* 2. 핸드 컨디션 박스 */}
       {renderSection('hand', '핸드 컨디션', getHandCondSummary(handCondition), (
         <div className="grid grid-cols-3 gap-2">
-          <ChartSelectField label="건/습" value={handCondition.moisture} onChange={v => updateCondition('moisture', v)} options={MOISTURE_OPTIONS} />
-          <ChartSelectField label="중약지" value={handCondition.fingerStiffness} onChange={v => updateCondition('fingerStiffness', v)} options={STIFFNESS_OPTIONS} />
-          <ChartSelectField label="엄지" value={handCondition.thumbStiffness} onChange={v => updateCondition('thumbStiffness', v)} options={STIFFNESS_OPTIONS} />
+          <ChartSelectField label="건/습 상태" value={handCondition.moisture} onChange={v => updateCondition('moisture', v)} options={MOISTURE_OPTIONS} />
+          <ChartSelectField label="중약지 경직도" value={handCondition.fingerStiffness} onChange={v => updateCondition('fingerStiffness', v)} options={STIFFNESS_OPTIONS} />
+          <ChartSelectField label="엄지 경직도" value={handCondition.thumbStiffness} onChange={v => updateCondition('thumbStiffness', v)} options={STIFFNESS_OPTIONS} />
         </div>
       ))}
 
@@ -432,12 +432,12 @@ export default function ChartInputForm({
           />
           <ChartKeypadField 
             label="RPM" 
-            onOpen={() => openKeypad('customerInfo.rpm', customerInfo.rpm, 'RPM', 'number')} 
+            onOpen={() => openKeypad('customerInfo.rpm', customerInfo.rpm, 'RPM', [], 'number')} 
             value={customerInfo.rpm || ''} 
           />
           <ChartKeypadField 
             label="구속 (km/h)" 
-            onOpen={() => openKeypad('customerInfo.ballSpeed', customerInfo.ballSpeed, '구속 (km/h)', 'number')} 
+            onOpen={() => openKeypad('customerInfo.ballSpeed', customerInfo.ballSpeed, '구속 (km/h)', [], 'number')} 
             value={customerInfo.ballSpeed || ''} 
           />
           <ChartKeypadField 
@@ -446,8 +446,13 @@ export default function ChartInputForm({
             value={customerInfo.papX || ''} 
           />
           <ChartKeypadField 
-            label="PAP (Up/Down)" 
-            onOpen={() => openKeypad('customerInfo.papY', customerInfo.papY, 'PAP (Up/Down)')} 
+            label={
+              <span className="whitespace-nowrap">
+                <span className="hidden min-[354px]:inline">PAP (Up/Down)</span>
+                <span className="inline min-[354px]:hidden">(Up/Down)</span>
+              </span>
+            } 
+            onOpen={() => openKeypad('customerInfo.papY', customerInfo.papY, 'PAP (Up/Down)', ['Up', 'Down'])} 
             value={customerInfo.papY || ''} 
           />
         </div>
@@ -458,8 +463,8 @@ export default function ChartInputForm({
         <>
         <div className="mb-2.5"><ChartSelectField label="Span 타입" value={spanType} onChange={v => onChange({ ...data, spanType: v })} options={SPAN_TYPE_OPTIONS} /></div>
         <div className="grid grid-cols-2 gap-2.5">
-          <ChartKeypadField label="중지 Span" onOpen={() => openKeypad('spanLeft', spanLeft, "중지 Span", 'span')} value={spanLeft} />
-          <ChartKeypadField label="약지 Span" onOpen={() => openKeypad('spanRight', spanRight, "약지 Span", 'span')} value={spanRight} />
+          <ChartKeypadField label="중지 Span" onOpen={() => openKeypad('spanLeft', spanLeft, "중지 Span", [], 'span')} value={spanLeft} />
+          <ChartKeypadField label="약지 Span" onOpen={() => openKeypad('spanRight', spanRight, "약지 Span", [], 'span')} value={spanRight} />
         </div>
         </>
       ))}
@@ -523,9 +528,10 @@ export default function ChartInputForm({
             <ChartSelectField label="Left (◀)" value={thumbPitch.left} onChange={v => updateThumb('left', v)} options={filteredPitchOptions} />
             <ChartSelectField label="Right (▶)" value={thumbPitch.right} onChange={v => updateThumb('right', v)} options={filteredPitchOptions} />
           </div>
+          <h4 className="font-bold text-sm mb-2 text-slate-700">Offset</h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
-            <ChartSelectField label="Offset - Left" value={thumbOffset.left} onChange={v => updateThumbOffset('left', v)} options={OFFSET_OPTIONS} />
-            <ChartSelectField label="Offset - Right" value={thumbOffset.right} onChange={v => updateThumbOffset('right', v)} options={OFFSET_OPTIONS} />
+            <ChartSelectField label="Left" value={thumbOffset.left} onChange={v => updateThumbOffset('left', v)} options={OFFSET_OPTIONS} />
+            <ChartSelectField label="Right" value={thumbOffset.right} onChange={v => updateThumbOffset('right', v)} options={OFFSET_OPTIONS} />
           </div>
           <h4 className="font-bold text-sm mb-2 text-slate-700">상세 사이즈 및 각도</h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -538,7 +544,7 @@ export default function ChartInputForm({
               onChange={v => updateThumbDetails('ovalCut', v)} 
               options={ovalCutOptions} 
             />
-            <ChartKeypadField label="오발 각도" onOpen={() => openKeypad('ovalAngle', ovalAngle, '오발 각도', 'number')} placeholder="" value={ovalAngle} />
+            <ChartKeypadField label="오발 각도" onOpen={() => openKeypad('ovalAngle', ovalAngle, '오발 각도', [], 'number')} placeholder="" value={ovalAngle} />
             <ChartSelectField allowCustom label="덤 타입" value={thumbDetails.slugType} onChange={v => updateThumbDetails('slugType', v)} options={THUMB_TYPE_OPTIONS} />
             <ChartSelectField allowCustom label="홀컷 사이즈" value={thumbDetails.holeCutSize} onChange={v => updateThumbDetails('holeCutSize', v)} options={THUMB_HOLE_CUT_OPTIONS} />
           </div>
@@ -557,6 +563,7 @@ export default function ChartInputForm({
         isOpen={keypad.isOpen}
         initialValue={keypad.value}
         title={keypad.title}
+        extraKeys={keypad.extraKeys}
         mode={keypad.mode}
         onClose={() => setKeypad(prev => ({ ...prev, isOpen: false }))}
         onConfirm={handleKeypadConfirm}

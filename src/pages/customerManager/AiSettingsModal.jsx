@@ -24,20 +24,20 @@ export default function AiSettingsModal({ onClose, onFeedback: propOnFeedback })
       <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
         {/* 설명 단락 */}
         <p className="text-xs text-slate-500 leading-relaxed pl-1">
-          구글 제미나이 지공 추천 기능을 활성화하기 위해 API 키를 설정합니다. API 키가 없으신 경우 구글 AI 스튜디오에서 무료로 발급받으실 수 있습니다.
+          구글 제미나이 지공 추천 기능을 활성화합니다.
         </p>
 
         {/* 설정 영역 컨테이너 (클라우드 설정 모달 기준 일치화) */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
           <div className="flex items-center gap-1.5">
             <span className="text-base">✨</span>
-            <h3 className="text-sm font-black text-slate-800">ProDrill AI 레이아웃 추천 설정</h3>
+            <h3 className="text-sm font-black text-slate-800">API Key 등록</h3>
           </div>
           
           <div className="space-y-2">
             <p className="text-[11px] text-slate-500 leading-normal">
-              구글 제미나이 지공 추천 기능을 활성화하기 위해 **Gemini API Key**를 입력해 주세요. (추천 모델: **gemini-3.5-flash**)<br />
-              API 키가 없으신 경우 <a href="https://aistudio.google.com/api-keys?project=drilling-chart-support" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline font-black">구글 AI 스튜디오(Google AI Studio)</a>에서 무료로 발급받으실 수 있습니다.
+              구글 제미나이 지공 추천 기능을 활성화하기 위해 Gemini API Key를 입력해 주세요.<br />
+              API 키가 없으신 경우 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline font-black">구글 AI 스튜디오(Google AI Studio)</a>에서 무료로 발급받으실 수 있습니다.
             </p>
             <input
               type="password"

@@ -1,13 +1,22 @@
-const DB_NAME = 'ProDrillDB';
 const DB_VERSION = 1;
 
-let dbInstance = null;
+// 계정별 DB 인스턴스 캐시 맵
+const dbInstancesMap = {};
 
-export const getDB = () => {
-  if (dbInstance) return Promise.resolve(dbInstance);
+export const getDB = (accountHashKeyOverride = null) => {
+  let accountHashKey = accountHashKeyOverride;
+  if (!accountHashKey && typeof window !== 'undefined') {
+    accountHashKey = localStorage.getItem('prodrill_certified_email_hash') || 'default';
+  }
+  const cleanKey = (accountHashKey || 'default').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const targetDbName = `ProDrillDB_${cleanKey}`;
+
+  if (dbInstancesMap[targetDbName]) {
+    return Promise.resolve(dbInstancesMap[targetDbName]);
+  }
 
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    const request = indexedDB.open(targetDbName, DB_VERSION);
 
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
@@ -20,16 +29,17 @@ export const getDB = () => {
     };
 
     request.onsuccess = async (event) => {
-      dbInstance = event.target.result;
+      const instance = event.target.result;
+      dbInstancesMap[targetDbName] = instance;
       
       // 🌟 [품질 향상]: 기존 localStorage 레거시 데이터가 있다면 IndexedDB로 자동 마이그레이션
       try {
-        await migrateLocalStorageToIndexedDB();
+        await migrateLocalStorageToIndexedDB(instance);
       } catch (err) {
         console.error("레거시 localStorage 마이그레이션 실패:", err);
       }
       
-      resolve(dbInstance);
+      resolve(instance);
     };
 
     request.onerror = (event) => {
@@ -94,8 +104,8 @@ async function migrateLocalStorageToIndexedDB() {
 }
 
 // CRUD Helpers
-export const getAllCustomers = async () => {
-  const db = await getDB();
+export const getAllCustomers = async (accountHashKey = null) => {
+  const db = await getDB(accountHashKey);
   return new Promise((resolve, reject) => {
     const transaction = db.transaction('customers', 'readonly');
     const store = transaction.objectStore('customers');
@@ -106,8 +116,8 @@ export const getAllCustomers = async () => {
   });
 };
 
-export const saveLocalCustomers = async (customers) => {
-  const db = await getDB();
+export const saveLocalCustomers = async (customers, accountHashKey = null) => {
+  const db = await getDB(accountHashKey);
   return new Promise((resolve, reject) => {
     const transaction = db.transaction('customers', 'readwrite');
     const store = transaction.objectStore('customers');
@@ -138,9 +148,9 @@ export const saveLocalCustomers = async (customers) => {
   });
 };
 
-export const getChartHistory = async (customerId) => {
+export const getChartHistory = async (customerId, accountHashKey = null) => {
   if (!customerId) return [];
-  const db = await getDB();
+  const db = await getDB(accountHashKey);
   return new Promise((resolve, reject) => {
     const transaction = db.transaction('chartHistories', 'readonly');
     const store = transaction.objectStore('chartHistories');
@@ -153,9 +163,9 @@ export const getChartHistory = async (customerId) => {
   });
 };
 
-export const saveLocalChartHistory = async (customerId, history) => {
+export const saveLocalChartHistory = async (customerId, history, accountHashKey = null) => {
   if (!customerId) return false;
-  const db = await getDB();
+  const db = await getDB(accountHashKey);
   return new Promise((resolve, reject) => {
     const transaction = db.transaction('chartHistories', 'readwrite');
     const store = transaction.objectStore('chartHistories');
@@ -166,9 +176,9 @@ export const saveLocalChartHistory = async (customerId, history) => {
   });
 };
 
-export const deleteLocalChartHistory = async (customerId) => {
+export const deleteLocalChartHistory = async (customerId, accountHashKey = null) => {
   if (!customerId) return false;
-  const db = await getDB();
+  const db = await getDB(accountHashKey);
   return new Promise((resolve, reject) => {
     const transaction = db.transaction('chartHistories', 'readwrite');
     const store = transaction.objectStore('chartHistories');
@@ -179,8 +189,8 @@ export const deleteLocalChartHistory = async (customerId) => {
   });
 };
 
-export const getChartsCount = async () => {
-  const db = await getDB();
+export const getChartsCount = async (accountHashKey = null) => {
+  const db = await getDB(accountHashKey);
   return new Promise((resolve, reject) => {
     const transaction = db.transaction('chartHistories', 'readonly');
     const store = transaction.objectStore('chartHistories');

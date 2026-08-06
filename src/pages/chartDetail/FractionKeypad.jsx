@@ -143,7 +143,7 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
         } else if (mode === 'span') {
           isAllowed = /^[0-9/\s]$/.test(e.key); // 스팬 모드일 때 "-" 및 허용되지 않은 키값 원천 차단
         } else {
-          isAllowed = /^[0-9\-/ ]$/.test(e.key);
+          isAllowed = /^[0-9/ ]$/.test(e.key); // 분수/PAP 모드에서도 "-" 키값 원천 차단
         }
 
         if (isAllowed) {
@@ -181,27 +181,6 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
     onConfirm(value.trim());
     onClose();
   };
-
-  // 스팬 모드일 때 하단 패드에서 "-" 가리기 스왑 분기문
-  const keys = mode === 'number' ? [
-    { value: '1', label: '1' }, { value: '2', label: '2' }, { value: '3', label: '3' },
-    { value: '4', label: '4' }, { value: '5', label: '5' }, { value: '6', label: '6' },
-    { value: '7', label: '7' }, { value: '8', label: '8' }, { value: '9', label: '9' },
-    { value: 'empty', label: '', variant: 'empty' }, { value: '0', label: '0' },
-    { action: 'delete', label: '삭제', variant: 'delete' },
-  ] : (mode === 'span' ? [
-    { value: '1', label: '1' }, { value: '2', label: '2' }, { value: '3', label: '3' },
-    { value: '4', label: '4' }, { value: '5', label: '5' }, { value: '6', label: '6' },
-    { value: '7', label: '7' }, { value: '8', label: '8' }, { value: '9', label: '9' },
-    { value: 'empty', label: '', variant: 'empty' }, { value: '0', label: '0' }, { value: '/', label: '/' },
-    { value: ' ', label: '띄어쓰기', variant: 'space' }, { action: 'delete', label: '삭제', variant: 'delete' },
-  ] : [
-    { value: '1', label: '1' }, { value: '2', label: '2' }, { value: '3', label: '3' },
-    { value: '4', label: '4' }, { value: '5', label: '5' }, { value: '6', label: '6' },
-    { value: '7', label: '7' }, { value: '8', label: '8' }, { value: '9', label: '9' },
-    { value: '-', label: '-' }, { value: '0', label: '0' }, { value: '/', label: '/' },
-    { value: ' ', label: '띄어쓰기', variant: 'space' }, { action: 'delete', label: '삭제', variant: 'delete' },
-  ]);
 
   return createPortal(
     <ModalShell
@@ -261,26 +240,80 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-2 mb-2">
-          {keys.map((key) => (
+        <div className="grid grid-cols-3 gap-2 mb-2 relative">
+          {/* 1 ~ 9 숫자 키 */}
+          {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
             <button
-              key={key.action || key.value}
+              key={num}
               type="button"
-              disabled={key.variant === 'empty'}
-              onClick={() => key.action === 'delete' ? handleDelete() : (key.variant !== 'empty' ? handleCharacterInput(key.value) : undefined)}
-              className={`h-14 sm:h-16 rounded-xl text-xl sm:text-2xl font-bold transition-colors active:scale-95 flex items-center justify-center ${
-                key.variant === 'empty'
-                  ? 'opacity-0 pointer-events-none'
-                  : key.variant === 'delete'
-                  ? 'bg-rose-100 text-rose-600 hover:bg-rose-200' 
-                  : key.variant === 'space'
-                  ? 'col-span-2 bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
+              onClick={() => handleCharacterInput(num)}
+              className="h-14 sm:h-16 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center"
             >
-              {key.variant === 'space' || key.variant === 'delete' ? <span className="text-base sm:text-lg">{key.label}</span> : key.label}
+              {num}
             </button>
           ))}
+
+          {/* 4행 & 5행 하단 컨트롤 레이아웃 (L자형 단일 키 성형 포함) */}
+          {mode === 'number' ? (
+            <>
+              <div className="opacity-0 pointer-events-none h-14 sm:h-16" />
+              <button
+                type="button"
+                onClick={() => handleCharacterInput('0')}
+                className="h-14 sm:h-16 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center"
+              >
+                0
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="h-14 sm:h-16 rounded-xl text-base sm:text-lg font-bold bg-rose-100 text-rose-600 hover:bg-rose-200 transition-colors active:scale-95 flex items-center justify-center"
+              >
+                삭제
+              </button>
+            </>
+          ) : (
+            <>
+              {/* 4행 1열: 빈 칸 (empty) */}
+              <div className="opacity-0 pointer-events-none h-14 sm:h-16" />
+
+              {/* 4행 2열: 0 */}
+              <button
+                type="button"
+                onClick={() => handleCharacterInput('0')}
+                className="h-14 sm:h-16 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center"
+              >
+                0
+              </button>
+
+              {/* 4행 3열: / (슬래시) */}
+              <button
+                type="button"
+                onClick={() => handleCharacterInput('/')}
+                className="h-14 sm:h-16 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center"
+              >
+                /
+              </button>
+
+              {/* 5행 1~2열: 띄어쓰기 */}
+              <button
+                type="button"
+                onClick={() => handleCharacterInput(' ')}
+                className="col-span-2 h-14 sm:h-16 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 font-bold text-base sm:text-lg flex items-center justify-center"
+              >
+                띄어쓰기
+              </button>
+
+              {/* 5행 3열: 삭제 */}
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="h-14 sm:h-16 rounded-xl text-base sm:text-lg font-bold bg-rose-100 text-rose-600 hover:bg-rose-200 transition-colors active:scale-95 flex items-center justify-center"
+              >
+                삭제
+              </button>
+            </>
+          )}
         </div>
         
         <div className="grid grid-cols-2 gap-2 mt-2">

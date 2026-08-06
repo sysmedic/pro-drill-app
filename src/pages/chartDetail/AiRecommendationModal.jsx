@@ -158,8 +158,8 @@ export default function AiRecommendationModal({
 
             <div className="space-y-2 text-left px-1">
               <p className="text-[11px] text-slate-500 leading-normal">
-                구글 제미나이 지공 추천 기능을 활성화하기 위해 **Gemini API Key**를 입력해 주세요. (추천 모델: **gemini-3.5-flash**)<br />
-                API 키가 없으신 경우 <a href="https://aistudio.google.com/api-keys?project=drilling-chart-support" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline font-black">구글 AI 스튜디오(Google AI Studio)</a>에서 무료로 발급받으실 수 있습니다.
+                구글 제미나이 지공 추천 기능을 활성화하기 위해 Gemini API Key를 입력해 주세요.<br />
+                API 키가 없으신 경우 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline font-black">구글 AI 스튜디오(Google AI Studio)</a>에서 무료로 발급받으실 수 있습니다.
               </p>
               <input
                 type="password"

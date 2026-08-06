@@ -415,7 +415,7 @@ export default function ChartDetail({
     : (isTimelineModalOpen || isAutoModalOpen);
 
   return (
-    <PageShell bottomPadding="pb-40">
+    <PageShell bottomPadding="pb-40" data-chart-detail-view="true">
       <style>{`
         ::-webkit-scrollbar {
           display: none !important;

@@ -51,12 +51,16 @@ Each object in the array must have the following keys:
 - condition: The target condition. Must be one of ["Heavy Oil", "Medium Oil", "Dry Oil", "Reference Layout"]
 - layout: The layout value.
   * You MUST prepend "(2LS) " or "(Dual Angle) " based on the format used.
-  * If the bowler is Thumbless/Two-handed, use Storm's 2LS format with "(2LS) " prefix (e.g., "(2LS) 4-1/2 x 5 x 2-1/4").
-  * If the bowler is traditional 3-finger, use Dual Angle format with "(Dual Angle) " prefix (e.g., "(Dual Angle) 55 x 4-1/2 x 35").
+  * If the bowler is Thumbless/Two-handed, use Storm's 2LS format with "(2LS) " prefix (e.g., "(2LS) 4 1/2 x 5 x 2 1/4").
+  * If the bowler is traditional 3-finger, use Dual Angle format with "(Dual Angle) " prefix (e.g., "(Dual Angle) 55 x 4 1/2 x 35").
+  * CRITICAL: NEVER use hyphens (-) between whole numbers and fractions. Always use a single space (e.g., use "4 1/2" instead of "4-1/2", "2 1/4" instead of "2-1/4").
 - description: A short, concise 1-line reason (under 50 characters) in Korean explaining why this layout is recommended. (e.g., "핀업 지공으로 랭스를 확보하고 백엔드 반응을 제어")
 - intentSummary: An even shorter key summary (under 30 characters) in Korean to be written into the intent log. (e.g., "핀업 지공으로 랭스 확보 및 백엔드 제어")
 
-Bowler Type: ${isThumbless ? 'Thumbless/Two-Handed (Use 2LS format with (2LS) prefix)' : 'Traditional 3-Finger (Use Dual Angle format with (Dual Angle) prefix)'}`;
+Bowler Type: ${isThumbless ? 'Thumbless/Two-Handed (Use 2LS format with (2LS) prefix)' : 'Traditional 3-Finger (Use Dual Angle format with (Dual Angle) prefix)'}
+
+SPECIAL INSTRUCTION FOR BOWLING BALL MODEL:
+If a specific Bowling Ball Model name is provided in Korean or English (e.g., "Storm Phaze II", "페이즈2", "어텐션 블랙펄", "블랙위도우 2.0", "Roto Grip Gem"), automatically translate any Korean phonetics into its official English model name, then utilize your internal bowling database to identify its Factory Specifications including Core Symmetry (Symmetric vs Asymmetric), RG value, Differential, and Coverstock aggressiveness to precisely customize the layout pin placement and angles.`;
 
   const userPrompt = `Bowler Info:
 - Name: ${bowler.name || 'Local Bowler'}
@@ -74,7 +78,7 @@ Bowler Spec:
 Bowling Ball Model:
 - Ball Name: ${ballName || 'Unknown Ball'}
 
-Please generate layout recommendations suited for this specific bowler and ball. Remember to format as a JSON array.`;
+Please look up the specifications of "${ballName || 'Unknown Ball'}" in your bowling knowledge base and generate layout recommendations suited for this specific bowler and ball. Remember to format as a JSON array.`;
 
   try {
     // 🎯 [오류 방지 - gemini-1.5-flash 고정 및 Structured Output 적용]
@@ -136,7 +140,15 @@ Please generate layout recommendations suited for this specific bowler and ball.
     const data = await response.json();
     const content = data.candidates[0].content.parts[0].text.trim();
     const cleanedContent = content.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanedContent);
+    const parsed = JSON.parse(cleanedContent);
+
+    // 🛡️ 실수와 분수 사이 하이픈(-) 사용 금지 2중 정제 치환 (예: 4-1/2 -> 4 1/2)
+    return parsed.map(item => ({
+      ...item,
+      layout: item.layout ? item.layout.replace(/(\d+)-(\d+\/\d+)/g, '$1 $2') : item.layout,
+      description: item.description ? item.description.replace(/(\d+)-(\d+\/\d+)/g, '$1 $2') : item.description,
+      intentSummary: item.intentSummary ? item.intentSummary.replace(/(\d+)-(\d+\/\d+)/g, '$1 $2') : item.intentSummary
+    }));
   } catch (error) {
     console.error("Gemini 레이아웃 추천 API 에러:", error);
     throw new Error(translateGeminiError(error.message), { cause: error });
@@ -150,11 +162,12 @@ export const convertLayoutTo2LS = async ({ currentLayout, bowler, spec }) => {
   }
 
   const systemPrompt = `You are a professional bowling layout converter.
-Convert the given Dual Angle layout (e.g. 50 x 4 x 35) into Storm's 2LS (Two-Handed Layout System) format (e.g. 4-1/2 x 5 x 2-1/4) for a thumbless/two-handed bowler.
+Convert the given Dual Angle layout (e.g. 50 x 4 x 35) into Storm's 2LS (Two-Handed Layout System) format (e.g. 4 1/2 x 5 x 2 1/4) for a thumbless/two-handed bowler.
 You MUST calculate the conversion by strictly reflecting the bowler's unique specs (RPM, Speed, PAP, Axis Tilt, and Track Flare) to adjust the pin placement and buffer.
+CRITICAL: NEVER use hyphens (-) between whole numbers and fractions. Always use a single space (e.g. use "4 1/2" instead of "4-1/2", "2 1/4" instead of "2-1/4").
 Always return a simple JSON object containing:
 - dualAngle: The original layout
-- twoLS: The converted 2LS layout (which must be prepended with "(2LS) ", e.g., "(2LS) 4-1/2 x 5 x 2-1/4")
+- twoLS: The converted 2LS layout (which must be prepended with "(2LS) ", e.g., "(2LS) 4 1/2 x 5 x 2 1/4")
 - reason: A very short 1-line explanation (in Korean, under 50 characters) of the conversion basis, explicitly mentioning how the bowler's RPM/Speed/Tilt/PAP influenced the resulting layout.
 No extra markdown, code block tickmarks or comments.`;
 
@@ -212,7 +225,15 @@ Please convert this layout to 2LS, strictly adjusting parameters based on the bo
     const data = await response.json();
     const content = data.candidates[0].content.parts[0].text.trim();
     const cleanedContent = content.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanedContent);
+    const parsed = JSON.parse(cleanedContent);
+
+    // 🛡️ 실수와 분수 사이 하이픈(-) 자동 소거 정제
+    return {
+      ...parsed,
+      dualAngle: parsed.dualAngle ? parsed.dualAngle.replace(/(\d+)-(\d+\/\d+)/g, '$1 $2') : parsed.dualAngle,
+      twoLS: parsed.twoLS ? parsed.twoLS.replace(/(\d+)-(\d+\/\d+)/g, '$1 $2') : parsed.twoLS,
+      reason: parsed.reason ? parsed.reason.replace(/(\d+)-(\d+\/\d+)/g, '$1 $2') : parsed.reason
+    };
   } catch (error) {
     console.error("Gemini 2LS 변환 API 에러:", error);
     throw new Error(translateGeminiError(error.message), { cause: error });
@@ -226,8 +247,9 @@ export const convert2LSToDualAngle = async ({ currentLayout, bowler, spec }) => 
   }
 
   const systemPrompt = `You are a professional bowling layout converter.
-Convert the given Storm's 2LS layout (e.g. 4-1/2 x 5 x 2-1/4) into standard Dual Angle format (e.g. 50 x 4 x 35) for a bowler.
+Convert the given Storm's 2LS layout (e.g. 4 1/2 x 5 x 2 1/4) into standard Dual Angle format (e.g. 50 x 4 x 35) for a bowler.
 You MUST calculate the conversion by strictly reflecting the bowler's unique specs (RPM, Speed, PAP, Axis Tilt, and Track Flare) to adjust the layout.
+CRITICAL: NEVER use hyphens (-) between whole numbers and fractions. Always use a single space (e.g. use "4 1/2" instead of "4-1/2", "2 1/4" instead of "2-1/4").
 Always return a simple JSON object containing:
 - twoLS: The original 2LS layout
 - dualAngle: The converted Dual Angle layout (which must be prepended with "(Dual Angle) ", e.g., "(Dual Angle) 50 x 4 x 35")
@@ -288,7 +310,15 @@ Please convert this 2LS layout back to Dual Angle layout, strictly adjusting par
     const data = await response.json();
     const content = data.candidates[0].content.parts[0].text.trim();
     const cleanedContent = content.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanedContent);
+    const parsed = JSON.parse(cleanedContent);
+
+    // 🛡️ 실수와 분수 사이 하이픈(-) 자동 소거 정제
+    return {
+      ...parsed,
+      twoLS: parsed.twoLS ? parsed.twoLS.replace(/(\d+)-(\d+\/\d+)/g, '$1 $2') : parsed.twoLS,
+      dualAngle: parsed.dualAngle ? parsed.dualAngle.replace(/(\d+)-(\d+\/\d+)/g, '$1 $2') : parsed.dualAngle,
+      reason: parsed.reason ? parsed.reason.replace(/(\d+)-(\d+\/\d+)/g, '$1 $2') : parsed.reason
+    };
   } catch (error) {
     console.error("Gemini Dual Angle 역변환 API 에러:", error);
     throw new Error(translateGeminiError(error.message), { cause: error });

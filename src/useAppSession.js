@@ -1,18 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
-import { isLicenseCertified, MASTER_HASH, checkRemoteLicenseStatus, updateTrialUserStats, calculateGracePeriod, getSha256Hash } from './lib/userLicenseManager.js';
+import { isLicenseCertified, MASTER_HASH, MASTER_EMAIL, checkRemoteLicenseStatus, updateTrialUserStats, calculateGracePeriod, getSha256Hash, certifyUserEmail } from './lib/userLicenseManager.js';
 
 const resolveInitialTier = () => {
   if (typeof window === 'undefined') return 'trial';
+  const plainEmail = (localStorage.getItem('prodrill_certified_email_plain') || '').trim().toLowerCase();
+  const hash = localStorage.getItem('prodrill_certified_email_hash');
+  if (plainEmail === MASTER_EMAIL || hash === MASTER_HASH) {
+    return 'master';
+  }
+
   const cachedStatus = localStorage.getItem('prodrill_license_status');
   if (cachedStatus === 'locked') return 'locked';
   if (cachedStatus === 'suspended') return 'suspended';
 
   const certified = isLicenseCertified();
   if (certified) {
-    const hash = localStorage.getItem('prodrill_certified_email_hash');
-    if (hash === MASTER_HASH) {
-      return 'master';
-    }
     return 'certified';
   }
   return 'trial';
@@ -91,20 +93,21 @@ export default function useAppSession() {
     if (!email) return;
     setIsAuthChecking(true);
     try {
-      const hash = await getSha256Hash(email);
+      const normalized = email.trim().toLowerCase();
+      const hash = normalized === MASTER_EMAIL ? MASTER_HASH : await getSha256Hash(normalized);
       localStorage.setItem('prodrill_certified_email_hash', hash);
-      localStorage.setItem('prodrill_certified_email_plain', email);
+      localStorage.setItem('prodrill_certified_email_plain', normalized);
       setCertifiedEmailHash(hash); // 🌟 상태 업데이트 트리거로 게이트 닫힘 유도!
 
       // 라이선스 등급 동적 확인
-      await certifyUserEmail(email);
-      const tier = await checkRemoteLicenseStatus(hash);
+      await certifyUserEmail(normalized);
+      const tier = normalized === MASTER_EMAIL ? 'master' : await checkRemoteLicenseStatus(hash);
       setUserTier(tier);
 
       // Trial 상태라면 유예 정보 기록 시작
       if (tier === 'trial') {
         const grace = calculateGracePeriod();
-        await updateTrialUserStats(email, hash, grace.daysLeft);
+        await updateTrialUserStats(normalized, hash, grace.daysLeft);
       }
     } catch (e) {
       console.error("세션 개통 에러:", e);

@@ -22,11 +22,13 @@ export default function CustomerManagement({
   onLogout,
   onNfcScan,
   graceInfo,
-  userTier
+  userTier,
+  certifiedEmailHash,
+  activeEmail
 }) {
   const [customers, setCustomers] = useState(() => {
-    const result = loadCustomers();
-    return result instanceof Promise ? [] : result;
+    const result = loadCustomers(null, activeEmail, certifiedEmailHash);
+    return result instanceof Promise ? [] : (Array.isArray(result) ? result : []);
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [sortType, setSortType] = useState('latest');
@@ -58,18 +60,25 @@ export default function CustomerManagement({
     setTotalCount(customers.length);
   }, [customers]);
 
-  // 고객 명단 로드
+  // 🧹 계정 변경 감지 즉시 고스트 데이터 리셋 및 계정 전용 DB 명단 로드
   useEffect(() => {
+    let isMounted = true;
+    setCustomers([]); // 이전 계정 고스트 잔존 데이터 즉시 100% 완전 소멸
+
     const fetchCustomers = async () => {
       try {
-        const list = await loadCustomers();
-        setCustomers(list);
+        const list = await loadCustomers(null, activeEmail, certifiedEmailHash);
+        if (isMounted) {
+          setCustomers(Array.isArray(list) ? list : []);
+        }
       } catch (err) {
         console.error("IndexedDB 고객 로드 실패:", err);
       }
     };
+
     fetchCustomers();
-  }, []);
+    return () => { isMounted = false; };
+  }, [certifiedEmailHash, activeEmail]);
 
   // 화면 진입 및 주요 모달 전환 시 강제 1배율 리셋 (원본 유지)
   useEffect(() => {

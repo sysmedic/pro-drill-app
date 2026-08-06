@@ -73,13 +73,27 @@ test('calculateGracePeriod reports expired when 90 days limit passes', () => {
   assert.equal(period.isExpired, true);
 });
 
-test('certifyUserEmail approves registered whitelist Gmail matching hash values', async () => {
+test('certifyUserEmail approves trial google linking for non-certified emails within 90 days', async () => {
   localStorage.clear();
   
-  // 허용되지 않은 이메일 시도
-  const failResult = await certifyUserEmail('stranger@gmail.com');
-  assert.equal(failResult, false);
+  // 트라이얼 90일 이내 일반 이메일 시도 (연동 성공)
+  const passResult = await certifyUserEmail('stranger@gmail.com');
+  assert.equal(passResult, true);
   assert.equal(isLicenseCertified(), false);
+  assert.equal(localStorage.getItem('prodrill_trial_google_linked'), 'true');
+
+  // 트라이얼 91일 지난 상태에서 연동 시도 (연동 차단)
+  localStorage.clear();
+  const prevDate = new Date();
+  prevDate.setDate(prevDate.getDate() - 91);
+  localStorage.setItem('prodrill_first_launch_time', prevDate.toISOString());
+
+  const expiredResult = await certifyUserEmail('stranger@gmail.com');
+  assert.equal(expiredResult, false);
+});
+
+test('certifyUserEmail approves registered whitelist Gmail matching hash values', async () => {
+  localStorage.clear();
 
   // 허용된 이메일 시도 (sysmedic@gmail.com)
   const passResult = await certifyUserEmail('sysmedic@gmail.com');

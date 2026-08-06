@@ -7,7 +7,7 @@ const densityClasses = {
     section: 'rounded-xl',
     trigger: 'p-4',
     title: 'text-lg',
-    summary: 'text-[11px] px-2 py-1 max-w-[150px] sm:max-w-[200px]',
+    summary: 'text-[12px] px-2 py-0.5',
     iconSize: 18,
     body: 'p-4',
   },
@@ -15,7 +15,7 @@ const densityClasses = {
     section: 'rounded-lg',
     trigger: 'px-3 py-2.5',
     title: 'text-base',
-    summary: 'text-[10px] px-1.5 py-0.5 max-w-[130px] sm:max-w-[180px]',
+    summary: 'text-[12px] px-2 py-0.5',
     iconSize: 16,
     body: 'p-3',
   },
@@ -49,16 +49,16 @@ export default function DisclosureSection({
         onClick={onToggle}
         type="button"
       >
-        <h3 className={cn('font-bold shrink-0', styles.title, isOpen ? 'text-indigo-900' : 'text-slate-800')}>
+        <h3 className={cn('font-bold shrink-0 mr-2 sm:mr-3', styles.title, isOpen ? 'text-indigo-900' : 'text-slate-800')}>
           {title}
         </h3>
-        <div className="flex items-center justify-end gap-2 overflow-hidden ml-3">
+        <div className="flex items-center justify-end gap-2 overflow-hidden min-w-0 flex-1 ml-auto">
           {!isOpen && summary && (
-            <span className={cn('font-bold text-slate-500 bg-white rounded-md border border-slate-200 truncate', styles.summary)}>
+            <span className={cn('font-bold text-slate-500 bg-white rounded-md border border-slate-200 truncate shrink min-w-0 max-w-full', styles.summary)}>
               {summary}
             </span>
           )}
-          <Icon className={cn('text-slate-400 transform transition-transform duration-300', isOpen && 'rotate-180')} name="chevronDown" size={styles.iconSize} />
+          <Icon className={cn('text-slate-400 transform transition-transform duration-300 shrink-0 ml-0.5', isOpen && 'rotate-180')} name="chevronDown" size={styles.iconSize} />
         </div>
       </button>
       <div

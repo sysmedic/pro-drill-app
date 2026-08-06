@@ -56,13 +56,11 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
     });
   };
 
+
+
   return (
     <ModalShell onClose={onClose} size="sm" title="⚙️ 환경 설정">
       <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
-        {/* 설명 영역 */}
-        <p className="text-xs text-slate-500 leading-relaxed pl-1">
-          ProDrill 앱의 작동 환경을 개인 설정에 맞게 변경할 수 있습니다.
-        </p>
 
         {/* 설정 그룹 */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
@@ -73,7 +71,7 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
                 🔒 차트 가리기
               </h4>
               <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
-                빈 화면이나 바탕화면을 3회 연속 터치(클릭)했을 때, 사생활 보호를 위해 즉시 화면 잠금을 가동합니다.
+                활성화 시 앱 내 모든 빈 공간 3회 터치로 화면을 잠그며, 비활성화 시 도면 영역 3회 터치로만 잠급니다.
               </p>
             </div>
             

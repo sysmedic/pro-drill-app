@@ -208,7 +208,7 @@ export default function ChartBlueprintView({
 
       <div
         ref={innerRef}
-        className={`relative shrink-0 select-none ${isMemoActive ? 'touch-none' : 'touch-auto'} transform-gpu`}
+        className={`relative shrink-0 select-none ${isMemoActive ? 'touch-none' : 'touch-auto'} transform-gpu chart-blueprint-container`}
         data-testid="chart-blueprint-canvas"
         style={{ width: '540px', height: `${activeCanvasHeight}px`, transform: `scale(${scale}) translateZ(0)`, transformOrigin: 'top left', backfaceVisibility: 'hidden', WebkitFontSmoothing: 'antialiased' }}
       >

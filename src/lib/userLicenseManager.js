@@ -1,3 +1,4 @@
+/* global process */
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { licenseDb } from './licenseFirebase.js';
 
@@ -7,6 +8,7 @@ import { licenseDb } from './licenseFirebase.js';
  */
 
 export const MASTER_HASH = '05311b63528f338bd7fa5d67c765f2a5ea9e0d30360236668eb2cc477ae51024';
+export const MASTER_EMAIL = 'sysmedic@gmail.com';
 
 export const getTierLabel = (tier) => {
   const t = (tier || '').toLowerCase();
@@ -71,23 +73,20 @@ export const calculateGracePeriod = () => {
 export const checkRemoteLicenseStatus = async (emailHash) => {
   if (!emailHash) return 'trial';
   
+  const plainEmail = typeof window !== 'undefined' ? (localStorage.getItem('prodrill_certified_email_plain') || '').trim().toLowerCase() : '';
+  if (plainEmail === MASTER_EMAIL || emailHash === MASTER_HASH) {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('prodrill_license_certified', 'true');
+      localStorage.setItem('prodrill_certified_email_hash', MASTER_HASH);
+      localStorage.setItem('prodrill_license_status', 'active');
+    }
+    return 'master';
+  }
+  
   // 🧪 Node.js 유닛 테스트 환경에서는 원격 파이어베이스 네트워크 IO 우회
   const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
   if (isTestEnv) {
-    if (emailHash === MASTER_HASH) {
-      localStorage.setItem('prodrill_license_certified', 'true');
-      localStorage.setItem('prodrill_certified_email_hash', emailHash);
-      return 'master';
-    }
     return 'trial';
-  }
-
-  // 👑 마스터 계정(sysmedic@gmail.com) 해시인 경우 원격 조회와 무관하게 무조건 master 반환 및 로컬 캐시 활성화
-  if (emailHash === MASTER_HASH) {
-    localStorage.setItem('prodrill_license_certified', 'true');
-    localStorage.setItem('prodrill_certified_email_hash', emailHash);
-    localStorage.setItem('prodrill_license_status', 'active');
-    return 'master';
   }
 
   try {
@@ -135,65 +134,96 @@ export const checkRemoteLicenseStatus = async (emailHash) => {
   }
 };
 
+// 5.5 구글 계정 연동 가능 여부 판단 (트라이얼 90일 이내 또는 정식 인증 계정)
+export const isGoogleLinkingAllowed = () => {
+  if (typeof window === 'undefined') return true;
+  const certified = isLicenseCertified();
+  if (certified) return true;
+  const { isExpired } = calculateGracePeriod();
+  return !isExpired;
+};
+
+export const isSyncAllowed = isGoogleLinkingAllowed;
+
 // 6. 이메일 화이트리스트 대조 및 인증 승인 (구글 로그인 완료 시 호출)
 export const certifyUserEmail = async (email) => {
   if (!email) return false;
+  const normalizedEmail = email.trim().toLowerCase();
+  
   // 🧪 Node.js 유닛 테스트 환경에서는 원격 파이어베이스 네트워크 IO 우회
   const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
   
   try {
-    const hashed = await getSha256Hash(email);
+    const hashed = await getSha256Hash(normalizedEmail);
     
-    if (isTestEnv) {
-      if (hashed === MASTER_HASH) {
-        localStorage.setItem('prodrill_license_certified', 'true');
-        localStorage.setItem('prodrill_certified_email_hash', hashed);
-        return true;
-      }
-      return false;
-    }
-    
-    // 마스터 계정(sysmedic@gmail.com)은 원격에 없더라도 파이어베이스 문서 자동 복원(백업 생성) 지원
-    if (hashed === MASTER_HASH) {
-      try {
-        const docRef = doc(licenseDb, 'licenses', hashed);
-        await setDoc(docRef, {
-          userTier: 'master',
-          status: 'active',
-          email: 'sysmedic@gmail.com',
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-      } catch (e) {
-        console.warn("마스터 라이선스 문서 자동 복원 실패(오프라인 가능성):", e);
+    // 👑 마스터 계정(sysmedic@gmail.com) 무조건 승인 및 파이어베이스 문서 동기화
+    if (normalizedEmail === MASTER_EMAIL || hashed === MASTER_HASH) {
+      if (!isTestEnv) {
+        try {
+          const docRef = doc(licenseDb, 'licenses', MASTER_HASH);
+          await setDoc(docRef, {
+            userTier: 'master',
+            status: 'active',
+            email: MASTER_EMAIL,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (e) {
+          console.warn("마스터 라이선스 문서 동기화 스킵:", e);
+        }
       }
       localStorage.setItem('prodrill_license_certified', 'true');
-      localStorage.setItem('prodrill_certified_email_hash', hashed);
+      localStorage.setItem('prodrill_certified_email_hash', MASTER_HASH);
+      localStorage.setItem('prodrill_certified_email_plain', MASTER_EMAIL);
       localStorage.setItem('prodrill_license_status', 'active');
+      localStorage.setItem('prodrill_linked_email', MASTER_EMAIL);
+      return true;
+    }
+
+    if (isTestEnv) {
+      localStorage.setItem('prodrill_trial_google_linked', 'true');
+      localStorage.setItem('prodrill_linked_email', normalizedEmail);
       return true;
     }
 
     // 일반 지공사 이메일 해시는 Firestore에서 실시간 활성 여부 대조
     const status = await checkRemoteLicenseStatus(hashed);
-    return status === 'certified' || status === 'master';
+    if (status === 'certified' || status === 'master') {
+      localStorage.setItem('prodrill_linked_email', normalizedEmail);
+      return true;
+    }
+
+    // 🔥 정식 등록 이메일이 아니더라도, 트라이얼 기간(90일 이내)이면 구글 연동 및 백업 지원 허용 + trial_users 기록!
+    const { daysLeft, isExpired } = calculateGracePeriod();
+    if (!isExpired) {
+      localStorage.setItem('prodrill_trial_google_linked', 'true');
+      localStorage.setItem('prodrill_linked_email', normalizedEmail);
+      await updateTrialUserStats(normalizedEmail, hashed, daysLeft);
+      return true;
+    }
+
+    return false;
   } catch (error) {
     console.error("이메일 해싱 인증 에러:", error);
     return false;
   }
 };
 
-// 7. Trial 사용자 기기 통계 수집 등록
+// 7. Trial 사용자 기기 통계 수집 등록 (Firestore trial_users 수집 보장)
 export const updateTrialUserStats = async (email, emailHash, daysLeft) => {
-  if (typeof window === 'undefined' || !emailHash) return;
+  if (typeof window === 'undefined' || (!email && !emailHash)) return;
   try {
-    const docRef = doc(licenseDb, 'trial_users', emailHash);
+    const hashKey = emailHash || (email ? await getSha256Hash(email) : '');
+    if (!hashKey) return;
+
+    const docRef = doc(licenseDb, 'trial_users', hashKey);
     await setDoc(docRef, {
       email: (email || '').trim().toLowerCase(),
       lastActive: serverTimestamp(),
-      daysLeft: daysLeft,
+      daysLeft: typeof daysLeft === 'number' ? daysLeft : 90,
       updatedAt: serverTimestamp()
     }, { merge: true });
-  } catch (error) {
-    // 백그라운드 무소음 무시 (오프라인 상태 등)
+  } catch (err) {
+    console.warn("트라이얼 통계 저장 스킵 (오프라인/네트워크):", err);
   }
 };
 
