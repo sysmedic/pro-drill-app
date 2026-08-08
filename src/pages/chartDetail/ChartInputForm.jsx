@@ -9,8 +9,8 @@ import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
 const styleManualSections = [
   {
     items: [
-      { title: "투구 스타일 선택", desc: "쓰리핑거 및 덤리스(투핸드) 버티컬 스타일을 전환합니다." },
-      { title: "덤리스 자동 정돈", desc: "덤리스 선택 시 엄지 수치 입력 구역이 자동으로 깔끔하게 정돈/숨김 처리됩니다." }
+      { title: "투구 스타일 선택", desc: "쓰리핑거 및 덤리스(투핸드) 스타일을 전환합니다." },
+      { title: "덤리스 자동화", desc: "덤리스 선택 시 엄지 수치 입력 구역이 자동으로 숨김 처리됩니다." }
     ]
   }
 ];
@@ -510,7 +510,7 @@ export default function ChartInputForm({
       <div className="w-full flex items-center justify-between px-3 py-2.5 bg-indigo-50/40 border border-indigo-300 shadow-sm rounded-lg relative">
         <h3 className="font-bold text-base text-indigo-900 shrink-0 flex items-center gap-1">
           <span>{isLeft ? '왼손' : '오른손'}</span>
-          {renderHelpBtn('style', '📖 투구 스타일 가이드', styleManualSections)}
+          {renderHelpBtn('style', '📖 투구 스타일', styleManualSections)}
         </h3>
         <div className="flex bg-slate-200/80 rounded-md p-1 border border-slate-300/80">
           <button 
