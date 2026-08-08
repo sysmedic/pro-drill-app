@@ -180,9 +180,13 @@ export const certifyUserEmail = async (email) => {
     }
 
     if (isTestEnv) {
-      localStorage.setItem('prodrill_trial_google_linked', 'true');
-      localStorage.setItem('prodrill_linked_email', normalizedEmail);
-      return true;
+      const { isExpired } = calculateGracePeriod();
+      if (!isExpired) {
+        localStorage.setItem('prodrill_trial_google_linked', 'true');
+        localStorage.setItem('prodrill_linked_email', normalizedEmail);
+        return true;
+      }
+      return false;
     }
 
     // 일반 지공사 이메일 해시는 Firestore에서 실시간 활성 여부 대조

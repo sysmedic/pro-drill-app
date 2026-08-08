@@ -2,9 +2,22 @@ import { useEffect, useState, useRef } from 'react';
 import PageShell from '../../components/layout/PageShell.jsx';
 import Card from '../../components/ui/Card.jsx';
 import Icon from '../../components/ui/Icon.jsx';
+import TaskbarHelpBalloon from '../../components/ui/TaskbarHelpBalloon.jsx';
 import { commonBoxClass, getEdgePoint } from './chartOptions.js';
+import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
 
-const { PAGE_MAX_WIDTH_PX, PAGE_PADDING_X_PX } = PageShell.tokens;
+const chartBlueprintManualSections = [
+  {
+    heading: "지공 도면 활용 가이드",
+    items: [
+      { iconName: "memo", title: "📌 메모 핀 작성법", desc: "상단 테스크바의 [메모] 버튼을 활성화한 후, 도면 위 원하는 위치(중지/약지/엄지/핀 부근 등)를 터치하여 메모 핀을 꽂고 작업 노하우를 기록합니다." },
+      { iconName: "chart", title: "📐 드릴링 가이드 이동", desc: "도면 하단/우측의 드릴링 가이드 버튼이나 라벨을 터치하면 상세 드릴링 가이드 팝업이 열립니다." },
+      { title: "🔒 비밀 3회 연속 터치 잠금", desc: "지공 도면 영역을 빠르게 3회 연속 터치하면 고객 시청 시 차트 화면이 즉시 비밀 잠금 전환됩니다." }
+    ]
+  }
+];
+
+const { PAGE_MAX_WIDTH_PX = 768, PAGE_PADDING_X_PX = { base: 16, sm: 32 } } = PageShell?.tokens || {};
 
 const parseFraction = (str) => {
   if (!str) return 0;
@@ -114,17 +127,33 @@ export default function ChartBlueprintView({
   const secondLabel = isLeft ? "중지" : "약지";
 
   const getExactScale = () => {
-    if (typeof window === 'undefined') return 1;
-    const cw = document.documentElement.clientWidth;
+    if (typeof window === 'undefined' || typeof document === 'undefined' || !document?.documentElement) return 1;
+    const cw = document.documentElement.clientWidth || 390;
     const isSm = cw >= 640;
-    const parentPadding = isSm ? PAGE_PADDING_X_PX.sm : PAGE_PADDING_X_PX.base;
-    const containerW = Math.min(cw, PAGE_MAX_WIDTH_PX) - parentPadding;
-    const wrapperW = Math.min(containerW, PAGE_MAX_WIDTH_PX);
+    const parentPadding = isSm ? (PAGE_PADDING_X_PX?.sm || 32) : (PAGE_PADDING_X_PX?.base || 16);
+    const containerW = Math.min(cw, PAGE_MAX_WIDTH_PX || 768) - parentPadding;
+    const wrapperW = Math.min(containerW, PAGE_MAX_WIDTH_PX || 768);
     const innerW = wrapperW - 2; 
     return innerW / 540;
   };
 
   const [scale, setScale] = useState(getExactScale);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showManualHelpSetting, setShowManualHelpSetting] = useState(true);
+  const syncedPingStyle = useSyncedPingStyle();
+
+  useEffect(() => {
+    const handleUpdateSetting = () => {
+      setShowManualHelpSetting(localStorage.getItem('show_manual_help') !== 'false');
+    };
+    handleUpdateSetting();
+    window.addEventListener('manual_help_setting_changed', handleUpdateSetting);
+    window.addEventListener('storage', handleUpdateSetting);
+    return () => {
+      window.removeEventListener('manual_help_setting_changed', handleUpdateSetting);
+      window.removeEventListener('storage', handleUpdateSetting);
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => setScale(getExactScale());
@@ -214,6 +243,34 @@ export default function ChartBlueprintView({
       >
         {memoOverlay}
         {memosRenderer}
+
+        {/* 💡 [지공 도면 상단 좌측 반투명 3초 맥동 도움말 버튼] */}
+        {showManualHelpSetting && (
+          <div className="absolute top-3 left-3 z-30 pointer-events-auto">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setShowHelp(prev => !prev);
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="relative z-10 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-200/60 hover:bg-slate-200/90 text-slate-700 border border-slate-300/50 backdrop-blur-xs shadow-xs flex items-center justify-center font-black text-xs sm:text-sm transition-transform active:scale-95 cursor-pointer focus:outline-none"
+              aria-label="지공 도면 가이드"
+              title="지공 도면 가이드"
+            >
+              <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400/40 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] pointer-events-none" style={syncedPingStyle} />
+              ?
+            </button>
+            <TaskbarHelpBalloon 
+              isOpen={showHelp} 
+              onClose={() => setShowHelp(false)} 
+              title="📖 지공 도면 가이드"
+              sections={chartBlueprintManualSections}
+            />
+          </div>
+        )}
 
         <div className="absolute inset-0 z-0 rounded-xl bg-white overflow-hidden" style={{ filter: isLeft ? 'invert(80%)' : 'none' }}>
         <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">

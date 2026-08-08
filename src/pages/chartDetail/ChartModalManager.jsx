@@ -113,11 +113,7 @@ export default function ChartModalManager({
         >
           <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
             {/* 설정 영역 컨테이너 (클라우드 설정 모달 기준 일치화) */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
-              <div className="flex items-center gap-1.5">
-                <span className="text-base">{"\uD83D\uDCE5"}</span>
-                <h3 className="text-sm font-black text-slate-800">지공 기록 불러오기 확인</h3>
-              </div>
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
               
               <div className="space-y-2">
                 <p className="text-[11px] text-slate-500 leading-normal">
@@ -280,19 +276,12 @@ export default function ChartModalManager({
           title={"\u26A0\uFE0F 차트 기록 변경"}
         >
           <div className="p-5 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
-            {/* 경고 영역 컨테이너 (AI 설정 모달 디자인 기준 일치화) */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
-              <div className="flex items-center gap-1.5">
-                <span className="text-base">{"\u26A0\uFE0F"}</span>
-                <h3 className="text-sm font-black text-slate-800">지공 차트 덮어쓰기 경고</h3>
-              </div>
-              
-              <div className="space-y-2">
-                <p className="text-[11px] text-slate-500 leading-normal">
-                  불러온 차트의 내용이 변경됩니다. 이대로 저장하면 기존 기록이 완전히 덮어씌워집니다. 계속하시겠습니까?<br /><br />
-                  <span className="text-rose-600 font-bold">※ 새로운 차트로 생성하려면 '취소'를 누른 후 상단의 기록 배너를 클릭해 주세요.</span>
-                </p>
-              </div>
+            {/* 안내 본문 영역 (중간의 '지공 차트 덮어쓰기 경고' 작은 타이틀 요소 삭제됨) */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <p className="text-[11px] text-slate-500 leading-normal">
+                불러온 차트의 내용이 변경됩니다. 이대로 저장하면 기존 기록이 완전히 덮어씌워집니다. 계속하시겠습니까?<br /><br />
+                <span className="text-rose-600 font-bold">※ 새로운 차트로 생성하려면 '취소'를 누른 후 상단의 기록 배너를 클릭해 주세요.</span>
+              </p>
             </div>
 
             {/* 액션 버튼 영역 */}
@@ -315,7 +304,7 @@ export default function ChartModalManager({
                 size="sm"
                 variant="primary"
               >
-                내용 변경
+                승인
               </Button>
             </div>
           </div>

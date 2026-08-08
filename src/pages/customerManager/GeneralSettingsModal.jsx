@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import ModalShell from '../../components/ui/ModalShell.jsx';
+import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
 
 export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedback }) {
   const onFeedback = propOnFeedback || (() => {});
@@ -7,6 +8,8 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
   const [showLogsOnChart, setShowLogsOnChart] = useState(true);
   const [expandInputAccordions, setExpandInputAccordions] = useState(false);
   const [expandBowlerSpec, setExpandBowlerSpec] = useState(false);
+  const [showManualHelp, setShowManualHelp] = useState(true);
+  const syncedPingStyle = useSyncedPingStyle();
 
   useEffect(() => {
     // 설정값 복원
@@ -14,6 +17,7 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
     setShowLogsOnChart(localStorage.getItem('showLogsOnChart') !== 'false');
     setExpandInputAccordions(localStorage.getItem('expandInputAccordions') === 'true');
     setExpandBowlerSpec(localStorage.getItem('expandBowlerSpec') === 'true');
+    setShowManualHelp(localStorage.getItem('show_manual_help') !== 'false');
   }, []);
 
   const handleToggleLockTrigger = () => {
@@ -56,6 +60,17 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
     });
   };
 
+  const handleToggleShowManualHelp = () => {
+    const nextVal = !showManualHelp;
+    setShowManualHelp(nextVal);
+    localStorage.setItem('show_manual_help', nextVal ? 'true' : 'false');
+    window.dispatchEvent(new Event('manual_help_setting_changed'));
+    onFeedback({
+      message: `테스크바 매뉴얼 가이드가 ${nextVal ? '활성화' : '비활성화'}되었습니다.`,
+      tone: 'success'
+    });
+  };
+
 
 
   return (
@@ -68,10 +83,10 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
               <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5 mb-0.5">
-                🔒 차트 가리기
+                🔒 차트 보호
               </h4>
               <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
-                활성화 시 앱 내 모든 빈 공간 3회 터치로 화면을 잠그며, 비활성화 시 도면 영역 3회 터치로만 잠급니다.
+                앱 내 모든 빈 공간 3회 터치로 화면을 잠그며, 비활성화 시 도면 영역 3회 터치로만 잠급니다.
               </p>
             </div>
             
@@ -92,11 +107,11 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
             </button>
           </div>
 
-          {/* 두 번째 설정 항목: 로그 보기 */}
+          {/* 두 번째 설정 항목: 타임라인 로그 보기 */}
           <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-200">
             <div className="flex-1">
               <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5 mb-0.5">
-                📁 로그 보기
+                📁 타임라인 로그 보기
               </h4>
               <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
                 고객 차트 진입 시 이전에 저장된 지공 관리 이력 모달을 자동으로 화면에 전개합니다.
@@ -171,6 +186,43 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
               <span
                 className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                   expandBowlerSpec ? 'translate-x-4.5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* 다섯 번째 설정 항목: ? 가이드 보기 */}
+          <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-200">
+            <div className="flex-1">
+              <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5 mb-0.5">
+                <span className="relative flex items-center justify-center shrink-0">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400/40 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] pointer-events-none" style={syncedPingStyle} />
+                  <span className="relative z-10 w-5 h-5 rounded-full bg-slate-200/60 text-slate-700 border border-slate-300/50 flex items-center justify-center font-black text-[11px]">?</span>
+                </span>
+                가이드 보기
+              </h4>
+              <p className="text-[11px] font-bold text-slate-500 leading-relaxed flex items-center flex-wrap gap-1">
+                <span>앱 사용 가이드</span>
+                <span className="relative inline-flex items-center justify-center shrink-0 mx-0.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400/40 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] pointer-events-none" style={syncedPingStyle} />
+                  <span className="relative z-10 w-4 h-4 rounded-full bg-slate-200/60 text-slate-700 border border-slate-300/50 flex items-center justify-center font-black text-[10px]">?</span>
+                </span>
+                <span>버튼을 노출합니다.</span>
+              </p>
+            </div>
+            
+            {/* 토글 스위치 버튼 */}
+            <button
+              type="button"
+              onClick={handleToggleShowManualHelp}
+              className={`relative inline-flex h-5.5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                showManualHelp ? 'bg-indigo-600' : 'bg-slate-300'
+              }`}
+              aria-label="테스크바 매뉴얼 가이드 여부 토글"
+            >
+              <span
+                className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  showManualHelp ? 'translate-x-4.5' : 'translate-x-0'
                 }`}
               />
             </button>

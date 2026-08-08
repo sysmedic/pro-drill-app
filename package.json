@@ -17,7 +17,7 @@
     "prompt:ui": "node scripts/gemini-prompt.mjs ui",
     "lint": "eslint src/lib src/App.jsx src/useAppSession.js src/pages/chartDetail/TaskDetailsCard.jsx src/pages/chartDetail/AiRecommendationModal.jsx src/pages/chartDetail/UtilitySheet.jsx src/pages/chartDetail/useHistoryRecords.js src/pages/customerManager/SettingsModal.jsx src/pages/CustomerManager.jsx src/hooks/useGlobalNfcRead.js",
     "preview": "vite preview",
-    "test": "node --test test/*.test.js",
+    "test": "NODE_ENV=test node --test test/*.test.js",
     "icons": "node scripts/generate-icons.mjs",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",

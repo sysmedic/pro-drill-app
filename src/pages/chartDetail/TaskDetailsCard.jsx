@@ -1,8 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Card from '../../components/ui/Card.jsx';
 import Field from '../../components/ui/Field.jsx';
 import Icon from '../../components/ui/Icon.jsx';
+import TaskbarHelpBalloon from '../../components/ui/TaskbarHelpBalloon.jsx';
 import { ConfirmModal } from '../../components/ui/Dialogs.jsx';
+import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
+
+const taskDetailsManualSections = [
+  {
+    heading: "지공 작업 & 레이아웃 가이드",
+    items: [
+      { title: "1. 볼링공 모델명", desc: "지공 작업 대상 볼링공 명칭을 입력합니다." },
+      { title: "2. 레이아웃 (Dual Angle)", desc: "Pin to PAP x PSA x Buffer 수치를 입력합니다." },
+      { iconName: "star", title: "3. ✨ AI 추천", desc: "볼러스펙과 공 제원을 바탕으로 최적의 레이아웃 4종을 추천받습니다." },
+      { iconName: "history", title: "4. 🔄 2LS 변환", desc: "Dual Angle 수치를 Storm 2LS 수치로 즉시 상호 자동 계산 변환합니다." },
+      { title: "5. 지공 의도 및 상담", desc: "고객 요청사항, 트랙 특성, 지공 목적을 자유롭게 작성합니다." },
+      { title: "6. 관리 내역 추가", desc: "지공 후 샌딩, 폴리싱, 핑거 교체 등 정비 이력을 기록합니다." }
+    ]
+  }
+];
 
 const getFormattedDate = () => {
   const now = new Date();
@@ -30,7 +46,23 @@ export default function TaskDetailsCard({
   const [logInput, setLogInput] = useState('');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [targetLogId, setTargetLogId] = useState(null);
-  
+  const [showHelp, setShowHelp] = useState(false);
+  const [showManualHelpSetting, setShowManualHelpSetting] = useState(true);
+  const syncedPingStyle = useSyncedPingStyle();
+
+  useEffect(() => {
+    const handleUpdateSetting = () => {
+      setShowManualHelpSetting(localStorage.getItem('show_manual_help') !== 'false');
+    };
+    handleUpdateSetting();
+    window.addEventListener('manual_help_setting_changed', handleUpdateSetting);
+    window.addEventListener('storage', handleUpdateSetting);
+    return () => {
+      window.removeEventListener('manual_help_setting_changed', handleUpdateSetting);
+      window.removeEventListener('storage', handleUpdateSetting);
+    };
+  }, []);
+
   const logs = Array.isArray(chartData?.maintenanceLogs) ? chartData.maintenanceLogs : [];
 
   const commitLogs = (nextLogs) => {
@@ -73,7 +105,7 @@ export default function TaskDetailsCard({
   };
 
   return (
-    <Card ref={innerRef} className="mt-0" elevation="md" layer="content" padding="md">
+    <Card ref={innerRef} className="mt-0 transition-all" elevation="md" layer="content" padding="md">
       {memoOverlay}
       {memosRenderer}
 
@@ -81,6 +113,41 @@ export default function TaskDetailsCard({
         <span className="font-black text-slate-800 text-sm sm:text-base pl-1 flex items-center gap-1.5">
           <Icon name="ball" className="text-slate-700" size={20} />
           작업내용
+          {/* 💡 [작업내용 반투명 3초 맥동 도움말 버튼] */}
+          {showManualHelpSetting && (
+            <span 
+              className="relative inline-flex shrink-0 ml-1 z-20"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setShowHelp(prev => !prev);
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="relative z-10 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-200/60 hover:bg-slate-200/90 text-slate-700 border border-slate-300/50 backdrop-blur-xs shadow-xs flex items-center justify-center font-black text-xs sm:text-sm transition-transform active:scale-95 cursor-pointer focus:outline-none"
+                aria-label="작업내용 가이드"
+                title="작업내용 가이드"
+              >
+                <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400/40 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] pointer-events-none" style={syncedPingStyle} />
+                ?
+              </button>
+              <TaskbarHelpBalloon 
+                isOpen={showHelp} 
+                onClose={() => setShowHelp(false)} 
+                title="📖 작업내용 가이드"
+                sections={taskDetailsManualSections}
+              />
+            </span>
+          )}
         </span>
 
         {showNfcWriteButton && realNfcSupported && (
@@ -105,7 +172,7 @@ export default function TaskDetailsCard({
               
               <div className="relative w-full flex flex-col">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-slate-700">레이아웃 (Dual Angle 등)</span>
+                  <label htmlFor="layout-info-input" className="text-xs font-bold text-slate-700">레이아웃 (Dual Angle 등)</label>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       type="button"
@@ -126,7 +193,7 @@ export default function TaskDetailsCard({
                   </div>
                 </div>
                 <div className="relative w-full">
-                  <Field label="" onChange={e => onLayoutInfoChange(e.target.value)} placeholder="예: 50 x 4 x 30" type="text" value={layoutInfo} />
+                  <Field id="layout-info-input" onChange={e => onLayoutInfoChange(e.target.value)} placeholder="예: 50 x 4 x 30" type="text" value={layoutInfo} />
                 </div>
               </div>
             </div>

@@ -112,7 +112,7 @@ test('saved chart creates the expected localStorage history key and reloads thro
 
   const headingCustomerManager = page.getByRole('heading', { name: /고객 관리/ });
   if (!(await headingCustomerManager.isVisible())) {
-    const backBtn = page.locator('button[aria-label="뒤로"]');
+    const backBtn = page.getByRole('button', { name: /고객관리/ });
     await backBtn.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
     if (await backBtn.isVisible()) {
       await backBtn.evaluate(el => el.click());
@@ -145,16 +145,16 @@ test('unsaved chart edits show an exit confirmation before leaving', async ({ pa
   await openTaskDetails(page);
   await page.getByLabel(/레이아웃/).fill('40 x 5 x 35');
 
-  await page.getByRole('button', { name: /뒤로/ }).click();
+  await page.getByRole('button', { name: /고객관리/ }).click();
   const exitDialog = page.getByRole('dialog', { name: /주의/ });
   await expect(exitDialog).toBeVisible();
-  await expect(exitDialog).toContainText(/저장되지 않은 변경 사항/);
+  await expect(exitDialog).toContainText(/수정한 변경 사항/);
 
   await exitDialog.getByRole('button', { name: /취소/ }).click();
   await expect(exitDialog).toBeHidden();
   await expect(page.getByText('작업내용')).toBeVisible();
 
-  await page.getByRole('button', { name: /뒤로/ }).click();
+  await page.getByRole('button', { name: /고객관리/ }).click();
   const reopenedExitDialog = page.getByRole('dialog', { name: /주의/ });
   await reopenedExitDialog.getByRole('button', { name: /저장하지 않고 나가기/ }).click();
   await expect(page.getByRole('heading', { name: /고객 관리/ })).toBeVisible();

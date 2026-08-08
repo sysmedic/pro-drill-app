@@ -113,6 +113,6 @@ test('chart save failure preserves dirty state and does not write history', asyn
   ), CHART_HISTORY_PREFIX);
   expect(historyKeys).toHaveLength(0);
 
-  await page.getByRole('button', { name: /뒤로/ }).click();
+  await page.getByRole('button', { name: /고객관리/ }).click();
   await expect(page.getByRole('dialog', { name: /주의/ })).toBeVisible();
 });

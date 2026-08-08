@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import Button from '../../components/ui/Button.jsx';
 import { ConfirmModal } from '../../components/ui/Dialogs.jsx';
 import ModalShell from '../../components/ui/ModalShell.jsx';
-import { isLicenseCertified, certifyUserEmail, calculateGracePeriod } from '../../lib/userLicenseManager.js';
+import { isLicenseCertified, calculateGracePeriod } from '../../lib/userLicenseManager.js';
 import { 
   initGoogleApi, 
   signInGoogle, 
-  signOutGoogle, 
   isGoogleSignedIn 
 } from '../../lib/googleDriveBackup.js';
 import { 
@@ -18,104 +17,23 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
   const onFeedback = propOnFeedback || (() => {});
 
   // AI 및 Google 관련 상태
-  const [googleConnected, setGoogleConnected] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [lastBackupTime, setLastBackupTime] = useState('');
   const [autoSync, setAutoSync] = useState(true);
   const [showSyncModeConfirm, setShowSyncModeConfirm] = useState(false);
   const [syncMode, setSyncMode] = useState('merge'); // 'merge' | 'overwrite'
-  const [graceDays, setGraceDays] = useState(() => calculateGracePeriod().daysLeft);
+  const [graceDays] = useState(() => calculateGracePeriod().daysLeft);
 
   useEffect(() => {
     // 초기 로딩 시 설정값 복원
-    setGoogleConnected(isGoogleSignedIn());
     setLastBackupTime(localStorage.getItem('prodrill_last_backup_time') || '기록 없음');
     setAutoSync(localStorage.getItem('prodrill_auto_sync_enabled') !== 'false');
 
     // 구글 API 사전 초기화 시도
-    initGoogleApi().then(() => {
-      setGoogleConnected(isGoogleSignedIn());
-    }).catch(e => {
+    initGoogleApi().catch(e => {
       console.warn("구글 API 초기 이닛 생략 (Vite 환경 변수가 비어있는 경우 등):", e);
     });
   }, []);
-
-
-
-  // 2. 구글 연동 로그인 및 라이선스 인증
-  const handleGoogleConnect = async () => {
-    // 🛑 만약 트라이얼 90일이 만료된 상태라면 연동을 차단
-    const { isExpired } = calculateGracePeriod();
-    if (isExpired && !isLicenseCertified()) {
-      onFeedback({ 
-        message: '90일 무료 트라이얼 기간이 만료되어 구글 계정 연동이 차단되었습니다. 정식 라이선스 등록 후 이용하실 수 있습니다. (문의: sysmedic@gmail.com)', 
-        tone: 'danger' 
-      });
-      return;
-    }
-
-    setGoogleLoading(true);
-    try {
-      const { getGoogleUserEmail } = await import('../../lib/googleDriveBackup.js');
-      await initGoogleApi();
-      await signInGoogle(true);
-      const email = await getGoogleUserEmail();
-      
-      if (!email) {
-        onFeedback({ message: '구글 계정의 이메일 정보를 획득할 수 없습니다.', tone: 'danger' });
-        signOutGoogle();
-        setGoogleConnected(false);
-        return;
-      }
-
-      // 🛡️ [안전장치]: 현재 ProDrill 앱에 로그인된 계정과 구글 선택 계정이 다르면 연동 차단
-      const activeAppEmail = localStorage.getItem('prodrill_active_user_email') || '';
-      if (activeAppEmail && email.toLowerCase() !== activeAppEmail.toLowerCase()) {
-        onFeedback({ 
-          message: `\u26A0\uFE0F 계정 불일치: 현재 앱 로그인 계정(${activeAppEmail})과 선택한 구글 계정(${email})이 다릅니다. 데이터 보호를 위해 동일한 계정으로만 연동할 수 있습니다.`, 
-          tone: 'danger' 
-        });
-        signOutGoogle();
-        setGoogleConnected(false);
-        return;
-      }
-
-      const isApproved = await certifyUserEmail(email);
-      if (isApproved) {
-        setGoogleConnected(true);
-        setGraceDays(calculateGracePeriod().daysLeft);
-        onFeedback({ message: '구글 계정 연동 및 클라우드 백업 기능이 활성화되었습니다!', tone: 'success' });
-        
-        // 연동에 성공하면 클라우드 동기화 기동
-        const { autoSyncOnLaunch } = await import('../../lib/syncService.js');
-        autoSyncOnLaunch(onFeedback);
-      } else {
-        signOutGoogle();
-        setGoogleConnected(false);
-        onFeedback({ message: '구글 계정 연동에 실패했습니다.', tone: 'danger' });
-      }
-    } catch (e) {
-      console.error("구글 연동 실패:", e);
-      if (e.message === 'GOOGLE_API_KEYS_MISSING') {
-        onFeedback({ message: '구글 OAuth 클라이언트 키가 설정되지 않았습니다. .env 파일을 먼저 설정해 주세요.', tone: 'warning' });
-      } else if (e.message === 'REQUIRED_SCOPES_MISSING') {
-        onFeedback({ message: '구글 로그인 동의 화면에서 [Google 드라이브 권한] 체크박스를 반드시 직접 체크(허용)해 주셔야 백업 연동이 가능합니다.', tone: 'warning' });
-      } else {
-        onFeedback({ message: '구글 연동 및 인증에 실패했습니다.', tone: 'danger' });
-      }
-      signOutGoogle();
-      setGoogleConnected(false);
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
-  // 3. 구글 연동 해제
-  const handleGoogleDisconnect = () => {
-    signOutGoogle();
-    setGoogleConnected(false);
-    onFeedback({ message: '구글 드라이브 연동이 해제되었습니다.', tone: 'info' });
-  };
 
   // 4. 구글 드라이브 즉시 백업
   const handleGoogleBackup = async () => {
@@ -133,7 +51,6 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
       if (!isGoogleSignedIn()) {
         await initGoogleApi();
         await signInGoogle(true);
-        setGoogleConnected(true);
       }
 
       const time = await performBackup();

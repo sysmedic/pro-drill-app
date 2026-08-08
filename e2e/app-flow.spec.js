@@ -67,7 +67,7 @@ test('customer creation and chart save flow works', async ({ page }) => {
 
   const headingCustomerManager = page.getByRole('heading', { name: /고객 관리/ });
   if (!(await headingCustomerManager.isVisible())) {
-    const backBtn = page.locator('button[aria-label="뒤로"]');
+    const backBtn = page.getByRole('button', { name: /고객관리/ });
     await backBtn.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
     if (await backBtn.isVisible()) {
       await backBtn.evaluate(el => el.click());

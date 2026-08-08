@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import TopBarShell from '../../components/layout/TopBarShell.jsx';
 import { signOutGoogle, isGoogleSignedIn } from '../../lib/googleDriveBackup.js';
+import TaskbarHelpBalloon from '../../components/ui/TaskbarHelpBalloon.jsx';
+import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
 
 export default function CustomerHeader({ 
   totalCount, currentCount, onAdd, searchQuery, setSearchQuery, sortType, setSortType, 
@@ -9,6 +11,22 @@ export default function CustomerHeader({
   onOpenAiSettings, onOpenBackupSettings, onOpenAdminSettings, onCheckUpdate, userTier, isAiAllowed, isBackupAllowed, onNfcScan 
 }) {
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showManualHelpSetting, setShowManualHelpSetting] = useState(true);
+  const syncedPingStyle = useSyncedPingStyle();
+
+  useEffect(() => {
+    const handleUpdateSetting = () => {
+      setShowManualHelpSetting(localStorage.getItem('show_manual_help') !== 'false');
+    };
+    handleUpdateSetting();
+    window.addEventListener('manual_help_setting_changed', handleUpdateSetting);
+    window.addEventListener('storage', handleUpdateSetting);
+    return () => {
+      window.removeEventListener('manual_help_setting_changed', handleUpdateSetting);
+      window.removeEventListener('storage', handleUpdateSetting);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isHamburgerOpen) return;
@@ -20,6 +38,44 @@ export default function CustomerHeader({
       document.removeEventListener('click', handleOutsideClick);
     };
   }, [isHamburgerOpen]);
+
+  const customerHeaderManualSections = [
+    {
+      heading: "1. ☰ 햄버거 메뉴",
+      items: [
+        { 
+          title: "⚙️ 환경 설정", 
+          desc: "세부 옵션을 설정합니다.",
+          subItems: [
+            { emoji: "🔒", label: "차트 보호" },
+            { emoji: "📁", label: "타임라인 로그" },
+            { emoji: "📋", label: "입력창 펼치기" },
+            { emoji: "👤", label: "볼러스펙 펼치기" },
+            { isHelpPing: true, label: "가이드 보기" }
+          ]
+        },
+        { title: "✨ ProDrill AI", desc: "AI 레이아웃 추천 알고리즘 설정 및 API 키를 연동합니다." },
+        { title: "☁️ 클라우드 백업", desc: "구글 드라이브 클라우드 동기화 및 복구를 진행합니다." },
+        { title: "📂 로컬 백업", desc: "수동 JSON 파일 내보내기/불러오기로 백업 파일을 관리합니다." },
+        { title: "🔄 업데이트", desc: "최신 배포본을 확인하고 앱을 즉시 갱신합니다." },
+        { title: "🚪 로그아웃", desc: "사용자 계정 세션을 안전하게 종료하고 로그인 화면으로 이동합니다." }
+      ]
+    },
+    {
+      heading: "2. \uD83D\uDC65 고객 현황 및 + 신규 고객 등록",
+      items: [
+        { title: "실시간 고객 수 표시", desc: "현재 저장된 전체 고객 수와 검색 필터링된 고객 수가 실시간 카운트됩니다." },
+        { iconName: "plus", title: "+ 신규 버튼", desc: "우측 상단 + 신규 버튼을 터치하여 신규 고객을 빠르게 등록합니다." }
+      ]
+    },
+    {
+      heading: "3. \uD83D\uDD0D 스마트 고객 검색 & 정렬",
+      items: [
+        { iconName: "search", title: "전화번호 & 이름 검색", desc: "고객 이름이나 전화번호 뒷 4자리 입력 시 실시간 정밀 필터링됩니다." },
+        { title: "고객 정렬 옵션", desc: "최신순 / 이름순 선택으로 명단을 깔끔하게 정돈합니다." }
+      ]
+    }
+  ];
 
   /* 🟢 NFC 스캔 버튼 임시 비활성화 처리
   const [realNfcSupported, setRealNfcSupported] = useState(() => {
@@ -197,8 +253,37 @@ export default function CustomerHeader({
             )}
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center gap-1.5 relative">
             <h1 className="text-xl font-bold text-slate-800 leading-none">고객 관리</h1>
+            {/* 💡 [고객 관리 타이틀 수직 위치 100% 동기화 3초 맥동 도움말 버튼] */}
+            {showManualHelpSetting && (
+              <div className="relative inline-flex items-center justify-center shrink-0 ml-0.5">
+                <div className="relative flex items-center justify-center">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400/40 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] pointer-events-none" style={syncedPingStyle} />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setShowHelp(prev => !prev);
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="relative z-10 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-200/60 hover:bg-slate-200/90 text-slate-700 border border-slate-300/50 backdrop-blur-xs shadow-xs flex items-center justify-center font-black text-xs sm:text-sm transition-transform active:scale-95 cursor-pointer focus:outline-none"
+                    aria-label="고객관리 사용 매뉴얼"
+                    title="고객관리 사용 매뉴얼"
+                  >
+                    ?
+                  </button>
+                </div>
+                <TaskbarHelpBalloon 
+                  isOpen={showHelp} 
+                  onClose={() => setShowHelp(false)} 
+                  title="📖 고객관리 테스크바"
+                  sections={customerHeaderManualSections}
+                />
+              </div>
+            )}
           </div>
         </div>
 

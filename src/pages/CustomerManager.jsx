@@ -14,6 +14,7 @@ import GeneralSettingsModal from './customerManager/GeneralSettingsModal.jsx'; /
 import BackupSettingsModal from './customerManager/BackupSettingsModal.jsx'; // 🗂️ 로컬 백업 모달 임포트
 import AiSettingsModal from './customerManager/AiSettingsModal.jsx'; // 🤖 AI 설정 모달 임포트
 import AdminSettingsModal from './customerManager/AdminSettingsModal.jsx'; // 👑 마스터 제어실 모달 임포트
+import UserManualModal from './customerManager/UserManualModal.jsx'; // 📖 사용 설명서 모달 임포트
 import { isLicenseCertified } from '../lib/userLicenseManager.js';
 import { checkForAppUpdate } from '../lib/pwaUpdate.js';
 
@@ -42,6 +43,7 @@ export default function CustomerManagement({
   const [showBackupSettingsModal, setShowBackupSettingsModal] = useState(false);
   const [showAiSettingsModal, setShowAiSettingsModal] = useState(false);
   const [showAdminSettingsModal, setShowAdminSettingsModal] = useState(false);
+  const [showUserManualModal, setShowUserManualModal] = useState(false);
   
   const [totalCount, setTotalCount] = useState(0);
 
@@ -176,6 +178,7 @@ export default function CustomerManagement({
           }
         }}
         onOpenAdminSettings={() => setShowAdminSettingsModal(true)}
+        onOpenUserManual={() => setShowUserManualModal(true)}
         onCheckUpdate={() => checkForAppUpdate(setFeedback)}
         userTier={userTier}
         isAiAllowed={['master', 'certified'].includes(userTier?.toLowerCase()) || (graceInfo && !graceInfo.isExpired && graceInfo.daysLeft > 30)}
@@ -382,6 +385,10 @@ export default function CustomerManagement({
 
       {showAdminSettingsModal && (
         <AdminSettingsModal onClose={() => setShowAdminSettingsModal(false)} onFeedback={setFeedback} />
+      )}
+
+      {showUserManualModal && (
+        <UserManualModal onClose={() => setShowUserManualModal(false)} />
       )}
 
       <FeedbackToast message={feedback?.message} onDismiss={() => setFeedback(null)} tone={feedback?.tone} />

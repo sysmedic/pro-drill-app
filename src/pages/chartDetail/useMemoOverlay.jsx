@@ -32,8 +32,8 @@ export default function useMemoOverlay({ onDirty }) {
     const initialX = ((event.clientX - rect.left) / rect.width) * 100;
     const initialY = ((event.clientY - rect.top) / rect.height) * 100;
     
-    const marginX = (60 / rect.width) * 100;
-    const marginY = (64 / rect.height) * 100;
+    const marginX = (24 / rect.width) * 100;
+    const marginY = (24 / rect.height) * 100;
 
     const x = Math.max(0, Math.min(100 - marginX, initialX));
     const y = Math.max(0, Math.min(100 - marginY, initialY));
@@ -79,6 +79,10 @@ export default function useMemoOverlay({ onDirty }) {
         const scaleClass = isPinned ? '' : (isDragging && dragMoved.current ? 'scale-110' : '');
         const cursorClass = isDragging && dragMoved.current ? 'cursor-grabbing' : 'cursor-grab';
 
+        const isMobileViewport = typeof window !== 'undefined' && window.innerWidth < 640;
+        const defaultWidth = isMobileViewport ? '110px' : '150px';
+        const defaultHeight = isMobileViewport ? '80px' : '90px';
+
         return (
           <div
             key={`${memo.id}-${isPinned ? 'pinned' : 'unpinned'}`}
@@ -122,8 +126,15 @@ export default function useMemoOverlay({ onDirty }) {
                 const memoWPercent = (memoWidth / rect.width) * 100;
                 const memoHPercent = (memoHeight / rect.height) * 100;
 
-                const newX = Math.max(0, Math.min(100 - memoWPercent, dragStartPos.current.memoX + deltaX));
-                const newY = Math.max(0, Math.min(100 - memoHPercent, dragStartPos.current.memoY + deltaY));
+                // 최소 28px 이상의 핸들/핀 영역이 화면에 남아 조작 가능하도록 한계 계산
+                const minVisibleXPercent = (28 / rect.width) * 100;
+                const minVisibleYPercent = (28 / rect.height) * 100;
+
+                const maxX = Math.max(0, 100 - Math.min(memoWPercent, minVisibleXPercent));
+                const maxY = Math.max(0, 100 - Math.min(memoHPercent, minVisibleYPercent));
+
+                const newX = Math.max(0, Math.min(maxX, dragStartPos.current.memoX + deltaX));
+                const newY = Math.max(0, Math.min(maxY, dragStartPos.current.memoY + deltaY));
 
                 setMemos(prev => prev.map(item => (
                   item.id === memo.id ? { ...item, x: newX, y: newY } : item
@@ -171,16 +182,16 @@ export default function useMemoOverlay({ onDirty }) {
               dragTargetType.current = null;
             }}
             onClick={(e) => e.stopPropagation()}
-            className={`absolute z-[60] origin-top-left ${transitionClass} ${scaleClass} ${isPinned ? 'resize overflow-hidden min-w-[60px] min-h-[64px]' : cursorClass}`}
+            className={`absolute z-[60] origin-top-left ${transitionClass} ${scaleClass} ${isPinned ? 'resize overflow-hidden min-w-[48px] min-h-[48px]' : cursorClass}`}
             style={{ 
               left: `${memo.x}%`, 
               top: `${memo.y}%`, 
               touchAction: 'none',
               ...(isPinned ? {
-                width: memo.width ? `${memo.width}px` : '150px',
-                height: memo.height ? `${memo.height}px` : '90px',
-                maxWidth: `${100 - memo.x}%`,
-                maxHeight: `${100 - memo.y}%`
+                width: memo.width ? `${memo.width}px` : defaultWidth,
+                height: memo.height ? `${memo.height}px` : defaultHeight,
+                maxWidth: '100%',
+                maxHeight: '100%'
               } : {})
             }}
           >

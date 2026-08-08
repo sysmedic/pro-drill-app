@@ -1,8 +1,83 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import DisclosureSection from '../../components/ui/DisclosureSection.jsx';
 import KeypadField from '../../components/ui/KeypadField.jsx';
 import SelectField from '../../components/ui/SelectField.jsx';
+import TaskbarHelpBalloon from '../../components/ui/TaskbarHelpBalloon.jsx';
 import FractionKeypad from './FractionKeypad.jsx';
+import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
+
+const styleManualSections = [
+  {
+    items: [
+      { title: "투구 스타일 선택", desc: "쓰리핑거 및 덤리스(투핸드) 버티컬 스타일을 전환합니다." },
+      { title: "덤리스 자동 정돈", desc: "덤리스 선택 시 엄지 수치 입력 구역이 자동으로 깔끔하게 정돈/숨김 처리됩니다." }
+    ]
+  }
+];
+
+const bridgeManualSections = [
+  {
+    items: [
+      { title: "브릿지 간격", desc: "중지와 약지 홀 사이의 브릿지 이격 거리를 의미합니다." },
+      { title: "수치 선택 및 커스텀 입력", desc: "주요 지정 간격(1/8, 3/16, 1/4 등)을 선택하거나 원하는 수치를 직접 입력할 수 있습니다." }
+    ]
+  }
+];
+
+const handCondManualSections = [
+  {
+    items: [
+      { title: "건/습 상태", desc: "고객의 손 피부 땀 및 습윤 상태를 기록하여 핑거 그립 및 부착 팁 선택 시 참고합니다." },
+      { title: "중약지 및 엄지 경직도", desc: "손가락의 유연성/경직도(상/중/하)를 관찰하여 스팬 및 피치 설정 시 반영합니다." }
+    ]
+  }
+];
+
+const bowlerSpecManualSections = [
+  {
+    items: [
+      { title: "볼러 스펙 기록", desc: "트랙 플레어, 틸트, RPM, 구속, PAP(Over/Up/Down) 수치를 입력합니다." },
+      { title: "차트 카드 연동", desc: "입력된 수치는 상세 차트 상단의 볼러스펙 카드에 실시간 연동 표시됩니다." }
+    ]
+  }
+];
+
+const spanManualSections = [
+  {
+    items: [
+      { title: "Span 타입", desc: "Conventional, Fingertip 등 볼러의 그립 타입을 선택합니다." },
+      { title: "중지 / 약지 Span", desc: "그립 수치를 터치하여 정밀 숫자 키패드로 중지 및 약지 스팬 치수를 각각 입력합니다." }
+    ]
+  }
+];
+
+const midFingerManualSections = [
+  {
+    items: [
+      { title: "중지 피치 (Pitch)", desc: "Reverse/Forward 및 Lateral(좌/우) 피치 수치와 방향을 입력합니다. (16분 / 32분 단위 토글 지원)" },
+      { title: "인서트 및 팁 정보", desc: "인서트 사이즈, 팁 종류, 제조사 브랜드 및 홀컷 사이즈를 세밀하게 지정합니다." }
+    ]
+  }
+];
+
+const ringFingerManualSections = [
+  {
+    items: [
+      { title: "약지 피치 (Pitch)", desc: "Reverse/Forward 및 Lateral(좌/우) 피치 수치와 방향을 입력합니다. (16분 / 32분 단위 토글 지원)" },
+      { title: "인서트 및 팁 정보", desc: "인서트 사이즈, 팁 종류, 제조사 브랜드 및 홀컷 사이즈를 세밀하게 지정합니다." }
+    ]
+  }
+];
+
+const thumbManualSections = [
+  {
+    items: [
+      { title: "엄지 피치 (Pitch)", desc: "Forward/Reverse 및 Left/Right 피치 수치를 설정합니다." },
+      { title: "Offset 수치 구역", desc: "엄지 좌/우 Offset 수치를 독립 설정합니다." },
+      { title: "원홀, 오발 & 베벨", desc: "원홀 사이즈, 오발 크기 및 각도, 슬러그 타입, 덤 슬러그 베벨 수치를 세밀하게 입력합니다." }
+    ]
+  }
+];
 
 // 🟢 외부 분리 모듈 직통 임포트 연동
 import BevelField from './BevelField.jsx';
@@ -136,6 +211,70 @@ export default function ChartInputForm({
   const toggleAccordion = (id) => setOpenAccordions(prev => ({ ...prev, [id]: !prev[id] }));
 
   const [keypad, setKeypad] = useState({ isOpen: false, field: null, value: '', title: '', mode: 'fraction' });
+  const [activeHelpSection, setActiveHelpSection] = useState(null);
+  const [showManualHelpSetting, setShowManualHelpSetting] = useState(true);
+
+  useEffect(() => {
+    const handleUpdateSetting = () => {
+      setShowManualHelpSetting(localStorage.getItem('show_manual_help') !== 'false');
+    };
+    handleUpdateSetting();
+    window.addEventListener('manual_help_setting_changed', handleUpdateSetting);
+    window.addEventListener('storage', handleUpdateSetting);
+    return () => {
+      window.removeEventListener('manual_help_setting_changed', handleUpdateSetting);
+      window.removeEventListener('storage', handleUpdateSetting);
+    };
+  }, []);
+
+  const syncedPingStyle = useSyncedPingStyle();
+
+  const renderHelpBtn = (sectionKey, helpTitle, sections) => {
+    if (!showManualHelpSetting) return null;
+    const isOpen = activeHelpSection === sectionKey;
+    return (
+      <span 
+        className="relative inline-flex shrink-0 ml-1.5 align-middle z-20"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setActiveHelpSection(prev => prev === sectionKey ? null : sectionKey);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.stopPropagation();
+              e.preventDefault();
+              setActiveHelpSection(prev => prev === sectionKey ? null : sectionKey);
+            }
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="relative z-10 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-200/60 hover:bg-slate-200/90 text-slate-700 border border-slate-300/50 backdrop-blur-xs shadow-xs flex items-center justify-center font-black text-xs sm:text-sm transition-transform active:scale-95 cursor-pointer focus:outline-none select-none"
+          aria-label={`${helpTitle} 안내`}
+          title={`${helpTitle} 안내`}
+        >
+          <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400/40 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] pointer-events-none" style={syncedPingStyle} />
+          ?
+        </span>
+        <TaskbarHelpBalloon 
+          isOpen={isOpen} 
+          onClose={() => setActiveHelpSection(null)} 
+          title={helpTitle}
+          sections={sections}
+        />
+      </span>
+    );
+  };
   
   const lastChart = useMemo(() => {
     if (!historyData || historyData.length === 0) return null;
@@ -326,40 +465,41 @@ export default function ChartInputForm({
   );
 
   const renderMidTitleBar = (isOpen) => {
-    if (!isOpen) {
-      return <span className="font-bold">{firstLabel}</span>;
-    }
-
     return (
-      <div className="flex items-center justify-between w-full pr-4 text-left gap-6 sm:gap-8">
-        <span className="font-bold shrink-0 mr-4 sm:mr-6">{firstLabel}</span>
-        <div 
-          className="flex items-center gap-3.5 sm:gap-5 ml-auto"
-          onClick={(e) => e.stopPropagation()} 
-        >
-          <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
-            <input 
-              type="radio" 
-              name="pitchPrecision" 
-              value="16" 
-              checked={pitchPrecision === '16'} 
-              onChange={() => setPitchPrecision('16')}
-              className="text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer" 
-            />
-            16분
-          </label>
-          <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
-            <input 
-              type="radio" 
-              name="pitchPrecision" 
-              value="32" 
-              checked={pitchPrecision === '32'} 
-              onChange={() => setPitchPrecision('32')}
-              className="text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer" 
-            />
-            32분
-          </label>
-        </div>
+      <div className="flex items-center justify-between w-full pr-2 text-left gap-4 sm:gap-6">
+        <span className="font-bold shrink-0 inline-flex items-center gap-1">
+          <span>{firstLabel}</span>
+          {renderHelpBtn('first', '📖 중지 지공 가이드', midFingerManualSections)}
+        </span>
+        {isOpen && (
+          <div 
+            className="flex items-center gap-3.5 sm:gap-5 ml-auto shrink-0"
+            onClick={(e) => e.stopPropagation()} 
+          >
+            <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
+              <input 
+                type="radio" 
+                name="pitchPrecision" 
+                value="16" 
+                checked={pitchPrecision === '16'} 
+                onChange={() => setPitchPrecision('16')}
+                className="text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer" 
+              />
+              16분
+            </label>
+            <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
+              <input 
+                type="radio" 
+                name="pitchPrecision" 
+                value="32" 
+                checked={pitchPrecision === '32'} 
+                onChange={() => setPitchPrecision('32')}
+                className="text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer" 
+              />
+              32분
+            </label>
+          </div>
+        )}
       </div>
     );
   };
@@ -367,9 +507,10 @@ export default function ChartInputForm({
   return (
     <div className="w-full flex flex-col gap-2 pb-1.5">
       {/* 0. 투구 스타일 박스 (사용손 / 쓰리핑거 · 덤리스) */}
-      <div className="w-full flex items-center justify-between px-3 py-2.5 bg-indigo-50/40 border border-indigo-300 shadow-sm rounded-lg">
-        <h3 className="font-bold text-base text-indigo-900 shrink-0">
-          {isLeft ? '왼손' : '오른손'}
+      <div className="w-full flex items-center justify-between px-3 py-2.5 bg-indigo-50/40 border border-indigo-300 shadow-sm rounded-lg relative">
+        <h3 className="font-bold text-base text-indigo-900 shrink-0 flex items-center gap-1">
+          <span>{isLeft ? '왼손' : '오른손'}</span>
+          {renderHelpBtn('style', '📖 투구 스타일 가이드', styleManualSections)}
         </h3>
         <div className="flex bg-slate-200/80 rounded-md p-1 border border-slate-300/80">
           <button 
@@ -389,10 +530,11 @@ export default function ChartInputForm({
         </div>
       </div>
 
-      {/* 1. Bridge 박스 (핑거선택박스와 100% 동일한 수평 한 줄 레이아웃 및 외곽선 스킨) */}
+      {/* 1. Bridge 박스 */}
       <div className="w-full flex items-center justify-between px-3 py-2.5 bg-indigo-50/40 border border-indigo-300 shadow-sm rounded-lg">
-        <h3 className="font-bold text-base text-indigo-900 shrink-0">
-          Bridge
+        <h3 className="font-bold text-base text-indigo-900 shrink-0 flex items-center gap-1">
+          <span>Bridge</span>
+          {renderHelpBtn('bridge', '📖 브릿지 (Bridge) 가이드', bridgeManualSections)}
         </h3>
         <ChartSelectField
           aria-label="브릿지 간격"
@@ -407,7 +549,12 @@ export default function ChartInputForm({
       </div>
 
       {/* 2. 핸드 컨디션 박스 */}
-      {renderSection('hand', '핸드 컨디션', getHandCondSummary(handCondition), (
+      {renderSection('hand', (
+        <span className="inline-flex items-center gap-1">
+          <span>핸드 컨디션</span>
+          {renderHelpBtn('hand', '📖 핸드 컨디션 가이드', handCondManualSections)}
+        </span>
+      ), getHandCondSummary(handCondition), (
         <div className="grid grid-cols-3 gap-2">
           <ChartSelectField label="건/습 상태" value={handCondition.moisture} onChange={v => updateCondition('moisture', v)} options={MOISTURE_OPTIONS} />
           <ChartSelectField label="중약지 경직도" value={handCondition.fingerStiffness} onChange={v => updateCondition('fingerStiffness', v)} options={STIFFNESS_OPTIONS} />
@@ -416,7 +563,12 @@ export default function ChartInputForm({
       ))}
 
       {/* 2.5 볼러 스펙 박스 */}
-      {renderSection('bowlerSpec', '볼러 스펙', getBowlerSpecSummary(customerInfo), (
+      {renderSection('bowlerSpec', (
+        <span className="inline-flex items-center gap-1">
+          <span>볼러 스펙</span>
+          {renderHelpBtn('bowlerSpec', '📖 볼러 스펙 가이드', bowlerSpecManualSections)}
+        </span>
+      ), getBowlerSpecSummary(customerInfo), (
         <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
           <ChartSelectField 
             label="트랙 플레어" 
@@ -459,7 +611,12 @@ export default function ChartInputForm({
       ))}
 
       {/* 3. Span 박스 */}
-      {renderSection('span', 'Span', getSpanSummary(), (
+      {renderSection('span', (
+        <span className="inline-flex items-center gap-1">
+          <span>Span</span>
+          {renderHelpBtn('span', '📖 Span 수치 가이드', spanManualSections)}
+        </span>
+      ), getSpanSummary(), (
         <>
         <div className="mb-2.5"><ChartSelectField label="Span 타입" value={spanType} onChange={v => onChange({ ...data, spanType: v })} options={SPAN_TYPE_OPTIONS} /></div>
         <div className="grid grid-cols-2 gap-2.5">
@@ -496,7 +653,12 @@ export default function ChartInputForm({
         isOpen={!!openAccordions['second']} 
         onToggle={() => toggleAccordion('second')} 
         summary={getFingerSummary(ringPitch)} 
-        title={secondLabel}
+        title={(
+          <span className="inline-flex items-center gap-1">
+            <span>{secondLabel}</span>
+            {renderHelpBtn('second', '📖 약지 지공 가이드', ringFingerManualSections)}
+          </span>
+        )}
       >
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5"><ChartSelectField label="Reverse (▲)" value={ringPitch.up} onChange={v => updateRing('up', v)} options={filteredPitchOptions} /><ChartSelectField label="Forward (▼)" value={ringPitch.down} onChange={v => updateRing('down', v)} options={filteredPitchOptions} /><ChartSelectField label="Lateral" value={ringPitch.lat} onChange={v => updateRing('lat', v)} options={filteredPitchOptions} /><ChartSelectField label="Lateral 방향" value={ringPitch.latDir} onChange={v => updateRing('latDir', v)} options={LATERAL_DIR_OPTIONS} /></div>
@@ -519,7 +681,12 @@ export default function ChartInputForm({
           isOpen={!!openAccordions['thumb']} 
           onToggle={() => toggleAccordion('thumb')} 
           summary={getThumbSummary(thumbPitch, thumbDetails, ovalAngle, thumbOffset)} 
-          title="엄지 (Thumb)"
+          title={(
+            <span className="inline-flex items-center gap-1">
+              <span>엄지 (Thumb)</span>
+              {renderHelpBtn('thumb', '📖 엄지 지공 가이드', thumbManualSections)}
+            </span>
+          )}
         >
           <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
@@ -528,12 +695,36 @@ export default function ChartInputForm({
             <ChartSelectField label="Left (◀)" value={thumbPitch.left} onChange={v => updateThumb('left', v)} options={filteredPitchOptions} />
             <ChartSelectField label="Right (▶)" value={thumbPitch.right} onChange={v => updateThumb('right', v)} options={filteredPitchOptions} />
           </div>
-          <h4 className="font-bold text-sm mb-2 text-slate-700">Offset</h4>
+
+          {/* 💡 Offset 구분선 배지 */}
+          <div className="relative my-3.5 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <div className="w-full border-t border-indigo-200/90" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-indigo-50 text-indigo-900 text-xs font-black px-3 py-0.5 rounded-full border border-indigo-200 shadow-2xs">
+                Offset
+              </span>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
             <ChartSelectField label="Left" value={thumbOffset.left} onChange={v => updateThumbOffset('left', v)} options={OFFSET_OPTIONS} />
             <ChartSelectField label="Right" value={thumbOffset.right} onChange={v => updateThumbOffset('right', v)} options={OFFSET_OPTIONS} />
           </div>
-          <h4 className="font-bold text-sm mb-2 text-slate-700">상세 사이즈 및 각도</h4>
+
+          {/* 💡 상세 사이즈 및 각도 구분선 배지 */}
+          <div className="relative my-3.5 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <div className="w-full border-t border-indigo-200/90" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-indigo-50 text-indigo-900 text-xs font-black px-3 py-0.5 rounded-full border border-indigo-200 shadow-2xs">
+                상세 사이즈 및 각도
+              </span>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <ChartSelectField allowCustom label="원홀" value={thumbDetails.holeSize} onChange={v => updateThumbDetails('holeSize', v)} options={HOLE_OPTIONS} />
             <ChartSelectField allowCustom label="오발 사이즈" value={thumbDetails.ovalSize} onChange={v => updateThumbDetails('ovalSize', v)} options={dynamicOvalOptions} />
@@ -548,7 +739,18 @@ export default function ChartInputForm({
             <ChartSelectField allowCustom label="덤 타입" value={thumbDetails.slugType} onChange={v => updateThumbDetails('slugType', v)} options={THUMB_TYPE_OPTIONS} />
             <ChartSelectField allowCustom label="홀컷 사이즈" value={thumbDetails.holeCutSize} onChange={v => updateThumbDetails('holeCutSize', v)} options={THUMB_HOLE_CUT_OPTIONS} />
           </div>
-          <h4 className="font-bold text-sm mb-2 mt-3 text-slate-700">Bevel (드릴 사이즈/깊이)</h4>
+
+          {/* 💡 Bevel (드릴 사이즈/깊이) 구분선 배지 */}
+          <div className="relative my-3.5 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <div className="w-full border-t border-indigo-200/90" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-indigo-50 text-indigo-900 text-xs font-black px-3 py-0.5 rounded-full border border-indigo-200 shadow-2xs">
+                Bevel (드릴 사이즈/깊이)
+              </span>
+            </div>
+          </div>
           <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 gap-2.5">
             <BevelField label="Bevel 1" value={thumbDetails.bevel1} onChange={v => updateThumbDetails('bevel1', v)} sizeOptions={bevelOptions} depthOptions={BEVEL_DEPTH_OPTIONS} />
             <BevelField label="Bevel 2" value={thumbDetails.bevel2} onChange={v => updateThumbDetails('bevel2', v)} sizeOptions={bevelOptions} depthOptions={BEVEL_DEPTH_OPTIONS} />
