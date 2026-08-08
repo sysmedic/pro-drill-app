@@ -197,11 +197,9 @@ export default function CustomerHistoryModal({
         {/* 지공 기록 탭 컨텐츠 */}
         {activeTab === 'history' && (
           <div className="flex flex-col gap-4">
-            <div className="px-2 mb-2 flex justify-between items-end">
-              <span className="text-xs font-bold text-white/30 tracking-tight">전체 기록 목록</span>
-              <span className="text-[10px] font-black text-indigo-300 bg-indigo-50/20 px-2 py-1 rounded-lg border border-indigo-500/30">
-                총 {history.length}개
-              </span>
+            <div className="px-2 mb-2 flex justify-between items-center text-xs font-bold tracking-tight">
+              <span className="text-white/30">전체 기록 목록</span>
+              <span className="text-indigo-300 font-black">총 {history.length}개</span>
             </div>
 
             {history.length === 0 ? (
