@@ -114,6 +114,8 @@
 - `package.json` test 스크립트에 `NODE_ENV=test` 환경변수 명시로 파이어베이스 gRPC 연결 루프 방지 및 Node 단위 테스트 2.5초대 완료 보장.
 - `TaskDetailsCard.jsx` 레이아웃 입력 라벨 접근성(`htmlFor="layout-info-input"`) 및 E2E 테스트 선택자 연동 보강.
 - Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `f5292d8` 푸시 및 성공적 배포).
+  - **ProDrill CHART 특허 출원 전략 및 기술 분석 보고서 작성 (`docs/PATENT_STRATEGY_REPORT.md`)**:
+    - 4대 특허 출원 핵심 기술 영역(분수 키패드 & 2LS/Dual Angle 변환, 덤리스/쓰리핑거 감응형 도면 & 메모 핀, 3회 터치 사생활 보호, NFC 개체 식별 매칭) 발굴 및 취득 가능성(85% 이상) 분석 수립.
   - **지공 기록 모달 개수 표기 방식 고도화 (`CustomerHistoryModal.jsx`)**:
     - 둘러싼 뱃지 박스를 깔끔하게 제거하고 `전체 기록 목록` 타이틀과 동일한 수평선 베이스라인에 배치.
     - 표기 방식을 **`[해당 고객 차트 수] / [전체 총차트 수]`** (`{history.length} / {currentChartsCount}`)로 한눈에 정밀하게 표시되도록 개결 정돈.
