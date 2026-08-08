@@ -200,7 +200,7 @@ export default function CustomerHistoryModal({
             <div className="px-2 mb-2 flex justify-between items-end">
               <span className="text-xs font-bold text-white/30 tracking-tight">전체 기록 목록</span>
               <span className="text-[10px] font-black text-indigo-300 bg-indigo-50/20 px-2 py-1 rounded-lg border border-indigo-500/30">
-                {currentChartsCount} / {maxChartsAllowed === Infinity ? '∞' : maxChartsAllowed} SAVED
+                총 {history.length}개
               </span>
             </div>
 
