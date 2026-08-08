@@ -113,9 +113,10 @@
 - `SettingsModal.jsx` 미사용 변수 및 구형 함수 정리로 ESLint 통과 보장.
 - `package.json` test 스크립트에 `NODE_ENV=test` 환경변수 명시로 파이어베이스 gRPC 연결 루프 방지 및 Node 단위 테스트 2.5초대 완료 보장.
 - `TaskDetailsCard.jsx` 레이아웃 입력 라벨 접근성(`htmlFor="layout-info-input"`) 및 E2E 테스트 선택자 연동 보강.
-- Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `31003f5` 푸시 및 성공적 배포).
-  - **지공 기록 모달 개수 표기 방식 직관화 (`CustomerHistoryModal.jsx`)**:
-    - 제한 수치 분수 형태(`X / Y SAVED`) 표기 방식을 제거하고 **`총 N개`** 총개수 직관적 표시로 개선 정돈.
+- Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `f5292d8` 푸시 및 성공적 배포).
+  - **지공 기록 모달 개수 표기 방식 고도화 (`CustomerHistoryModal.jsx`)**:
+    - 둘러싼 뱃지 박스를 깔끔하게 제거하고 `전체 기록 목록` 타이틀과 동일한 수평선 베이스라인에 배치.
+    - 표기 방식을 **`[해당 고객 차트 수] / [전체 총차트 수]`** (`{history.length} / {currentChartsCount}`)로 한눈에 정밀하게 표시되도록 개결 정돈.
   - **드릴링 가이드 모달 박스 타이틀 영문 대소문자 표기 정돈 (`DrillingGuideView.jsx`)**:
     - `GlassBox` 컴포넌트의 CSS `uppercase` 변환 속성을 제거하여 `중지 (Middle)`, `약지 (Ring)`, `엄지 (Thumb)`, `Bevel` 등 영문 명칭이 대소문자 혼용(CamelCase) 형태로 자연스럽게 정확히 표시되도록 완벽 정돈.
     - 타이틀 `계산기` ➔ `오발 계산기` 명칭 정돈 완료.
