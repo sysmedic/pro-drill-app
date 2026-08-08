@@ -3,7 +3,7 @@ import { useMemo, useEffect } from 'react';
 const GlassBox = ({ title, rightElement, children, className = '' }) => (
   <div className={`bg-black/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] ${className}`}>
     <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-      <div className="text-white/70 text-sm sm:text-base font-black uppercase tracking-widest shrink-0">{title}</div>
+      <div className="text-white/70 text-sm sm:text-base font-black tracking-widest shrink-0">{title}</div>
       {rightElement && <div className="shrink-0">{rightElement}</div>}
     </div>
     <div className="text-white font-bold leading-relaxed">{children}</div>
