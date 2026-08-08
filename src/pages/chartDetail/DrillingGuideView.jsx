@@ -312,7 +312,7 @@ export default function DrillingGuideView({ data = {}, customer = {}, onClose, o
             <GlassBox 
               title={
                 <div className="flex items-center gap-3">
-                  <span>계산기</span>
+                  <span>오발 계산기</span>
                   <label className="flex items-center gap-1.5 cursor-pointer normal-case tracking-normal">
                     <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border flex items-center justify-center transition-colors ${isDetailedMode ? 'bg-indigo-500 border-indigo-500' : 'border-white/50'}`}>
                       {isDetailedMode && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>}
