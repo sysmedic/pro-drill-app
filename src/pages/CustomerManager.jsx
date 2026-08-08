@@ -15,6 +15,7 @@ import BackupSettingsModal from './customerManager/BackupSettingsModal.jsx'; // 
 import AiSettingsModal from './customerManager/AiSettingsModal.jsx'; // 🤖 AI 설정 모달 임포트
 import AdminSettingsModal from './customerManager/AdminSettingsModal.jsx'; // 👑 마스터 제어실 모달 임포트
 import UserManualModal from './customerManager/UserManualModal.jsx'; // 📖 사용 설명서 모달 임포트
+import InvitationCardModal from './customerManager/InvitationCardModal.jsx'; // 🎟️ 초청 카드 모달 임포트
 import { isLicenseCertified } from '../lib/userLicenseManager.js';
 import { checkForAppUpdate } from '../lib/pwaUpdate.js';
 
@@ -44,6 +45,7 @@ export default function CustomerManagement({
   const [showAiSettingsModal, setShowAiSettingsModal] = useState(false);
   const [showAdminSettingsModal, setShowAdminSettingsModal] = useState(false);
   const [showUserManualModal, setShowUserManualModal] = useState(false);
+  const [showInvitationCardModal, setShowInvitationCardModal] = useState(false);
   
   const [totalCount, setTotalCount] = useState(0);
 
@@ -388,7 +390,14 @@ export default function CustomerManagement({
       )}
 
       {showUserManualModal && (
-        <UserManualModal onClose={() => setShowUserManualModal(false)} />
+        <UserManualModal 
+          onClose={() => setShowUserManualModal(false)} 
+          onOpenInvitation={() => setShowInvitationCardModal(true)}
+        />
+      )}
+
+      {showInvitationCardModal && (
+        <InvitationCardModal onClose={() => setShowInvitationCardModal(false)} />
       )}
 
       <FeedbackToast message={feedback?.message} onDismiss={() => setFeedback(null)} tone={feedback?.tone} />
