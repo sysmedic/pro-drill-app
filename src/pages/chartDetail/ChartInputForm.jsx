@@ -469,7 +469,7 @@ export default function ChartInputForm({
       <div className="flex items-center justify-between w-full pr-2 text-left gap-4 sm:gap-6">
         <span className="font-bold shrink-0 inline-flex items-center gap-1">
           <span>{firstLabel}</span>
-          {renderHelpBtn('first', '📖 중지 지공 가이드', midFingerManualSections)}
+          {renderHelpBtn('first', '📖 중지', midFingerManualSections)}
         </span>
         {isOpen && (
           <div 
@@ -534,7 +534,7 @@ export default function ChartInputForm({
       <div className="w-full flex items-center justify-between px-3 py-2.5 bg-indigo-50/40 border border-indigo-300 shadow-sm rounded-lg">
         <h3 className="font-bold text-base text-indigo-900 shrink-0 flex items-center gap-1">
           <span>Bridge</span>
-          {renderHelpBtn('bridge', '📖 브릿지 (Bridge) 가이드', bridgeManualSections)}
+          {renderHelpBtn('bridge', '📖 브릿지 (Bridge)', bridgeManualSections)}
         </h3>
         <ChartSelectField
           aria-label="브릿지 간격"
@@ -552,7 +552,7 @@ export default function ChartInputForm({
       {renderSection('hand', (
         <span className="inline-flex items-center gap-1">
           <span>핸드 컨디션</span>
-          {renderHelpBtn('hand', '📖 핸드 컨디션 가이드', handCondManualSections)}
+          {renderHelpBtn('hand', '📖 핸드 컨디션', handCondManualSections)}
         </span>
       ), getHandCondSummary(handCondition), (
         <div className="grid grid-cols-3 gap-2">
@@ -566,7 +566,7 @@ export default function ChartInputForm({
       {renderSection('bowlerSpec', (
         <span className="inline-flex items-center gap-1">
           <span>볼러 스펙</span>
-          {renderHelpBtn('bowlerSpec', '📖 볼러 스펙 가이드', bowlerSpecManualSections)}
+          {renderHelpBtn('bowlerSpec', '📖 볼러 스펙', bowlerSpecManualSections)}
         </span>
       ), getBowlerSpecSummary(customerInfo), (
         <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
@@ -614,7 +614,7 @@ export default function ChartInputForm({
       {renderSection('span', (
         <span className="inline-flex items-center gap-1">
           <span>Span</span>
-          {renderHelpBtn('span', '📖 Span 수치 가이드', spanManualSections)}
+          {renderHelpBtn('span', '📖 Span', spanManualSections)}
         </span>
       ), getSpanSummary(), (
         <>
@@ -656,7 +656,7 @@ export default function ChartInputForm({
         title={(
           <span className="inline-flex items-center gap-1">
             <span>{secondLabel}</span>
-            {renderHelpBtn('second', '📖 약지 지공 가이드', ringFingerManualSections)}
+            {renderHelpBtn('second', '📖 약지', ringFingerManualSections)}
           </span>
         )}
       >
@@ -684,7 +684,7 @@ export default function ChartInputForm({
           title={(
             <span className="inline-flex items-center gap-1">
               <span>엄지 (Thumb)</span>
-              {renderHelpBtn('thumb', '📖 엄지 지공 가이드', thumbManualSections)}
+              {renderHelpBtn('thumb', '📖 엄지', thumbManualSections)}
             </span>
           )}
         >

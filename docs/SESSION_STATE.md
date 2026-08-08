@@ -113,7 +113,11 @@
 - `SettingsModal.jsx` 미사용 변수 및 구형 함수 정리로 ESLint 통과 보장.
 - `package.json` test 스크립트에 `NODE_ENV=test` 환경변수 명시로 파이어베이스 gRPC 연결 루프 방지 및 Node 단위 테스트 2.5초대 완료 보장.
 - `TaskDetailsCard.jsx` 레이아웃 입력 라벨 접근성(`htmlFor="layout-info-input"`) 및 E2E 테스트 선택자 연동 보강.
-- Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `a52d4e0` 푸시 및 성공적 배포).
+- Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `b348753` 푸시 및 성공적 배포).
+  - **투구 스타일 도움말 매뉴얼 타이틀 및 문구 정돈 (`ChartInputForm.jsx`)**:
+    - **팝업 타이틀**: `📖 투구 스타일 가이드` ➔ **`📖 투구 스타일`**로 변경.
+    - **투구 스타일 선택**: `쓰리핑거 및 덤리스(투핸드) 버티컬 스타일을 전환합니다.` ➔ **`쓰리핑거 및 덤리스(투핸드) 스타일을 전환합니다.`**로 변경.
+    - **덤리스 자동화**: `덤리스 자동 정돈` ➔ **`덤리스 자동화`**로 변경, `덤리스 선택 시 엄지 수치 입력 구역이 자동으로 숨김 처리됩니다.`로 정돈.
   - **도움말 매뉴얼 팝업 타이틀, 소타이틀 제거, 이모지 및 넘버링 정돈 (`BowlerSpecCard.jsx`, `ChartBlueprintView.jsx`, `TaskDetailsCard.jsx`, `ChartTopBar.jsx`, `CustomerHeader.jsx`)**:
     - **볼러스펙 가이드**: 타이틀 `📖 볼러스펙`으로 변경, 소타이틀 제거, `트랙 플레어 & 틸트` 항목 첫 번째 이동.
     - **지공 도면 가이드**: 타이틀 `📖 지공 차트`로 변경, 소타이틀 제거, `메모 작성`, `드릴링 가이드`, `차트 보호` 문구 정돈.
