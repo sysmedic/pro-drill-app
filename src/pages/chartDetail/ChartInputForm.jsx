@@ -74,7 +74,7 @@ const thumbManualSections = [
     items: [
       { title: "엄지 피치 (Pitch)", desc: "Forward/Reverse 및 Left/Right 피치 수치를 설정합니다." },
       { title: "Offset 수치 구역", desc: "엄지 좌/우 Offset 수치를 독립 설정합니다." },
-      { title: "원홀, 오발 & 베벨", desc: "원홀 사이즈, 오발 크기 및 각도, 슬러그 타입, 덤 슬러그 베벨 수치를 세밀하게 입력합니다." }
+      { title: "원홀, 오발 & 베벨", desc: "원홀 사이즈, 오발 크기 및 각도, 슬러그 타입, 베벨 수치를 세밀하게 입력합니다." }
     ]
   }
 ];
