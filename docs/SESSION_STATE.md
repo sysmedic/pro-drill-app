@@ -113,7 +113,11 @@
 - `SettingsModal.jsx` 미사용 변수 및 구형 함수 정리로 ESLint 통과 보장.
 - `package.json` test 스크립트에 `NODE_ENV=test` 환경변수 명시로 파이어베이스 gRPC 연결 루프 방지 및 Node 단위 테스트 2.5초대 완료 보장.
 - `TaskDetailsCard.jsx` 레이아웃 입력 라벨 접근성(`htmlFor="layout-info-input"`) 및 E2E 테스트 선택자 연동 보강.
-- Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `4ffcc31` 푸시 및 성공적 배포).
+- Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `462dedb` 푸시 및 성공적 배포).
+  - **도움말 매뉴얼 팝업 볼드 제목 및 본문 서체 baseline 중앙 높이 정돈 (`TaskbarHelpBalloon.jsx`, `TaskDetailsCard.jsx`)**:
+    - `inline-flex`로 인한 볼드 제목과 일반 설명 서체 간 1~3px 높이 이격(float baseline mismatch) 현상을 완전 해결.
+    - 동일한 text baseline 렌더링 블록(`flex-1 min-w-0` 내 순수 inline span 조합)으로 일체화하여 100% 동일 수평선 라인으로 완벽 중앙 높이 정렬.
+    - `TaskDetailsCard.jsx` 내 아이콘 박스 렌더링 시 타이틀의 중복 이모지(`✨`, `🔄`) 삭제 정돈.
   - **엄지 원홀, 오발 & 베벨 도움말 설명 문구 정돈 (`ChartInputForm.jsx`)**:
     - `원홀, 오발 & 베벨`: `원홀 사이즈, 오발 크기 및 각도, 슬러그 타입, 덤 슬러그 베벨 수치를 세밀하게 입력합니다.` ➔ **`원홀 사이즈, 오발 크기 및 각도, 슬러그 타입, 베벨 수치를 세밀하게 입력합니다.`**로 변경.
   - **약지 피치 도움말 수치/단위 설명 간결화 (`ChartInputForm.jsx`)**:
