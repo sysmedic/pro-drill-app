@@ -46,7 +46,7 @@ const spanManualSections = [
   {
     items: [
       { title: "Span 타입", desc: "Actual Span, Cut to Cut, Center to Center 등 Span 타입을 선택합니다." },
-      { title: "중지 / 약지 Span", desc: "그립 수치를 터치하여 정밀 숫자 키패드로 중지 및 약지 스팬 치수를 각각 입력합니다." }
+      { title: "중지 / 약지 Span", desc: "정밀 숫자 키패드로 중지 및 약지 스팬 치수를 각각 입력합니다." }
     ]
   }
 ];

@@ -113,7 +113,9 @@
 - `SettingsModal.jsx` 미사용 변수 및 구형 함수 정리로 ESLint 통과 보장.
 - `package.json` test 스크립트에 `NODE_ENV=test` 환경변수 명시로 파이어베이스 gRPC 연결 루프 방지 및 Node 단위 테스트 2.5초대 완료 보장.
 - `TaskDetailsCard.jsx` 레이아웃 입력 라벨 접근성(`htmlFor="layout-info-input"`) 및 E2E 테스트 선택자 연동 보강.
-- Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `3076fdb` 푸시 및 성공적 배포).
+- Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `f733436` 푸시 및 성공적 배포).
+  - **Span 타입 도움말 설명 문구 정돈 (`ChartInputForm.jsx`)**:
+    - `Span 타입`: `Conventional, Fingertip 등 볼러의 그립 타입을 선택합니다.` ➔ **`Actual Span, Cut to Cut, Center to Center 등 Span 타입을 선택합니다.`**로 변경.
   - **수치 입력창 도움말 타이틀 7종 '가이드/수치' 접미사 제거 간결화 (`ChartInputForm.jsx`)**:
     - `📖 브릿지 (Bridge) 가이드` ➔ **`📖 브릿지 (Bridge)`**
     - `📖 핸드 컨디션 가이드` ➔ **`📖 핸드 컨디션`**
