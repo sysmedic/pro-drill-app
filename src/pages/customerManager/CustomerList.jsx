@@ -55,10 +55,17 @@ export default function CustomerList({ customers, onDelete, onEdit, onSelect }) 
             key={customer.id}
             className="flex items-stretch justify-between overflow-hidden transition-all hover:border-indigo-400 hover:shadow-md"
           >
-            <button
-              type="button"
-              className="flex-1 min-w-0 p-4 sm:p-5 text-left active:scale-[0.99] transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+            <div
+              role="button"
+              tabIndex={0}
+              className="flex-1 min-w-0 p-4 sm:p-5 text-left active:scale-[0.99] transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 cursor-pointer"
               onClick={() => onSelect && onSelect(customer)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelect && onSelect(customer);
+                }
+              }}
             >
               {/* 📍 이름과 상주 볼링장/클럽 및 ? 가이드 버튼 배치 */}
               <div className="flex items-center gap-2 w-full truncate">
@@ -125,7 +132,7 @@ export default function CustomerList({ customers, onDelete, onEdit, onSelect }) 
                 {/* 📍 style2를 styleExtra로 수정 */}
                 {customer.styleExtra && <Badge variant="accent">{customer.styleExtra}</Badge>}
               </span>
-            </button>
+            </div>
 
             <div className="flex flex-col items-center justify-center gap-2 px-3 sm:px-4 border-l border-slate-100">
               <IconButton
