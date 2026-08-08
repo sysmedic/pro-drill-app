@@ -1,27 +1,16 @@
 import ModalShell from '../../components/ui/ModalShell.jsx';
 import Icon from '../../components/ui/Icon.jsx';
 
-export default function UserManualModal({ onClose, onOpenInvitation }) {
+export default function UserManualModal({ onClose }) {
   return (
     <ModalShell onClose={onClose} size="md" title={"📖 ProDrill 사용 설명서"}>
       <div className="p-5 flex flex-col gap-5 max-h-[75vh] overflow-y-auto text-slate-700 text-xs leading-relaxed select-text">
         
-        {/* 안내 개요 카드 & 초청장 열기 */}
-        <div className="bg-indigo-50/70 border border-indigo-100 p-3.5 rounded-2xl space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <div className="font-black text-indigo-900 text-sm flex items-center gap-1.5">
-              <Icon name="ball" size={16} className="text-indigo-600 shrink-0" />
-              <span>ProDrill 지공사 공식 안내서</span>
-            </div>
-            {onOpenInvitation && (
-              <button
-                type="button"
-                onClick={onOpenInvitation}
-                className="py-1 px-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-black transition-colors shrink-0 flex items-center gap-1 cursor-pointer active:scale-95 shadow-xs"
-              >
-                <span>🎟️ 초청장 보기</span>
-              </button>
-            )}
+        {/* 안내 개요 카드 */}
+        <div className="bg-indigo-50/70 border border-indigo-100 p-3.5 rounded-2xl space-y-1">
+          <div className="font-black text-indigo-900 text-sm flex items-center gap-1.5">
+            <Icon name="ball" size={16} className="text-indigo-600 shrink-0" />
+            <span>ProDrill 지공사 공식 안내서</span>
           </div>
           <p className="text-[11px] text-indigo-800 font-medium">
             볼링 지공 현장에서 차트 작성, 키패드 입력, 사생활 보호 및 백업 기능을 손쉽게 활용하실 수 있는 안내서입니다.

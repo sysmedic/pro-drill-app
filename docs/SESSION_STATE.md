@@ -113,9 +113,7 @@
 - `SettingsModal.jsx` 미사용 변수 및 구형 함수 정리로 ESLint 통과 보장.
 - `package.json` test 스크립트에 `NODE_ENV=test` 환경변수 명시로 파이어베이스 gRPC 연결 루프 방지 및 Node 단위 테스트 2.5초대 완료 보장.
 - `TaskDetailsCard.jsx` 레이아웃 입력 라벨 접근성(`htmlFor="layout-info-input"`) 및 E2E 테스트 선택자 연동 보강.
-- Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `6a1cf55` 푸시 및 성공적 배포).
-  - **신규 ProDrill CHART 고해상도 브랜드 앱 아이콘 및 파비콘 생성 적용 (`public/icon-512.png`, `public/icon-192.png`, `public/maskable-icon-512.png`, `public/apple-touch-icon.png`, `public/favicon.png`, `index.html`)**:
-    - 업로드된 고해상도 ProDrill CHART 브랜딩 볼링공 디자인 이미지(1024x1024)를 정밀 리샘플링하여 PWA 및 웹앱 전체 아이콘 세트 일괄 교체 완료.
+- Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `462dedb` 푸시 및 성공적 배포).
   - **도움말 매뉴얼 팝업 볼드 제목 및 본문 서체 baseline 중앙 높이 정돈 (`TaskbarHelpBalloon.jsx`, `TaskDetailsCard.jsx`)**:
     - `inline-flex`로 인한 볼드 제목과 일반 설명 서체 간 1~3px 높이 이격(float baseline mismatch) 현상을 완전 해결.
     - 동일한 text baseline 렌더링 블록(`flex-1 min-w-0` 내 순수 inline span 조합)으로 일체화하여 100% 동일 수평선 라인으로 완벽 중앙 높이 정렬.
