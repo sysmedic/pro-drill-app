@@ -11,8 +11,8 @@ const taskDetailsManualSections = [
     items: [
       { title: "볼링공 모델명", desc: "지공 작업 대상 볼링공 명칭을 정확히 입력합니다." },
       { title: "레이아웃 (Dual Angle)", desc: "Pin to PAP x PSA x Buffer 수치를 입력합니다." },
-      { iconName: "star", title: "✨ AI 추천", desc: "볼러스펙과 공 제원을 바탕으로 최적의 레이아웃 4종을 추천받습니다." },
-      { iconName: "history", title: "🔄 2LS 변환", desc: "Dual Angle 수치를 Storm 2LS 수치로 즉시 상호 자동 계산 변환합니다." },
+      { iconName: "star", title: "AI 추천", desc: "볼러스펙과 공 제원을 바탕으로 최적의 레이아웃 4종을 추천받습니다." },
+      { iconName: "history", title: "2LS 변환", desc: "Dual Angle 수치를 Storm 2LS 수치로 즉시 상호 자동 계산 변환합니다." },
       { title: "지공 의도 및 상담", desc: "고객 요청사항, 트랙 특성, 지공 목적을 자유롭게 작성합니다." },
       { title: "관리 내역 추가", desc: "지공 후 샌딩, 폴리싱, 핑거 교체 등 정비 이력을 기록합니다." }
     ]

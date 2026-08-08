@@ -113,7 +113,9 @@
 - `SettingsModal.jsx` 미사용 변수 및 구형 함수 정리로 ESLint 통과 보장.
 - `package.json` test 스크립트에 `NODE_ENV=test` 환경변수 명시로 파이어베이스 gRPC 연결 루프 방지 및 Node 단위 테스트 2.5초대 완료 보장.
 - `TaskDetailsCard.jsx` 레이아웃 입력 라벨 접근성(`htmlFor="layout-info-input"`) 및 E2E 테스트 선택자 연동 보강.
-- Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `60e1fd7` 푸시 및 성공적 배포).
+- Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `4ffcc31` 푸시 및 성공적 배포).
+  - **엄지 원홀, 오발 & 베벨 도움말 설명 문구 정돈 (`ChartInputForm.jsx`)**:
+    - `원홀, 오발 & 베벨`: `원홀 사이즈, 오발 크기 및 각도, 슬러그 타입, 덤 슬러그 베벨 수치를 세밀하게 입력합니다.` ➔ **`원홀 사이즈, 오발 크기 및 각도, 슬러그 타입, 베벨 수치를 세밀하게 입력합니다.`**로 변경.
   - **약지 피치 도움말 수치/단위 설명 간결화 (`ChartInputForm.jsx`)**:
     - `약지 피치 (Pitch)`: `Reverse/Forward 및 Lateral(좌/우) 피치 수치와 방향을 입력합니다. (16분 / 32분 단위 토글 지원)` ➔ **`Reverse/Forward 및 Lateral(좌/우) 피치 수치와 방향을 입력합니다.`**로 변경.
   - **중지/약지 Span 도움말 설명 문구 정돈 (`ChartInputForm.jsx`)**:

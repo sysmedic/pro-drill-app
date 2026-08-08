@@ -79,46 +79,47 @@ export default function TaskbarHelpBalloon({
                 </h4>
               )}
               {section.items && (
-                <ul className="space-y-1.5 pl-1">
+                <ul className="space-y-2 pl-0.5">
                   {section.items.map((item, itemIdx) => {
                     const match = item.title ? item.title.match(/^(\d+\.)\s*(.*)$/) : null;
                     const numPrefix = match ? match[1] : null;
-                    const mainTitle = match ? match[2] : item.title;
+                    const rawTitle = match ? match[2] : item.title;
+                    const cleanTitle = rawTitle ? rawTitle.replace(/^:\s*/, '').replace(/:\s*$/, '') : '';
 
                     return (
-                      <li key={item.title || itemIdx} className="text-slate-600">
-                        <span className="font-bold text-slate-800 inline-flex items-center gap-1">
-                          {numPrefix && (
-                            <span className="font-bold text-slate-800 shrink-0 mr-0.5">{numPrefix}</span>
-                          )}
-                          {item.iconName && (
-                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-slate-50 border border-slate-200 text-slate-700 shadow-xs shrink-0">
-                              <Icon name={item.iconName} size={12} className="text-slate-700 shrink-0" />
-                            </span>
-                          )}
-                          {mainTitle}:{" "}
-                        </span>
-                        <span className="text-slate-600 font-medium">{item.desc}</span>
-                      {item.subItems && (
-                        <div className="pl-4 mt-1.5 space-y-1 text-[11px]">
-                          {item.subItems.map((sub, sIdx) => (
-                            <div key={sub.label || sIdx} className="flex items-center gap-1.5 text-slate-600 font-medium">
-                              {sub.isHelpPing ? (
-                                <span className="relative flex items-center justify-center shrink-0 w-4 h-4">
-                                  <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400/40 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] pointer-events-none" style={syncedPingStyle} />
-                                  <span className="relative z-10 w-4 h-4 rounded-full bg-slate-200/60 text-slate-700 border border-slate-300/50 flex items-center justify-center font-black text-[10px]">?</span>
-                                </span>
-                              ) : (
-                                <span className="shrink-0">{sub.emoji}</span>
-                              )}
-                              <span>{sub.label}</span>
+                      <li key={item.title || itemIdx} className="flex items-start gap-1.5 text-slate-600 leading-relaxed text-xs">
+                        {item.iconName && (
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-slate-50 border border-slate-200 text-slate-700 shadow-xs shrink-0 mt-0.5">
+                            <Icon name={item.iconName} size={12} className="text-slate-700 shrink-0" />
+                          </span>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <span className="font-bold text-slate-800">
+                            {numPrefix && <span className="font-bold text-slate-800 mr-1">{numPrefix}</span>}
+                            {cleanTitle}:{" "}
+                          </span>
+                          <span className="text-slate-600 font-medium">{item.desc}</span>
+                          {item.subItems && (
+                            <div className="pl-2 mt-1.5 space-y-1 text-[11px]">
+                              {item.subItems.map((sub, sIdx) => (
+                                <div key={sub.label || sIdx} className="flex items-center gap-1.5 text-slate-600 font-medium">
+                                  {sub.isHelpPing ? (
+                                    <span className="relative flex items-center justify-center shrink-0 w-4 h-4">
+                                      <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400/40 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] pointer-events-none" style={syncedPingStyle} />
+                                      <span className="relative z-10 w-4 h-4 rounded-full bg-slate-200/60 text-slate-700 border border-slate-300/50 flex items-center justify-center font-black text-[10px]">?</span>
+                                    </span>
+                                  ) : (
+                                    <span className="shrink-0">{sub.emoji}</span>
+                                  )}
+                                  <span>{sub.label}</span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
                         </div>
-                      )}
-                    </li>
-                  );
-                })}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
               {section.note && (
