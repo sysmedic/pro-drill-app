@@ -113,7 +113,7 @@
 - `SettingsModal.jsx` 미사용 변수 및 구형 함수 정리로 ESLint 통과 보장.
 - `package.json` test 스크립트에 `NODE_ENV=test` 환경변수 명시로 파이어베이스 gRPC 연결 루프 방지 및 Node 단위 테스트 2.5초대 완료 보장.
 - `TaskDetailsCard.jsx` 레이아웃 입력 라벨 접근성(`htmlFor="layout-info-input"`) 및 E2E 테스트 선택자 연동 보강.
-- E2E 테스트(`e2e/app-flow.spec.js`, `e2e/storage-failure.spec.js`, `e2e/storage-history.spec.js`) 상단바 '고객관리' 이동 버튼 라벨 명칭 변경 반영 완료 (24/24 항목 전원 통과).
+- Vercel 프로덕션 배포 완료: `https://drilling-chart-psi.vercel.app` (커밋 `89fa803` 푸시 및 성공적 배포).
   - **모바일 메모 핀 우측 드래그 이동 제한 해제 및 모바일 반응형 크기 최적화 (`useMemoOverlay.jsx`)**:
     - **우측 드래그 제한 해제**: 모바일 해상도(350px~390px)에서 고정 너비(`150px`) 상한 공식(`100% - 42.8% = 57.2%`)으로 인해 화면 중앙에서 멈추던 현상을 완전 해제하였습니다. 핀/핸들 최소 가시 영역(28px)을 확보하고 **화면 우측 끝(최대 92%+)까지 자유롭게 이동 가능**하도록 상한 계산 공식을 개선하였습니다.
     - **모바일 반응형 크기 최적화**: 모바일 뷰포트(<640px) 진입 시 핀 메모 기본 너비를 `150px` ➔ **`110px`** (높이 `80px`, 최소 너비 `48px`)로 슬림화하여 화면 가독성 및 조작 용이성을 강화하였습니다.

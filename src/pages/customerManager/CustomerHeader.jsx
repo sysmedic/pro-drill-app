@@ -54,7 +54,7 @@ export default function CustomerHeader({
             { isHelpPing: true, label: "가이드 보기" }
           ]
         },
-        { title: "✨ ProDrill AI", desc: "AI 레이아웃 추천 알고리즘 설정 및 API 키를 연동합니다." },
+        { title: "✨ ProDrill AI", desc: "AI 레이아웃 추천 알고리즘 활성을 위한 API 키를 생성 입력합니다." },
         { title: "☁️ 클라우드 백업", desc: "구글 드라이브 클라우드 동기화 및 복구를 진행합니다." },
         { title: "📂 로컬 백업", desc: "수동 JSON 파일 내보내기/불러오기로 백업 파일을 관리합니다." },
         { title: "🔄 업데이트", desc: "최신 배포본을 확인하고 앱을 즉시 갱신합니다." },
@@ -62,14 +62,14 @@ export default function CustomerHeader({
       ]
     },
     {
-      heading: "2. \uD83D\uDC65 고객 현황 및 + 신규 고객 등록",
+      heading: "2. 고객 현황 및 신규 고객 등록",
       items: [
         { title: "실시간 고객 수 표시", desc: "현재 저장된 전체 고객 수와 검색 필터링된 고객 수가 실시간 카운트됩니다." },
         { iconName: "plus", title: "+ 신규 버튼", desc: "우측 상단 + 신규 버튼을 터치하여 신규 고객을 빠르게 등록합니다." }
       ]
     },
     {
-      heading: "3. \uD83D\uDD0D 스마트 고객 검색 & 정렬",
+      heading: "3. 스마트 고객 검색 & 정렬",
       items: [
         { iconName: "search", title: "전화번호 & 이름 검색", desc: "고객 이름이나 전화번호 뒷 4자리 입력 시 실시간 정밀 필터링됩니다." },
         { title: "고객 정렬 옵션", desc: "최신순 / 이름순 선택으로 명단을 깔끔하게 정돈합니다." }

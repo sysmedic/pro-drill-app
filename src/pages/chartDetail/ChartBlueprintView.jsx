@@ -8,11 +8,10 @@ import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
 
 const chartBlueprintManualSections = [
   {
-    heading: "지공 도면 활용 가이드",
     items: [
-      { iconName: "memo", title: "📌 메모 핀 작성법", desc: "상단 테스크바의 [메모] 버튼을 활성화한 후, 도면 위 원하는 위치(중지/약지/엄지/핀 부근 등)를 터치하여 메모 핀을 꽂고 작업 노하우를 기록합니다." },
-      { iconName: "chart", title: "📐 드릴링 가이드 이동", desc: "도면 하단/우측의 드릴링 가이드 버튼이나 라벨을 터치하면 상세 드릴링 가이드 팝업이 열립니다." },
-      { title: "🔒 비밀 3회 연속 터치 잠금", desc: "지공 도면 영역을 빠르게 3회 연속 터치하면 고객 시청 시 차트 화면이 즉시 비밀 잠금 전환됩니다." }
+      { title: "메모 작성", desc: "상단 테스크바의 [메모] 버튼을 활성화한 후, 도면 위 원하는 위치(중지/약지/엄지/핀 부근 등)를 터치하여 메모(작업 노하우)를 기록합니다." },
+      { title: "드릴링 가이드", desc: "3핑거의 경우 맥동효과가 적용중인 오발 각도를 클릭하면 상세 드릴링 가이드 팝업이 열립니다. 2핑거의 경우 중지 혹은 약지 밑에 표시된 스판 편차값을 클릭하면 상세 드릴링 가이드 팝업이 열립니다" },
+      { title: "차트 보호", desc: "지공 차트 영역을 빠르게 3회 연속 터치하면 화면이 즉시 잠금 전환됩니다." }
     ]
   }
 ];
@@ -266,7 +265,7 @@ export default function ChartBlueprintView({
             <TaskbarHelpBalloon 
               isOpen={showHelp} 
               onClose={() => setShowHelp(false)} 
-              title="📖 지공 도면 가이드"
+              title="📖 지공 차트"
               sections={chartBlueprintManualSections}
             />
           </div>

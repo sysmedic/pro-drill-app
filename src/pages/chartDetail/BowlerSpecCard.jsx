@@ -7,11 +7,10 @@ import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
 
 const bowlerSpecManualSections = [
   {
-    heading: "볼러스펙 입력 가이드",
     items: [
+      { title: "트랙 플레어 & 틸트", desc: "볼의 플레어 이격 거리 와 틸트 각도를 입력합니다." },
       { title: "RPM & 구속", desc: "볼러의 평균 회전수(RPM)와 투구 속도를 입력합니다." },
       { title: "PAP (Right/Left & Up/Down)", desc: "볼러의 회전축(Positive Axis Point) 이격 거리를 입력합니다." },
-      { title: "축 틸트 & 트랙 플레어", desc: "볼의 틸트 각도와 플레어 이격 거리를 입력합니다." },
       { title: "미입력 시 표준 대입", desc: "수치가 비어있는 경우 AI 및 연산 엔진이 표준 기본값(300RPM, 25km/h, 5\" Right 1\" Up, 13°, 4.5\")을 자동으로 대입하여 정밀 연산합니다." }
     ]
   }
@@ -132,7 +131,7 @@ export default function BowlerSpecCard({
                 <TaskbarHelpBalloon 
                   isOpen={showHelp} 
                   onClose={() => setShowHelp(false)} 
-                  title="📖 볼러스펙 가이드"
+                  title="📖 볼러스펙"
                   sections={bowlerSpecManualSections}
                 />
               </span>
