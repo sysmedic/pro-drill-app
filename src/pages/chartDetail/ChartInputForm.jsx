@@ -63,7 +63,7 @@ const midFingerManualSections = [
 const ringFingerManualSections = [
   {
     items: [
-      { title: "약지 피치 (Pitch)", desc: "Reverse/Forward 및 Lateral(좌/우) 피치 수치와 방향을 입력합니다. (16분 / 32분 단위 토글 지원)" },
+      { title: "약지 피치 (Pitch)", desc: "Reverse/Forward 및 Lateral(좌/우) 피치 수치와 방향을 입력합니다." },
       { title: "인서트 및 팁 정보", desc: "인서트 사이즈, 팁 종류, 제조사 브랜드 및 홀컷 사이즈를 세밀하게 지정합니다." }
     ]
   }
