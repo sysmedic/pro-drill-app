@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { getCustomerChartProfile } from '../../lib/customerSchema.js';
 import { createLocalId } from '../../lib/ids.js';
 import { loadCustomers, saveCustomers } from '../../lib/customerStorage.js'; 
+import { autoSyncOnChange } from '../../lib/syncService.js';
 
 const createDefaultChartData = ({ handedness = 'right', isThumbless = false } = {}) => ({
   isThumbless,
@@ -98,6 +99,23 @@ export default function useChartSession({
   const historyLengthRef = useRef(0);
 
   const customerId = customer?.id;
+
+  useEffect(() => {
+    const handleRestored = () => {
+      loadedCustomerId.current = null;
+      historyLengthRef.current = -1;
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('prodrill_data_restored', handleRestored);
+      window.addEventListener('storage', handleRestored);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('prodrill_data_restored', handleRestored);
+        window.removeEventListener('storage', handleRestored);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (loading) return;
@@ -287,6 +305,7 @@ export default function useChartSession({
         });
 
         await saveCustomers(updatedCustomers);
+        autoSyncOnChange(); // ☁️ 회원 정보 및 타임라인 변경사항 클라우드 백업 트리거
 
         // 메모리 즉시 동기화
         if (customer) {

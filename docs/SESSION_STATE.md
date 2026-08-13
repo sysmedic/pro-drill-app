@@ -11,7 +11,49 @@
 
 ## 최근 변경
 
-- 더 이상 필요하지 않은 온라인 데이터베이스(Firebase 및 Supabase) 관련 설정 및 소스 코드(functions/, .firebase/, firebase.json, supabaseClient.js, authService.js, chartService.js, Login.jsx 등 총 13개 항목)를 완전히 삭제 정리했다.
+- 구글 드라이브 스냅샷 시각 파싱 정밀화 및 차트 상세 화면 폼 상태 실시간 자동 새로고침 (`googleDriveBackup.js`, `useChartSession.js`, `SettingsModal.jsx`):
+  - **스냅샷 파일 시각 파싱 정렬 (`googleDriveBackup.js`)**: `listBackupSnapshots` 및 `findBackupFile`에서 구글 API의 `createdTime` 대신 파일명(`prodrill_backup_YYYYMMDD_HHMMSS`)에 표기된 초 단위 시각을 파싱하여 **가장 최신 파일(57분)을 1순위로 확정 인양**하도록 교정.
+  - **수동 스냅샷 복원 덮어쓰기(`overwrite`) 확정 (`SettingsModal.jsx`)**: 사용자가 수동으로 선택한 스냅샷 복원 시 `overwrite` 모드로 100% 깔끔히 대체되도록 전환.
+  - **차트 편집창 폼 상태 실시간 자동 새로고침 (`useChartSession.js`)**: `prodrill_data_restored` 이벤트 감지 시 `loadedCustomerId`를 리셋하여, 현재 열려 있는 차트 도면 수치 및 메모가 복원 즉시 **57분 최신 데이터로 실시간 반영**되도록 보강.
+- 백업 스냅샷 100개 보관 확장 및 무소음 구글 인증 자동 갱신(Silent Refresh) 시스템 구축 (`googleDriveBackup.js`, `syncService.js`, `useChartSession.js`):
+  - **스냅샷 보관 100개 확장**: 구글 드라이브 스냅샷 보관 한도를 기존 30개에서 **최대 100개**로 대폭 확장하여 더욱 넓은 복원 지점을 제공.
+  - **무소음 자동 토큰 갱신 (`ensureActiveGoogleToken`)**: 60분 구글 OAuth 액세스 토큰 만료 및 앱 업데이트/재실행 시 수동 재로그인 없이 백그라운드 무소음(`prompt: ''`)으로 토큰을 자동 갱신하여 100% 무중단 백업 보장.
+  - **동기화 시각 감지 교정**: `autoSyncOnLaunch` 내 10초 예외 로직을 제거하고 1초라도 더 최신 클라우드 파일이 존재하면 무조건 자동 인양 및 머지를 수행하도록 정밀화. 회원 정보/타임라인 수정 시에도 백업 트리거(`autoSyncOnChange`) 바인딩 완결.
+- 환경설정 모달 전체 토글 버튼 규격 통일 및 햄버거 메뉴 업데이트 모달 분리 이관 (`GeneralSettingsModal.jsx`, `AppUpdateModal.jsx`, `CustomerManager.jsx`):
+  - **토글 버튼 규격 통일**: `GeneralSettingsModal.jsx` 내 모든 토글 스위치(차트 보호, 타임라인 로그, 볼러스펙 펼치기, 가이드 도움말)를 아코디언 토글 스펙과 동일한 **`h-5 w-9` (노브 `h-4 w-4`, 이동거리 `translate-x-4`)** 스마트 미니멀 디자인으로 일괄 통일.
+  - **업데이트 카드 이관 및 모달 타이틀 이모지 교정**: 환경설정 모달 내 정적 카드로 있던 배포 확인 영역을 제거하고, 햄버거 메뉴의 **`🔄 업데이트`** 버튼 클릭 시 즉시 실행되는 전용 **`AppUpdateModal.jsx`** 컴포넌트로 분리/이관. 모달 타이틀의 유니코드 이스케이프 문자열 표출 현상을 `title={"\uD83D\uDD04 앱 업데이트 정보"}` 바인딩 평가식으로 교정하여 **`🔄 앱 업데이트 정보`** 아이콘이 선명하게 표출되도록 조치.
+- 환경설정 입력창 아코디언 명칭 변경 및 서브 옵션 세분화 (`GeneralSettingsModal.jsx`, `ChartInputForm.jsx`):
+  - 항목명 변경: **`📋 입력창 아코디언 박스 펼치기`**
+  - 상호 배타적 세부 옵션 2종 추가 (`모두 펼치기` / `자동 접기`):
+    - **`모두 펼치기` ON**: 진입 시 모든 수치 입력 박스를 한눈에 펼쳐서 노출 (`expandInputAccordions`).
+    - **`자동 접기` ON**: 한 번에 입력 중인 1개의 박스만 펼침 유지하며 다른 박스 선택 시 이전 박스 자동 닫힘 (`autoCollapseInputAccordions`).
+    - **`둘 다 OFF`**: 접힌 상태로 시작하며, 박스 개출 시 이전 박스가 자동으로 접히지 않고 개별 유지됨.
+- 안드로이드 홈 화면 PWA 독립 앱(Standalone) 세로 고정 정밀 적용 (`vite.config.js`, `src/App.jsx`, `test/projectContracts.test.js`):
+  - PWA manifest 설정에 **`"orientation": "portrait-primary"`** 지정 (안드로이드 홈 화면 아이콘으로 실행되는 Standalone PWA 가동 시 기기 세로 모드 최우선 강제 고정).
+  - `src/App.jsx`에서 `display-mode: standalone` 여부를 감지하여 `screen.orientation.lock('portrait-primary')`을 자동 실행.
+- 엄지(Thumb) 수치 입력 섹션 필드 순서 조정 (`ChartInputForm.jsx`):
+  - 엄지 피치 수치 입력 그리드의 첫 번째 항목을 **Reverse (▼)**, 두 번째 항목을 **Forward (▲)**로 재배치하여, 중지/약지 피치 입력 방식과 100% 일치하도록 순서를 통일함.
+- 환경설정 앱 배포일자 확인/비교 기능 및 안드로이드 세로 고정 고도화 (`GeneralSettingsModal.jsx`, `src/lib/pwaUpdate.js`, `vite.config.js`, `index.html`, `src/App.jsx`):
+  - **앱 배포일자 시스템**: 빌드 시 `version.json`을 동적 생성하고 `__APP_BUILD_DATE__` 상수를 주입하여 현재 사용 중인 앱의 배포일자와 서버의 최신 배포일자를 실시간 대조.
+  - **환경설정 모달**: `🔄 앱 업데이트 & 배포 정보` 카드 신설. 사용 중인 배포일자와 최신 서버 배포일자를 표시하며, 최신 버전 유무(최신 버전일 시 `[최신]` 안내, 새 버전 유무 시 `[지금 최신 버전으로 업데이트]` 버튼)를 안내.
+  - **안드로이드 크롬 세로 고정(Portrait Lock) 보강**: `index.html` 내 세로 모드 전용 메타 태그(`<meta name="screen-orientation" content="portrait">`, `<meta name="x5-orientation" content="portrait">`) 추가 및 사용자 첫 터치(`pointerdown`) 시 `screen.orientation.lock('portrait')` 자동 실행 바인딩.
+- PAP (Up/Down) 키패드 물리 키보드 화살표 연동 (`FractionKeypad.jsx`):
+  - PAP 수치 입력 키패드 개출 시 물리 키보드의 **위쪽 화살표(`ArrowUp`) ➔ `Up`**, **아래쪽 화살표(`ArrowDown`) ➔ `Down`** 키값으로 즉시 바인딩 처리.
+- 지공 도면 `?` 가이드 도움말 버튼 크기 통일 및 상황별 동적 안내문 대치 (`ChartBlueprintView.jsx`):
+  - 도면 `?` 도움말 버튼 위치를 모바일 스케일링 계산 영역 밖(`Card` 최상위 레이어)으로 이전하여, 다른 카드/헤더의 `?` 버튼과 **100% 동일한 고정 크기(`w-6 h-6 sm:w-7 sm:h-7`)**를 유지하도록 정밀 교정.
+  - 지공 타입(`isThumbless`)에 따른 맞춤 가이드 도움말 동적 분기 노출:
+    - 3핑거: **`"맥동효과가 적용중인 오발 각도를 클릭하면 상세 드릴링 가이드 팝업이 열립니다."`**
+    - 2핑거: **`"중지 혹은 약지 밑에 표시된 스판 편차값을 클릭하면 상세 드릴링 가이드 팝업이 열립니다."`**
+- PWA 매니페스트 세로 고정 설정 및 안드로이드 수직 락 반영 (`vite.config.js`, `src/App.jsx`, `test/projectContracts.test.js`):
+  - PWA manifest에 **`"orientation": "portrait"`** 설정 추가 (안드로이드 홈 화면 PWA 가동 시 세로 모드 강제 고정).
+  - 마운트 시 `screen.orientation.lock('portrait')` 안전 호출 적용.
+- 매뉴얼 가이드, 용어 일괄 변경, 비밀번호 연속 오류 배너 및 환경설정 기본값 고도화:
+  - 매뉴얼 클라우드 백업 설명문구 변경: **`클라우드 백업: 지공사 프로필 관리 / 구글 드라이브 클라우드 동기화 및 복구를 진행합니다.`** (`CustomerHeader.jsx`).
+  - 용어 일괄 변경: **`사생활 보호 비밀번호` ➔ `차트 보호 비밀번호`** (`AppLocker.jsx`, `UserManualModal.jsx`, `App.jsx`).
+  - **`AppLocker`**: 비밀번호 입력 실패 경고 배너 기준을 **5회 연속 입력 실패**로 조정하고, 비밀번호 초기화 시 **실패 카운터 및 문의 배너 즉시 초기화/숨김** 처리.
+  - **`GeneralSettingsModal`**: 최초 앱 가동 시 모든 환경설정 항목 토글(차트 보호, 타임라인 로그, 입력창/볼러스펙 펼치기, 가이드)이 **기본 활성화(ON)** 상태로 가동되도록 수정.
+- Vercel 프로덕션 배포 완료 (`https://drilling-chart-psi.vercel.app`).
+- Node 프로젝트 계약 테스트(54/54) 및 Playwright E2E 자동화 테스트(24/24) 100% 통과 검증 완료.
 - `package.json`의 `dependencies`에서 `firebase` 및 `@supabase/supabase-js` 패키지 의존성을 제거했다.
 - `src/hooks/useGlobalNfcRead.js`의 NFC 스캔 점프 로직을 Firebase 원격 조회 방식에서 로컬 DB(IndexedDB 및 LocalStorage) 순회 검색 방식으로 리팩토링하여 Firebase SDK 의존성을 완전히 걷어냈다.
 - 프로젝트 하네스 문서(`GEMINI.md`) 및 전체 기술 아키텍처 문서들(`PROJECT_CONTEXT.md`, `VIBE_CODING_GUIDE.md`, `CI_CD.md`)에서 Firebase/Supabase 설명을 제거하고 로컬 전용 구동 모드에 맞춰 대대적으로 갱신했다.

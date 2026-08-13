@@ -38,7 +38,7 @@ export default function ChartDetail({
   const [showDrillingGuide, setShowDrillingGuide] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [feedback, setFeedback] = useState(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(() => localStorage.getItem('expandBowlerSpec') === 'true');
+  const [isDetailOpen, setIsDetailOpen] = useState(() => localStorage.getItem('expandBowlerSpec') !== 'false');
   const [isTaskOpen, setIsTaskOpen] = useState(true);
   const [showTemplateConfirm, setShowTemplateConfirm] = useState(false);
   const [showLogInterceptModal, setShowLogInterceptModal] = useState(false);

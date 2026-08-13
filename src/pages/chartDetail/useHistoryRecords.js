@@ -39,6 +39,13 @@ export default function useHistoryRecords(customer, { refreshChartCount, setFeed
 
   useEffect(() => {
     fetchLocalHistory();
+    const handleRestored = () => fetchLocalHistory();
+    window.addEventListener('prodrill_data_restored', handleRestored);
+    window.addEventListener('storage', handleRestored);
+    return () => {
+      window.removeEventListener('prodrill_data_restored', handleRestored);
+      window.removeEventListener('storage', handleRestored);
+    };
   }, [fetchLocalHistory]);
 
   // [C/U] 지공 차트 생성 및 갱신 파이프라인 (IndexedDB 기반)

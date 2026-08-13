@@ -6,11 +6,16 @@ import TaskbarHelpBalloon from '../../components/ui/TaskbarHelpBalloon.jsx';
 import { commonBoxClass, getEdgePoint } from './chartOptions.js';
 import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
 
-const chartBlueprintManualSections = [
+const getChartBlueprintManualSections = (isThumbless) => [
   {
     items: [
       { title: "메모 작성", desc: "상단 테스크바의 [메모] 버튼을 활성화한 후, 도면 위 원하는 위치(중지/약지/엄지/핀 부근 등)를 터치하여 메모(작업 노하우)를 기록합니다." },
-      { title: "드릴링 가이드", desc: "3핑거의 경우 맥동효과가 적용중인 오발 각도를 클릭하면 상세 드릴링 가이드 팝업이 열립니다. 2핑거의 경우 중지 혹은 약지 밑에 표시된 스판 편차값을 클릭하면 상세 드릴링 가이드 팝업이 열립니다" },
+      {
+        title: "드릴링 가이드",
+        desc: isThumbless
+          ? "중지 혹은 약지 밑에 표시된 스판 편차값을 클릭하면 상세 드릴링 가이드 팝업이 열립니다."
+          : "맥동효과가 적용중인 오발 각도를 클릭하면 상세 드릴링 가이드 팝업이 열립니다."
+      },
       { title: "차트 보호", desc: "지공 차트 영역을 빠르게 3회 연속 터치하면 화면이 즉시 잠금 전환됩니다." }
     ]
   }
@@ -222,7 +227,7 @@ export default function ChartBlueprintView({
   const hasOvalData = !!thumbDetails?.ovalSize || !!data?.ovalAngle;
 
   return (
-    <Card className="overflow-hidden transition-[height] duration-500 animate-fade-in mt-2 mb-2 sm:mb-2" constrained data-testid="chart-blueprint-surface" elevation="md" gpu layer="content" style={{ height: `${activeCanvasHeight * scale}px` }}>
+    <Card className="relative overflow-hidden transition-[height] duration-500 animate-fade-in mt-2 mb-2 sm:mb-2" constrained data-testid="chart-blueprint-surface" elevation="md" gpu layer="content" style={{ height: `${activeCanvasHeight * scale}px` }}>
       {/* 🎯 [순서 정밀 교정]: 3핑거/덤리스 관계없이 상시 스케일링이 작동하도록 핵심 하트비트 애니메이션 정의를 스코프 외부 최상단으로 격리 배치 */}
       <style>{`
         @keyframes heartbeat-thump {
@@ -234,6 +239,34 @@ export default function ChartBlueprintView({
         }
       `}</style>
 
+      {/* 💡 [지공 도면 상단 좌측 반투명 3초 맥동 도움말 버튼 - Card 최상위에 배치하여 스케일 축소 방지] */}
+      {showManualHelpSetting && (
+        <div className="absolute top-3 left-3 z-30 pointer-events-auto">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setShowHelp(prev => !prev);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="relative z-10 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-200/60 hover:bg-slate-200/90 text-slate-700 border border-slate-300/50 backdrop-blur-xs shadow-xs flex items-center justify-center font-black text-xs sm:text-sm transition-transform active:scale-95 cursor-pointer focus:outline-none"
+            aria-label="지공 도면 가이드"
+            title="지공 도면 가이드"
+          >
+            <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400/40 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] pointer-events-none" style={syncedPingStyle} />
+            ?
+          </button>
+          <TaskbarHelpBalloon 
+            isOpen={showHelp} 
+            onClose={() => setShowHelp(false)} 
+            title="📖 지공 차트"
+            sections={getChartBlueprintManualSections(isThumbless)}
+          />
+        </div>
+      )}
+
       <div
         ref={innerRef}
         className={`relative shrink-0 select-none ${isMemoActive ? 'touch-none' : 'touch-auto'} transform-gpu chart-blueprint-container`}
@@ -242,34 +275,6 @@ export default function ChartBlueprintView({
       >
         {memoOverlay}
         {memosRenderer}
-
-        {/* 💡 [지공 도면 상단 좌측 반투명 3초 맥동 도움말 버튼] */}
-        {showManualHelpSetting && (
-          <div className="absolute top-3 left-3 z-30 pointer-events-auto">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setShowHelp(prev => !prev);
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              className="relative z-10 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-200/60 hover:bg-slate-200/90 text-slate-700 border border-slate-300/50 backdrop-blur-xs shadow-xs flex items-center justify-center font-black text-xs sm:text-sm transition-transform active:scale-95 cursor-pointer focus:outline-none"
-              aria-label="지공 도면 가이드"
-              title="지공 도면 가이드"
-            >
-              <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400/40 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] pointer-events-none" style={syncedPingStyle} />
-              ?
-            </button>
-            <TaskbarHelpBalloon 
-              isOpen={showHelp} 
-              onClose={() => setShowHelp(false)} 
-              title="📖 지공 차트"
-              sections={chartBlueprintManualSections}
-            />
-          </div>
-        )}
 
         <div className="absolute inset-0 z-0 rounded-xl bg-white overflow-hidden" style={{ filter: isLeft ? 'invert(80%)' : 'none' }}>
         <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">

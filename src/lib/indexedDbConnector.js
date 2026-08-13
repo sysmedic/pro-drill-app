@@ -38,6 +38,20 @@ export const getDB = (accountHashKeyOverride = null) => {
       } catch (err) {
         console.error("레거시 localStorage 마이그레이션 실패:", err);
       }
+
+      // 🔄 [계정 해시 변경 감지]: 이전과 다른 DB 키라면 기존 DB 데이터를 새 DB로 자동 복사
+      if (typeof window !== 'undefined') {
+        try {
+          const lastDbKey = localStorage.getItem('prodrill_last_db_key');
+          if (lastDbKey && lastDbKey !== cleanKey && lastDbKey !== 'default') {
+            const prevDbName = `ProDrillDB_${lastDbKey}`;
+            await migrateAcrossDbInstances(prevDbName, instance);
+          }
+          localStorage.setItem('prodrill_last_db_key', cleanKey);
+        } catch (err) {
+          console.warn("DB 인스턴스 간 마이그레이션 실패:", err);
+        }
+      }
       
       resolve(instance);
     };
@@ -47,6 +61,7 @@ export const getDB = (accountHashKeyOverride = null) => {
     };
   });
 };
+
 
 // 마이그레이션 헬퍼 함수
 async function migrateLocalStorageToIndexedDB() {
@@ -101,6 +116,76 @@ async function migrateLocalStorageToIndexedDB() {
   // 성공 플래그 등록 (레거시 localStorage 데이터는 안전을 위해 강제로 지우지 않고 그대로 둡니다.)
   localStorage.setItem('prodrill_db_migrated_v1', 'true');
   console.log("🎉 [마이그레이션] IndexedDB 로컬 이주 성공 완료!");
+}
+
+// 🔄 DB 인스턴스 간 데이터 복사 (계정 해시 변경 시 구 DB → 신 DB 자동 이전)
+async function migrateAcrossDbInstances(prevDbName, newDbInstance) {
+  return new Promise((resolve) => {
+    const req = indexedDB.open(prevDbName, DB_VERSION);
+    req.onsuccess = async (event) => {
+      const prevDb = event.target.result;
+      try {
+        // 1. 구 DB에서 고객 목록 읽기
+        const customers = await new Promise((res, rej) => {
+          const tx = prevDb.transaction('customers', 'readonly');
+          const st = tx.objectStore('customers');
+          const r = st.getAll();
+          r.onsuccess = () => res(r.result || []);
+          r.onerror = () => rej(r.error);
+        });
+
+        // 2. 구 DB에서 차트 히스토리 읽기
+        const chartHistories = await new Promise((res, rej) => {
+          const tx = prevDb.transaction('chartHistories', 'readonly');
+          const st = tx.objectStore('chartHistories');
+          const r = st.getAll();
+          r.onsuccess = () => res(r.result || []);
+          r.onerror = () => rej(r.error);
+        });
+
+        prevDb.close();
+
+        // 3. 신 DB에 복사 (기존 데이터가 없을 때만)
+        const newCustomers = await new Promise((res, rej) => {
+          const tx = newDbInstance.transaction('customers', 'readonly');
+          const st = tx.objectStore('customers');
+          const r = st.getAll();
+          r.onsuccess = () => res(r.result || []);
+          r.onerror = () => rej(r.error);
+        });
+
+        if (newCustomers.length === 0 && customers.length > 0) {
+          await new Promise((res, rej) => {
+            const tx = newDbInstance.transaction('customers', 'readwrite');
+            const st = tx.objectStore('customers');
+            let count = 0;
+            if (customers.length === 0) { res(true); return; }
+            for (const c of customers) {
+              const r = st.put(c);
+              r.onsuccess = () => { if (++count === customers.length) res(true); };
+              r.onerror = () => rej(r.error);
+            }
+          });
+
+          for (const entry of chartHistories) {
+            await new Promise((res) => {
+              const tx = newDbInstance.transaction('chartHistories', 'readwrite');
+              const st = tx.objectStore('chartHistories');
+              const r = st.put(entry);
+              r.onsuccess = () => res(true);
+              r.onerror = () => res(false);
+            });
+          }
+          console.log(`🔄 [DB 이전] ${prevDbName} → 신 DB 이전 완료 (고객 ${customers.length}명, 차트 ${chartHistories.length}건)`);
+        }
+      } catch (err) {
+        console.warn("DB 간 이전 중 오류:", err);
+        try { prevDb.close(); } catch (closeErr) { console.warn('prevDb.close 실패:', closeErr); }
+      }
+      resolve();
+    };
+    req.onerror = () => resolve(); // 구 DB 없으면 조용히 통과
+  });
 }
 
 // CRUD Helpers

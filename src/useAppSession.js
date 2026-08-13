@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { isLicenseCertified, MASTER_HASH, MASTER_EMAIL, checkRemoteLicenseStatus, updateTrialUserStats, calculateGracePeriod, getSha256Hash, certifyUserEmail } from './lib/userLicenseManager.js';
+import { isLicenseCertified, MASTER_HASH, MASTER_EMAIL, checkRemoteLicenseStatus, updateTrialUserStats, calculateGracePeriod, getSha256Hash, certifyUserEmail, fetchRemoteUserProfile } from './lib/userLicenseManager.js';
 
 const resolveInitialTier = () => {
   if (typeof window === 'undefined') return 'trial';
@@ -28,7 +28,17 @@ const LOCAL_USER = {
 };
 
 export default function useAppSession() {
-  const [user, setUser] = useState(LOCAL_USER);
+  const [user, setUser] = useState(() => {
+    // 로그인 후 리로드 시에도 실제 이메일 유지 (localStorage에서 복원)
+    if (typeof window !== 'undefined') {
+      const email = localStorage.getItem('prodrill_linked_email') ||
+                    localStorage.getItem('prodrill_certified_email_plain') || '';
+      if (email && email !== 'guest@prodrill.local') {
+        return { uid: 'google_user', email: email.trim().toLowerCase(), displayName: email };
+      }
+    }
+    return LOCAL_USER;
+  });
   const [isAuthChecking, setIsAuthChecking] = useState(false);
   const [userTier, setUserTier] = useState(() => resolveInitialTier());
   const [maxChartsAllowed, setMaxChartsAllowed] = useState(Infinity);
@@ -46,13 +56,10 @@ export default function useAppSession() {
   const refreshChartCount = useCallback(async (uid) => {
     if (!uid) return;
     try {
-      // IndexedDB가 연결된 이후 해당 모듈에서 총 차트 갯수를 세어 세팅할 예정
-      // 초기에는 0으로 우선 세팅
       if (globalThis.indexedDbHelper) {
         const count = await globalThis.indexedDbHelper.getChartsCount();
         setCurrentChartsCount(count || 0);
       } else {
-        // 폴백으로 localStorage 키 갯수 세기
         const keys = Object.keys(localStorage);
         const chartKeys = keys.filter(k => k.startsWith('chart_history_v8_'));
         setCurrentChartsCount(chartKeys.length);
@@ -62,7 +69,7 @@ export default function useAppSession() {
     }
   }, []);
 
-  // 인증 확인 및 라이선스 백그라운드 대조
+  // 인증 확인 및 주기적 6시간 라이선스 백그라운드 대조 (Focus 시 30분 경과 감지)
   useEffect(() => {
     setUser(LOCAL_USER);
     const initialTier = resolveInitialTier();
@@ -71,7 +78,19 @@ export default function useAppSession() {
     refreshChartCount(LOCAL_USER.uid);
     setIsAuthChecking(false);
 
+    let lastCheckTimestamp = new Date().getTime();
+
     const syncLicenseAndStats = async () => {
+      const activeEmail = localStorage.getItem('prodrill_linked_email') || 
+                          localStorage.getItem('prodrill_certified_email_plain') || '';
+      if (activeEmail) {
+        try {
+          await fetchRemoteUserProfile(activeEmail);
+        } catch (err) {
+          console.warn("원격 프로필 동기화 지연:", err);
+        }
+      }
+
       const hash = localStorage.getItem('prodrill_certified_email_hash');
       if (hash) {
         const remoteTier = await checkRemoteLicenseStatus(hash);
@@ -83,9 +102,41 @@ export default function useAppSession() {
           const grace = calculateGracePeriod();
           await updateTrialUserStats(email, hash, grace.daysLeft);
         }
+      } else {
+        const updatedTier = resolveInitialTier();
+        setUserTier(updatedTier);
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('prodrill_license_updated'));
+      }
+      lastCheckTimestamp = new Date().getTime();
+    };
+
+    syncLicenseAndStats();
+
+    // 1. 6시간 마다 주기적 자동 점검 타이머 (6 * 60 * 60 * 1000)
+    const intervalId = setInterval(() => {
+      syncLicenseAndStats();
+    }, 6 * 60 * 60 * 1000);
+
+    // 2. 사용자가 다른 앱을 보다가 복귀(Focus) 시 마지막 점검 후 30분이 지났으면 자동 재검증
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible' && new Date().getTime() - lastCheckTimestamp > 30 * 60 * 1000) {
+        syncLicenseAndStats();
       }
     };
-    syncLicenseAndStats();
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    return () => {
+      clearInterval(intervalId);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+    };
   }, [refreshChartCount]);
 
   // 구글 로그인 성공 후 동적 세션 활성화 및 락 해제 처리

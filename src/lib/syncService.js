@@ -1,17 +1,94 @@
 import { loadCustomers, saveCustomers } from './customerStorage.js';
 import { getChartHistory, saveLocalChartHistory } from './indexedDbConnector.js';
-import { uploadBackupData, downloadBackupData, findBackupFile, isGoogleSignedIn, initGoogleApi, getGoogleUserEmail } from './googleDriveBackup.js';
+import { uploadBackupData, downloadBackupData, findBackupFile, isGoogleSignedIn, initGoogleApi, getGoogleUserEmail, ensureActiveGoogleToken } from './googleDriveBackup.js';
 import { isLicenseCertified, isSyncAllowed } from './userLicenseManager.js';
 import { generateSignature, verifyBackupPackage } from './encryption.js';
 
 // 디바운스 타이머 캐시
 let debounceTimer = null;
 
+// [안전망] 모든 ProDrillDB IndexedDB 인스턴스에서 고객+차트 데이터 통합 수집
+async function collectFromAllProDrillDBs() {
+  if (typeof indexedDB === 'undefined' || !indexedDB.databases) return null;
+  try {
+    const allDbs = await indexedDB.databases();
+    const prodrillDbs = allDbs.filter(d => d.name && d.name.startsWith('ProDrillDB_'));
+    if (prodrillDbs.length === 0) return null;
+
+    let bestCustomers = [];
+    const allChartHistories = {};
+
+    for (const dbInfo of prodrillDbs) {
+      try {
+        const db = await new Promise((resolve, reject) => {
+          const req = indexedDB.open(dbInfo.name, dbInfo.version);
+          req.onsuccess = e => resolve(e.target.result);
+          req.onerror = e => reject(e.target.error);
+        });
+
+        const customers = await new Promise((res, rej) => {
+          const tx = db.transaction('customers', 'readonly');
+          const r = tx.objectStore('customers').getAll();
+          r.onsuccess = () => res(r.result || []);
+          r.onerror = () => rej(r.error);
+        });
+
+        if (customers.length > bestCustomers.length) {
+          bestCustomers = customers;
+        }
+
+        const chartEntries = await new Promise((res, rej) => {
+          const tx = db.transaction('chartHistories', 'readonly');
+          const r = tx.objectStore('chartHistories').getAll();
+          r.onsuccess = () => res(r.result || []);
+          r.onerror = () => rej(r.error);
+        });
+
+        for (const entry of chartEntries) {
+          if (entry.customerId && Array.isArray(entry.history) && entry.history.length > 0) {
+            const existing = allChartHistories[entry.customerId];
+            if (!existing || entry.history.length > existing.length) {
+              allChartHistories[entry.customerId] = entry.history;
+            }
+          }
+        }
+
+        db.close();
+      } catch (err) {
+        console.warn(`[collectFromAllProDrillDBs] DB ${dbInfo.name} 읽기 실패:`, err);
+      }
+    }
+
+    if (bestCustomers.length > 0) {
+      console.warn('[packAppData] 모든 ProDrillDB 순회 폴백 사용 - 고객:', bestCustomers.length);
+      return { customers: bestCustomers, chartHistories: allChartHistories };
+    }
+  } catch (err) {
+    console.warn('[collectFromAllProDrillDBs] 실패:', err);
+  }
+  return null;
+}
+
 // 1. 앱 내 모든 데이터 패키징 (IndexedDB -> JSON + 전자서명 + 소유자 격리)
 export const packAppData = async (ownerEmailOverride = null) => {
   try {
-    const customers = await loadCustomers();
-    const chartHistories = {};
+    let customers = await loadCustomers();
+
+    // [1차 안전망] IndexedDB가 비어있으면 localStorage 'bowling_customers' 폴백
+    if ((!Array.isArray(customers) || customers.length === 0) && typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const raw = window.localStorage.getItem('bowling_customers');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            customers = parsed;
+            console.warn('[packAppData] IndexedDB 고객 미스. localStorage 폴백 사용');
+          }
+        }
+      } catch (e) {
+        console.warn('[packAppData] localStorage 고객 폴백 읽기 실패:', e);
+      }
+    }
 
     let ownerEmail = ownerEmailOverride;
     if (!ownerEmail && isGoogleSignedIn()) {
@@ -22,27 +99,67 @@ export const packAppData = async (ownerEmailOverride = null) => {
       }
     }
 
-    // 🛡️ 소유자 데이터 격리: 타인의 createdByEmail이 명시된 차트는 백업 수집 대상에서 완전히 제외
+    // [2차 안전망] 여전히 비어있으면 모든 ProDrillDB 인스턴스 순회
+    let allDbFallback = null;
+    if ((!Array.isArray(customers) || customers.length === 0)) {
+      allDbFallback = await collectFromAllProDrillDBs();
+      if (allDbFallback && allDbFallback.customers.length > 0) {
+        customers = allDbFallback.customers;
+      }
+    }
+
+    // 소유자 데이터 격리: 타인의 명시적 이메일이 있는 고객만 제외 (guest/빈값은 모두 허용)
     const normalizedOwnerEmail = (ownerEmail || '').trim().toLowerCase();
     const filteredCustomers = customers.filter(c => {
-      if (!c.createdByEmail || !normalizedOwnerEmail) return true;
-      return c.createdByEmail.trim().toLowerCase() === normalizedOwnerEmail;
+      if (!normalizedOwnerEmail) return true;          // ownerEmail 없으면 전부 허용
+      if (!c.createdByEmail) return true;              // createdByEmail 없으면 허용 (레거시/신규 고객)
+      const cEmail = c.createdByEmail.trim().toLowerCase();
+      if (cEmail === 'guest@prodrill.local') return true; // 오프라인 guest 고객 허용
+      return cEmail === normalizedOwnerEmail;
     });
+
+    const chartHistories = {};
 
     for (const customer of filteredCustomers) {
       if (customer.id) {
-        const history = await getChartHistory(customer.id);
-        if (Array.isArray(history) && history.length > 0) {
-          const filteredHistory = history.filter(h => {
-            if (!h.createdByEmail || !normalizedOwnerEmail) return true;
-            return h.createdByEmail.trim().toLowerCase() === normalizedOwnerEmail;
-          });
-          if (filteredHistory.length > 0) {
-            chartHistories[customer.id] = filteredHistory;
+        const idbHistory = await getChartHistory(customer.id);
+        let history = Array.isArray(idbHistory) ? idbHistory : [];
+
+        // [1차 안전망] IndexedDB 비어있으면 localStorage 폴백
+        if (history.length === 0 && typeof window !== 'undefined' && window.localStorage) {
+          try {
+            const raw = window.localStorage.getItem(`chart_history_v8_${customer.id}`);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                history = parsed;
+                console.warn(`[packAppData] IndexedDB 미스. localStorage 폴백 - 고객: ${customer.name}`);
+              }
+            }
+          } catch (e) {
+            console.warn('[packAppData] localStorage 폴백 읽기 실패:', e);
           }
+        }
+
+        // [2차 안전망] 모든 ProDrillDB 순회 결과 활용
+        if (history.length === 0 && allDbFallback && allDbFallback.chartHistories[customer.id]) {
+          history = allDbFallback.chartHistories[customer.id];
+          console.warn(`[packAppData] 전체 DB 순회 폴백 - 고객: ${customer.name}`);
+        }
+
+        const filteredHistory = history.filter(h => {
+          if (!normalizedOwnerEmail) return true;
+          if (!h.createdByEmail) return true;
+          const hEmail = h.createdByEmail.trim().toLowerCase();
+          if (hEmail === 'guest@prodrill.local') return true;
+          return hEmail === normalizedOwnerEmail;
+        });
+        if (filteredHistory.length > 0) {
+          chartHistories[customer.id] = filteredHistory;
         }
       }
     }
+
 
     const dataPayload = {
       customers: filteredCustomers,
@@ -89,49 +206,105 @@ export const unpackAppData = async (payload, mode = 'merge', expectedEmail = nul
 
   try {
     if (mode === 'overwrite') {
-      // 덮어쓰기 모드: 기존 로컬 데이터를 완전히 지우고 들어온 데이터로 대체
+      // 덮어쓰기 모드: 이름 기반 레거시 캐시 키(chart_history_v7_*, chart_history_이름기반, legacy_chart_*)만 청소
+      // [주의] chart_history_v8_* (ID 기반 현행 키)는 절대 삭제하지 않음 - 백업 폴백 데이터 보호
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          const keysToRemove = [];
+          for (let i = 0; i < window.localStorage.length; i++) {
+            const k = window.localStorage.key(i);
+            if (!k) continue;
+            // v8 ID 기반 키는 보호 (새 데이터로 덮어쓰기 전까지 유지)
+            if (k.startsWith('chart_history_v8_')) continue;
+            // 레거시 이름 기반 키만 청소
+            if (k.startsWith('chart_history_') || k.startsWith('legacy_chart_')) {
+              keysToRemove.push(k);
+            }
+          }
+          keysToRemove.forEach(k => window.localStorage.removeItem(k));
+        } catch (e) {
+          console.warn("로컬 스토리지 레거시 캐시 청소 실패:", e);
+        }
+      }
+
       await saveCustomers(incomingCustomers);
       for (const customerId of Object.keys(incomingHistories)) {
-        await saveLocalChartHistory(customerId, incomingHistories[customerId]);
+        const historyList = incomingHistories[customerId] || [];
+        await saveLocalChartHistory(customerId, historyList);
+        if (typeof window !== 'undefined' && window.localStorage) {
+          try {
+            window.localStorage.setItem(`chart_history_v8_${customerId}`, JSON.stringify(historyList));
+          } catch (e) {
+            console.warn("localStorage 복원 캐시 작성 실패:", e);
+          }
+        }
+      }
+
+      // [핵심] 복원 완료 시각을 현재로 기록 → autoSyncOnLaunch가 구 드라이브 데이터로 덮어쓰는 것 방지
+      const restoreNow = new Date().toISOString();
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('prodrill_last_backup_time', restoreNow);
+        localStorage.setItem('prodrill_last_restore_time', restoreNow);
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('prodrill_data_restored'));
+        window.dispatchEvent(new Event('storage'));
       }
       return true;
     }
 
-    // 병합(Merge) 모드: 고유 ID 기반 타임스탬프 비교 병합
+    // 병합(Merge) 모드: 고유 ID/이름 대조 및 최종 수정일(updatedAt/createdAt) 비교 세부 병합
     const localCustomers = await loadCustomers();
     const mergedCustomers = [...localCustomers];
 
-    // 2.1 고객 목록 병합
+    // 2.1 고객 목록 병합 (ID 또는 이름+연락처 매칭)
     for (const incoming of incomingCustomers) {
-      const localIdx = mergedCustomers.findIndex(c => c.id === incoming.id);
+      const localIdx = mergedCustomers.findIndex(c => c.id === incoming.id || (c.name && incoming.name && c.name === incoming.name && c.phone === incoming.phone));
       if (localIdx === -1) {
-        // 기존 로컬에 없는 신규 고객 -> 추가
+        // 로컬에 없는 신규 고객 -> 추가
         mergedCustomers.push(incoming);
       } else {
-        // 동일 고객 -> updatedAt 시간 비교 후 더 최신본으로 덮어씀
-        const localTime = new Date(mergedCustomers[localIdx].updatedAt || 0).getTime();
-        const incomingTime = new Date(incoming.updatedAt || 0).getTime();
-        if (incomingTime > localTime) {
+        // 동일 고객 -> updatedAt 시각 비교 (들어온 수치가 같거나 더 최신이면 덮어씀)
+        const localTime = mergedCustomers[localIdx].updatedAt ? new Date(mergedCustomers[localIdx].updatedAt).getTime() : 0;
+        const incomingTime = incoming.updatedAt ? new Date(incoming.updatedAt).getTime() : 0;
+        if (incomingTime >= localTime || localTime === 0) {
           mergedCustomers[localIdx] = incoming;
         }
       }
     }
     await saveCustomers(mergedCustomers);
 
-    // 2.2 지공 기록 히스토리 병합
+    // 2.2 개별 지공 차트 기록 레코드 단위 병합 (ID 또는 차트명/볼이름 대조)
     for (const customerId of Object.keys(incomingHistories)) {
       const incomingList = incomingHistories[customerId] || [];
       const localList = await getChartHistory(customerId);
       const mergedList = [...localList];
 
       for (const incomingRecord of incomingList) {
-        const localRecIdx = mergedList.findIndex(r => r.id === incomingRecord.id);
+        // 개별 차트 레코드 고유 ID 또는 차트명 기반 대조
+        const localRecIdx = mergedList.findIndex(r => {
+          if (incomingRecord.id && r.id) return r.id === incomingRecord.id;
+          if (incomingRecord.name && r.name) return r.name === incomingRecord.name;
+          return false;
+        });
+
         if (localRecIdx === -1) {
+          // 신규 차트 레코드 -> 병합 목록에 추가
           mergedList.push(incomingRecord);
         } else {
-          const localRecTime = new Date(mergedList[localRecIdx].updatedAt || 0).getTime();
-          const incomingRecTime = new Date(incomingRecord.updatedAt || 0).getTime();
-          if (incomingRecTime > localRecTime) {
+          // 동일한 차트 레코드 -> 최종 수정일 시각 보장 (updatedAt -> createdAt -> timestamp)
+          const getRecTime = (rec) => {
+            if (rec.updatedAt) return new Date(rec.updatedAt).getTime();
+            if (rec.createdAt) return new Date(rec.createdAt).getTime();
+            if (rec.timestamp) return new Date(rec.timestamp).getTime();
+            return 0;
+          };
+
+          const localRecTime = getRecTime(mergedList[localRecIdx]);
+          const incomingRecTime = getRecTime(incomingRecord);
+
+          if (incomingRecTime >= localRecTime || localRecTime === 0) {
             mergedList[localRecIdx] = incomingRecord;
           }
         }
@@ -139,12 +312,30 @@ export const unpackAppData = async (payload, mode = 'merge', expectedEmail = nul
 
       // 최신 등록순 정렬하여 저장
       mergedList.sort((a, b) => {
-        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return timeB - timeA;
+        const getRecTime = (rec) => {
+          if (rec.createdAt) return new Date(rec.createdAt).getTime();
+          if (rec.timestamp) return new Date(rec.timestamp).getTime();
+          if (rec.updatedAt) return new Date(rec.updatedAt).getTime();
+          return 0;
+        };
+        return getRecTime(b) - getRecTime(a);
       });
 
       await saveLocalChartHistory(customerId, mergedList);
+
+      // 🌟 [핵심 수정을 통한 이중 동기화]: localStorage 캐시 키도 함께 갱신하여 loadChartHistory 동기 조회 시 최신 데이터 보장
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.setItem(`chart_history_v8_${customerId}`, JSON.stringify(mergedList));
+        } catch (e) {
+          console.warn("localStorage 복원 캐시 작성 실패:", e);
+        }
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('prodrill_data_restored'));
+      window.dispatchEvent(new Event('storage'));
     }
 
     return true;
@@ -186,8 +377,8 @@ export const performBackup = async () => {
   }
 };
 
-// 4. 구글 드라이브로부터 복원(가져오기) 실행
-export const performRestore = async (mode = 'merge') => {
+// 4. 구글 드라이브로부터 복원(가져오기) 실행 (특정 백업 스냅샷 ID 지정 지원)
+export const performRestore = async (fileId = null, mode = 'merge') => {
   if (!isSyncAllowed()) {
     throw new Error('LICENSE_NOT_CERTIFIED');
   }
@@ -201,8 +392,11 @@ export const performRestore = async (mode = 'merge') => {
       }
     }
 
-    const payload = await downloadBackupData();
-    await unpackAppData(payload, mode, currentEmail);
+    const targetFileId = typeof fileId === 'string' && fileId.trim() ? fileId.trim() : null;
+    const targetMode = typeof fileId === 'string' && (mode === 'merge' || mode === 'overwrite') ? mode : (typeof fileId === 'string' ? 'merge' : (mode || 'merge'));
+
+    const payload = await downloadBackupData(targetFileId);
+    await unpackAppData(payload, targetMode, currentEmail);
     
     if (payload.exportedAt) {
       localStorage.setItem('prodrill_last_backup_time', payload.exportedAt);
@@ -234,8 +428,8 @@ export const autoSyncOnLaunch = async (setFeedback) => {
 
   try {
     await initGoogleApi();
-    if (!isGoogleSignedIn()) {
-      // 자동 로그인이 안 되어 있으면 즉각적인 사용자 팝업을 띄우지 않고 자연스레 스킵 (불안한 팝업 방지)
+    const hasToken = await ensureActiveGoogleToken();
+    if (!hasToken && !isGoogleSignedIn()) {
       return;
     }
 
@@ -263,18 +457,23 @@ export const autoSyncOnLaunch = async (setFeedback) => {
     const driveTime = new Date(driveTimeRaw).getTime();
     const localTime = new Date(localTimeRaw).getTime();
 
-    // 10초 이내 미세 차이는 오차 범위로 보고 동기화 생략 (무한 동기화 루프 방지)
-    if (Math.abs(driveTime - localTime) < 10000) {
-      return;
+    // [복원 직후 보호]: 방금 복원한 경우(30초 이내) autoSync의 자동 merge 스킵 → 복원 데이터 보호
+    const lastRestoreRaw = localStorage.getItem('prodrill_last_restore_time');
+    if (lastRestoreRaw) {
+      const restoreAge = new Date().getTime() - new Date(lastRestoreRaw).getTime();
+      if (restoreAge < 30000) {
+        console.log('☁️ [자동 동기화] 복원 직후 30초 보호 구간. 자동 merge 스킵.');
+        return;
+      }
     }
 
-    if (driveTime > localTime) {
-      // 클라우드가 더 최신 데이터인 경우 -> 내려받아 머지
+    // 클라우드가 1초 이상 더 최신이면 무조건 다운로드 & 병합
+    if (driveTime > localTime + 1000) {
       console.log("☁️ [자동 동기화] 클라우드 데이터가 더 최신입니다. 자동 복원 병합 진행...");
       if (setFeedback) setFeedback({ message: '☁️ 구글 드라이브의 최신 지공 기록을 자동으로 가져오는 중...', tone: 'info' });
       await performRestore('merge');
       if (setFeedback) setFeedback({ message: '☁️ 클라우드 동기화 완료!', tone: 'success' });
-    } else {
+    } else if (localTime > driveTime + 1000) {
       // 로컬 데이터가 더 최신인 경우 -> 즉시 업로드하여 클라우드 갱신
       console.log("☁️ [자동 동기화] 로컬 데이터가 더 최신입니다. 클라우드 자동 백업 진행...");
       await performBackup();
@@ -362,6 +561,8 @@ export const registerVisibilitySync = () => {
   const handleVisibilityChange = () => {
     if (document.visibilityState === 'hidden') {
       handleFinalSync();
+    } else if (document.visibilityState === 'visible') {
+      autoSyncOnLaunch();
     }
   };
 

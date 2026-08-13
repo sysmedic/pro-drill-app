@@ -1,3 +1,4 @@
+/* global process */
 import { useState, useEffect } from 'react';
 import PageShell from '../components/layout/PageShell.jsx';
 import { FeedbackToast } from '../components/ui/Dialogs.jsx';
@@ -15,8 +16,9 @@ import BackupSettingsModal from './customerManager/BackupSettingsModal.jsx'; // 
 import AiSettingsModal from './customerManager/AiSettingsModal.jsx'; // 🤖 AI 설정 모달 임포트
 import AdminSettingsModal from './customerManager/AdminSettingsModal.jsx'; // 👑 마스터 제어실 모달 임포트
 import UserManualModal from './customerManager/UserManualModal.jsx'; // 📖 사용 설명서 모달 임포트
-import { isLicenseCertified } from '../lib/userLicenseManager.js';
-import { checkForAppUpdate } from '../lib/pwaUpdate.js';
+import ProfileOnboardingModal from './customerManager/ProfileOnboardingModal.jsx'; // 🛡️ 지공사 프로필 온보딩 모달 임포트
+import AppUpdateModal from './customerManager/AppUpdateModal.jsx'; // 🔄 앱 업데이트 모달 임포트
+import { isLicenseCertified, getUserProfile, fetchRemoteUserProfile, saveUserProfile } from '../lib/userLicenseManager.js';
 
 export default function CustomerManagement({ 
   onSelectCustomer, 
@@ -44,6 +46,44 @@ export default function CustomerManagement({
   const [showAiSettingsModal, setShowAiSettingsModal] = useState(false);
   const [showAdminSettingsModal, setShowAdminSettingsModal] = useState(false);
   const [showUserManualModal, setShowUserManualModal] = useState(false);
+  const [showProfileOnboardingModal, setShowProfileOnboardingModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const checkProfileOnboarding = async () => {
+      const storedEmail = typeof window !== 'undefined' ? (localStorage.getItem('prodrill_linked_email') || localStorage.getItem('prodrill_certified_email_plain') || '') : '';
+      const effectiveEmail = (activeEmail && activeEmail !== 'guest@prodrill.local') ? activeEmail : storedEmail;
+      const isRealGoogleUser = effectiveEmail && effectiveEmail !== 'guest@prodrill.local';
+      const isTestEnv = (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') || (typeof window !== 'undefined' && (window.navigator?.webdriver || localStorage.getItem('prodrill_test_mode') === 'true'));
+      
+      if (isRealGoogleUser && !isTestEnv) {
+        const remoteProf = await fetchRemoteUserProfile(effectiveEmail);
+        const prof = remoteProf || getUserProfile();
+        if (isMounted) {
+          if (!prof || !prof.name) {
+            setShowProfileOnboardingModal(true);
+          }
+        }
+      }
+    };
+
+    checkProfileOnboarding();
+    return () => { isMounted = false; };
+  }, [activeEmail]);
+
+  useEffect(() => {
+    const handleRestored = async () => {
+      const result = await loadCustomers(null, activeEmail, certifiedEmailHash);
+      setCustomers(Array.isArray(result) ? result : []);
+    };
+    window.addEventListener('prodrill_data_restored', handleRestored);
+    window.addEventListener('storage', handleRestored);
+    return () => {
+      window.removeEventListener('prodrill_data_restored', handleRestored);
+      window.removeEventListener('storage', handleRestored);
+    };
+  }, [activeEmail, certifiedEmailHash]);
   
   const [totalCount, setTotalCount] = useState(0);
 
@@ -114,14 +154,22 @@ export default function CustomerManagement({
             : c
         );
       } else {
+        // [Fix C] 신규 고객에 실제 이메일 주입 (localStorage에서 직접 읽어 안전하게 처리)
+        const resolvedEmail = (
+          localStorage.getItem('prodrill_linked_email') ||
+          localStorage.getItem('prodrill_certified_email_plain') ||
+          activeEmail || ''
+        ).trim().toLowerCase();
         const newCustomer = {
           ...customerData,
           id: createLocalId(),
-          userId: 'local_driller', 
+          userId: 'local_driller',
           createdAt: isoTimestamp,
-          updatedAt: isoTimestamp 
+          updatedAt: isoTimestamp,
+          createdByEmail: resolvedEmail || ''
         };
         updatedCustomers.unshift(newCustomer);
+
       }
 
       const success = await saveCustomers(updatedCustomers);
@@ -179,7 +227,7 @@ export default function CustomerManagement({
         }}
         onOpenAdminSettings={() => setShowAdminSettingsModal(true)}
         onOpenUserManual={() => setShowUserManualModal(true)}
-        onCheckUpdate={() => checkForAppUpdate(setFeedback)}
+        onCheckUpdate={() => setShowUpdateModal(true)}
         userTier={userTier}
         isAiAllowed={['master', 'certified'].includes(userTier?.toLowerCase()) || (graceInfo && !graceInfo.isExpired && graceInfo.daysLeft > 30)}
         isBackupAllowed={['master', 'certified'].includes(userTier?.toLowerCase())}
@@ -389,6 +437,28 @@ export default function CustomerManagement({
 
       {showUserManualModal && (
         <UserManualModal onClose={() => setShowUserManualModal(false)} />
+      )}
+
+      {showProfileOnboardingModal && (() => {
+        const displayGoogleEmail = (activeEmail && activeEmail !== 'guest@prodrill.local')
+          ? activeEmail
+          : (typeof window !== 'undefined' ? (localStorage.getItem('prodrill_linked_email') || localStorage.getItem('prodrill_certified_email_plain') || activeEmail) : activeEmail);
+        return (
+          <ProfileOnboardingModal
+            isOpen={showProfileOnboardingModal}
+            email={displayGoogleEmail}
+            onFeedback={setFeedback}
+            onSave={async (profileData) => {
+              await saveUserProfile(displayGoogleEmail, profileData, 'user');
+              setShowProfileOnboardingModal(false);
+              setFeedback({ message: '🎉 지공사 프로필 등록이 완료되었습니다. 서비스 이용을 시작합니다!', tone: 'success' });
+            }}
+          />
+        );
+      })()}
+
+      {showUpdateModal && (
+        <AppUpdateModal onClose={() => setShowUpdateModal(false)} onFeedback={setFeedback} />
       )}
 
       <FeedbackToast message={feedback?.message} onDismiss={() => setFeedback(null)} tone={feedback?.tone} />

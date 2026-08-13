@@ -118,6 +118,12 @@ export const saveCustomers = (customers, storage, accountHashKey = null) => {
   return (async () => {
     try {
       await saveLocalCustomers(normalizedCustomers, accountHashKey);
+      // [이중 기록] localStorage 캐시도 항상 갱신 (IndexedDB 계정 해시 불일치 안전망)
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(normalizedCustomers));
+        } catch { /* ignore - 캐시 기록 실패는 무시 */ }
+      }
       return true;
     } catch (error) {
       console.error("IndexedDB 고객 저장 실패:", error);

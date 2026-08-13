@@ -143,6 +143,13 @@ export const saveChartHistory = (customer, history, storage) => {
   return (async () => {
     try {
       const success = await saveLocalChartHistory(customer.id, normalized);
+      // [이중 기록] localStorage 캐시도 항상 갱신 (IndexedDB 계정 해시 불일치 안전망)
+      if (success && typeof window !== 'undefined' && window.localStorage) {
+        try {
+          const key = `${CHART_HISTORY_PREFIX}${customer.id}`;
+          window.localStorage.setItem(key, JSON.stringify(normalized));
+        } catch { /* ignore - 캐시 기록 실패는 무시 */ }
+      }
       return success ? `${CHART_HISTORY_PREFIX}${customer.id}` : null;
     } catch (error) {
       console.error("지공 히스토리 저장 실패:", error);

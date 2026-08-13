@@ -136,6 +136,16 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
       } else if (e.key === 'Backspace') {
         handleDelete();
         e.preventDefault();
+      } else if (e.key === 'ArrowUp') {
+        if (extraKeys.includes('Up')) {
+          handleExtraKeyPress('Up');
+          e.preventDefault();
+        }
+      } else if (e.key === 'ArrowDown') {
+        if (extraKeys.includes('Down')) {
+          handleExtraKeyPress('Down');
+          e.preventDefault();
+        }
       } else {
         let isAllowed = false;
         if (mode === 'number') {
@@ -159,7 +169,7 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, value, isPreview, onClose, onConfirm, mode]);
+  }, [isOpen, value, isPreview, onClose, onConfirm, mode, extraKeys, handleExtraKeyPress]);
 
   if (!isOpen) return null;
 

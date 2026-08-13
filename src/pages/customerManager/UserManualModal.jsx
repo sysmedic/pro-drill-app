@@ -13,7 +13,7 @@ export default function UserManualModal({ onClose }) {
             <span>ProDrill 지공사 공식 안내서</span>
           </div>
           <p className="text-[11px] text-indigo-800 font-medium">
-            볼링 지공 현장에서 차트 작성, 키패드 입력, 사생활 보호 및 백업 기능을 손쉽게 활용하실 수 있는 안내서입니다.
+            볼링 지공 현장에서 차트 작성, 키패드 입력, 차트 보호 및 백업 기능을 손쉽게 활용하실 수 있는 안내서입니다.
           </p>
         </div>
 
@@ -63,7 +63,7 @@ export default function UserManualModal({ onClose }) {
         <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2">
           <h3 className="font-black text-slate-800 text-xs flex items-center gap-1.5 border-b border-slate-200 pb-1.5">
             <Icon name="warning" size={14} className="text-indigo-600 shrink-0" />
-            <span>[제4장] 사생활 보호 & 화면 잠금</span>
+            <span>[제4장] 차트 보호 & 화면 잠금</span>
           </h3>
           <ul className="list-disc pl-4 space-y-1 text-[11px] font-medium text-slate-600">
             <li><strong className="text-slate-800">차트 보호 (3회 연속 터치):</strong>

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import CustomerManager from './pages/CustomerManager.jsx';
 import ChartDetail from './pages/ChartDetail.jsx';
 import { FeedbackToast } from './components/ui/Dialogs.jsx'; 
-import AppLocker from './AppLocker.jsx'; // 🔒 사생활 보호 게이트키퍼 컴포넌트
+import AppLocker from './AppLocker.jsx'; // 🔒 차트 보호 게이트키퍼 컴포넌트
 import LoginGate from './components/auth/LoginGate.jsx'; // 🔑 로그인 의무 게이트 수입
 import useAppSession from './useAppSession.js'; // 🌟 신설된 세션 커스텀 훅 수입
 import { autoSyncOnLaunch, registerVisibilitySync } from './lib/syncService.js'; // ☁️ 자동 동기화 허브 임포트
@@ -48,6 +48,25 @@ export default function App() {
         }
       });
     }
+  }, []);
+
+  // [앱] 안드로이드 홈 화면 PWA 독립 앱(Standalone) 실행 시 세로 모드 강제 고정
+  useEffect(() => {
+    const tryLockOrientation = () => {
+      if (typeof window === 'undefined') return;
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      if (isStandalone && window.screen && window.screen.orientation && window.screen.orientation.lock) {
+        window.screen.orientation.lock('portrait-primary').catch(() => {});
+      }
+    };
+
+    tryLockOrientation();
+    window.addEventListener('orientationchange', tryLockOrientation);
+    window.addEventListener('pointerdown', tryLockOrientation, { passive: true });
+    return () => {
+      window.removeEventListener('orientationchange', tryLockOrientation);
+      window.removeEventListener('pointerdown', tryLockOrientation);
+    };
   }, []);
 
 
@@ -227,7 +246,7 @@ export default function App() {
         />
       )}
 
-      {/* 🔒 사생활 보호 게이트키퍼 컴포넌트 */}
+      {/* 🔒 차트 보호 게이트키퍼 컴포넌트 */}
       <AppLocker 
         isAppLocked={isAppLocked} 
         setIsAppLocked={setIsAppLocked} 

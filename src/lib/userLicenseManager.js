@@ -1,5 +1,5 @@
 /* global process */
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { licenseDb } from './licenseFirebase.js';
 
 /**
@@ -100,11 +100,8 @@ export const checkRemoteLicenseStatus = async (emailHash) => {
 
       localStorage.setItem('prodrill_license_status', status);
 
-      if (status === 'locked') {
-        // 강제 원격 잠금 상태 수령
-        return 'locked';
-      } else if (status === 'suspended') {
-        // 정지 및 만료 상태 수령
+      if (status !== 'active') {
+        // 해지, 정지, 만료 상태 수령 -> 즉시 인증 무효화
         localStorage.setItem('prodrill_license_certified', 'false');
         return 'suspended';
       } else {
@@ -114,8 +111,13 @@ export const checkRemoteLicenseStatus = async (emailHash) => {
         return tier;
       }
     } else {
-      // 라이선스 테이블에 정보 없음
+      // 라이선스 테이블에 정보 없음 (관리자가 인증 해지 또는 삭제한 계정)
+      const prevCertified = isLicenseCertified();
       localStorage.setItem('prodrill_license_certified', 'false');
+      if (prevCertified) {
+        localStorage.setItem('prodrill_license_status', 'suspended');
+        return 'suspended';
+      }
       localStorage.setItem('prodrill_license_status', 'trial');
       return 'trial';
     }
@@ -123,8 +125,7 @@ export const checkRemoteLicenseStatus = async (emailHash) => {
     console.error("원격 라이선스 조회 에러 (오프라인 폴백 기동):", error);
     // 오프라인 시 로컬 스토리지에 캐시된 마지막 상태를 기준으로 판단
     const cachedStatus = localStorage.getItem('prodrill_license_status');
-    if (cachedStatus === 'locked') return 'locked';
-    if (cachedStatus === 'suspended') return 'suspended';
+    if (cachedStatus === 'locked' || cachedStatus === 'suspended' || cachedStatus === 'revoked') return 'suspended';
     
     const certified = isLicenseCertified();
     if (certified) {
@@ -137,6 +138,10 @@ export const checkRemoteLicenseStatus = async (emailHash) => {
 // 5.5 구글 계정 연동 가능 여부 판단 (트라이얼 90일 이내 또는 정식 인증 계정)
 export const isGoogleLinkingAllowed = () => {
   if (typeof window === 'undefined') return true;
+  const status = localStorage.getItem('prodrill_license_status');
+  if (status === 'suspended' || status === 'revoked' || status === 'locked' || status === 'inactive') {
+    return false;
+  }
   const certified = isLicenseCertified();
   if (certified) return true;
   const { isExpired } = calculateGracePeriod();
@@ -212,20 +217,46 @@ export const certifyUserEmail = async (email) => {
   }
 };
 
-// 7. Trial 사용자 기기 통계 수집 등록 (Firestore trial_users 수집 보장)
-export const updateTrialUserStats = async (email, emailHash, daysLeft) => {
+// 7. Trial 사용자 기기 통계 수집 및 서버 시각 기준 잔여일수 검증 (무한 연장 방어)
+export const updateTrialUserStats = async (email, emailHash, localDaysLeft) => {
   if (typeof window === 'undefined' || (!email && !emailHash)) return;
+  const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
+  if (isTestEnv) return;
+
   try {
     const hashKey = emailHash || (email ? await getSha256Hash(email) : '');
     if (!hashKey) return;
 
     const docRef = doc(licenseDb, 'trial_users', hashKey);
-    await setDoc(docRef, {
-      email: (email || '').trim().toLowerCase(),
-      lastActive: serverTimestamp(),
-      daysLeft: typeof daysLeft === 'number' ? daysLeft : 90,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
+    const docSnap = await getDoc(docRef).catch(() => null);
+
+    let calculatedDaysLeft = typeof localDaysLeft === 'number' ? localDaysLeft : 90;
+
+    if (docSnap && docSnap.exists()) {
+      const data = docSnap.data();
+      if (data.createdAt) {
+        const createdMs = data.createdAt.seconds ? data.createdAt.seconds * 1000 : new Date(data.createdAt).getTime();
+        const diffDays = (new Date().getTime() - createdMs) / (1000 * 60 * 60 * 24);
+        calculatedDaysLeft = Math.max(0, Math.ceil(GRACE_DAYS - diffDays));
+      }
+      await setDoc(docRef, {
+        email: (email || '').trim().toLowerCase(),
+        lastActive: serverTimestamp(),
+        daysLeft: calculatedDaysLeft,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } else {
+      // 🌟 신규 유저 또는 파이어베이스 콘솔 삭제 후 재등록: createdAt 서버 시각 최초 기록 + 신규 90일 트라이얼 시작
+      const newLaunchTime = new Date().toISOString();
+      localStorage.setItem('prodrill_first_launch_time', newLaunchTime);
+      await setDoc(docRef, {
+        email: (email || '').trim().toLowerCase(),
+        createdAt: serverTimestamp(),
+        lastActive: serverTimestamp(),
+        daysLeft: 90,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }
   } catch (err) {
     console.warn("트라이얼 통계 저장 스킵 (오프라인/네트워크):", err);
   }
@@ -238,6 +269,161 @@ export const resetCertification = () => {
   localStorage.removeItem('prodrill_license_status');
   localStorage.removeItem('prodrill_first_launch_time');
   localStorage.removeItem('prodrill_device_uuid');
+  localStorage.removeItem('prodrill_user_profile');
   initFirstLaunchTime();
+};
+
+// 9. XSS 및 악성 코드 입력을 방지하기 위한 문자열 정제(Sanitization) 헬퍼
+export const sanitizeString = (str = '', maxLength = 30) => {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/<[^>]*>?/gm, '') // HTML 태그 제거
+    .replace(/[<>"'&]/g, '')   // 특수 문자 탈출
+    .trim()
+    .slice(0, maxLength);
+};
+
+// 10. 로컬 스토리지에 캐시된 지공사 프로필 조회
+export const getUserProfile = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('prodrill_user_profile');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+// 10.5. 원격 Firestore에서 지공사 프로필 동기화 조회 (원격 삭제 시 로컬 캐시 자동 초기화)
+export const fetchRemoteUserProfile = async (email) => {
+  if (typeof window === 'undefined' || !email) return null;
+  const normalized = email.trim().toLowerCase();
+  const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
+  if (isTestEnv) return getUserProfile();
+
+  try {
+    const hashed = await getSha256Hash(normalized);
+    const prevCertified = isLicenseCertified();
+
+    // 1. licenses 테이블 조회
+    const licenseRef = doc(licenseDb, 'licenses', hashed);
+    const licenseSnap = await getDoc(licenseRef).catch(() => null);
+
+    if (licenseSnap && licenseSnap.exists()) {
+      const data = licenseSnap.data();
+      const status = data.status || 'active';
+      if (status !== 'active') {
+        // 원격 라이선스 인증 해지/정지 상태
+        localStorage.setItem('prodrill_license_certified', 'false');
+        localStorage.setItem('prodrill_license_status', status || 'suspended');
+        return null;
+      }
+      
+      localStorage.setItem('prodrill_license_certified', 'true');
+      localStorage.setItem('prodrill_license_status', 'active');
+      if (data.name || data.shopName) {
+        const prof = {
+          email: normalized,
+          name: data.name || '',
+          shopName: data.shopName || '',
+          phone: data.phone || '',
+          updatedAt: data.updatedAt ? new Date(data.updatedAt.seconds * 1000).toISOString() : new Date().toISOString()
+        };
+        localStorage.setItem('prodrill_user_profile', JSON.stringify(prof));
+        return prof;
+      }
+    } else if (prevCertified) {
+      // 이전에 인증된 계정이었으나 라이선스 컬렉션에서 삭제/해지된 경우
+      localStorage.setItem('prodrill_license_certified', 'false');
+      localStorage.setItem('prodrill_license_status', 'suspended');
+      return null;
+    }
+
+    // 2. trial_users 테이블 조회
+    const trialRef = doc(licenseDb, 'trial_users', hashed);
+    const trialSnap = await getDoc(trialRef).catch(() => null);
+
+    if (trialSnap && trialSnap.exists()) {
+      const data = trialSnap.data();
+      if (data && (data.name || data.shopName)) {
+        const prof = {
+          email: normalized,
+          name: data.name || '',
+          shopName: data.shopName || '',
+          phone: data.phone || '',
+          updatedAt: data.updatedAt ? new Date(data.updatedAt.seconds * 1000).toISOString() : new Date().toISOString()
+        };
+        localStorage.setItem('prodrill_user_profile', JSON.stringify(prof));
+        return prof;
+      }
+    }
+
+    return getUserProfile();
+  } catch (err) {
+    console.warn("원격 프로필 동기화 지연 (네트워크 오프라인 폴백):", err);
+    return getUserProfile();
+  }
+};
+
+// 11. 지공사 프로필 저장 및 Audit Trail(변경 이력) 원격 동기화
+export const saveUserProfile = async (email, profileData = {}, changedBy = 'user') => {
+  if (typeof window === 'undefined' || !email) return false;
+  const normalizedEmail = email.trim().toLowerCase();
+  const cleanName = sanitizeString(profileData?.name || '', 15);
+  const cleanShop = sanitizeString(profileData?.shopName || '', 30);
+  const cleanPhone = sanitizeString(profileData?.phone || '', 20);
+
+  const profilePayload = {
+    email: normalizedEmail,
+    name: cleanName,
+    shopName: cleanShop,
+    phone: cleanPhone,
+    updatedAt: new Date().toISOString()
+  };
+
+  // 1. 로컬 캐시 갱신
+  localStorage.setItem('prodrill_user_profile', JSON.stringify(profilePayload));
+
+  // 2. 테스트 환경일 경우 원격 IO 우회
+  const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
+  if (isTestEnv) return true;
+
+  try {
+    const hashed = await getSha256Hash(normalizedEmail);
+    const auditRecord = {
+      timestamp: new Date().toISOString(),
+      changedBy: changedBy,
+      newName: cleanName,
+      newShopName: cleanShop,
+      phone: cleanPhone
+    };
+
+    const certified = isLicenseCertified();
+    const collectionName = certified ? 'licenses' : 'trial_users';
+    const targetDocRef = doc(licenseDb, collectionName, hashed);
+
+    // 기존 문서에서 이전 프로필 정보 읽어서 변경 이력 바인딩
+    const docSnap = await getDoc(targetDocRef).catch(() => null);
+    if (docSnap && docSnap.exists()) {
+      const prevData = docSnap.data();
+      auditRecord.prevName = prevData.name || '';
+      auditRecord.prevShopName = prevData.shopName || '';
+    }
+
+    await setDoc(targetDocRef, {
+      email: normalizedEmail,
+      name: cleanName,
+      shopName: cleanShop,
+      phone: cleanPhone,
+      profileHistory: arrayUnion(auditRecord),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    return true;
+  } catch (err) {
+    console.warn("원격 프로필 저장 지연 (로컬 저장소 캐시 보장):", err);
+    return true;
+  }
 };
 

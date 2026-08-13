@@ -202,13 +202,27 @@ export default function ChartInputForm({
   }, [baseHoleSizeNum]);
 
   const [openAccordions, setOpenAccordions] = useState(() => {
-    const expandAll = localStorage.getItem('expandInputAccordions') === 'true';
-    if (expandAll) {
-      return { bridge: true, hand: true, bowlerSpec: true, span: true, first: true, second: true, thumb: true };
+    const autoCollapse = localStorage.getItem('autoCollapseInputAccordions') === 'true';
+    const expandVal = localStorage.getItem('expandInputAccordions');
+    if (autoCollapse) {
+      return {};
     }
-    return {};
+    if (expandVal === 'false') {
+      return {};
+    }
+    return { bridge: true, hand: true, bowlerSpec: true, span: true, first: true, second: true, thumb: true };
   });
-  const toggleAccordion = (id) => setOpenAccordions(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const toggleAccordion = (id) => {
+    setOpenAccordions(prev => {
+      const autoCollapse = localStorage.getItem('autoCollapseInputAccordions') === 'true';
+      const isOpening = !prev[id];
+      if (autoCollapse && isOpening) {
+        return { [id]: true };
+      }
+      return { ...prev, [id]: !prev[id] };
+    });
+  };
 
   const [keypad, setKeypad] = useState({ isOpen: false, field: null, value: '', title: '', mode: 'fraction' });
   const [activeHelpSection, setActiveHelpSection] = useState(null);
@@ -690,8 +704,8 @@ export default function ChartInputForm({
         >
           <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
-            <ChartSelectField label="Forward (▲)" value={thumbPitch.up} onChange={v => updateThumb('up', v)} options={filteredPitchOptions} />
             <ChartSelectField label="Reverse (▼)" value={thumbPitch.down} onChange={v => updateThumb('down', v)} options={filteredPitchOptions} />
+            <ChartSelectField label="Forward (▲)" value={thumbPitch.up} onChange={v => updateThumb('up', v)} options={filteredPitchOptions} />
             <ChartSelectField label="Left (◀)" value={thumbPitch.left} onChange={v => updateThumb('left', v)} options={filteredPitchOptions} />
             <ChartSelectField label="Right (▶)" value={thumbPitch.right} onChange={v => updateThumb('right', v)} options={filteredPitchOptions} />
           </div>

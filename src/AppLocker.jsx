@@ -3,8 +3,21 @@ import { ConfirmModal } from './components/ui/Dialogs.jsx'; // 앱 표준 컨펌
 
 export default function AppLocker({ isAppLocked, setIsAppLocked, setFeedback }) {
   const [pinInput, setPinInput] = useState('');
+  const [failCount, setFailCount] = useState(0);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const resetClickRef = useRef({ count: 0, lastClick: 0 });
+
+  const handleContactAdmin = useCallback(() => {
+    const email = 'sysmedic@gmail.com';
+    const mailUrl = `mailto:${email}?subject=${encodeURIComponent('[ProDrill] 차트 보호 비밀번호 및 라이선스 문의')}&body=${encodeURIComponent('안녕하세요. ProDrill 차트 보호 비밀번호 재설정 관련 문의드립니다.')}`;
+    window.location.href = mailUrl;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(email).catch(() => {});
+    }
+    if (typeof setFeedback === 'function') {
+      setFeedback({ message: `관리자 이메일(${email})이 클립보드에 복사되었습니다.`, tone: 'info' });
+    }
+  }, [setFeedback]);
 
   // 비밀번호 입력 및 영구 검증 제어 엔진
   const handlePinKeyPress = useCallback((digit) => {
@@ -18,15 +31,18 @@ export default function AppLocker({ isAppLocked, setIsAppLocked, setFeedback }) 
       if (!savedPin) {
         // 1) 기기에 암호가 없는 상태에서 진입 시 -> 최초 비밀번호로 영구 등록 처리
         localStorage.setItem('drilling_app_pin_code', nextInput);
-        setFeedback({ message: '🔒 초기 사생활 보호 비밀번호가 안전하게 설정되었습니다!', tone: 'success' });
+        setFeedback({ message: '🔒 초기 차트 보호 비밀번호가 안전하게 설정되었습니다!', tone: 'success' });
         setIsAppLocked(false);
         setPinInput('');
+        setFailCount(0);
       } else if (savedPin === nextInput) {
         // 2) 암호 일치 시 잠금 해제
         setIsAppLocked(false); 
         setPinInput('');
+        setFailCount(0);
       } else {
         // 3) 실패 시 리셋 및 진동 피드백
+        setFailCount(prev => prev + 1);
         setFeedback({ message: '❌ 비밀번호가 일치하지 않습니다. 다시 시도해 주세요.', tone: 'danger' });
         setPinInput('');
         if (navigator.vibrate) navigator.vibrate(200);
@@ -71,7 +87,7 @@ export default function AppLocker({ isAppLocked, setIsAppLocked, setFeedback }) 
       </div>
 
       {/* 보안 도트 표시기 */}
-      <div className="flex justify-center gap-4 mb-10">
+      <div className="flex justify-center gap-4 mb-6">
         {[...Array(4)].map((_, i) => (
           <div 
             key={i} 
@@ -81,6 +97,22 @@ export default function AppLocker({ isAppLocked, setIsAppLocked, setFeedback }) 
           />
         ))}
       </div>
+
+      {/* 5회 연속 실패 시 문의하기 안내 배너 */}
+      {failCount >= 5 && (
+        <div className="mb-6 p-3.5 bg-rose-950/80 border border-rose-500/50 rounded-xl space-y-2 text-center max-w-[280px] animate-fade-in shadow-lg">
+          <p className="text-xs font-bold text-rose-200 leading-normal">
+            비밀번호를 {failCount}회 연속으로 잘못 입력하셨습니다.
+          </p>
+          <button
+            type="button"
+            onClick={handleContactAdmin}
+            className="w-full py-2 px-3 bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-xs font-black rounded-lg transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <span>✉️</span> 비밀번호 / 라이선스 문의하기
+          </button>
+        </div>
+      )}
 
       {/* 숫자 키패드 격자 */}
       <div className="w-full max-w-[280px] grid grid-cols-3 gap-y-4 gap-x-6 mb-8">
@@ -132,14 +164,16 @@ export default function AppLocker({ isAppLocked, setIsAppLocked, setFeedback }) 
           `}</style>
           <ConfirmModal
             title="비밀번호 초기화 안내"
-            message="사생활 보호 비밀번호를 분실하셨습니까? 초기화를 진행하면 비밀번호 잠금이 즉시 해제되며, 기기에 저장된 고객 정보는 안전하게 유지됩니다."
+            message="차트 보호 비밀번호를 분실하셨습니까? 초기화를 진행하면 비밀번호 잠금이 즉시 해제되며, 기기에 저장된 고객 정보는 안전하게 유지됩니다."
             confirmLabel="리셋 진행"
             cancelLabel="취소"
             onConfirm={() => {
               setShowResetConfirm(false);
               localStorage.removeItem('drilling_app_pin_code'); 
               setIsAppLocked(false);
-              setFeedback({ message: '🔓 사생활 보호 비밀번호가 성공적으로 초기화되었습니다.', tone: 'success' });
+              setFailCount(0);
+              setPinInput('');
+              setFeedback({ message: '🔓 차트 보호 비밀번호가 성공적으로 초기화되었습니다.', tone: 'success' });
             }}
             onCancel={() => setShowResetConfirm(false)}
           />

@@ -2,7 +2,6 @@
 const CLIENT_ID = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GOOGLE_CLIENT_ID) || '';
 const API_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GOOGLE_API_KEY) || '';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
-const BACKUP_FILE_NAME = 'prodrill_backup.json';
 
 export const isIOSDevice = () => {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
@@ -302,43 +301,141 @@ export const isGoogleSignedIn = () => {
   }
   const cachedToken = localStorage.getItem('prodrill_google_access_token');
   const expiry = localStorage.getItem('prodrill_google_token_expiry');
-  return !!(cachedToken && expiry && new Date().getTime() < Number(expiry));
+  const hasValidToken = !!(cachedToken && expiry && new Date().getTime() < Number(expiry));
+  if (hasValidToken) return true;
+
+  // 🛡️ [무소음 자동 토큰 갱신 지원]: 기존 연동 이메일이 있고 사용자가 직접 로그아웃하지 않았다면 연동 유효 상태로 인식
+  const linkedEmail = typeof window !== 'undefined' ? localStorage.getItem('prodrill_linked_email') : null;
+  return !!linkedEmail;
 };
 
-// 4. 구글 드라이브에서 백업 파일 정보 찾기
-export const findBackupFile = async () => {
-  await initGoogleApi();
-  if (!isGoogleSignedIn()) {
-    await signInGoogle();
+export const ensureActiveGoogleToken = async () => {
+  if (typeof window === 'undefined') return false;
+  if (localStorage.getItem('prodrill_user_logged_out') === 'true') return false;
+
+  const cachedToken = localStorage.getItem('prodrill_google_access_token');
+  const expiry = localStorage.getItem('prodrill_google_token_expiry');
+  const isTokenValid = !!(cachedToken && expiry && new Date().getTime() < Number(expiry));
+
+  if (isTokenValid && accessToken) {
+    return true;
   }
 
+  if (isTokenValid && cachedToken) {
+    accessToken = cachedToken;
+    try {
+      if (typeof gapi !== 'undefined' && gapi.client) {
+        gapi.client.setToken({ access_token: cachedToken });
+      }
+    } catch { /* ignore */ }
+    return true;
+  }
+
+  const linkedEmail = localStorage.getItem('prodrill_linked_email');
+  if (!linkedEmail) return false;
+
+  // 무소음 사이일런트 토큰 재발급 시도
+  try {
+    await signInGoogle(false, false);
+    return true;
+  } catch (err) {
+    console.warn("🔐 [자동 토큰 갱신]: 무소음 구글 인증 실패", err);
+    return false;
+  }
+};
+
+// 4. 구글 드라이브에서 보관 중인 백업 스냅샷 목록 조회 (최대 100개)
+export const listBackupSnapshots = async () => {
+  await initGoogleApi();
+  await ensureActiveGoogleToken();
+
   const response = await gapi.client.drive.files.list({
-    q: `name = '${BACKUP_FILE_NAME}' and trashed = false`,
-    fields: 'files(id, name, modifiedTime)',
-    spaces: 'drive',
+    q: "(name contains 'prodrill_backup' or name = 'prodrill_backup.json') and trashed = false",
+    fields: 'files(id, name, createdTime, modifiedTime, description, size)',
+    orderBy: 'modifiedTime desc, createdTime desc',
+    pageSize: 150,
   });
 
   const files = response.result.files || [];
-  return files.length > 0 ? files[0] : null;
+
+  // 🌟 [정밀 시각 파싱 정렬]: 파일명(prodrill_backup_YYYYMMDD_HHMMSS) 및 수정시각을 직접 파싱하여 1초 오차 없이 최신 백업본(57분) 1순위 보장
+  files.sort((a, b) => {
+    const getFileTime = (file) => {
+      const match = (file.name || '').match(/prodrill_backup_(\d{8})_(\d{6})\.json/);
+      if (match) {
+        const yyyymmdd = match[1];
+        const hhmmss = match[2];
+        const iso = `${yyyymmdd.slice(0, 4)}-${yyyymmdd.slice(4, 6)}-${yyyymmdd.slice(6, 8)}T${hhmmss.slice(0, 2)}:${hhmmss.slice(2, 4)}:${hhmmss.slice(4, 6)}`;
+        const t = new Date(iso).getTime();
+        if (!isNaN(t)) return t;
+      }
+      return new Date(file.modifiedTime || file.createdTime || 0).getTime();
+    };
+    return getFileTime(b) - getFileTime(a);
+  });
+  return files.map(file => {
+    let meta = {};
+    try {
+      if (file.description) meta = JSON.parse(file.description);
+    } catch { /* ignore */ }
+
+    return {
+      id: file.id,
+      name: file.name,
+      createdTime: file.createdTime || file.modifiedTime,
+      customerCount: typeof meta.customerCount === 'number' ? meta.customerCount : 0,
+      chartCount: typeof meta.chartCount === 'number' ? meta.chartCount : 0,
+      size: file.size || '0'
+    };
+  });
 };
 
-// 5. 구글 드라이브에 백업 업로드 (JSON 형식)
+// 4.5. 가장 최근 백업 스냅샷 파일 단건 찾기
+export const findBackupFile = async () => {
+  const snapshots = await listBackupSnapshots();
+  return snapshots.length > 0 ? snapshots[0] : null;
+};
+
+// 5. 구글 드라이브에 타임스탬프 스냅샷 업로드 (최대 100개 보관 유지 & FIFO 자동 정리)
 export const uploadBackupData = async (payload) => {
   await initGoogleApi();
-  if (!isGoogleSignedIn()) {
-    await signInGoogle();
-  }
+  await ensureActiveGoogleToken();
 
-  const backupFile = await findBackupFile();
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const timestampStr = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const snapshotFileName = `prodrill_backup_${timestampStr}.json`;
+
+  const customerList = Array.isArray(payload?.data?.customers)
+    ? payload.data.customers
+    : (Array.isArray(payload?.customers) ? payload.customers : []);
+  const customerCount = customerList.length;
+
+  const chartMap = (payload?.data?.chartHistories && typeof payload.data.chartHistories === 'object')
+    ? payload.data.chartHistories
+    : (payload?.chartHistories && typeof payload.chartHistories === 'object' ? payload.chartHistories : {});
+  
+  let chartCount = 0;
+  Object.values(chartMap).forEach(records => {
+    if (Array.isArray(records)) {
+      chartCount += records.length;
+    }
+  });
+
+  const description = JSON.stringify({
+    customerCount,
+    chartCount,
+    createdAt: now.toISOString()
+  });
+
   const fileContent = JSON.stringify(payload, null, 2);
-  const fileId = backupFile ? backupFile.id : null;
-
   const boundary = '314159265358979323846';
   const delimiter = `\r\n--${boundary}\r\n`;
   const closeDelimiter = `\r\n--${boundary}--`;
 
   const metadata = {
-    name: BACKUP_FILE_NAME,
+    name: snapshotFileName,
+    description: description,
     mimeType: 'application/json',
   };
 
@@ -351,16 +448,8 @@ export const uploadBackupData = async (payload) => {
     fileContent +
     closeDelimiter;
 
-  let url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-  let method = 'POST';
-
-  if (fileId) {
-    url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`;
-    method = 'PATCH';
-  }
-
-  const response = await fetch(url, {
-    method: method,
+  const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': `multipart/related; boundary=${boundary}`,
@@ -374,10 +463,24 @@ export const uploadBackupData = async (payload) => {
   }
 
   const result = await response.json();
+
+  // 🧹 백업이 100개를 초과할 경우 가장 오래된 101번째 이상 스냅샷 자동 삭제 (FIFO Retention)
+  try {
+    const snapshots = await listBackupSnapshots();
+    if (snapshots.length > 100) {
+      const olderFiles = snapshots.slice(100);
+      for (const oldFile of olderFiles) {
+        await gapi.client.drive.files.delete({ fileId: oldFile.id }).catch(() => {});
+      }
+    }
+  } catch (cleanErr) {
+    console.warn("오래된 스냅샷 자동 정리 스킵:", cleanErr);
+  }
+
   return result;
 };
 
-// 6. 구글 드라이브로부터 백업 다운로드
+// 6. 구글 드라이브로부터 백업 다운로드 (특정 스냅샷 ID 지원)
 export const downloadBackupData = async (fileId = null) => {
   await initGoogleApi();
   if (!isGoogleSignedIn()) {

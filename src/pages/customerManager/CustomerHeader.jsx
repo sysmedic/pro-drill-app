@@ -55,7 +55,7 @@ export default function CustomerHeader({
           ]
         },
         { title: "✨ ProDrill AI", desc: "AI 레이아웃 추천 알고리즘 활성을 위한 API 키를 생성 입력합니다." },
-        { title: "☁️ 클라우드 백업", desc: "구글 드라이브 클라우드 동기화 및 복구를 진행합니다." },
+        { title: "☁️ 클라우드 백업", desc: "지공사 프로필 관리 / 구글 드라이브 클라우드 동기화 및 복구를 진행합니다." },
         { title: "📂 로컬 백업", desc: "수동 JSON 파일 내보내기/불러오기로 백업 파일을 관리합니다." },
         { title: "🔄 업데이트", desc: "최신 배포본을 확인하고 앱을 즉시 갱신합니다." },
         { title: "🚪 로그아웃", desc: "사용자 계정 세션을 안전하게 종료하고 로그인 화면으로 이동합니다." }
@@ -233,6 +233,10 @@ export default function CustomerHeader({
                     setIsHamburgerOpen(false);
                     signOutGoogle();
                     try {
+                      localStorage.removeItem('prodrill_user_profile');
+                      localStorage.removeItem('prodrill_license_certified');
+                      localStorage.removeItem('prodrill_linked_email');
+                      localStorage.removeItem('prodrill_trial_google_linked');
                       localStorage.removeItem('prodrill_certified_email_hash');
                       localStorage.removeItem('prodrill_certified_email_plain');
                       localStorage.removeItem('prodrill_license_status');
