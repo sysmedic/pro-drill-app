@@ -42,17 +42,12 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
   const [pendingBackupPackage, setPendingBackupPackage] = useState(null);
   const [showRestoreModeConfirm, setShowRestoreModeConfirm] = useState(false);
 
-  // 🔒 엑셀 마이그레이션 한시적 ON/OFF 및 허용 계정 가시성 제어 상태
-  const [migrationEnabled, setMigrationEnabled] = useState(() => {
-    return localStorage.getItem("prodrill_excel_migration_enabled") !== "false";
-  });
-
   const activeEmail = (typeof window !== "undefined"
     ? (localStorage.getItem("prodrill_linked_email") || localStorage.getItem("prodrill_certified_email_plain") || "sysmedic3@gmail.com")
     : "sysmedic3@gmail.com"
   ).trim().toLowerCase();
 
-  // 🔑 특정 지정 계정 (sysmedic3@gmail.com, worms0529@gmail.com) 가시성 제어
+  // 🔑 특정 지정 관리자 계정 (sysmedic3@gmail.com, worms0529@gmail.com) 전용 권한 검사
   const isAuthorizedForMigration = isMigrationAuthorizedEmail(activeEmail);
 
   const handleFileRestoreSelect = (e) => {
@@ -375,79 +370,53 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
                 </Button>
               </div>
 
-              
-
-              {/* 🔒 엑셀 마이그레이션 지정 계정 (sysmedic3@gmail.com, worms0529@gmail.com) 전용 가시성 제한 & 한시적 ON/OFF 카드 */}
+              {/* 📊 [신규] 엑셀 데이터 마이그레이션 및 엑셀 백업 (지정 관리자 전용 노출) */}
               {isAuthorizedForMigration && (
-                <div className="bg-emerald-50/70 border border-emerald-200 p-3.5 rounded-xl space-y-3">
+                <div className="bg-emerald-50/70 border border-emerald-200 p-3.5 rounded-xl space-y-2">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-black text-emerald-900 flex items-center gap-1.5">
-                      📊 엑셀 ➔ 로컬 백업 JSON 변환 다운로드
+                      📊 엑셀 마이그레이션 및 엑셀 백업
                     </h4>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const nextState = !migrationEnabled;
-                        setMigrationEnabled(nextState);
-                        localStorage.setItem("prodrill_excel_migration_enabled", nextState ? "true" : "false");
-                        onFeedback({
-                          message: nextState ? "🟢 마이그레이션 기능이 한시적으로 열렸습니다 (ON)" : "🔴 마이그레이션 기능이 닫혔습니다 (OFF)",
-                          tone: nextState ? "success" : "warning"
-                        });
-                      }}
-                      className={"px-2 py-0.5 rounded text-[10px] font-black transition-all cursor-pointer shadow-2xs flex items-center gap-1 " + (migrationEnabled ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-700")}
-                    >
-                      <span className={"w-1.5 h-1.5 rounded-full " + (migrationEnabled ? "bg-white animate-pulse" : "bg-slate-400")} />
-                      <span>{migrationEnabled ? "마이그레이션 ON (열림)" : "마이그레이션 OFF (닫힘)"}</span>
-                    </button>
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-300">관리자 전용</span>
                   </div>
-
-                  {migrationEnabled ? (
-                    <>
-                      <p className="text-[11px] text-emerald-800 leading-normal font-bold">
-                        지정 관리자 계정(sysmedic3@gmail.com, worms0529@gmail.com)에서 한시적으로 가동되는 엑셀 마이그레이션 도구입니다. 엑셀 지공 차트(.xlsx) 폴더나 다중 파일들을 1개의 백업 JSON 파일로 일괄 다운로드합니다.
-                      </p>
-                      <div className="pt-1 flex gap-2">
-                        <label className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-black transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer">
-                          <span>📁 엑셀 폴더 / 다중 파일 ➔ 백업 JSON 변환</span>
-                          <input
-                            type="file"
-                            accept=".xlsx, .xls"
-                            multiple
-                            webkitdirectory="true"
-                            directory="true"
-                            className="hidden"
-                            onChange={async (e) => {
-                              const files = e.target.files;
-                              if (!files || files.length === 0) return;
-                              setGoogleLoading(true);
-                              try {
-                                const { convertMultipleExcelsToBackupJsonInBrowser } = await import("../../lib/excelMigrationService.js");
-                                const res = await convertMultipleExcelsToBackupJsonInBrowser(files, activeEmail);
-                                onFeedback({
-                                  message: `🎉 백업 파일 다운로드 완료! 총 ${res.totalFiles}개 파일 처리 (${res.customerCount}명 고객 마이그레이션). '${res.filename}' 파일로 로컬 복원을 진행해 주세요.`,
-                                  tone: "success"
-                                });
-                              } catch (err) {
-                                console.error("엑셀 백업 변환 오류:", err);
-                                onFeedback({
-                                  message: `엑셀 변환 실패: ${err.message || "파일 변환 중 오류가 발생했습니다."}`,
-                                  tone: "danger"
-                                });
-                              } finally {
-                                setGoogleLoading(false);
-                                e.target.value = "";
-                              }
-                            }}
-                          />
-                        </label>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-[11px] font-bold text-slate-500 bg-white/60 p-2.5 rounded-lg border border-emerald-100 text-center">
-                      마이그레이션 기능이 닫혀있습니다 (OFF). 사용을 원하시면 상단 버튼을 클릭하여 한시적으로 열어주세요.
-                    </div>
-                  )}
+                  <p className="text-[11px] text-emerald-800 leading-normal font-bold">
+                    기존 엑셀 지공 차트(.xlsx) 폴더나 다중 파일들을 1개의 백업 JSON 파일로 일괄 변환 및 다운로드합니다.
+                  </p>
+                  <div className="pt-1">
+                    <label className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-black transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer">
+                      <span>📁 엑셀 폴더 / 다중 파일 ➔ 백업 JSON 변환</span>
+                      <input
+                        type="file"
+                        accept=".xlsx, .xls"
+                        multiple
+                        webkitdirectory="true"
+                        directory="true"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const files = e.target.files;
+                          if (!files || files.length === 0) return;
+                          setGoogleLoading(true);
+                          try {
+                            const { convertMultipleExcelsToBackupJsonInBrowser } = await import("../../lib/excelMigrationService.js");
+                            const res = await convertMultipleExcelsToBackupJsonInBrowser(files, activeEmail);
+                            onFeedback({
+                              message: `🎉 백업 파일 다운로드 완료! 총 ${res.totalFiles}개 파일 처리 (${res.customerCount}명 고객 마이그레이션). '${res.filename}' 파일로 아래 [📤 로컬 백업 파일 직접 불러오기] 복원을 진행해 주세요.`,
+                              tone: "success"
+                            });
+                          } catch (err) {
+                            console.error("엑셀 백업 변환 오류:", err);
+                            onFeedback({
+                              message: `엑셀 변환 실패: ${err.message || "파일 변환 중 오류가 발생했습니다."}`,
+                              tone: "danger"
+                            });
+                          } finally {
+                            setGoogleLoading(false);
+                            e.target.value = "";
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
                 </div>
               )}
 
