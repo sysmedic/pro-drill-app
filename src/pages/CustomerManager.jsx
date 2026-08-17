@@ -21,6 +21,23 @@ import ProfileOnboardingModal from './customerManager/ProfileOnboardingModal.jsx
 import AppUpdateModal from './customerManager/AppUpdateModal.jsx'; // 🔄 앱 업데이트 모달 임포트
 import { isLicenseCertified, getUserProfile, fetchRemoteUserProfile, saveUserProfile } from '../lib/userLicenseManager.js';
 
+// 한글 초성 추출 헬퍼 (예: '김볼러' -> 'ㄱㅂㄹ')
+function getKoreanChoseong(str) {
+  if (!str) return '';
+  const CHOSEONG = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+  let result = '';
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i) - 44032;
+    if (code >= 0 && code <= 11172) {
+      const choseongIndex = Math.floor(code / 588);
+      result += CHOSEONG[choseongIndex];
+    } else {
+      result += str[i];
+    }
+  }
+  return result;
+}
+
 export default function CustomerManagement({ 
   onSelectCustomer, 
   onLogout,
@@ -191,15 +208,27 @@ export default function CustomerManagement({
     }
   };
 
-  const cleanQuery = (searchQuery || '').trim().toLowerCase().replace(/_/g, '');
+  const rawQuery = (searchQuery || '').trim();
+  const cleanQuery = rawQuery.toLowerCase().replace(/[-_ \s]/g, '');
+  const isChoseongOnly = /^[ㄱ-ㅎ]+$/.test(rawQuery);
+
   const filtered = customers.filter(c => {
-    if (!cleanQuery) return true;
+    if (!rawQuery) return true;
     const nameRaw = (c.name || '').toLowerCase();
-    const nameNormalized = nameRaw.replace(/_/g, '');
-    const phoneRaw = (c.phone || '').replace(/[- \s]/g, '');
-    return nameRaw.includes(cleanQuery) || 
-           nameNormalized.includes(cleanQuery) || 
-           phoneRaw.includes(cleanQuery);
+    const nameClean = nameRaw.replace(/[-_ \s]/g, '');
+    const phoneRaw = (c.phone || '').replace(/[-_ \s]/g, '');
+
+    // 1) 초성 자음(ㄱ, ㅎ 등) 검색어일 경우 초성 대조
+    if (isChoseongOnly) {
+      const nameChoseong = getKoreanChoseong(c.name || '');
+      if (nameChoseong.includes(rawQuery)) return true;
+    }
+
+    // 2) 하이픈(-) 및 특수문자 양방향 정제 대조 (010- 치든 010 치든 100% 매칭)
+    return nameRaw.includes(rawQuery.toLowerCase()) || 
+           nameClean.includes(cleanQuery) || 
+           phoneRaw.includes(cleanQuery) ||
+           (c.phone || '').includes(rawQuery);
   });
   const displayedCustomers = filtered.slice(0, 100);
 
