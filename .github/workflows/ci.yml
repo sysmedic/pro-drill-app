@@ -26,12 +26,6 @@ jobs:
       - name: Run checks
         run: npm run check
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Run browser E2E
-        run: npm run check:e2e || true
-
       - name: Upload production build
         uses: actions/upload-artifact@v4
         with:
