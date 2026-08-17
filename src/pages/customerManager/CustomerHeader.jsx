@@ -277,6 +277,30 @@ export default function CustomerHeader({
 
           <div className="flex items-center gap-1.5 relative">
             <h1 className="text-xl font-bold text-slate-800 leading-none">고객 관리</h1>
+            
+            {/* 💡 [현재 활성 지공사 명시 배지 & 계정 전환 버튼] */}
+            {(() => {
+              const activeEmail = (typeof window !== "undefined"
+                ? (localStorage.getItem("prodrill_linked_email") || localStorage.getItem("prodrill_certified_email_plain") || "지공사")
+                : "지공사").trim();
+              const displayEmail = activeEmail.includes('@') ? activeEmail.split('@')[0] : activeEmail;
+              return (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onLogout) onLogout();
+                  }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-full text-xs font-black text-indigo-700 shadow-2xs transition-all active:scale-95 cursor-pointer ml-1"
+                  title={`현재 지공사: ${activeEmail} (클릭 시 계정 전환/로그아웃)`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>👤 {displayEmail}</span>
+                  <span className="text-[10px] text-indigo-400 font-normal">│전환</span>
+                </button>
+              );
+            })()}
+
             {/* 💡 [고객 관리 타이틀 수직 위치 100% 동기화 3초 맥동 도움말 버튼] */}
             {showManualHelpSetting && (
               <div className="relative inline-flex items-center justify-center shrink-0 ml-0.5">

@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 엑셀 마이그레이션 엄지 레터럴 0 무시 및 유의미 수치 우선 파싱 Vercel 프로덕션 배포 완료 (`excelMigrationService.js`):
-  - **정밀 파싱 교정**: 엑셀 마이그레이션 시 엄지 레터럴(`E4` Left / `E5` Right)에서 한쪽에 `0`이 있고 다른 한쪽에 유의미한 실제 수치(예: `1/8`, `1/16` 등)가 존재할 때, `0`을 100% 무시하고 유의미한 수치만 해당 방향(Left 또는 Right)에 매핑.
-  - **영향도 격리**: 앱 내 일반 차트 작성 화면은 변경 없이 유지하고, 오직 엑셀 마이그레이션 파서(`excelMigrationService.js`)에만 전용 적용.
+- 왼손 지공 차트 중지-약지 수치 스왑 및 마이그레이션 전체 64분법 통일 Vercel 프로덕션 배포 완수 (`excelMigrationService.js`):
+  - **왼손 수치 맞교환 (Swap)**: 엑셀 마이그레이션 시 손잡이가 왼손(Left Hand)인 경우, 중지와 약지의 전체 제원 수치(스판 `spanLeft`/`spanRight`, 홀컷, 피치 `rev`/`fwd`/`lat`, 인서트)를 1:1로 자동 맞교환하여 매핑.
+  - **전체 수치 64분법 기약분수 통일**: 스판, 피치, 홀컷, 인서트, 퍼플 메모 수치 등 마이그레이션 변환 수치를 64분법 기약분수(`toReducedFraction(val, 64)`)로 100% 통합 적용.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
