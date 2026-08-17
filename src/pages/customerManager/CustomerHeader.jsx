@@ -349,7 +349,7 @@ export default function CustomerHeader({
                       window.location.reload();
                     }, 50);
                   }}
-                  className="text-sm sm:text-base font-medium text-slate-600 hover:text-indigo-600 transition-colors active:scale-95 cursor-pointer ml-1 sm:ml-1.5 underline decoration-slate-300/60 underline-offset-2"
+                  className="text-sm sm:text-base font-medium text-slate-600 hover:text-indigo-600 transition-colors active:scale-95 cursor-pointer ml-1 sm:ml-1.5"
                   title="클릭 시 로그아웃"
                 >
                   {displayName}

@@ -9,9 +9,10 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 상단 지공사 계정 박스 디자인 태스크바 100% 통일 및 즉시 로그아웃 완치 Vercel 배포 (`CustomerHeader.jsx`):
-  - **디자인 100% 일치**: 둥근 알약형 및 이모지 `👤`, `전환` 텍스트를 100% 제거하고, 각진 깔끔한 박스 형태(`rounded-md border-slate-200 bg-slate-50/80`)와 얇은 정갈한 폰트(`font-normal text-slate-500`)로 오직 프로필 이름만 깔끔하게 정제.
-  - **로그아웃 완치**: 클릭 시 구글 OAuth 토큰(`signOutGoogle()`) 및 라이선스/연동 로컬스토리지 키를 일괄 완전히 삭제 파기 후 1초 만에 로그인 화면으로 이탈하도록 100% 동작 완치.
+- 가이드 바로 뒤 지공사 프로필 이름 1순위 노출, 서체 확대 및 외각 박스 제거 Vercel 프로덕션 라이브 완료 (`CustomerHeader.jsx`):
+  - **배치 위치 교정**: `고객 관리` ➔ `?` (가이드 도움말 버튼) ➔ `[프로필 이름]` 순서로 가이드 바로 뒤에 정밀 배치.
+  - **1순위 프로필 이름 표기**: 구글 이메일 대신 지공사 프로필 이름(`drillerName`)을 1순위로 표시하며, 이름이 미설정된 경우에만 계정 이메일 ID를 2순위로 표시하는 2단계 정밀 구조 적용.
+  - **디자인 정제**: 테두리/배경 외각 박스를 100% 완전히 삭제하고, 서체 크기를 14~16px(`text-sm sm:text-base`)로 시원하게 확대.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
