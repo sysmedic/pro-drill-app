@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- E1 셀 수치 덤타입 매핑 100% 제거 및 엄지 홀컷 사이즈 전용 1:1 매핑 Vercel 프로덕션 성공 배포 (`excelMigrationService.js`):
-  - **매핑 교정**: `E1` 셀 수치가 덤타입(`slugType`)에 들어가던 매핑을 100% 완전히 제거(공난 `''` 유지)하고, 오직 엄지 홀컷 사이즈(`thumbDetails.holeCutSize`)에만 1:1 전용으로 적용.
-  - **덤피치 라이트 분리**: 덤피치 라이트(`thumbPitch.right`)는 오직 `E5` 셀(엄지 레터럴 Right) 수치만 사용하도록 확실히 분리 차단.
+- 엑셀 마이그레이션 엄지 레터럴 0 무시 및 유의미 수치 우선 파싱 Vercel 프로덕션 배포 완료 (`excelMigrationService.js`):
+  - **정밀 파싱 교정**: 엑셀 마이그레이션 시 엄지 레터럴(`E4` Left / `E5` Right)에서 한쪽에 `0`이 있고 다른 한쪽에 유의미한 실제 수치(예: `1/8`, `1/16` 등)가 존재할 때, `0`을 100% 무시하고 유의미한 수치만 해당 방향(Left 또는 Right)에 매핑.
+  - **영향도 격리**: 앱 내 일반 차트 작성 화면은 변경 없이 유지하고, 오직 엑셀 마이그레이션 파서(`excelMigrationService.js`)에만 전용 적용.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

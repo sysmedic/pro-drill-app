@@ -228,14 +228,14 @@ function parseInputSheet(formSheet, diagramSheet, isSub = false, ownerEmail = ''
   // 🌟 [도면 핀 메모(Visual Memos) 좌표/색상/핀 자동 생성 로직]:
   const visualMemos = [];
 
-  // 1. E8 퍼플 메모 (Purple, x: 1.935, y: 45.275, w: 161, h: 106, 32분법 기약분수 + E9 "좌 ", E10 "우 ")
+  // 1. E8 퍼플 메모 (Purple, x: 1.935, y: 45.275, w: 161, h: 106, 64분법 기약분수 + E9 "좌 ", E10 "우 ")
   const e8Raw = getCellValue(formSheet, 'E8');
   const e9Raw = getCellValue(formSheet, 'E9');
   const e10Raw = getCellValue(formSheet, 'E10');
   if (e8Raw) {
-    const e8Val = toReducedFraction(e8Raw, 32);
-    const e9Val = e9Raw ? `좌 ${toReducedFraction(e9Raw, 32)}` : null;
-    const e10Val = e10Raw ? `우 ${toReducedFraction(e10Raw, 32)}` : null;
+    const e8Val = toReducedFraction(e8Raw, 64);
+    const e9Val = e9Raw ? `좌 ${toReducedFraction(e9Raw, 64)}` : null;
+    const e10Val = e10Raw ? `우 ${toReducedFraction(e10Raw, 64)}` : null;
 
     const offsetLines = [e8Val, e9Val, e10Val].filter(Boolean).join('\n');
     visualMemos.push({
@@ -301,10 +301,10 @@ function parseInputSheet(formSheet, diagramSheet, isSub = false, ownerEmail = ''
 
   const isRight = hand.includes('오른') || hand.includes('Right') || !hand.includes('왼');
 
-  // 중지 레터럴 (B12): 32분법 / latDir 1:1 대입
-  const midLatParsed = getLateralPitchAndDirection(getCellValue(formSheet, 'B12'), hand, false, 32);
-  // 약지 레터럴 (B18): 32분법 / latDir 1:1 대입
-  const ringLatParsed = getLateralPitchAndDirection(getCellValue(formSheet, 'B18'), hand, true, 32);
+  // 🌟 [왼손 스왑 및 64분법 기약분수 통합 적용]:
+  // 왼손인 경우 중지 레터럴 ➔ B18 셀, 약지 레터럴 ➔ B12 셀로 수치 맞교환!
+  const midLatParsed = getLateralPitchAndDirection(getCellValue(formSheet, isRight ? 'B12' : 'B18'), hand, false, 64);
+  const ringLatParsed = getLateralPitchAndDirection(getCellValue(formSheet, isRight ? 'B18' : 'B12'), hand, true, 64);
 
   // 엄지 레터럴 (E4: Left / E5: Right): 64분법 / 0과 유의미한 수치 혼재 시 0 무시 및 유의미 실수치 우선 파싱!
   const e4Str = getCellValue(formSheet, 'E4');
@@ -362,10 +362,25 @@ function parseGender(rawGender) {
     createdByEmail: ownerEmail
   };
 
-  // Reverse / Forward 0값 무조건 Reverse 기록 규칙 연산
-  const midRevFwd = parseRevFwdPitches(formSheet, 'B10', 'B11', 32);
-  const ringRevFwd = parseRevFwdPitches(formSheet, 'B16', 'B17', 32);
+  // 🌟 [왼손 스왑 및 64분법 적용]: Rev/Fwd 피치 셀 맞교환 파싱 (64분법)
+  const midRevFwd = parseRevFwdPitches(formSheet, isRight ? 'B10' : 'B16', isRight ? 'B11' : 'B17', 64);
+  const ringRevFwd = parseRevFwdPitches(formSheet, isRight ? 'B16' : 'B10', isRight ? 'B17' : 'B11', 64);
   const thumbRevFwd = parseRevFwdPitches(formSheet, 'E2', 'E3', 64);
+
+  // 🌟 [왼손 스왑 및 64분법 적용]: 스판 셀 수치 맞교환 (64분법)
+  const b21SpanVal = toReducedFraction(getCellValue(formSheet, 'B21'), 64);
+  const b22SpanVal = toReducedFraction(getCellValue(formSheet, 'B22'), 64);
+  const spanLeftVal = isRight ? b21SpanVal : b22SpanVal;
+  const spanRightVal = isRight ? b22SpanVal : b21SpanVal;
+
+  // 🌟 [왼손 스왑 및 64분법 적용]: 홀컷, 인서트, 팁종류 수치 맞교환 (64분법)
+  const midHoleCutVal = toReducedFraction(getCellValue(formSheet, isRight ? 'B9' : 'B15'), 64);
+  const ringHoleCutVal = toReducedFraction(getCellValue(formSheet, isRight ? 'B15' : 'B9'), 64);
+
+  const midInsertVal = toReducedFraction(getCellValue(formSheet, isRight ? 'B13' : 'B19'), 64);
+  const ringInsertVal = toReducedFraction(getCellValue(formSheet, isRight ? 'B19' : 'B13'), 64);
+
+  const midTipTypeVal = isRight ? (getCellValue(formSheet, 'B7') || '') : '';
 
   const chartRecord = {
     id: chartId,
@@ -376,7 +391,7 @@ function parseGender(rawGender) {
     updatedAt: new Date().toISOString(),
     timestamp: dateStr,
     createdByEmail: ownerEmail,
-    // 🌟 [ProDrill 8.0 표준 래퍼 1:1 완벽 정밀 셀 매핑]:
+    // 🌟 [ProDrill 8.0 표준 래퍼 1:1 완벽 정밀 셀 매핑 - 왼손 스왑 & 64분법 통합 적용]:
     data: {
       ballName: `${finalCustomerName} 마이그레이션 차트`,
       layoutInfo: '',
@@ -390,29 +405,29 @@ function parseGender(rawGender) {
         isThumbless: false,
         handedness: isRight ? 'right' : 'left',
         bridge: '',                                          // 🌟 Bridge 수치 공난 처리
-        spanLeft: toReducedFraction(getCellValue(formSheet, 'B21'), 32),   // 중지 Span 32분법 (B21)
-        spanRight: toReducedFraction(getCellValue(formSheet, 'B22'), 32),  // 약지 Span 32분법 (B22)
+        spanLeft: spanLeftVal,                               // 🌟 중지 Span (왼손이면 B22, 64분법)
+        spanRight: spanRightVal,                             // 🌟 약지 Span (왼손이면 B21, 64분법)
         midPitch: {
-          tipType: getCellValue(formSheet, 'B7') || '',       // 중지 팁종류 (B7)
-          holeCutSize: toReducedFraction(getCellValue(formSheet, 'B9'), 32),   // 중지 홀컷 32분법 (B9)
-          reverse: midRevFwd.rev,                             // 중지 리버스 32분법 (0값은 Reverse 기록)
-          forward: midRevFwd.fwd,                             // 중지 포워드 32분법
+          tipType: midTipTypeVal,                             // 중지 팁종류
+          holeCutSize: midHoleCutVal,                         // 중지 홀컷 64분법 (왼손이면 B15)
+          reverse: midRevFwd.rev,                             // 중지 리버스 64분법
+          forward: midRevFwd.fwd,                             // 중지 포워드 64분법
           up: midRevFwd.rev,                                  // 🌟 입력창 전용 Reverse (▲)
           down: midRevFwd.fwd,                                // 🌟 입력창 전용 Forward (▼)
-          lat: midLatParsed.val,                              // 중지 레터럴 32분법 (B12)
-          latDir: midLatParsed.dir,                           // 중지 레터럴 방향 (0값은 Left)
-          insertSize: toReducedFraction(getCellValue(formSheet, 'B13'), 32)    // 중지 인서트 32분법 (B13)
+          lat: midLatParsed.val,                              // 중지 레터럴 64분법 (왼손이면 B18)
+          latDir: midLatParsed.dir,                           // 중지 레터럴 방향
+          insertSize: midInsertVal                            // 중지 인서트 64분법 (왼손이면 B19)
         },
         ringPitch: {
           tipType: '',                                        // 약지 팁종류 없음
-          holeCutSize: toReducedFraction(getCellValue(formSheet, 'B15'), 32),  // 약지 홀컷 32분법 (B15)
-          reverse: ringRevFwd.rev,                            // 약지 리버스 32분법 (0값은 Reverse 기록)
-          forward: ringRevFwd.fwd,                            // 약지 포워드 32분법
+          holeCutSize: ringHoleCutVal,                        // 약지 홀컷 64분법 (왼손이면 B9)
+          reverse: ringRevFwd.rev,                            // 약지 리버스 64분법
+          forward: ringRevFwd.fwd,                            // 약지 포워드 64분법
           up: ringRevFwd.rev,                                 // 🌟 입력창 전용 Reverse (▲)
           down: ringRevFwd.fwd,                               // 🌟 입력창 전용 Forward (▼)
-          lat: ringLatParsed.val,                             // 약지 레터럴 32분법 (B18)
-          latDir: ringLatParsed.dir,                          // 약지 레터럴 방향 (0값은 Right)
-          insertSize: toReducedFraction(getCellValue(formSheet, 'B19'), 32)    // 약지 인서트 32분법 (B19)
+          lat: ringLatParsed.val,                             // 약지 레터럴 64분법 (왼손이면 B12)
+          latDir: ringLatParsed.dir,                          // 약지 레터럴 방향
+          insertSize: ringInsertVal                           // 약지 인서트 64분법 (왼손이면 B13)
         },
         thumbPitch: {
           reverse: thumbRevFwd.rev,                           // 엄지 리버스 64분법 (E2, 0값은 Reverse 기록)
