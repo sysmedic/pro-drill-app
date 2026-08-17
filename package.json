@@ -27,7 +27,8 @@
     "firebase": "^12.16.0",
     "html-to-image": "^1.11.13",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
