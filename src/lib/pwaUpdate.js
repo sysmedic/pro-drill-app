@@ -6,7 +6,8 @@ export const CURRENT_APP_BUILD_DATE = typeof __APP_BUILD_DATE__ !== 'undefined' 
 
 export async function fetchServerVersionInfo() {
   try {
-    const res = await fetch(`/version.json?t=${new Date().getTime()}`, {
+    const timestamp = new Date().getTime();
+    const res = await fetch(`/version.json?noCache=${timestamp}`, {
       cache: 'no-store',
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -29,8 +30,8 @@ export async function checkForAppUpdate() {
 
   if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.getRegistration();
-      if (registration) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
         await registration.update();
         if (registration.waiting) {
           registration.waiting.postMessage({ type: 'SKIP_WAITING' });
@@ -43,12 +44,13 @@ export async function checkForAppUpdate() {
 
   const currentBuild = CURRENT_APP_BUILD_DATE;
   const serverBuild = serverInfo?.buildDate || currentBuild;
-  const hasNewVersion = serverBuild && currentBuild && serverBuild !== currentBuild;
+  const hasNewVersion = Boolean(serverBuild && currentBuild && serverBuild !== currentBuild);
 
   return {
     currentBuild,
     serverBuild,
-    hasNewVersion
+    hasNewVersion,
+    serverTimestamp: serverInfo?.timestamp
   };
 }
 
