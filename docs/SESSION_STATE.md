@@ -9,8 +9,12 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 엑셀 파일명 1:1 고객명 직접 치환 파싱(이중 중복 제거 및 누락 0%) 완치 (`excelMigrationService.js`, `scripts/batch_excel_migrator.js`):
-  - **이중 중복 해결 완치**: 이전의 `김볼러 (김볼러_피치)` 처럼 시트 텍스트와 괄호 조합으로 중복 등록되던 문제를 완전 제거하고, 엑셀 파일명(확장자 제외)을 1:1 고객 이름으로 직접 치환(`김볼러_피치`)하도록 완치.
+- 고객 이름 검색어 정제(대소문자/언더바 무시) & 오른손/왼손 피치 라테랄 음수 방향 전환 공식 완치 (`CustomerManager.jsx`, `excelMigrationService.js`, `scripts/batch_excel_migrator.js`):
+  - **이름 검색 완치**: `CustomerManager.jsx` 필터 연산 시 대소문자, 공백 및 언더바(`_`)를 무시 정제 대조하도록 개선하여 `김볼러_피치` 이름이 `"김볼러"`, `"김볼러피치"` 등 어떤 패턴으로도 100% 즉시 검색되도록 완치.
+  - **피치 라테랄 음수 방향 공식 완치**:
+    - 오른손: 중지 기본 `Left` (음수`-` ➔ `Right`), 약지 기본 `Right` (음수`-` ➔ `Left`)
+    - 왼손: 중지 기본 `Right` (음수`-` ➔ `Left`), 약지 기본 `Left` (음수`-` ➔ `Right`)
+    - 0 값: 중지 `Left 0`, 약지 `Right 0` 유지.
   - **Vercel 라이브 배포 완치**: 58개 전체 단위 테스트, ESLint, Vite PWA 빌드 100% 성공 후 `main` 브랜치 합침 및 Vercel 프로덕션 라이브 배포 완료.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

@@ -149,9 +149,17 @@ function calculatePitchWithDirection(rawVal, hand, defaultDirRight, defaultDirLe
   const isRightHand = !hand.includes('왼') && (hand.includes('오른') || hand.includes('Right') || hand.includes('우'));
   const isNegative = num < 0;
 
-  let dir = rawDir || (isRightHand ? defaultDirRight : defaultDirLeft);
-  if (isNegative && !rawDir) {
-    dir = dir === 'Left' ? 'Right' : 'Left';
+  let dir = rawDir;
+  if (!dir) {
+    if (isRightHand) {
+      // 오른손: 중지(isRing===false) 기본 Left, 약지(isRing===true) 기본 Right
+      const baseDir = isRing ? 'Right' : 'Left';
+      dir = isNegative ? (baseDir === 'Left' ? 'Right' : 'Left') : baseDir;
+    } else {
+      // 왼손: 중지(isRing===false) 기본 Right, 약지(isRing===true) 기본 Left
+      const baseDir = isRing ? 'Left' : 'Right';
+      dir = isNegative ? (baseDir === 'Left' ? 'Right' : 'Left') : baseDir;
+    }
   }
 
   const reducedVal = toReducedFraction(Math.abs(num), baseDenominator);

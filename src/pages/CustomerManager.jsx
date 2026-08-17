@@ -191,7 +191,16 @@ export default function CustomerManagement({
     }
   };
 
-  const filtered = customers.filter(c => c.name.includes(searchQuery) || (c.phone && c.phone.includes(searchQuery)));
+  const cleanQuery = (searchQuery || '').trim().toLowerCase().replace(/_/g, '');
+  const filtered = customers.filter(c => {
+    if (!cleanQuery) return true;
+    const nameRaw = (c.name || '').toLowerCase();
+    const nameNormalized = nameRaw.replace(/_/g, '');
+    const phoneRaw = (c.phone || '').replace(/[- \s]/g, '');
+    return nameRaw.includes(cleanQuery) || 
+           nameNormalized.includes(cleanQuery) || 
+           phoneRaw.includes(cleanQuery);
+  });
   const displayedCustomers = filtered.slice(0, 100);
 
   if (sortType === 'name') {
