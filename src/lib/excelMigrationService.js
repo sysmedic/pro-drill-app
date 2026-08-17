@@ -407,8 +407,8 @@ function parseGender(rawGender) {
         },
         thumbOffset: { left: '', right: '' },
         thumbDetails: {
-          slugType: toReducedFraction(getCellValue(formSheet, 'E1'), 64),      // 엄지 덤타입/홀컷 64분법 (E1)
-          holeCutSize: toReducedFraction(getCellValue(formSheet, 'E1'), 64),
+          slugType: '',                                                       // 🌟 덤타입 E1 매핑 100% 완전 제거 (공난 유지)
+          holeCutSize: toReducedFraction(getCellValue(formSheet, 'E1'), 64),  // 🌟 엄지 홀컷 사이즈 64분법 (E1 1:1 전용 매핑)
           holeSize: toReducedFraction(getCellValue(formSheet, 'E6'), 64),      // 엄지 원홀 64분법 (E6)
           bevel1: bevel1Str,                                  // 🌟 베벨 1 (E12 + "|")
           bevel2: bevel2Str,                                  // 🌟 베벨 2 (E13 + "|")
