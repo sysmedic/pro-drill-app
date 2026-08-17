@@ -9,8 +9,12 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- CustomerManager 유니코드 NFD/NFC(자소분리/완성형) 한글 정규화 통합 검색 완치 (`CustomerManager.jsx`):
-  - **맥/윈도우/엑셀 유니코드 자소분리 완치**: `normalize('NFC')` 및 `normalize('NFD')` 정규화를 검색어와 고객 이름 양쪽에 통합 적용하여 `김승익` 등 맥OS/엑셀 기반 자소분리 고객 100% 실시간 정밀 검색 완치.
+- 피치 라테랄(lat / latDir) 수치 분수 변환 및 음수 방향 1:1 자동 전환 완치 (`excelMigrationService.js`, `scripts/batch_excel_migrator.js`):
+  - **오른손/왼손 라테랄 방향 완치**:
+    - 오른손 중지: 기본 `Left` (음수`-` ➔ `Right`), 약지: 기본 `Right` (음수`-` ➔ `Left`)
+    - 왼손 중지: 기본 `Right` (음수`-` ➔ `Left`), 약지: 기본 `Left` (음수`-` ➔ `Right`)
+    - 0 값: 중지 `Left 0`, 약지 `Right 0` 보존.
+  - **최우선 대입 완치**: 엑셀 텍스트 잔존 여부와 무관하게 수치의 부호(양수/음수)를 판별하여 `latDir` 키에 지공사님의 규칙을 1순위로 대입.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드 100% 성공 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

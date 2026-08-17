@@ -114,33 +114,23 @@ function toReducedFraction(rawVal, baseDenominator = 32) {
 }
 
 /**
- * 중지/약지 피치 라테랄 수치 및 latDir 방향 1:1 정밀 대입 헬퍼
- * (오른손/왼손 및 음수 수치 기준 latDir 자동 반대 방향 전환 100% 반영)
+ * 중지/약지 피치 라테랄 수치(lat) 및 latDir 방향 1:1 정밀 대입 헬퍼
+ * (오른손/왼손 및 음수 수치 기준 latDir 자동 반대 방향 전환 100% 최우선 대입)
  */
 function getLateralPitchAndDirection(rawVal, hand, isRing = false, baseDenominator = 32) {
   if (rawVal === null || rawVal === undefined || rawVal === '') return { val: '', dir: '' };
   const strVal = String(rawVal).trim();
   if (!strVal) return { val: '', dir: '' };
 
-  // 🌟 0값 처리 규칙: 중지/엄지 ➔ Left '0', 약지 ➔ Right '0'
+  // 🌟 0값 처리 규칙: 중지 ➔ Left '0', 약지 ➔ Right '0'
   if (strVal === '0' || strVal === '0.0' || strVal === '-0') {
     return { val: '0', dir: isRing ? 'Right' : 'Left' };
   }
 
-  let numVal = strVal;
-  let rawDir = '';
-
-  if (strVal.includes('Left') || strVal.includes('Right') || strVal.includes('L') || strVal.includes('R')) {
-    const match = strVal.match(/(Left|Right|L|R)?\s*([-\d./]+)\s*(Left|Right|L|R)?/i);
-    if (match) {
-      const d = (match[1] || match[3] || '').toUpperCase();
-      rawDir = d.startsWith('L') ? 'Left' : (d.startsWith('R') ? 'Right' : '');
-      numVal = match[2] || '';
-    }
+  const num = parseFractionOrFloat(strVal);
+  if (num === null) {
+    return { val: strVal, dir: isRing ? 'Right' : 'Left' };
   }
-
-  const num = parseFractionOrFloat(numVal);
-  if (num === null) return { val: strVal, dir: rawDir };
 
   if (num === 0) {
     return { val: '0', dir: isRing ? 'Right' : 'Left' };
@@ -149,24 +139,22 @@ function getLateralPitchAndDirection(rawVal, hand, isRing = false, baseDenominat
   const isRightHand = !hand.includes('왼') && (hand.includes('오른') || hand.includes('Right') || hand.includes('우'));
   const isNegative = num < 0;
 
-  let latDir = rawDir;
-  if (!latDir) {
-    if (isRightHand) {
-      if (!isRing) {
-        // 오른손 중지: 양수/0 ➔ Left, 음수(-) ➔ Right
-        latDir = isNegative ? 'Right' : 'Left';
-      } else {
-        // 오른손 약지: 양수/0 ➔ Right, 음수(-) ➔ Left
-        latDir = isNegative ? 'Left' : 'Right';
-      }
+  let latDir;
+  if (isRightHand) {
+    if (!isRing) {
+      // 오른손 중지: 양수/0 ➔ Left, 음수(-) ➔ Right
+      latDir = isNegative ? 'Right' : 'Left';
     } else {
-      if (!isRing) {
-        // 왼손 중지: 양수/0 ➔ Right, 음수(-) ➔ Left
-        latDir = isNegative ? 'Left' : 'Right';
-      } else {
-        // 왼손 약지: 양수/0 ➔ Left, 음수(-) ➔ Right
-        latDir = isNegative ? 'Right' : 'Left';
-      }
+      // 오른손 약지: 양수/0 ➔ Right, 음수(-) ➔ Left
+      latDir = isNegative ? 'Left' : 'Right';
+    }
+  } else {
+    if (!isRing) {
+      // 왼손 중지: 양수/0 ➔ Right, 음수(-) ➔ Left
+      latDir = isNegative ? 'Left' : 'Right';
+    } else {
+      // 왼손 약지: 양수/0 ➔ Left, 음수(-) ➔ Right
+      latDir = isNegative ? 'Right' : 'Left';
     }
   }
 
