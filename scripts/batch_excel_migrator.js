@@ -118,25 +118,25 @@ function toReducedFraction(rawVal, baseDenominator = 32) {
 
 /**
  * 중지/약지 피치 라테랄 수치(lat) 및 latDir 방향 1:1 정밀 대입 헬퍼
- * (오른손/왼손 및 음수 수치 기준 latDir 자동 반대 방향 전환 100% 최우선 대입)
+ * (오른손/왼손 및 음수 수치 기준 latDir 소문자 'right'/'left' 최우선 대입)
  */
 function getLateralPitchAndDirection(rawVal, hand, isRing = false, baseDenominator = 32) {
   if (rawVal === null || rawVal === undefined || rawVal === '') return { val: '', dir: '' };
   const strVal = String(rawVal).trim();
   if (!strVal) return { val: '', dir: '' };
 
-  // 🌟 0값 처리 규칙: 중지 ➔ Left '0', 약지 ➔ Right '0'
+  // 🌟 0값 처리 규칙: 중지 ➔ left '0', 약지 ➔ right '0'
   if (strVal === '0' || strVal === '0.0' || strVal === '-0') {
-    return { val: '0', dir: isRing ? 'Right' : 'Left' };
+    return { val: '0', dir: isRing ? 'right' : 'left' };
   }
 
   const num = parseFractionOrFloat(strVal);
   if (num === null) {
-    return { val: strVal, dir: isRing ? 'Right' : 'Left' };
+    return { val: strVal, dir: isRing ? 'right' : 'left' };
   }
 
   if (num === 0) {
-    return { val: '0', dir: isRing ? 'Right' : 'Left' };
+    return { val: '0', dir: isRing ? 'right' : 'left' };
   }
 
   const isRightHand = !hand.includes('왼') && (hand.includes('오른') || hand.includes('Right') || hand.includes('우'));
@@ -145,19 +145,19 @@ function getLateralPitchAndDirection(rawVal, hand, isRing = false, baseDenominat
   let latDir;
   if (isRightHand) {
     if (!isRing) {
-      // 오른손 중지: 양수/0 ➔ Left, 음수(-) ➔ Right
-      latDir = isNegative ? 'Right' : 'Left';
+      // 오른손 중지: 양수/0 ➔ left, 음수(-) ➔ right
+      latDir = isNegative ? 'right' : 'left';
     } else {
-      // 오른손 약지: 양수/0 ➔ Right, 음수(-) ➔ Left
-      latDir = isNegative ? 'Left' : 'Right';
+      // 오른손 약지: 양수/0 ➔ right, 음수(-) ➔ left
+      latDir = isNegative ? 'left' : 'right';
     }
   } else {
     if (!isRing) {
-      // 왼손 중지: 양수/0 ➔ Right, 음수(-) ➔ Left
-      latDir = isNegative ? 'Left' : 'Right';
+      // 왼손 중지: 양수/0 ➔ right, 음수(-) ➔ left
+      latDir = isNegative ? 'left' : 'right';
     } else {
-      // 왼손 약지: 양수/0 ➔ Left, 음수(-) ➔ Right
-      latDir = isNegative ? 'Right' : 'Left';
+      // 왼손 약지: 양수/0 ➔ left, 음수(-) ➔ right
+      latDir = isNegative ? 'right' : 'left';
     }
   }
 
