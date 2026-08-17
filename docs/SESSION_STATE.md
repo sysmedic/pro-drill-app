@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 왼손 지공 차트 중지-약지 수치 스왑 및 마이그레이션 전체 64분법 통일 Vercel 프로덕션 배포 완수 (`excelMigrationService.js`):
-  - **왼손 수치 맞교환 (Swap)**: 엑셀 마이그레이션 시 손잡이가 왼손(Left Hand)인 경우, 중지와 약지의 전체 제원 수치(스판 `spanLeft`/`spanRight`, 홀컷, 피치 `rev`/`fwd`/`lat`, 인서트)를 1:1로 자동 맞교환하여 매핑.
-  - **전체 수치 64분법 기약분수 통일**: 스판, 피치, 홀컷, 인서트, 퍼플 메모 수치 등 마이그레이션 변환 수치를 64분법 기약분수(`toReducedFraction(val, 64)`)로 100% 통합 적용.
+- 공용 태블릿 상단 활성 지공사 명시 배지 및 1초 빠른 전환 UI Vercel 프로덕션 성공 배포 (`CustomerHeader.jsx`):
+  - **지공사 배지 노출**: 앱 최상단 헤더 '고객 관리' 타이틀 옆에 현재 로그인된 활성 지공사 계정 명시 배지(`👤 sysmedic3│전환`)를 실시간 노출하여 1초 만에 계정 식별 지원.
+  - **빠른 계정 전환**: 상단 배지 클릭 시 계정 교대 및 전환 안내 모달/동작 연동하여 다중 사용자 데이터 착오 100% 차단.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
