@@ -9,10 +9,8 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 가이드 바로 뒤 지공사 프로필 이름 1순위 노출, 서체 확대 및 외각 박스 제거 Vercel 프로덕션 라이브 완료 (`CustomerHeader.jsx`):
-  - **배치 위치 교정**: `고객 관리` ➔ `?` (가이드 도움말 버튼) ➔ `[프로필 이름]` 순서로 가이드 바로 뒤에 정밀 배치.
-  - **1순위 프로필 이름 표기**: 구글 이메일 대신 지공사 프로필 이름(`drillerName`)을 1순위로 표시하며, 이름이 미설정된 경우에만 계정 이메일 ID를 2순위로 표시하는 2단계 정밀 구조 적용.
-  - **디자인 정제**: 테두리/배경 외각 박스를 100% 완전히 삭제하고, 서체 크기를 14~16px(`text-sm sm:text-base`)로 시원하게 확대.
+- 프로필 이름 밑줄 및 그림자 100% 완전 제거 완치 Vercel 프로덕션 배포 (`CustomerHeader.jsx`):
+  - **밑줄/그림자 완치**: 프로필 이름 아래에 표시되던 옅은 밑줄/그림자 효과(`underline decoration-slate-300/60`)를 100% 완전히 삭제하여 맑고 순수한 텍스트 스타일로 정제.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

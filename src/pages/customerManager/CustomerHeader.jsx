@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import TopBarShell from '../../components/layout/TopBarShell.jsx';
+import ModalShell from '../../components/ui/ModalShell.jsx';
+import Button from '../../components/ui/Button.jsx';
 import { signOutGoogle, isGoogleSignedIn } from '../../lib/googleDriveBackup.js';
 import TaskbarHelpBalloon from '../../components/ui/TaskbarHelpBalloon.jsx';
 import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
@@ -14,6 +16,7 @@ export default function CustomerHeader({
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showManualHelpSetting, setShowManualHelpSetting] = useState(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const syncedPingStyle = useSyncedPingStyle();
 
   useEffect(() => {
@@ -327,33 +330,73 @@ export default function CustomerHeader({
               }
 
               return (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    signOutGoogle();
-                    try {
-                      localStorage.removeItem('prodrill_user_profile');
-                      localStorage.removeItem('prodrill_license_certified');
-                      localStorage.removeItem('prodrill_linked_email');
-                      localStorage.removeItem('prodrill_trial_google_linked');
-                      localStorage.removeItem('prodrill_certified_email_hash');
-                      localStorage.removeItem('prodrill_certified_email_plain');
-                      localStorage.removeItem('prodrill_license_status');
-                      localStorage.removeItem('prodrill_first_time_setup_done');
-                      localStorage.removeItem('prodrill_google_access_token');
-                      localStorage.removeItem('prodrill_google_token_expiry');
-                    } catch { /* ignore */ }
-                    if (onLogout) onLogout();
-                    setTimeout(() => {
-                      window.location.reload();
-                    }, 50);
-                  }}
-                  className="text-sm sm:text-base font-medium text-slate-600 hover:text-indigo-600 transition-colors active:scale-95 cursor-pointer ml-1 sm:ml-1.5"
-                  title="클릭 시 로그아웃"
-                >
-                  {displayName}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowLogoutConfirm(true);
+                    }}
+                    className="text-base sm:text-lg font-medium text-slate-600 hover:text-indigo-600 transition-colors active:scale-95 cursor-pointer ml-1 sm:ml-1.5"
+                    title="클릭 시 로그아웃 안내"
+                  >
+                    {displayName}
+                  </button>
+
+                  {/* 💡 [실수 방지 로그아웃 승인 / 취소 선택 경고 모달 다이얼로그] */}
+                  {showLogoutConfirm && (
+                    <ModalShell
+                      align="center"
+                      onClose={() => setShowLogoutConfirm(false)}
+                      size="sm"
+                      title="🚪 계정 로그아웃"
+                      variant="light"
+                    >
+                      <div className="p-4 flex flex-col gap-5 text-center">
+                        <p className="text-sm font-bold text-slate-700 leading-relaxed">
+                          현재 <span className="text-indigo-600 font-extrabold">{displayName}</span> 지공사 계정 세션을 안전하게 종료하고 로그인 화면으로 이동하시겠습니까?
+                        </p>
+                        <div className="flex gap-2.5 justify-center pt-2">
+                          <Button
+                            variant="outline"
+                            size="md"
+                            className="flex-1"
+                            onClick={() => setShowLogoutConfirm(false)}
+                          >
+                            취소
+                          </Button>
+                          <Button
+                            variant="primary"
+                            size="md"
+                            className="flex-1 bg-rose-600 hover:bg-rose-700 border-rose-600 text-white"
+                            onClick={() => {
+                              setShowLogoutConfirm(false);
+                              signOutGoogle();
+                              try {
+                                localStorage.removeItem('prodrill_user_profile');
+                                localStorage.removeItem('prodrill_license_certified');
+                                localStorage.removeItem('prodrill_linked_email');
+                                localStorage.removeItem('prodrill_trial_google_linked');
+                                localStorage.removeItem('prodrill_certified_email_hash');
+                                localStorage.removeItem('prodrill_certified_email_plain');
+                                localStorage.removeItem('prodrill_license_status');
+                                localStorage.removeItem('prodrill_first_time_setup_done');
+                                localStorage.removeItem('prodrill_google_access_token');
+                                localStorage.removeItem('prodrill_google_token_expiry');
+                              } catch { /* ignore */ }
+                              if (onLogout) onLogout();
+                              setTimeout(() => {
+                                window.location.reload();
+                              }, 50);
+                            }}
+                          >
+                            로그아웃 승인
+                          </Button>
+                        </div>
+                      </div>
+                    </ModalShell>
+                  )}
+                </>
               );
             })()}
           </div>
