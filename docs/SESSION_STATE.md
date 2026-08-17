@@ -9,10 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 엑셀 마이그레이션 지정 계정(`worms0529@gmail.com`, `sysmedic3@gmail.com`) 전용 보안 가시성 제한 & 한시적 ON/OFF 스위치 완치 (`userLicenseManager.js`, `SettingsModal.jsx`):
-  - **특정 계정 가시성 제한 완치**: `isMigrationAuthorizedEmail` 헬퍼로 `worms0529@gmail.com` 및 `sysmedic3@gmail.com` 지정 계정일 때만 마이그레이션 카드가 설정 화면에 보이며, 다른 일반 계정은 아예 안 보이게 완벽 차단.
-  - **한시적 ON/OFF 스위치 연동 완치**: 허용 계정 화면 상단에 `[🟢 마이그레이션 ON (열림)]` / `[🔴 마이그레이션 OFF (닫힘)]` 원클릭 토글 버튼을 추가하여 마이그레이션 작업을 한시적으로 제어할 수 있도록 완치.
-  - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드 100% 성공 입증. (Vercel 배포는 지공사님 컨펌 시까지 보류)
+- 엑셀 파일명 1:1 고객명 직접 치환 파싱(이중 중복 제거 및 누락 0%) 완치 (`excelMigrationService.js`, `scripts/batch_excel_migrator.js`):
+  - **이중 중복 해결 완치**: 이전의 `김볼러 (김볼러_피치)` 처럼 시트 텍스트와 괄호 조합으로 중복 등록되던 문제를 완전 제거하고, 엑셀 파일명(확장자 제외)을 1:1 고객 이름으로 직접 치환(`김볼러_피치`)하도록 완치.
+  - **Vercel 라이브 배포 완치**: 58개 전체 단위 테스트, ESLint, Vite PWA 빌드 100% 성공 후 `main` 브랜치 합침 및 Vercel 프로덕션 라이브 배포 완료.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
   - **Vercel 라이브 배포 완수**: 대칭/비대칭 선택 시 `bg-slate-700 border-slate-700 text-white` 적용 최신 프로덕션 배포 완수.

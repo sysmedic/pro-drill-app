@@ -191,18 +191,12 @@ function parseInputSheet(formSheet, diagramSheet, isSub = false, ownerEmail = ''
   if (!formSheet) return null;
   const rawName = getCellValue(formSheet, 'B3');
   const baseName = rawName || fallbackName;
-  if (!baseName) return null;
 
+  // 🌟 [지공사 절대 규칙]: 시트 이름과 이중 조합하지 않고, 엑셀 파일명(확장자 제외)을 1:1 고객 이름으로 직접 치환!
   const cleanFileName = fileName ? path.basename(fileName, path.extname(fileName)).trim() : '';
 
-  let finalCustomerName = baseName;
-  if (cleanFileName && cleanFileName !== baseName) {
-    if (!cleanFileName.includes(baseName)) {
-      finalCustomerName = `${baseName} (${cleanFileName})`;
-    } else {
-      finalCustomerName = cleanFileName;
-    }
-  }
+  let finalCustomerName = cleanFileName || baseName;
+  if (!finalCustomerName) return null;
 
   if (isSub) {
     finalCustomerName = `${finalCustomerName}_서브`;
