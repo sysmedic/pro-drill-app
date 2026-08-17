@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 백업 복원 방식 선택 3선택(덧붙이기/덮어쓰기/취소) 카드 UI Vercel 프로덕션 배포 완료 (`ExcelMigrationModal.jsx`):
-  - **3선택 카드 모달 도입**: 백업 파일 불러오기 시 `➕ 기존 차트에 덧붙이기 [권장]` 카드와 `💥 전체 덮어쓰기 [기존 삭제]` 카드, 그리고 독립 `취소` 버튼을 명확히 분리하여 3가지 옵션을 100% 또렷하게 제공.
-  - **안전성 보장**: 기존 차트 유지 덧붙이기와 전체 덮어쓰기를 직관적 카드로 구별하여 오작동 차단.
+- E1 셀 수치 덤타입 매핑 100% 제거 및 엄지 홀컷 사이즈 전용 1:1 매핑 Vercel 프로덕션 성공 배포 (`excelMigrationService.js`):
+  - **매핑 교정**: `E1` 셀 수치가 덤타입(`slugType`)에 들어가던 매핑을 100% 완전히 제거(공난 `''` 유지)하고, 오직 엄지 홀컷 사이즈(`thumbDetails.holeCutSize`)에만 1:1 전용으로 적용.
+  - **덤피치 라이트 분리**: 덤피치 라이트(`thumbPitch.right`)는 오직 `E5` 셀(엄지 레터럴 Right) 수치만 사용하도록 확실히 분리 차단.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

@@ -306,12 +306,29 @@ function parseInputSheet(formSheet, diagramSheet, isSub = false, ownerEmail = ''
   // 약지 레터럴 (B18): 32분법 / latDir 1:1 대입
   const ringLatParsed = getLateralPitchAndDirection(getCellValue(formSheet, 'B18'), hand, true, 32);
 
-  // 엄지 레터럴 (E4/E5): 64분법 / 0값 ➔ Left '0'
+  // 엄지 레터럴 (E4: Left / E5: Right): 64분법 / 0과 유의미한 수치 혼재 시 0 무시 및 유의미 실수치 우선 파싱!
   const e4Str = getCellValue(formSheet, 'E4');
   const e5Str = getCellValue(formSheet, 'E5');
-  let thumbLeftRaw = toReducedFraction(e4Str, 64);
-  let thumbRightRaw = toReducedFraction(e5Str, 64);
-  if (e4Str === '0' || e5Str === '0') {
+
+  const e4Num = parseFractionOrFloat(e4Str);
+  const e5Num = parseFractionOrFloat(e5Str);
+
+  const e4HasValue = e4Str !== '' && e4Num !== null && e4Num !== 0;
+  const e5HasValue = e5Str !== '' && e5Num !== null && e5Num !== 0;
+
+  let thumbLeftRaw = '';
+  let thumbRightRaw = '';
+
+  if (e4HasValue && !e5HasValue) {
+    thumbLeftRaw = toReducedFraction(e4Str, 64);
+    thumbRightRaw = '';
+  } else if (!e4HasValue && e5HasValue) {
+    thumbLeftRaw = '';
+    thumbRightRaw = toReducedFraction(e5Str, 64);
+  } else if (e4HasValue && e5HasValue) {
+    thumbLeftRaw = toReducedFraction(e4Str, 64);
+    thumbRightRaw = toReducedFraction(e5Str, 64);
+  } else if (e4Str === '0' || e5Str === '0') {
     thumbLeftRaw = '0';
     thumbRightRaw = '';
   }
