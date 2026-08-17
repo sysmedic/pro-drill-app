@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Button from "../../components/ui/Button.jsx";
 import { ConfirmModal } from "../../components/ui/Dialogs.jsx";
 import ModalShell from "../../components/ui/ModalShell.jsx";
-import { isLicenseCertified, calculateGracePeriod, getUserProfile, saveUserProfile, sanitizeString, isMigrationAuthorizedEmail } from "../../lib/userLicenseManager.js";
+import { isLicenseCertified, calculateGracePeriod, getUserProfile, saveUserProfile, sanitizeString } from "../../lib/userLicenseManager.js";
 import { 
   initGoogleApi, 
   isGoogleSignedIn,
@@ -42,13 +42,7 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
   const [pendingBackupPackage, setPendingBackupPackage] = useState(null);
   const [showRestoreModeConfirm, setShowRestoreModeConfirm] = useState(false);
 
-  const activeEmail = (typeof window !== "undefined"
-    ? (localStorage.getItem("prodrill_linked_email") || localStorage.getItem("prodrill_certified_email_plain") || "sysmedic3@gmail.com")
-    : "sysmedic3@gmail.com"
-  ).trim().toLowerCase();
 
-  // 🔑 특정 지정 관리자 계정 (sysmedic3@gmail.com, worms0529@gmail.com) 전용 권한 검사
-  const isAuthorizedForMigration = isMigrationAuthorizedEmail(activeEmail);
 
   const handleFileRestoreSelect = (e) => {
     const file = e.target.files?.[0];
@@ -370,55 +364,7 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
                 </Button>
               </div>
 
-              {/* 📊 [신규] 엑셀 데이터 마이그레이션 및 엑셀 백업 (지정 관리자 전용 노출) */}
-              {isAuthorizedForMigration && (
-                <div className="bg-emerald-50/70 border border-emerald-200 p-3.5 rounded-xl space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black text-emerald-900 flex items-center gap-1.5">
-                      📊 엑셀 마이그레이션 및 엑셀 백업
-                    </h4>
-                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-300">관리자 전용</span>
-                  </div>
-                  <p className="text-[11px] text-emerald-800 leading-normal font-bold">
-                    기존 엑셀 지공 차트(.xlsx) 폴더나 다중 파일들을 1개의 백업 JSON 파일로 일괄 변환 및 다운로드합니다.
-                  </p>
-                  <div className="pt-1">
-                    <label className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-black transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer">
-                      <span>📁 엑셀 폴더 / 다중 파일 ➔ 백업 JSON 변환</span>
-                      <input
-                        type="file"
-                        accept=".xlsx, .xls"
-                        multiple
-                        webkitdirectory="true"
-                        directory="true"
-                        className="hidden"
-                        onChange={async (e) => {
-                          const files = e.target.files;
-                          if (!files || files.length === 0) return;
-                          setGoogleLoading(true);
-                          try {
-                            const { convertMultipleExcelsToBackupJsonInBrowser } = await import("../../lib/excelMigrationService.js");
-                            const res = await convertMultipleExcelsToBackupJsonInBrowser(files, activeEmail);
-                            onFeedback({
-                              message: `🎉 백업 파일 다운로드 완료! 총 ${res.totalFiles}개 파일 처리 (${res.customerCount}명 고객 마이그레이션). '${res.filename}' 파일로 아래 [📤 로컬 백업 파일 직접 불러오기] 복원을 진행해 주세요.`,
-                              tone: "success"
-                            });
-                          } catch (err) {
-                            console.error("엑셀 백업 변환 오류:", err);
-                            onFeedback({
-                              message: `엑셀 변환 실패: ${err.message || "파일 변환 중 오류가 발생했습니다."}`,
-                              tone: "danger"
-                            });
-                          } finally {
-                            setGoogleLoading(false);
-                            e.target.value = "";
-                          }
-                        }}
-                      />
-                    </label>
-                  </div>
-                </div>
-              )}
+
 
               {/* 📤 로컬 백업 파일 직접 불러오기 (복원 선택 연동) */}
               <div className="bg-indigo-50/70 border border-indigo-200 p-3.5 rounded-xl space-y-2">

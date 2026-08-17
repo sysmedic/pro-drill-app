@@ -155,50 +155,7 @@ export default function BackupSettingsModal({ onClose, onFeedback: propOnFeedbac
             현재 기기의 데이터를 JSON 파일로 다운로드하거나, 이전에 보관했던 백업 파일을 직접 가져와 데이터를 복원합니다.
           </p>
 
-          {/* A. 📊 엑셀 ➔ 백업 JSON 파일 변환 다운로드 */}
-          <div className="bg-emerald-50/80 p-4 rounded-xl border border-emerald-200 space-y-3">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-black text-emerald-900 flex items-center gap-1.5">
-                  📊 엑셀 지공차트 ➔ 백업 JSON 변환 다운로드
-                </h4>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">.xlsx ➔ .json</span>
-              </div>
-              <p className="text-[11px] font-bold text-emerald-800 leading-relaxed">
-                기존 사용 중이시던 엑셀 차트(.xlsx)를 선택하시면, 계정 서명이 주입된 로컬 백업 파일(`prodrill_local_backup_...json`)로 0.01초 만에 변환하여 기기에 다운로드합니다.
-              </p>
-              <label className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-black transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer">
-                <span>📊 엑셀 ➔ 백업 JSON 변환 다운로드</span>
-                <input
-                  type="file"
-                  accept=".xlsx, .xls"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    try {
-                      const { convertExcelToBackupJsonInBrowser } = await import('../../lib/excelMigrationService.js');
-                      const activeEmail = localStorage.getItem('prodrill_linked_email') || localStorage.getItem('prodrill_certified_email_plain') || 'sysmedic3@gmail.com';
-                      const buffer = await file.arrayBuffer();
-                      const res = await convertExcelToBackupJsonInBrowser(buffer, activeEmail);
-                      onFeedback({
-                        message: `🎉 백업 파일 생성 성공! 다운로드된 '${res.filename}' 파일로 아래 [📤 백업 파일 직접 불러오기]를 실행하세요.`,
-                        tone: 'success'
-                      });
-                    } catch (err) {
-                      console.error('엑셀 백업 변환 오류:', err);
-                      onFeedback({
-                        message: `엑셀 변환 실패: ${err.message || '파일 변환 중 오류가 발생했습니다.'}`,
-                        tone: 'danger'
-                      });
-                    } finally {
-                      e.target.value = '';
-                    }
-                  }}
-                />
-              </label>
-            </div>
-          </div>
+
 
           {/* B. 파일 내보내기 */}
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">

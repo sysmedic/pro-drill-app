@@ -19,6 +19,7 @@ import AdminSettingsModal from './customerManager/AdminSettingsModal.jsx'; // �
 import UserManualModal from './customerManager/UserManualModal.jsx'; // 📖 사용 설명서 모달 임포트
 import ProfileOnboardingModal from './customerManager/ProfileOnboardingModal.jsx'; // 🛡️ 지공사 프로필 온보딩 모달 임포트
 import AppUpdateModal from './customerManager/AppUpdateModal.jsx'; // 🔄 앱 업데이트 모달 임포트
+import ExcelMigrationModal from './customerManager/ExcelMigrationModal.jsx'; // 📦 엑셀 마이그레이션 신설 모달 임포트
 import { isLicenseCertified, getUserProfile, fetchRemoteUserProfile, saveUserProfile } from '../lib/userLicenseManager.js';
 
 // 한글 초성 추출 헬퍼 (예: '김볼러' -> 'ㄱㅂㄹ', NFD/NFC 유니코드 정규화 포함)
@@ -67,6 +68,7 @@ export default function CustomerManagement({
   const [showUserManualModal, setShowUserManualModal] = useState(false);
   const [showProfileOnboardingModal, setShowProfileOnboardingModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showExcelMigrationModal, setShowExcelMigrationModal] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -275,6 +277,7 @@ export default function CustomerManagement({
         }}
         onOpenAdminSettings={() => setShowAdminSettingsModal(true)}
         onOpenUserManual={() => setShowUserManualModal(true)}
+        onOpenExcelMigration={() => setShowExcelMigrationModal(true)}
         onCheckUpdate={() => setShowUpdateModal(true)}
         userTier={userTier}
         isAiAllowed={['master', 'certified'].includes(userTier?.toLowerCase()) || (graceInfo && !graceInfo.isExpired && graceInfo.daysLeft > 30)}
@@ -506,6 +509,10 @@ export default function CustomerManagement({
 
       {showUpdateModal && (
         <AppUpdateModal onClose={() => setShowUpdateModal(false)} onFeedback={setFeedback} />
+      )}
+
+      {showExcelMigrationModal && (
+        <ExcelMigrationModal onClose={() => setShowExcelMigrationModal(false)} onFeedback={setFeedback} />
       )}
 
       <FeedbackToast message={feedback?.message} onDismiss={() => setFeedback(null)} tone={feedback?.tone} />

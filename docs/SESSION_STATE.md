@@ -9,10 +9,11 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- Vercel 실서버 프로덕션(Production) 배포 100% 완치 성공 (`package.json`, `vite.config.js`):
-  - **Vercel 실서버 빌드 완치**: `package.json` dependencies 에 `xlsx` 모듈이 누락되어 Vercel 서버 빌드 시 튕기던 현상을 규명하고 `xlsx` 패키지 정밀 등록 완료.
-  - **프로덕션 라이브 배포 완수**: `npx vercel --prod --yes` 및 `main` 브랜치 자동 파이프라인으로 Vercel 정식 프로덕션 URL (`https://drilling-chart-psi.vercel.app`) 배포 완료 (`READY` 상태 달성).
-  - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 프로덕션 빌드, Vercel Production Deploy 100% 성공 입증.
+- 엑셀 마이그레이션 독립 메뉴 신설 및 Vercel 프로덕션 100% 성공 배포 (`SettingsModal.jsx`):
+  - **기존 백업 100% 보존**: 기존 `.json` 로컬 백업/복원 기능 및 구글 드라이브 백업 스냅샷 영역을 단 1줄의 소손도 없이 100% 그대로 원본 보존.
+  - **신규 엑셀 마이그레이션 메뉴 신설 & 권한 노출**: 햄버거 메뉴 모달 내에 **[📊 엑셀 마이그레이션 및 엑셀 백업]** 카드를 별도 신설하고 허가된 관리자 계정(`sysmedic3@gmail.com`, `worms0529@gmail.com`)에만 100% 노출.
+  - **ON/OFF 스위치 제거**: 복잡했던 마이그레이션 ON/OFF 토글 스위치를 완전히 제거하여 권한 확인 시 원클릭으로 바로 작동하도록 직관적 단순화.
+  - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 프로덕션 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
   - **Vercel 라이브 배포 완수**: 대칭/비대칭 선택 시 `bg-slate-700 border-slate-700 text-white` 적용 최신 프로덕션 배포 완수.

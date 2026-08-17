@@ -3,12 +3,13 @@ import TopBarShell from '../../components/layout/TopBarShell.jsx';
 import { signOutGoogle, isGoogleSignedIn } from '../../lib/googleDriveBackup.js';
 import TaskbarHelpBalloon from '../../components/ui/TaskbarHelpBalloon.jsx';
 import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
+import { isMigrationAuthorizedEmail } from '../../lib/userLicenseManager.js';
 
 export default function CustomerHeader({ 
   totalCount, currentCount, onAdd, searchQuery, setSearchQuery, sortType, setSortType, 
   onLogout, onOpenSettings, onOpenEnvironmentSettings,
   // eslint-disable-next-line no-unused-vars
-  onOpenAiSettings, onOpenBackupSettings, onOpenAdminSettings, onCheckUpdate, userTier, isAiAllowed, isBackupAllowed, onNfcScan 
+  onOpenAiSettings, onOpenBackupSettings, onOpenAdminSettings, onOpenExcelMigration, onCheckUpdate, userTier, isAiAllowed, isBackupAllowed, onNfcScan 
 }) {
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -203,6 +204,23 @@ export default function CustomerHeader({
                     className="pl-5 pr-4 py-3 text-sm font-black text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left flex items-center gap-2.5 border-t border-slate-100"
                   >
                     🗂️ 로컬 백업
+                  </button>
+                )}
+                {isMigrationAuthorizedEmail(
+                  (typeof window !== "undefined"
+                    ? (localStorage.getItem("prodrill_linked_email") || localStorage.getItem("prodrill_certified_email_plain") || "sysmedic3@gmail.com")
+                    : "sysmedic3@gmail.com"
+                  ).trim().toLowerCase()
+                ) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsHamburgerOpen(false);
+                      if (onOpenExcelMigration) onOpenExcelMigration();
+                    }}
+                    className="pl-5 pr-4 py-3 text-sm font-black text-emerald-700 hover:bg-emerald-50 transition-colors text-left flex items-center gap-2.5 border-t border-slate-100"
+                  >
+                    📦 엑셀 마이그레이션
                   </button>
                 )}
                 {['master', 'admin'].includes(userTier?.toLowerCase()) && (
