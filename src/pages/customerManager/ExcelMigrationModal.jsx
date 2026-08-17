@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import ModalShell from '../../components/ui/ModalShell.jsx';
-import { ConfirmModal } from '../../components/ui/Dialogs.jsx';
+
 import { isMigrationAuthorizedEmail } from '../../lib/userLicenseManager.js';
 
 export default function ExcelMigrationModal({ onClose, onFeedback: propOnFeedback }) {
@@ -179,18 +179,70 @@ export default function ExcelMigrationModal({ onClose, onFeedback: propOnFeedbac
         </div>
       </ModalShell>
 
-      {/* 4. 복원 방식 선택 컨펌 모달 (덧붙이기 vs 덮어쓰기) */}
+      {/* 4. 복원 방식 선택 모달 (기존 차트에 덧붙이기 vs 전체 덮어쓰기 vs 취소 3선택 명확 제공) */}
       {showRestoreModeConfirm && (
-        <ConfirmModal
-          confirmLabel="기존 데이터 유지하고 덧붙이기"
-          message={`선택하신 백업 파일(고객 ${pendingBackupPackage?.data?.customers?.length || 0}명)의 지공 차트 데이터를 현재 앱에 어떤 방식으로 복원하시겠습니까?`}
-          onCancel={() => handleExecuteRestoreMode('overwrite')}
-          onConfirm={() => handleExecuteRestoreMode('merge')}
-          title="백업 복원 방식 선택"
-          titleId="migration-restore-mode-confirm-title"
+        <ModalShell
+          align="center"
+          onClose={() => { setShowRestoreModeConfirm(false); setPendingBackupPackage(null); }}
+          size="md"
+          title="📦 백업 복원 방식 선택"
+          titleId="migration-restore-mode-select-title"
+          variant="light"
           zClassName="z-[2000]"
-          dangerLabel="전체 덮어쓰기 (기존 삭제)"
-        />
+        >
+          <div className="p-5 space-y-4">
+            <p className="text-xs text-slate-600 font-bold leading-relaxed">
+              선택하신 백업 파일(고객 {pendingBackupPackage?.data?.customers?.length || 0}명) 데이터를 현재 ProDrill 앱에 적용할 방식을 선택해 주세요.
+            </p>
+
+            <div className="space-y-2.5 pt-1">
+              {/* 옵션 A: 기존 차트에 덧붙이기 (권장) */}
+              <button
+                type="button"
+                onClick={() => handleExecuteRestoreMode('merge')}
+                className="w-full p-3.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xl text-left transition-all active:scale-[0.98] cursor-pointer group"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-black text-emerald-900 group-hover:text-emerald-950 flex items-center gap-1.5">
+                    <span>➕ 기존 차트에 덧붙이기</span>
+                    <span className="bg-emerald-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded">권장</span>
+                  </span>
+                </div>
+                <p className="text-[11px] font-bold text-emerald-700 leading-normal">
+                  작성해 두신 기존 고객 데이터와 차트를 <strong>100% 보존</strong>하면서, 백업 파일 데이터만 안전하게 추가합니다.
+                </p>
+              </button>
+
+              {/* 옵션 B: 전체 덮어쓰기 */}
+              <button
+                type="button"
+                onClick={() => handleExecuteRestoreMode('overwrite')}
+                className="w-full p-3.5 bg-rose-50/80 hover:bg-rose-100 border border-rose-200 hover:border-rose-300 rounded-xl text-left transition-all active:scale-[0.98] cursor-pointer group"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-black text-rose-900 group-hover:text-rose-950 flex items-center gap-1.5">
+                    <span>💥 전체 덮어쓰기</span>
+                    <span className="bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded">기존 삭제</span>
+                  </span>
+                </div>
+                <p className="text-[11px] font-bold text-rose-700 leading-normal">
+                  현재 기기의 모든 기존 데이터를 삭제하고, 불러온 백업 파일 데이터로 완전히 교체합니다.
+                </p>
+              </button>
+            </div>
+
+            {/* 하단 취소 버튼 */}
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => { setShowRestoreModeConfirm(false); setPendingBackupPackage(null); }}
+                className="py-2 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-slate-700 text-xs font-black transition-colors active:scale-95"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </ModalShell>
       )}
     </>
   );

@@ -9,11 +9,11 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 로컬/클라우드 백업 모달 내 엑셀 변환 완전 제거 및 신설 독립 [📦 엑셀 마이그레이션] 모달/메뉴 Vercel 프로덕션 성공 배포 (`ExcelMigrationModal.jsx`, `CustomerHeader.jsx`, `BackupSettingsModal.jsx`, `SettingsModal.jsx`):
-  - **기존 백업 모달 100% 정제**: `BackupSettingsModal.jsx`(로컬 백업)와 `SettingsModal.jsx`(클라우드 백업) 양쪽 모달에서 엑셀 마이그레이션 변환/다운로드 관련 섹션을 100% 깔끔하게 제거.
-  - **신설 독립 엑셀 마이그레이션 모달**: 엑셀 폴더 선택 및 마이그레이션 백업 변환만을 처리하는 전용 모달 (`ExcelMigrationModal.jsx`) 신규 생성.
-  - **햄버거 메뉴 독립 버튼 & 권한 제어**: `CustomerHeader.jsx` 드로어 메뉴에 **[📦 엑셀 마이그레이션]** 독립 버튼을 신설하고 허가된 관리자 계정(`sysmedic3@gmail.com`, `worms0529@gmail.com`)에만 100% 노출.
-  - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 프로덕션 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
+- 클라우드 백업 내 로컬 불러오기 제거 ➔ 엑셀 마이그레이션 모달 원스톱 이전 Vercel 프로덕션 배포 완료 (`SettingsModal.jsx`, `ExcelMigrationModal.jsx`):
+  - **클라우드 백업 모달 100% 정제**: `SettingsModal.jsx`에서 `📤 로컬 백업 파일 직접 불러오기` 및 관련 복원 함수들을 100% 제거하여 구글 백업 및 프로필 관리 전용 모달로 완성.
+  - **엑셀 마이그레이션 원스톱 이전**: `ExcelMigrationModal.jsx`에 `📤 변환 완료된 백업 JSON 파일 불러오기 및 복원`(덧붙이기 vs 덮어쓰기 선택 컨펌 포함) 섹션을 이전 통합하여 변환과 복원을 한곳에서 완수.
+  - **타이틀 정제**: 모달 타이틀 및 드로어 메뉴 항목 명칭을 깔끔하게 **`"📦 엑셀 마이그레이션"`**으로 변경.
+  - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
   - **Vercel 라이브 배포 완수**: 대칭/비대칭 선택 시 `bg-slate-700 border-slate-700 text-white` 적용 최신 프로덕션 배포 완수.
