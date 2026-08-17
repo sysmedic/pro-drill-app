@@ -9,13 +9,10 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 고객 이름 검색어 정제(대소문자/언더바 무시) & 오른손/왼손 피치 라테랄 음수 방향 전환 공식 완치 (`CustomerManager.jsx`, `excelMigrationService.js`, `scripts/batch_excel_migrator.js`):
-  - **이름 검색 완치**: `CustomerManager.jsx` 필터 연산 시 대소문자, 공백 및 언더바(`_`)를 무시 정제 대조하도록 개선하여 `김볼러_피치` 이름이 `"김볼러"`, `"김볼러피치"` 등 어떤 패턴으로도 100% 즉시 검색되도록 완치.
-  - **피치 라테랄 음수 방향 공식 완치**:
-    - 오른손: 중지 기본 `Left` (음수`-` ➔ `Right`), 약지 기본 `Right` (음수`-` ➔ `Left`)
-    - 왼손: 중지 기본 `Right` (음수`-` ➔ `Left`), 약지 기본 `Left` (음수`-` ➔ `Right`)
-    - 0 값: 중지 `Left 0`, 약지 `Right 0` 유지.
-  - **Vercel 라이브 배포 완치**: 58개 전체 단위 테스트, ESLint, Vite PWA 빌드 100% 성공 후 `main` 브랜치 합침 및 Vercel 프로덕션 라이브 배포 완료.
+- CustomerList 검색 배열 바인딩 & latDir 전용 음수 라테랄 방향 전환 수식 완치 (`CustomerManager.jsx`, `excelMigrationService.js`, `scripts/batch_excel_migrator.js`):
+  - **검색 UI 바인딩 완치**: `CustomerManager.jsx`에서 `CustomerList` 컴포넌트로 필터링된 배열 `displayedCustomers`를 1:1 전달하여 한글, 대소문자, 언더바(`_`) 무시 실시간 검색 완치.
+  - **latDir 전용 음수 라테랄 수식 완치**: `midPitch.latDir` 및 `ringPitch.latDir` 필드에 오른손/왼손 및 음수 수치 기준 `latDir` 방향이 1:1 정밀 자동 전환되도록 `getLateralPitchAndDirection` 독립 수식 연동 완치.
+  - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드 100% 성공 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
   - **Vercel 라이브 배포 완수**: 대칭/비대칭 선택 시 `bg-slate-700 border-slate-700 text-white` 적용 최신 프로덕션 배포 완수.

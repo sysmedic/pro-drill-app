@@ -116,14 +116,18 @@ function toReducedFraction(rawVal, baseDenominator = 32) {
   return `${sign}${numReduced}/${denReduced}`;
 }
 
-function calculatePitchWithDirection(rawVal, hand, defaultDirRight, defaultDirLeft, baseDenominator = 32, isRing = false) {
+/**
+ * 중지/약지 피치 라테랄 수치 및 latDir 방향 1:1 정밀 대입 헬퍼
+ * (오른손/왼손 및 음수 수치 기준 latDir 자동 반대 방향 전환 100% 반영)
+ */
+function getLateralPitchAndDirection(rawVal, hand, isRing = false, baseDenominator = 32) {
   if (rawVal === null || rawVal === undefined || rawVal === '') return { val: '', dir: '' };
   const strVal = String(rawVal).trim();
   if (!strVal) return { val: '', dir: '' };
 
+  // 🌟 0값 처리 규칙: 중지/엄지 ➔ Left '0', 약지 ➔ Right '0'
   if (strVal === '0' || strVal === '0.0' || strVal === '-0') {
-    const dir = isRing ? 'Right' : 'Left';
-    return { val: '0', dir };
+    return { val: '0', dir: isRing ? 'Right' : 'Left' };
   }
 
   let numVal = strVal;
@@ -142,28 +146,35 @@ function calculatePitchWithDirection(rawVal, hand, defaultDirRight, defaultDirLe
   if (num === null) return { val: strVal, dir: rawDir };
 
   if (num === 0) {
-    const dir = isRing ? 'Right' : 'Left';
-    return { val: '0', dir };
+    return { val: '0', dir: isRing ? 'Right' : 'Left' };
   }
 
   const isRightHand = !hand.includes('왼') && (hand.includes('오른') || hand.includes('Right') || hand.includes('우'));
   const isNegative = num < 0;
 
-  let dir = rawDir;
-  if (!dir) {
+  let latDir = rawDir;
+  if (!latDir) {
     if (isRightHand) {
-      // 오른손: 중지(isRing===false) 기본 Left, 약지(isRing===true) 기본 Right
-      const baseDir = isRing ? 'Right' : 'Left';
-      dir = isNegative ? (baseDir === 'Left' ? 'Right' : 'Left') : baseDir;
+      if (!isRing) {
+        // 오른손 중지: 양수/0 ➔ Left, 음수(-) ➔ Right
+        latDir = isNegative ? 'Right' : 'Left';
+      } else {
+        // 오른손 약지: 양수/0 ➔ Right, 음수(-) ➔ Left
+        latDir = isNegative ? 'Left' : 'Right';
+      }
     } else {
-      // 왼손: 중지(isRing===false) 기본 Right, 약지(isRing===true) 기본 Left
-      const baseDir = isRing ? 'Left' : 'Right';
-      dir = isNegative ? (baseDir === 'Left' ? 'Right' : 'Left') : baseDir;
+      if (!isRing) {
+        // 왼손 중지: 양수/0 ➔ Right, 음수(-) ➔ Left
+        latDir = isNegative ? 'Left' : 'Right';
+      } else {
+        // 왼손 약지: 양수/0 ➔ Left, 음수(-) ➔ Right
+        latDir = isNegative ? 'Right' : 'Left';
+      }
     }
   }
 
   const reducedVal = toReducedFraction(Math.abs(num), baseDenominator);
-  return { val: reducedVal, dir };
+  return { val: reducedVal, dir: latDir };
 }
 
 function parseRevFwdPitches(formSheet, revCell, fwdCell, baseDenominator = 32) {
@@ -302,8 +313,8 @@ function parseInputSheet(formSheet, diagramSheet, isSub = false, ownerEmail = ''
 
   const isRight = hand.includes('오른') || hand.includes('Right') || !hand.includes('왼');
 
-  const midLatParsed = calculatePitchWithDirection(getCellValue(formSheet, 'B12'), hand, 'Left', 'Right', 32, false);
-  const ringLatParsed = calculatePitchWithDirection(getCellValue(formSheet, 'B18'), hand, 'Right', 'Left', 32, true);
+  const midLatParsed = getLateralPitchAndDirection(getCellValue(formSheet, 'B12'), hand, false, 32);
+  const ringLatParsed = getLateralPitchAndDirection(getCellValue(formSheet, 'B18'), hand, true, 32);
 
   const e4Str = getCellValue(formSheet, 'E4');
   const e5Str = getCellValue(formSheet, 'E5');
