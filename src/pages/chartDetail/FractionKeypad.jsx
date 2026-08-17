@@ -15,44 +15,60 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
     }
   }, [isOpen, initialValue]);
 
-  // 분수 문자열 정밀 파싱 함수 (3 1/4 -> 3.25)
+  // 분수 문자열 정밀 파싱 함수 (3 1/4 -> 3.25, -1 1/4 -> -1.25)
   const parseFractionToFloat = (str) => {
     if (!str) return 0;
-    const cleanStr = String(str).trim();
+    let cleanStr = String(str).trim();
+    let isNegative = false;
+    if (cleanStr.startsWith('-')) {
+      isNegative = true;
+      cleanStr = cleanStr.slice(1).trim();
+    }
+    let val = 0;
     if (cleanStr.includes(' ')) {
       const parts = cleanStr.split(' ');
       const whole = parseFloat(parts[0]) || 0;
       const frac = parts[1].split('/');
       if (frac.length === 2) {
-        return whole + (parseFloat(frac[0]) / parseFloat(frac[1]));
+        val = whole + (parseFloat(frac[0]) / parseFloat(frac[1]));
+      } else {
+        val = whole;
       }
-      return whole;
     } else if (cleanStr.includes('/')) {
       const frac = cleanStr.split('/');
       if (frac.length === 2) {
-        return parseFloat(frac[0]) / parseFloat(frac[1]);
+        val = parseFloat(frac[0]) / parseFloat(frac[1]);
       }
+    } else {
+      val = parseFloat(cleanStr) || 0;
     }
-    return parseFloat(cleanStr) || 0;
+    return isNegative ? -val : val;
   };
 
   // 최대공약수(GCD) 연산 함수
   const getGCD = (a, b) => (b === 0 ? a : getGCD(b, a % b));
 
-  // 계산된 실수를 지공 규격인 32분법 기약분수 문자열로 포맷팅하는 함수
+  // 계산된 실수를 지공 규격인 32분법 기약분수 문자열로 포맷팅하는 함수 (음수 지원)
   const formatFloatToFraction32 = (val) => {
-    if (val <= 0) return '0';
-    const total32 = Math.round(val * 32);
+    if (val === 0) return '0';
+    const isNegative = val < 0;
+    const absVal = Math.abs(val);
+    const total32 = Math.round(absVal * 32);
     const whole = Math.floor(total32 / 32);
     const rem = total32 % 32;
-    if (rem === 0) return String(whole);
     
-    const gcd = getGCD(rem, 32);
-    const n = rem / gcd;
-    const d = 32 / gcd;
+    let res = '';
+    if (rem === 0) {
+      res = String(whole);
+    } else {
+      const gcd = getGCD(rem, 32);
+      const n = rem / gcd;
+      const d = 32 / gcd;
+      if (whole > 0) res = `${whole} ${n}/${d}`;
+      else res = `${n}/${d}`;
+    }
     
-    if (whole > 0) return `${whole} ${n}/${d}`;
-    return `${n}/${d}`;
+    return isNegative && res !== '0' ? `-${res}` : res;
   };
 
   // 원터치 버튼 클릭 시 즉시 수치를 가감하여 반영하는 계산 핫-핸들러
@@ -149,11 +165,11 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
       } else {
         let isAllowed = false;
         if (mode === 'number') {
-          isAllowed = /^[0-9]$/.test(e.key);
+          isAllowed = /^[0-9-]$/.test(e.key);
         } else if (mode === 'span') {
-          isAllowed = /^[0-9/\s]$/.test(e.key); // 스팬 모드일 때 "-" 및 허용되지 않은 키값 원천 차단
+          isAllowed = /^[0-9/-\s]$/.test(e.key);
         } else {
-          isAllowed = /^[0-9/ ]$/.test(e.key); // 분수/PAP 모드에서도 "-" 키값 원천 차단
+          isAllowed = /^[0-9/-]$/.test(e.key);
         }
 
         if (isAllowed) {
@@ -216,7 +232,7 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
           </div>
         </div>
 
-        {/* 원터치 가감 직통 버튼 모듈 (4열 2행 구조 및 인지 유도 컬러) */}
+        {/* 원터치 가감 직통 버튼 모듈 (일반 스팬 모드) */}
         {mode === 'span' && (
           <div className="grid grid-cols-4 gap-2 mb-3 bg-slate-50 p-2 rounded-xl border border-slate-200 animate-fade-in">
             {/* 1행: 플러스 즉시 증감 연산 */}
@@ -229,24 +245,6 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
             <button type="button" onClick={() => handleDirectCalc(-1/16)} className="h-11 rounded-lg font-bold text-xs bg-white text-rose-600 border border-rose-200/80 hover:bg-rose-50 active:scale-95 transition-all flex items-center justify-center">- 1/16</button>
             <button type="button" onClick={() => handleDirectCalc(-1/8)} className="h-11 rounded-lg font-bold text-xs bg-white text-rose-600 border border-rose-200/80 hover:bg-rose-50 active:scale-95 transition-all flex items-center justify-center">- 1/8</button>
             <button type="button" onClick={() => handleDirectCalc(-1/4)} className="h-11 rounded-lg font-bold text-xs bg-white text-rose-600 border border-rose-200/80 hover:bg-rose-50 active:scale-95 transition-all flex items-center justify-center">- 1/4</button>
-          </div>
-        )}
-
-        {extraKeys && extraKeys.length > 0 && (
-          <div className="flex gap-2 mb-2">
-            {extraKeys.map((key, index) => {
-              const label = key === 'Up' ? 'Up (↑)' : key === 'Down' ? 'Down (↓)' : key;
-              return (
-                <button
-                  key={`extra-${index}`}
-                  type="button"
-                  onClick={() => handleExtraKeyPress(key)}
-                  className="flex-1 h-12 sm:h-14 rounded-xl text-base sm:text-lg font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors active:scale-95 flex items-center justify-center"
-                >
-                  {label}
-                </button>
-              );
-            })}
           </div>
         )}
 
@@ -263,10 +261,16 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
             </button>
           ))}
 
-          {/* 4행 & 5행 하단 컨트롤 레이아웃 (L자형 단일 키 성형 포함) */}
+          {/* 4행 & 5행 하단 컨트롤 레이아웃 */}
           {mode === 'number' ? (
             <>
-              <div className="opacity-0 pointer-events-none h-14 sm:h-16" />
+              <button
+                type="button"
+                onClick={() => handleCharacterInput('-')}
+                className="h-14 sm:h-16 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center"
+              >
+                -
+              </button>
               <button
                 type="button"
                 onClick={() => handleCharacterInput('0')}
@@ -284,8 +288,14 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
             </>
           ) : (
             <>
-              {/* 4행 1열: 빈 칸 (empty) */}
-              <div className="opacity-0 pointer-events-none h-14 sm:h-16" />
+              {/* 4행 1열: - (마이너스) */}
+              <button
+                type="button"
+                onClick={() => handleCharacterInput('-')}
+                className="h-14 sm:h-16 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center"
+              >
+                -
+              </button>
 
               {/* 4행 2열: 0 */}
               <button

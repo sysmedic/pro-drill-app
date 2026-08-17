@@ -48,14 +48,18 @@ export const filterCustomersByOwner = (customers, activeEmail = '') => {
   if (!Array.isArray(customers)) return [];
   const normalizedActiveEmail = (activeEmail || '').trim().toLowerCase();
   if (!normalizedActiveEmail) {
+    console.log(`[TRACE FILTER] activeEmail이 비어있어 전체 ${customers.length}명 통과 리턴`);
     return customers;
   }
 
-  return customers.filter(c => {
+  const filtered = customers.filter(c => {
     const owner = (c.createdByEmail || '').trim().toLowerCase();
-    if (!owner) return false;
+    if (!owner) return true;
     return owner === normalizedActiveEmail;
   });
+
+  console.log(`[TRACE FILTER] activeEmail='${normalizedActiveEmail}' 기준: 전체 ${customers.length}명 중 ${filtered.length}명 통과 (필터링된 명단: ${filtered.map(c=>c.name).join(', ')})`);
+  return filtered;
 };
 
 export const loadCustomers = (storage, activeEmail = '', accountHashKey = null) => {
@@ -68,7 +72,6 @@ export const loadCustomers = (storage, activeEmail = '', accountHashKey = null) 
   
   const processMigration = (rawCustomers) => {
     if (!Array.isArray(rawCustomers)) return [];
-    // 로그인된 이메일이 있을 경우, 이메일이 빠져있던 구버전 레코드에 현재 계정 이메일 자동 주입
     if (activeEmail) {
       const normalizedEmail = activeEmail.trim().toLowerCase();
       rawCustomers.forEach(c => {
@@ -80,35 +83,55 @@ export const loadCustomers = (storage, activeEmail = '', accountHashKey = null) 
     return filterCustomersByOwner(rawCustomers, activeEmail);
   };
 
-  if (store && (storage || !migrated)) {
+  if (storage || (store && !migrated)) {
     const result = readCustomers(store, accountHashKey);
+    console.log(`[TRACE LOAD 동기] storage=${!!storage}, migrated=${migrated} -> ${result.customers.length}명 읽음`);
     return processMigration(result.customers);
   }
   
   return (async () => {
-    const result = await readCustomers(null, accountHashKey);
-    return processMigration(result.customers);
+    let rawCustomers = [];
+    if (typeof window !== 'undefined' && typeof indexedDB !== 'undefined') {
+      try {
+        const idbResult = await readCustomers(null, accountHashKey);
+        if (Array.isArray(idbResult.customers) && idbResult.customers.length > 0) {
+          rawCustomers = idbResult.customers;
+          console.log(`[TRACE LOAD IndexedDB 성공] accountHashKey='${accountHashKey}' -> ${rawCustomers.length}명 인양 완료 (${rawCustomers.map(c=>c.name).join(', ')})`);
+        }
+      } catch (e) {
+        console.warn("IndexedDB 조회 폴백:", e);
+      }
+    }
+
+    if (rawCustomers.length === 0 && store) {
+      const lsResult = readCustomers(store, accountHashKey);
+      if (Array.isArray(lsResult.customers)) {
+        rawCustomers = lsResult.customers;
+        console.log(`[TRACE LOAD LocalStorage 폴백] -> ${rawCustomers.length}명 인양 완료 (${rawCustomers.map(c=>c.name).join(', ')})`);
+      }
+    }
+    return processMigration(rawCustomers);
   })();
 };
 
 export const saveCustomers = (customers, storage, accountHashKey = null) => {
   if (!Array.isArray(customers)) return false;
   const normalizedCustomers = normalizeCustomers(customers);
-  if (normalizedCustomers.length !== customers.length) return false;
+  if (normalizedCustomers.length !== customers.length) {
+    console.warn(`[TRACE SAVE 경고] 정규화 과정에서 일부 고객 drop (원래 ${customers.length}명 -> 정규화 ${normalizedCustomers.length}명)`);
+    return false;
+  }
 
   const store = storage || (
     typeof window !== 'undefined' 
       ? window.localStorage 
       : (typeof globalThis !== 'undefined' ? globalThis.localStorage : null)
   );
-  const migrated = typeof window !== 'undefined' && window.localStorage.getItem('prodrill_db_migrated_v1') === 'true';
 
-  if (store && (storage || !migrated)) {
+  if (storage) {
     try {
-      store.setItem(CUSTOMERS_KEY, JSON.stringify(normalizedCustomers));
-      if (!storage) {
-        saveLocalCustomers(normalizedCustomers, accountHashKey).catch(e => console.error(e));
-      }
+      storage.setItem(CUSTOMERS_KEY, JSON.stringify(normalizedCustomers));
+      console.log(`[TRACE SAVE MockStorage] ${normalizedCustomers.length}명 동기 저장 성공`);
       return true;
     } catch {
       return false;
@@ -116,18 +139,29 @@ export const saveCustomers = (customers, storage, accountHashKey = null) => {
   }
 
   return (async () => {
-    try {
-      await saveLocalCustomers(normalizedCustomers, accountHashKey);
-      // [이중 기록] localStorage 캐시도 항상 갱신 (IndexedDB 계정 해시 불일치 안전망)
-      if (typeof window !== 'undefined' && window.localStorage) {
-        try {
-          window.localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(normalizedCustomers));
-        } catch { /* ignore - 캐시 기록 실패는 무시 */ }
+    let ok = false;
+    // 1. IndexedDB 비동기 저장
+    if (typeof window !== 'undefined' && typeof indexedDB !== 'undefined') {
+      try {
+        await saveLocalCustomers(normalizedCustomers, accountHashKey);
+        console.log(`[TRACE SAVE IndexedDB] accountHashKey='${accountHashKey}' -> 총 ${normalizedCustomers.length}명 비동기 저장 완료! (${normalizedCustomers.map(c=>c.name).join(', ')})`);
+        ok = true;
+      } catch (error) {
+        console.error("IndexedDB 고객 저장 실패:", error);
       }
-      return true;
-    } catch (error) {
-      console.error("IndexedDB 고객 저장 실패:", error);
-      return false;
     }
+
+    // 2. LocalStorage 동시 이중 저장 (어디서 읽든 100% 매칭)
+    if (store) {
+      try {
+        store.setItem(CUSTOMERS_KEY, JSON.stringify(normalizedCustomers));
+        console.log(`[TRACE SAVE LocalStorage] 캐시 ${normalizedCustomers.length}명 저장 완료!`);
+        ok = true;
+      } catch (lsErr) {
+        console.warn("LocalStorage 고객 캐시 저장 실패:", lsErr);
+      }
+    }
+
+    return ok;
   })();
 };

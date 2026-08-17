@@ -4,6 +4,7 @@ import { licenseDb } from '../../lib/licenseFirebase.js';
 import { getSha256Hash, MASTER_HASH, saveUserProfile, sanitizeString } from '../../lib/userLicenseManager.js';
 import Button from '../../components/ui/Button.jsx';
 import ModalShell from '../../components/ui/ModalShell.jsx';
+import Icon from '../../components/ui/Icon.jsx';
 
 export default function AdminSettingsModal({ onClose, onFeedback: propOnFeedback }) {
   const onFeedback = propOnFeedback || (() => {});
@@ -12,6 +13,7 @@ export default function AdminSettingsModal({ onClose, onFeedback: propOnFeedback
   const [newShopName, setNewShopName] = useState('');
   const [licensedUsers, setLicensedUsers] = useState([]);
   const [trialUsers, setTrialUsers] = useState([]);
+  const [sharedBalls, setSharedBalls] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // 프로필 편집 및 히스토리 팝업 상태
@@ -20,7 +22,7 @@ export default function AdminSettingsModal({ onClose, onFeedback: propOnFeedback
   const [editShop, setEditShop] = useState('');
   const [auditUser, setAuditUser] = useState(null);
 
-  // 1. 라이선스 유저 및 Trial 사용자 목록 원격 로드
+  // 1. 라이선스 유저, Trial 사용자 및 수집 볼링공 DB 목록 원격 로드
   const loadAdminData = async () => {
     setLoading(true);
     
@@ -83,7 +85,7 @@ export default function AdminSettingsModal({ onClose, onFeedback: propOnFeedback
       setLicensedUsers(fallbackList);
     }
 
-    // (2) Trial 사용자 목록 조회 및 로컬 정렬 (독립 로드)
+    // (2) Trial 사용자 목록 조회 및 로컬 정렬
     try {
       const trialRef = collection(licenseDb, 'trial_users');
       const trialSnap = await getDocs(trialRef);
@@ -100,6 +102,189 @@ export default function AdminSettingsModal({ onClose, onFeedback: propOnFeedback
     } catch (e) {
       console.error("Trial 사용자 로드 실패:", e);
       setTrialUsers([]);
+    }
+
+    // (3) Firestore 파이어베이스 수집 볼링공 DB 목록 (shared_bowling_balls) 조회
+    try {
+      const sharedRef = collection(licenseDb, 'shared_bowling_balls');
+      const sharedSnap = await getDocs(sharedRef);
+      const bList = [];
+      sharedSnap.forEach((docSnap) => {
+        bList.push({ docId: docSnap.id, ...docSnap.data() });
+      });
+      bList.sort((a, b) => {
+        const aTime = a.createdAt?.seconds || 0;
+        const bTime = b.createdAt?.seconds || 0;
+        return bTime - aTime;
+      });
+
+      // 🧹 24시간 이상 지난 승인완료 데이터 자동 정리 (Auto Cleanup)
+      const nowMs = new Date().getTime();
+      const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+      const staleApproved = bList.filter(b => {
+        if (b.status !== 'approved') return false;
+        const updatedMs = b.updatedAt?.seconds ? (b.updatedAt.seconds * 1000) : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
+        return updatedMs > 0 && (nowMs - updatedMs > TWENTY_FOUR_HOURS_MS);
+      });
+
+      if (staleApproved.length > 0) {
+        for (const item of staleApproved) {
+          try {
+            const docRef = doc(licenseDb, 'shared_bowling_balls', item.docId);
+            await deleteDoc(docRef);
+          } catch { /* ignore */ }
+        }
+        // 정리 후 남은 목록 반영
+        const remaining = bList.filter(b => !staleApproved.some(s => s.docId === b.docId));
+        setSharedBalls(remaining);
+      } else {
+        setSharedBalls(bList);
+      }
+    } catch (e) {
+      console.error("수집 볼링공 DB 로드 실패:", e);
+      setSharedBalls([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🎯 Trial 사용자 실시간 서버 시각 기준 D-Day 잔여일 연산 헬퍼
+  const calculateRealtimeDaysLeft = (user) => {
+    const ts = user.createdAt || user.firstLaunchTime || user.updatedAt;
+    if (!ts) return user.daysLeft ?? 90;
+    let createdMs = 0;
+    if (typeof ts === 'object' && ts.seconds) {
+      createdMs = ts.seconds * 1000;
+    } else {
+      createdMs = new Date(ts).getTime();
+    }
+    if (isNaN(createdMs) || createdMs <= 0) return user.daysLeft ?? 90;
+    const diffDays = (new Date().getTime() - createdMs) / (1000 * 60 * 60 * 24);
+    return Math.max(0, Math.ceil(90 - diffDays));
+  };
+
+  // 🎯 수집 볼링공 건별 승인 처리
+  const handleApproveSharedBall = async (ballItem) => {
+    try {
+      const docRef = doc(licenseDb, 'shared_bowling_balls', ballItem.docId);
+      await setDoc(docRef, { status: 'approved', updatedAt: serverTimestamp() }, { merge: true });
+      onFeedback({ message: `'${ballItem.ballName}' 공이 성공적으로 승인되었습니다!`, tone: 'success' });
+      await loadAdminData();
+    } catch (e) {
+      onFeedback({ message: '승인 처리 실패: ' + e.message, tone: 'danger' });
+    }
+  };
+
+  // 🎯 수집 볼링공 건별 거절/삭제 처리
+  const handleDeleteSharedBall = async (ballItem) => {
+    try {
+      const docRef = doc(licenseDb, 'shared_bowling_balls', ballItem.docId);
+      await deleteDoc(docRef);
+      onFeedback({ message: `'${ballItem.ballName}' 삭제 완료.`, tone: 'secondary' });
+      await loadAdminData();
+    } catch (e) {
+      onFeedback({ message: '삭제 실패: ' + e.message, tone: 'danger' });
+    }
+  };
+
+  // 🎯 수집 볼링공 승인 완료된 모든 임시 데이터 일괄 자동 정리
+  const handleCleanupApprovedBalls = async () => {
+    const approvedList = sharedBalls.filter(b => b.status === 'approved');
+    if (approvedList.length === 0) {
+      onFeedback({ message: '정리할 승인완료 임시 데이터가 없습니다.', tone: 'warning' });
+      return;
+    }
+    setLoading(true);
+    try {
+      let count = 0;
+      for (const item of approvedList) {
+        const docRef = doc(licenseDb, 'shared_bowling_balls', item.docId);
+        await deleteDoc(docRef);
+        count++;
+      }
+      onFeedback({ message: `승인 완료된 임시 수집 데이터 ${count}건이 깨끗하게 자동 정리되었습니다!`, tone: 'success' });
+      await loadAdminData();
+    } catch (e) {
+      onFeedback({ message: '자동 정리 실패: ' + e.message, tone: 'danger' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🎯 🧹 파이어베이스 shared_bowling_balls 중복 데이터 자동 통합 & 찌꺼기 정리
+  const handleDeduplicateSharedBalls = async () => {
+    if (sharedBalls.length === 0) {
+      onFeedback({ message: '정제할 수집 볼링공이 없습니다.', tone: 'warning' });
+      return;
+    }
+    setLoading(true);
+    try {
+      const nameGroupMap = new Map();
+      sharedBalls.forEach(ball => {
+        const rawName = ball.ballName || ball.model_name_kr || ball.version_name || '';
+        const key = rawName.toLowerCase().replace(/[\s\-_]/g, '');
+        if (!key) return;
+        if (!nameGroupMap.has(key)) {
+          nameGroupMap.set(key, []);
+        }
+        nameGroupMap.get(key).push(ball);
+      });
+
+      let removedCount = 0;
+      for (const [, group] of nameGroupMap.entries()) {
+        if (group.length > 1) {
+          // 중복군 중에서 가장 최신/승인된 1개 마스터만 남기고 나머지 삭제
+          group.sort((a, b) => {
+            if (a.status === 'approved' && b.status !== 'approved') return -1;
+            if (a.status !== 'approved' && b.status === 'approved') return 1;
+            const aTime = a.updatedAt?.seconds || a.createdAt?.seconds || 0;
+            const bTime = b.updatedAt?.seconds || b.createdAt?.seconds || 0;
+            return bTime - aTime;
+          });
+
+          // 2번째 항목부터 삭제
+          const duplicatesToRemove = group.slice(1);
+          for (const item of duplicatesToRemove) {
+            try {
+              const docRef = doc(licenseDb, 'shared_bowling_balls', item.docId);
+              await deleteDoc(docRef);
+              removedCount++;
+            } catch { /* ignore */ }
+          }
+        }
+      }
+
+      onFeedback({ 
+        message: removedCount > 0 
+          ? `🧹 중복된 볼링공 데이터 ${removedCount}건이 깨끗하게 정제 삭제되고 통합되었습니다!` 
+          : '✨ 이미 모든 볼링공 DB가 중복 없이 깨끗하게 통합 정제되어 있습니다.', 
+        tone: 'success' 
+      });
+      await loadAdminData();
+    } catch (e) {
+      onFeedback({ message: '중복 정제 중 오류: ' + e.message, tone: 'danger' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🎯 수집 볼링공 전체 일괄 승인 처리
+  const handleApproveAllSharedBalls = async () => {
+    const pendingList = sharedBalls.filter(b => b.status !== 'approved');
+    if (pendingList.length === 0) {
+      onFeedback({ message: '승인 대기 중인 볼링공이 없습니다.', tone: 'warning' });
+      return;
+    }
+    setLoading(true);
+    try {
+      for (const item of pendingList) {
+        const docRef = doc(licenseDb, 'shared_bowling_balls', item.docId);
+        await setDoc(docRef, { status: 'approved', updatedAt: serverTimestamp() }, { merge: true });
+      }
+      onFeedback({ message: `대기 중인 볼링공 ${pendingList.length}건이 전체 일괄 승인되었습니다!`, tone: 'success' });
+      await loadAdminData();
+    } catch (e) {
+      onFeedback({ message: '일괄 승인 실패: ' + e.message, tone: 'danger' });
     } finally {
       setLoading(false);
     }
@@ -479,7 +664,7 @@ export default function AdminSettingsModal({ onClose, onFeedback: propOnFeedback
             </div>
           </div>
 
-          {/* C. 체험판 (Trial) 지공사 실시간 모니터링 목록 */}
+          {/* C. 체험판 (Trial) 지공사 실시간 모니터링 목록 (실시간 D-Day 연산 보정) */}
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
             <div className="flex items-center gap-1.5">
               <span className="text-base">{"\u23F3"}</span>
@@ -490,37 +675,195 @@ export default function AdminSettingsModal({ onClose, onFeedback: propOnFeedback
               {cleanTrialUsers.length === 0 ? (
                 <div className="text-center text-xs text-slate-400 py-3">현재 체험 중인 지공사가 없습니다.</div>
               ) : (
-                cleanTrialUsers.map((user) => (
-                  <div 
-                    key={user.hash} 
-                    onClick={() => {
-                      if (user.email) setNewEmail(user.email);
-                      if (user.name) setNewName(user.name);
-                      if (user.shopName) setNewShopName(user.shopName);
-                    }}
-                    className="p-2.5 bg-white border border-slate-100 rounded-xl text-xs space-y-1 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group"
-                    title="클릭 시 라이선스 즉시 승인 입력창에 자동 채움"
+                cleanTrialUsers.map((user) => {
+                  const realtimeDays = calculateRealtimeDaysLeft(user);
+                  const isExpired = realtimeDays <= 0;
+                  return (
+                    <div 
+                      key={user.hash} 
+                      onClick={() => {
+                        if (user.email) setNewEmail(user.email);
+                        if (user.name) setNewName(user.name);
+                        if (user.shopName) setNewShopName(user.shopName);
+                      }}
+                      className="p-2.5 bg-white border border-slate-100 rounded-xl text-xs space-y-1 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group"
+                      title="클릭 시 라이선스 즉시 승인 입력창에 자동 채움"
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-black text-slate-700 group-hover:text-indigo-600 truncate max-w-[190px] transition-colors">
+                          {user.name ? `${user.name} (${user.shopName || user.email})` : (user.email || `체험 사용자 (${user.hash.substring(0, 8)})`)}
+                        </span>
+                        {user.status === 'revoked' || isExpired ? (
+                          <span className="px-2 py-0.5 rounded bg-rose-50 border border-rose-200 text-rose-700 font-black text-[9px]">
+                            {isExpired ? '트라이얼 만료' : formatDateOnly(user.revokedDateStr || user.revokedAt)}
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-800 font-black text-[9px]">
+                            D-{realtimeDays}일
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex justify-between text-[9px] text-slate-400 font-bold border-t border-slate-100 pt-1 mt-0.5">
+                        <span>최초 앱 등록일: {formatDateOnly(user.firstLaunchTime || user.createdAt)}</span>
+                        <span>라이선스 등록일: {formatDateOnly(user.licenseRegisteredAt)}</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* D. 파이어베이스 현장 수집 볼링공 DB 실시간 검증 & 건별/일괄 승인 및 자동 정리 */}
+          <div className="bg-indigo-50/40 p-4 rounded-xl border border-indigo-100 space-y-3">
+            {/* 🚀 상단 독립 Vercel 실시간 앱 재배포 제어 헤더 */}
+            <div className="p-3 bg-gradient-to-r from-indigo-900 to-slate-900 rounded-xl text-white space-y-2 shadow-sm">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm">🚀</span>
+                  <h4 className="text-xs font-black tracking-wide text-indigo-100">Vercel 실시간 앱 재배포 제어</h4>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (loading) return;
+                    setLoading(true);
+                    try {
+                      const deployUrl = import.meta.env?.VITE_VERCEL_DEPLOY_HOOK_URL || 'https://api.vercel.com/v1/integrations/deploy/prj_GdzRgcWWQ5qB6kFbCfiMRMZGi82C';
+                      await fetch(deployUrl, { method: 'POST', mode: 'no-cors' }).catch(() => {});
+                      onFeedback({ message: '🚀 Vercel 클라우드 즉시 재배포 명령이 정상 발송되었습니다! (약 1분 후 전체 라이브 반영)', tone: 'success' });
+                    } catch (e) {
+                      onFeedback({ message: '재배포 요청 구동: ' + e.message, tone: 'success' });
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  disabled={loading}
+                  className="px-3 py-1.5 bg-indigo-500 hover:bg-indigo-400 active:scale-95 text-white text-xs font-black rounded-lg transition-all shadow-sm cursor-pointer flex items-center gap-1"
+                >
+                  <span>🚀 실시간 앱 즉각 재배포</span>
+                </button>
+              </div>
+              <p className="text-[10px] text-indigo-200/80 leading-relaxed">
+                승인된 팩트 데이터를 전체 유저 앱 PWA에 라이브 릴리즈 배포하려면 이 버튼을 클릭하세요 (약 1분 소요).
+              </p>
+            </div>
+
+            <div className="flex justify-between items-center flex-wrap gap-1.5 pt-1">
+              <div className="flex items-center gap-1.5">
+                <Icon name="check" size={16} className="text-indigo-600" />
+                <h3 className="text-sm font-black text-indigo-950">현장 수집 볼링공 DB 검증 & 승인</h3>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {sharedBalls.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleDeduplicateSharedBalls}
+                    disabled={loading}
+                    className="px-2 py-1 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white text-[10px] font-black rounded-lg transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+                    title="중복 수집된 볼링공 데이터를 1개로 깨끗이 통합 정제"
                   >
-                    <div className="flex justify-between items-center">
-                      <span className="font-black text-slate-700 group-hover:text-indigo-600 truncate max-w-[190px] transition-colors">
-                        {user.name ? `${user.name} (${user.shopName || user.email})` : (user.email || `체험 사용자 (${user.hash.substring(0, 8)})`)}
-                      </span>
-                      {user.status === 'revoked' || user.revokedDateStr ? (
-                        <span className="px-2 py-0.5 rounded bg-red-50 border border-red-100 text-red-700 font-black text-[9px]">
-                          {formatDateOnly(user.revokedDateStr || user.revokedAt)}
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded bg-amber-50 border border-amber-100 text-amber-700 font-black text-[9px]">
-                          D-{user.daysLeft ?? 90}일
-                        </span>
-                      )}
+                    <span>🧹 중복 통합 & 정제</span>
+                  </button>
+                )}
+                {sharedBalls.some(b => b.status === 'approved') && (
+                  <button
+                    type="button"
+                    onClick={handleCleanupApprovedBalls}
+                    disabled={loading}
+                    className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[10px] font-black rounded-lg transition-all shadow-2xs cursor-pointer"
+                    title="승인 완료된 임시 수집 데이터 일괄 정리"
+                  >
+                    승인완료 데이터 정리
+                  </button>
+                )}
+                {sharedBalls.filter(b => b.status !== 'approved').length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleApproveAllSharedBalls}
+                    disabled={loading}
+                    className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-[10px] font-black rounded-lg transition-all shadow-2xs cursor-pointer"
+                  >
+                    전체 일괄 승인 ({sharedBalls.filter(b => b.status !== 'approved').length}건)
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {sharedBalls.length === 0 ? (
+                <div className="text-center text-xs text-slate-400 py-3">실시간 수집된 신규 볼링공이 없습니다.</div>
+              ) : (
+                sharedBalls.map((item) => {
+                  const isApproved = item.status === 'approved';
+                  return (
+                    <div key={item.docId} className="p-2.5 bg-white border border-slate-100 rounded-xl text-xs space-y-1.5">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-black text-slate-800 text-xs flex items-center gap-1.5">
+                            <span>{item.ballName}</span>
+                            <span className="text-[9px] font-extrabold text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded">
+                              {item.weight || '15lb'}
+                            </span>
+                            <span className="text-[9px] font-extrabold text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-100">
+                              {item.coreType === 'Asymmetric' ? '비대칭' : '대칭'}
+                            </span>
+                          </div>
+                          <div className="text-[10px] font-bold text-slate-500 font-mono mt-0.5">
+                            RG: {item.rg ?? '-'} / Diff: {item.diff ?? '-'}{item.coreType === 'Asymmetric' ? ` / Int: ${item.intDiff ?? '-'}` : ''}
+                          </div>
+                          {(item.coverstock || item.finish) && (
+                            <div className="text-[10px] font-medium text-slate-400 mt-0.5">
+                              {item.coverstock ? `커버스탁: ${item.coverstock}` : ''}{item.finish ? ` (${item.finish})` : ''}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0 ml-2">
+                          {isApproved ? (
+                            <>
+                              <span className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-700 font-black text-[9px]">
+                                승인됨
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSharedBall(item)}
+                                disabled={loading}
+                                className="px-2 py-1 rounded text-[10px] font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 cursor-pointer"
+                                title="승인 항목 제거"
+                              >
+                                삭제
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleApproveSharedBall(item)}
+                                disabled={loading}
+                                className="px-2 py-1 rounded text-[10px] font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs cursor-pointer"
+                              >
+                                승인
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSharedBall(item)}
+                                disabled={loading}
+                                className="px-2 py-1 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
+                              >
+                                삭제
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-[9px] text-slate-400 font-medium flex justify-between border-t border-slate-100 pt-1">
+                        <span>제보: {item.contributedBy || '익명 지공사'}</span>
+                        <span>{formatDateOnly(item.createdAt)}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-[9px] text-slate-400 font-bold border-t border-slate-100 pt-1 mt-0.5">
-                      <span>최초 앱 등록일: {formatDateOnly(user.firstLaunchTime || user.createdAt)}</span>
-                      <span>라이선스 등록일: {formatDateOnly(user.licenseRegisteredAt)}</span>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

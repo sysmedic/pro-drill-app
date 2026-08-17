@@ -250,15 +250,23 @@ export const getChartHistory = async (customerId, accountHashKey = null) => {
 
 export const saveLocalChartHistory = async (customerId, history, accountHashKey = null) => {
   if (!customerId) return false;
-  const db = await getDB(accountHashKey);
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction('chartHistories', 'readwrite');
-    const store = transaction.objectStore('chartHistories');
-    const request = store.put({ customerId, history });
+  try {
+    const db = await getDB(accountHashKey);
+    return await new Promise((resolve) => {
+      const transaction = db.transaction('chartHistories', 'readwrite');
+      const store = transaction.objectStore('chartHistories');
+      const request = store.put({ customerId, history });
 
-    request.onsuccess = () => resolve(true);
-    request.onerror = () => reject(request.error);
-  });
+      request.onsuccess = () => resolve(true);
+      request.onerror = (e) => {
+        console.warn("IndexedDB 차트 기록 저장 실패 폴백:", e);
+        resolve(false);
+      };
+    });
+  } catch (err) {
+    console.warn("IndexedDB 차트 기록 접근 에러 무시:", err);
+    return false;
+  }
 };
 
 export const deleteLocalChartHistory = async (customerId, accountHashKey = null) => {

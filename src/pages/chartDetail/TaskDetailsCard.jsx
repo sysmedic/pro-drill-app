@@ -10,9 +10,9 @@ const taskDetailsManualSections = [
   {
     items: [
       { title: "볼링공 모델명", desc: "지공 작업 대상 볼링공 명칭을 정확히 입력합니다." },
-      { title: "레이아웃 (Dual Angle)", desc: "Pin to PAP x PSA x Buffer 수치를 입력합니다." },
+      { title: "레이아웃 (Dual / 2LS)", desc: "Dual 또는 2LS 방식의 레이아웃 수치를 입력합니다." },
       { iconName: "star", title: "AI 추천", desc: "볼러스펙과 공 제원을 바탕으로 최적의 레이아웃 4종을 추천받습니다." },
-      { iconName: "history", title: "2LS 변환", desc: "Dual Angle 수치를 Storm 2LS 수치로 즉시 상호 자동 계산 변환합니다." },
+      { iconName: "history", title: "Dual / 2LS 변환", desc: "Dual 수치와 Storm 2LS 수치를 즉시 상호 자동 계산 변환합니다." },
       { title: "지공 의도 및 상담", desc: "고객 요청사항, 트랙 특성, 지공 목적을 자유롭게 작성합니다." },
       { title: "관리 내역 추가", desc: "지공 후 샌딩, 폴리싱, 핑거 교체 등 정비 이력을 기록합니다." }
     ]
@@ -171,7 +171,7 @@ export default function TaskDetailsCard({
               
               <div className="relative w-full flex flex-col">
                 <div className="flex items-center justify-between mb-1">
-                  <label htmlFor="layout-info-input" className="text-xs font-bold text-slate-700">레이아웃 (Dual Angle 등)</label>
+                  <label htmlFor="layout-info-input" className="text-xs font-bold text-slate-700">레이아웃 (Dual / 2LS)</label>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       type="button"
@@ -180,13 +180,13 @@ export default function TaskDetailsCard({
                     >
                       ✨ AI 추천
                     </button>
-                    {layoutInfo && (layoutInfo.includes('x') || layoutInfo.includes('X') || layoutInfo.includes('*') || layoutInfo.includes('-')) && (
+                    {layoutInfo && layoutInfo.trim().length > 0 && (
                       <button
                         type="button"
                         onClick={onTrigger2LsConvert}
                         className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-md text-[11px] font-bold transition-all active:scale-95 flex items-center gap-1 cursor-pointer outline-none shadow-xs"
                       >
-                        🔄 {layoutInfo.includes('(2LS)') ? 'Dual 변환' : '2LS 변환'}
+                        🔄 {(layoutInfo.includes('(2LS)') || layoutInfo.includes('2LS')) ? 'Dual 변환' : '2LS 변환'}
                       </button>
                     )}
                   </div>
@@ -197,7 +197,7 @@ export default function TaskDetailsCard({
               </div>
             </div>
             
-            <Field as="textarea" controlClassName="text-base text-slate-700 resize-none" label="지공 의도 및 상담 내용" onChange={handleIntentChange} placeholder="특이사항, 지공 변경 이유, 고객 요청사항 등을 자유롭게 기록하세요." rows="3" value={intent} />
+            <Field as="textarea" controlClassName="text-[16px] font-normal text-slate-800 resize-none" label="지공 의도 및 상담 내용" onChange={handleIntentChange} placeholder="특이사항, 지공 변경 이유, 고객 요청사항 등을 자유롭게 기록하세요." rows="3" value={intent} />
             
             {!isNewChart && (
               <div className="pt-2 space-y-4">
@@ -239,7 +239,7 @@ export default function TaskDetailsCard({
                       onChange={(e) => setLogInput(e.target.value)}
                       onKeyDown={handleAddLogTrigger}
                       placeholder="내역을 입력하고 추가 버튼을 누르세요"
-                      className="w-full flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
+                      className="w-full flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[16px] font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
                     />
                     <button
                       type="button"

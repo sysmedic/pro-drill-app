@@ -207,14 +207,31 @@ export const certifyUserEmail = async (email) => {
       localStorage.setItem('prodrill_trial_google_linked', 'true');
       localStorage.setItem('prodrill_linked_email', normalizedEmail);
       await updateTrialUserStats(normalizedEmail, hashed, daysLeft);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('prodrill_license_updated'));
+      }
       return true;
     }
 
     return false;
   } catch (error) {
-    console.error("이메일 해싱 인증 에러:", error);
+    console.error("인증 실패:", error);
     return false;
   }
+};
+
+/**
+ * 엑셀 마이그레이션 보안 가시성 허용 계정 (sysmedic3@gmail.com, worms0529@gmail.com) 여부 체크
+ */
+export const isMigrationAuthorizedEmail = (email) => {
+  if (!email) return false;
+  const clean = String(email).trim().toLowerCase();
+  const ALLOWED_EMAILS = [
+    'sysmedic3@gmail.com',
+    'worms0529@gmail.com',
+    'sysmedic@gmail.com'
+  ];
+  return ALLOWED_EMAILS.includes(clean);
 };
 
 // 7. Trial 사용자 기기 통계 수집 및 서버 시각 기준 잔여일수 검증 (무한 연장 방어)

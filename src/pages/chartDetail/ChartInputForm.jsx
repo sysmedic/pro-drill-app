@@ -632,7 +632,14 @@ export default function ChartInputForm({
         </span>
       ), getSpanSummary(), (
         <>
-        <div className="mb-2.5"><ChartSelectField label="Span 타입" value={spanType} onChange={v => onChange({ ...data, spanType: v })} options={SPAN_TYPE_OPTIONS} /></div>
+        <div className="mb-2.5">
+          <ChartSelectField 
+            label="Span 타입" 
+            value={isThumbless ? 'Actual Span' : (spanType || 'Actual Span')} 
+            onChange={v => onChange({ ...data, spanType: v })} 
+            options={isThumbless ? ['Actual Span'] : SPAN_TYPE_OPTIONS} 
+          />
+        </div>
         <div className="grid grid-cols-2 gap-2.5">
           <ChartKeypadField label="중지 Span" onOpen={() => openKeypad('spanLeft', spanLeft, "중지 Span", [], 'span')} value={spanLeft} />
           <ChartKeypadField label="약지 Span" onOpen={() => openKeypad('spanRight', spanRight, "약지 Span", [], 'span')} value={spanRight} />

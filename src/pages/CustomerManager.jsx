@@ -8,6 +8,7 @@ import CustomerHeader from './customerManager/CustomerHeader.jsx';
 import CustomerList from './customerManager/CustomerList.jsx';
 import CustomerFormModal from './customerManager/CustomerFormModal.jsx';
 import { loadCustomers, saveCustomers } from '../lib/customerStorage.js';
+import { deleteChartHistory } from '../lib/chartHistoryStorage.js';
 import { createLocalId } from '../lib/ids.js';
 import { autoSyncOnChange } from '../lib/syncService.js'; // ☁️ 실시간 백업 트리거 임포트
 import SettingsModal from './customerManager/SettingsModal.jsx'; // ⚙️ 설정 모달 임포트
@@ -74,8 +75,11 @@ export default function CustomerManagement({
 
   useEffect(() => {
     const handleRestored = async () => {
+      console.log(`[TRACE RENDER] 복원 이벤트(prodrill_data_restored) 수신! activeEmail='${activeEmail}', accountHash='${certifiedEmailHash}' 기준 데이터 재로드 개시...`);
       const result = await loadCustomers(null, activeEmail, certifiedEmailHash);
-      setCustomers(Array.isArray(result) ? result : []);
+      const list = Array.isArray(result) ? result : [];
+      console.log(`[TRACE RENDER 결과] 렌더링될 고객 명단 (총 ${list.length}명): ${list.map(c=>c.name).join(', ')}`);
+      setCustomers(list);
     };
     window.addEventListener('prodrill_data_restored', handleRestored);
     window.addEventListener('storage', handleRestored);
@@ -385,7 +389,6 @@ export default function CustomerManagement({
               <button
                 onClick={async () => {
                   try {
-                    const { deleteChartHistory } = await import('../lib/chartHistoryStorage.js');
                     await deleteChartHistory(deleteRequest);
 
                     const updatedCustomers = customers.filter(c => c.id !== deleteRequest.id);

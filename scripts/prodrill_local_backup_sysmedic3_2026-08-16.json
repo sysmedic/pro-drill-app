@@ -1,0 +1,106 @@
+{
+  "appId": "ProDrill",
+  "exportedAt": "2026-08-16T09:14:20.783Z",
+  "ownerEmail": "sysmedic3@gmail.com",
+  "signature": "sig_3vuuru_khg4wi",
+  "version": 1,
+  "data": {
+    "customers": [
+      {
+        "id": "cust_1786871660782_7751d",
+        "name": "홍길동",
+        "phone": "010-1234-5678",
+        "hand": "오른손",
+        "style": "클래식",
+        "createdAt": "2026-08-16",
+        "updatedAt": "2026-08-16T09:14:20.782Z",
+        "createdByEmail": "sysmedic3@gmail.com"
+      },
+      {
+        "id": "cust_1786871660782_36cw9",
+        "name": "홍길동_서브",
+        "phone": "010-1234-5678",
+        "hand": "오른손",
+        "style": "클래식",
+        "createdAt": "2026-08-16",
+        "updatedAt": "2026-08-16T09:14:20.782Z",
+        "createdByEmail": "sysmedic3@gmail.com"
+      }
+    ],
+    "chartHistories": {
+      "cust_1786871660782_7751d": [
+        {
+          "id": "chart_1786871660782_de637",
+          "customerId": "cust_1786871660782_7751d",
+          "name": "홍길동 마이그레이션 차트",
+          "date": "2026-08-16",
+          "createdAt": "2026-08-16",
+          "updatedAt": "2026-08-16T09:14:20.782Z",
+          "middleTip": "Power Tip",
+          "middleCut": "31/32",
+          "middleReverse": "1/4",
+          "middleForward": "0",
+          "middleLateral": "Right 1",
+          "middleInsert": "31",
+          "ringTip": "",
+          "ringCut": "31/32",
+          "ringReverse": "1/4",
+          "ringForward": "0",
+          "ringLateral": "Right 1",
+          "ringInsert": "31",
+          "middleSpan": "4 1/2",
+          "ringSpan": "4 5/8",
+          "thumbCut": "1",
+          "thumbReverse": "1/8",
+          "thumbForward": "0",
+          "thumbLeft": "1/16",
+          "thumbRight": "0",
+          "thumbOneHole": "원홀 특수 가공",
+          "bevel1Front": "1/16",
+          "bevel2Front": "1/32",
+          "ovalSize": "Oval 63",
+          "ovalCut": "Straight",
+          "notes": "[엑셀 마이그레이션 자동 변환 기록]\n[옵셋 1행] 1/8 옵셋\n[옵셋 2행] 미세 각도 피팅\n[그린 메모] 그린 메모: 그린 특수 매핑 메모\n퍼플 메모 (2행): 기본 오발 도면 조율\n퍼플 메모 (4행): 백엔드 마찰 강화",
+          "createdByEmail": "sysmedic3@gmail.com"
+        }
+      ],
+      "cust_1786871660782_36cw9": [
+        {
+          "id": "chart_1786871660782_nwei1",
+          "customerId": "cust_1786871660782_36cw9",
+          "name": "홍길동_서브 마이그레이션 차트",
+          "date": "2026-08-16",
+          "createdAt": "2026-08-16",
+          "updatedAt": "2026-08-16T09:14:20.782Z",
+          "middleTip": "",
+          "middleCut": "30/32",
+          "middleReverse": "1/8",
+          "middleForward": "",
+          "middleLateral": "",
+          "middleInsert": "",
+          "ringTip": "",
+          "ringCut": "",
+          "ringReverse": "",
+          "ringForward": "",
+          "ringLateral": "",
+          "ringInsert": "",
+          "middleSpan": "4 3/8",
+          "ringSpan": "4 1/2",
+          "thumbCut": "",
+          "thumbReverse": "",
+          "thumbForward": "",
+          "thumbLeft": "",
+          "thumbRight": "",
+          "thumbOneHole": "",
+          "bevel1Front": "",
+          "bevel2Front": "",
+          "ovalSize": "",
+          "ovalCut": "",
+          "notes": "[엑셀 마이그레이션 자동 변환 기록]\n블루 메모 (1행): 서브 도면 가이드",
+          "createdByEmail": "sysmedic3@gmail.com"
+        }
+      ]
+    },
+    "customBowlingBalls": []
+  }
+}

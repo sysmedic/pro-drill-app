@@ -18,6 +18,7 @@ import ChartModalManager from './chartDetail/ChartModalManager.jsx';
 import CustomerHistoryModal from './chartDetail/CustomerHistoryModal.jsx';
 import AiRecommendationModal from './chartDetail/AiRecommendationModal.jsx'; // 🤖 AI 추천 모달 임포트
 import ConvertProcessModal from './chartDetail/ConvertProcessModal.jsx'; // 🔄 변환 과정 모달 임포트
+import { getApiKey, convertLayoutTo2LS, convert2LSToDualAngle } from '../lib/openaiService.js';
 
 import useChartSession from './chartDetail/useChartSession.js'; 
 import useChartExport from './chartDetail/useChartExport.js'; 
@@ -156,17 +157,28 @@ export default function ChartDetail({
     }
   }, [initialChartId, historyManager.loading, historyManager.history, sessionManager.viewingRecord, sessionManager.sessionRecordId, historyManager]);
 
-  // 🤖 AI 추천 및 2LS 변환 핸들러 신설
+  // 🤖 AI 추천 및 2LS 변환 핸들러 (Dual Angle -> Dual 표기 통일, ° 각도 기호 자동 보정, 레이아웃 수치 + 레이아웃 의도 1줄 기록)
   const handleSelectRecommendation = useCallback(({ layout, intentSummary, condition }) => {
-    sessionManager.setLayoutInfo(layout);
+    let normLayout = layout ? layout.replace(/Dual\s*Angle/gi, 'Dual').trim() : '';
+    if (normLayout.includes('(Dual)') || normLayout.startsWith('Dual') || (!normLayout.includes('(2LS)') && /^\d+\s*x/i.test(normLayout))) {
+      normLayout = normLayout.replace(/\(Dual\)\s*(\d+)\s*x\s*([\d\s\/]+)\s*x\s*(\d+)/gi, '(Dual) $1° x $2 x $3°');
+      if (!normLayout.includes('°') && /^\d+\s*x/i.test(normLayout)) {
+        normLayout = normLayout.replace(/^(\d+)\s*x\s*([\d\s\/]+)\s*x\s*(\d+)$/gi, '(Dual) $1° x $2 x $3°');
+      }
+    }
+
+    sessionManager.setLayoutInfo(normLayout);
+    
     const prefix = sessionManager.intent ? `${sessionManager.intent}\n` : '';
-    sessionManager.setIntent(`${prefix}[AI 추천(${condition}): ${intentSummary}]`);
+    const cleanSummary = intentSummary || '최적 백엔드 모션 유도';
+    const entryNote = `[AI추천(${condition})] ${normLayout} : ${cleanSummary}`;
+    
+    sessionManager.setIntent(`${prefix}${entryNote}`);
     sessionManager.setHasUnsavedChanges(true);
-    setFeedback({ message: 'AI 레이아웃 및 추천 의도가 적용되었습니다.', tone: 'success' });
+    setFeedback({ message: 'AI 레이아웃 및 지공 의도가 적용되었습니다.', tone: 'success' });
   }, [sessionManager.intent, sessionManager.setLayoutInfo, sessionManager.setIntent, sessionManager.setHasUnsavedChanges]);
 
   const handleManual2LsConvert = useCallback(async () => {
-    const { getApiKey, convertLayoutTo2LS, convert2LSToDualAngle } = await import('../lib/openaiService.js');
     const apiKey = getApiKey();
     if (!apiKey) {
       setFeedback({ message: '변환 연산을 위해 Gemini API Key를 먼저 설정해주세요. (시스템 설정⚙️ 혹은 AI 추천 모달)', tone: 'warning' });
@@ -177,7 +189,7 @@ export default function ChartDetail({
     if (!sessionManager.layoutInfo) return;
 
     const fromLayout = sessionManager.layoutInfo;
-    const has2lsPrefix = fromLayout.includes('(2LS)');
+    const has2lsPrefix = fromLayout.includes('(2LS)') || fromLayout.includes('2LS');
     const convertType = has2lsPrefix ? 'Dual Angle 변환' : '2LS 변환';
     
     // 볼러 스펙 요약 문구 생성
@@ -206,7 +218,7 @@ export default function ChartDetail({
             fromLayout,
             toLayout: res.dualAngle,
             convertType,
-            reason: res.reason || '볼러의 PAP 수치 및 틸트를 반영하여 Dual Angle 호환 수치를 정확하게 산출했습니다.',
+            reason: res.reason || '볼러의 PAP 좌표 및 틸트를 반영하여 Dual Angle 호환 수치를 정확하게 산출했습니다.',
             specSummary
           });
         }
@@ -222,7 +234,7 @@ export default function ChartDetail({
             fromLayout,
             toLayout: res.twoLS,
             convertType,
-            reason: res.reason || '볼러의 PAP 수치 및 틸트를 반영하여 Storm 2LS 지공 공식 수치를 정확하게 산출했습니다.',
+            reason: res.reason || '볼러의 PAP 좌표 및 틸트를 반영하여 Storm 2LS 지공 공식 수치를 정확하게 산출했습니다.',
             specSummary
           });
         }
@@ -236,16 +248,26 @@ export default function ChartDetail({
     }
   }, [sessionManager.layoutInfo, customer, sessionManager.customerInfo]);
 
-  // 변환 과정 모달에서 지공사가 [차트에 변환값 적용] 버튼 클릭 시 확정 대입
+  // 변환 과정 모달에서 지공사가 [차트에 적용] 버튼 클릭 시 확정 대입 (순수 수치 변환 1줄 기록: (Dual) 50° x 4 1/2 x 40° ➔ (2LS) 4 1/2 x 4 x 2)
   const handleApplyConvertedLayout = useCallback(() => {
     if (!convertResultData) return;
-    sessionManager.setLayoutInfo(convertResultData.toLayout);
+    const normToLayout = convertResultData.toLayout ? convertResultData.toLayout.replace(/Dual\s*Angle/gi, 'Dual') : '';
+    const normFromLayout = convertResultData.fromLayout ? convertResultData.fromLayout.replace(/Dual\s*Angle/gi, 'Dual') : '';
+
+    const updateLayout = sessionManager.updateWorkField(sessionManager.setLayoutInfo);
+    updateLayout(normToLayout);
+
     const prefix = sessionManager.intent ? `${sessionManager.intent}\n` : '';
-    sessionManager.setIntent(`${prefix}[${convertResultData.convertType} 적용: ${convertResultData.reason}]`);
+    const updateIntent = sessionManager.updateWorkField(sessionManager.setIntent);
+    
+    // 요청하신 순수 수치 변환 1줄만 정확히 기입!
+    const convertNote = `${normFromLayout} ➔ ${normToLayout}`;
+    updateIntent(`${prefix}${convertNote}`);
+
     sessionManager.setHasUnsavedChanges(true);
     setShowConvertModal(false);
     setFeedback({ message: `${convertResultData.convertType} 레이아웃 적용 완료!`, tone: 'success' });
-  }, [convertResultData, sessionManager.intent, sessionManager.setLayoutInfo, sessionManager.setIntent, sessionManager.setHasUnsavedChanges]);
+  }, [convertResultData, sessionManager.intent, sessionManager.setLayoutInfo, sessionManager.setIntent, sessionManager.updateWorkField, sessionManager.setHasUnsavedChanges]);
 
   // 화면 꺼짐 방지(Screen Wake Lock) 가동 이펙트
   useEffect(() => {
@@ -515,7 +537,7 @@ export default function ChartDetail({
         )}
 
         {sessionManager.isEditMode ? (
-          <Card className="w-full p-2 pb-2 sm:p-3 sm:pb-4 mt-0.5 mb-1.5 sm:mb-2 relative z-40 overflow-hidden animate-fade-in transform-gpu [backface-visibility:hidden]" data-testid="chart-edit-surface">
+          <Card className="w-full p-2 pb-2 sm:p-3 sm:pb-4 mt-0.5 mb-1.5 sm:mb-2 relative z-40 overflow-hidden animate-fade-in transform-gpu [backface-visibility:hidden] border-slate-300 shadow-md" data-testid="chart-edit-surface">
             <div ref={formRef} className="relative w-full h-full">
               <ChartInputForm 
                 customer={customer} 

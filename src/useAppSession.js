@@ -71,11 +71,18 @@ export default function useAppSession() {
 
   // 인증 확인 및 주기적 6시간 라이선스 백그라운드 대조 (Focus 시 30분 경과 감지)
   useEffect(() => {
-    setUser(LOCAL_USER);
+    const storedEmail = typeof window !== 'undefined' 
+      ? (localStorage.getItem('prodrill_linked_email') || localStorage.getItem('prodrill_certified_email_plain') || '').trim().toLowerCase()
+      : '';
+    const activeUser = storedEmail && storedEmail !== 'guest@prodrill.local'
+      ? { uid: 'google_user', email: storedEmail, displayName: storedEmail }
+      : LOCAL_USER;
+
+    setUser(activeUser);
     const initialTier = resolveInitialTier();
     setUserTier(initialTier);
     setMaxChartsAllowed(Infinity);
-    refreshChartCount(LOCAL_USER.uid);
+    refreshChartCount(activeUser.uid);
     setIsAuthChecking(false);
 
     let lastCheckTimestamp = new Date().getTime();

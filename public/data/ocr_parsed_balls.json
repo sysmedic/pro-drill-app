@@ -1,0 +1,3377 @@
+[
+  {
+    "idx": 27,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "5board",
+    "url": "https://www.lordfield.com/product/5board/859/category/23/display/1/",
+    "catalog_images_count": 24,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 28,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "5board",
+    "url": "https://www.lordfield.com/product/5board/859/category/44/display/1/",
+    "catalog_images_count": 24,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 29,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "5board",
+    "url": "https://www.lordfield.com/product/5board/859/category/93/display/1/",
+    "catalog_images_count": 24,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 30,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ace",
+    "url": "https://www.lordfield.com/product/ace/778/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 31,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ace",
+    "url": "https://www.lordfield.com/product/ace/778/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 32,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ace",
+    "url": "https://www.lordfield.com/product/ace/778/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 33,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "active-motion-tape-black",
+    "url": "https://www.lordfield.com/product/active-motion-tape-black/834/category/26/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 34,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "active-motion-tape-black",
+    "url": "https://www.lordfield.com/product/active-motion-tape-black/834/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 35,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "active-motion-tape-orange",
+    "url": "https://www.lordfield.com/product/active-motion-tape-orange/832/category/26/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 36,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "active-motion-tape-orange",
+    "url": "https://www.lordfield.com/product/active-motion-tape-orange/832/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 37,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "active-motion-tape-red",
+    "url": "https://www.lordfield.com/product/active-motion-tape-red/833/category/26/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 38,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "active-motion-tape-red",
+    "url": "https://www.lordfield.com/product/active-motion-tape-red/833/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 39,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ald-001",
+    "url": "https://www.lordfield.com/product/ald-001/722/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 40,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ald-002",
+    "url": "https://www.lordfield.com/product/ald-002/723/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 41,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ald-003",
+    "url": "https://www.lordfield.com/product/ald-003/724/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 42,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ald-004",
+    "url": "https://www.lordfield.com/product/ald-004/725/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 43,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ald-005",
+    "url": "https://www.lordfield.com/product/ald-005/726/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 44,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ald-006",
+    "url": "https://www.lordfield.com/product/ald-006/727/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 45,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "apex-solid",
+    "url": "https://www.lordfield.com/product/apex-solid/824/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 46,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "apex-solid",
+    "url": "https://www.lordfield.com/product/apex-solid/824/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 47,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "apex-solid",
+    "url": "https://www.lordfield.com/product/apex-solid/824/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 48,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "archive-20",
+    "url": "https://www.lordfield.com/product/archive-20/821/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 49,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "archive-20",
+    "url": "https://www.lordfield.com/product/archive-20/821/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 50,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "archive-20",
+    "url": "https://www.lordfield.com/product/archive-20/821/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 51,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "archive-solid",
+    "url": "https://www.lordfield.com/product/archive-solid/758/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 52,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "archive-solid",
+    "url": "https://www.lordfield.com/product/archive-solid/758/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 53,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "archive-solid",
+    "url": "https://www.lordfield.com/product/archive-solid/758/category/93/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 54,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "archive-unlimited",
+    "url": "https://www.lordfield.com/product/archive-unlimited/794/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 55,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "archive-unlimited",
+    "url": "https://www.lordfield.com/product/archive-unlimited/794/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 56,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "archive-unlimited",
+    "url": "https://www.lordfield.com/product/archive-unlimited/794/category/93/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 57,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "archive",
+    "url": "https://www.lordfield.com/product/archive/732/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 58,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "archive",
+    "url": "https://www.lordfield.com/product/archive/732/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 59,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-1",
+    "url": "https://www.lordfield.com/product/beardive-lf-1/23/category/27/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 60,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-10",
+    "url": "https://www.lordfield.com/product/beardive-lf-10/32/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 61,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-11",
+    "url": "https://www.lordfield.com/product/beardive-lf-11/33/category/27/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 62,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-12",
+    "url": "https://www.lordfield.com/product/beardive-lf-12/539/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 63,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-13",
+    "url": "https://www.lordfield.com/product/beardive-lf-13/540/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 64,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-14",
+    "url": "https://www.lordfield.com/product/beardive-lf-14/541/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 65,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-15",
+    "url": "https://www.lordfield.com/product/beardive-lf-15/542/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 66,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-16",
+    "url": "https://www.lordfield.com/product/beardive-lf-16/543/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 67,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-17",
+    "url": "https://www.lordfield.com/product/beardive-lf-17/544/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 68,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-18",
+    "url": "https://www.lordfield.com/product/beardive-lf-18/546/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 69,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-19",
+    "url": "https://www.lordfield.com/product/beardive-lf-19/547/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 70,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-2",
+    "url": "https://www.lordfield.com/product/beardive-lf-2/24/category/27/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 71,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-20",
+    "url": "https://www.lordfield.com/product/beardive-lf-20/548/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 72,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-21",
+    "url": "https://www.lordfield.com/product/beardive-lf-21/549/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 73,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-22",
+    "url": "https://www.lordfield.com/product/beardive-lf-22/550/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 74,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-23",
+    "url": "https://www.lordfield.com/product/beardive-lf-23/559/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 75,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-24",
+    "url": "https://www.lordfield.com/product/beardive-lf-24/560/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 76,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-25",
+    "url": "https://www.lordfield.com/product/beardive-lf-25/561/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 77,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-26",
+    "url": "https://www.lordfield.com/product/beardive-lf-26/562/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 78,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-27",
+    "url": "https://www.lordfield.com/product/beardive-lf-27/565/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 79,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-28",
+    "url": "https://www.lordfield.com/product/beardive-lf-28/566/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 80,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-29",
+    "url": "https://www.lordfield.com/product/beardive-lf-29/567/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 81,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-3",
+    "url": "https://www.lordfield.com/product/beardive-lf-3/25/category/27/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 82,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-30",
+    "url": "https://www.lordfield.com/product/beardive-lf-30/568/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 83,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-31",
+    "url": "https://www.lordfield.com/product/beardive-lf-31/569/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 84,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-32",
+    "url": "https://www.lordfield.com/product/beardive-lf-32/570/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 85,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-33",
+    "url": "https://www.lordfield.com/product/beardive-lf-33/571/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 86,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-34",
+    "url": "https://www.lordfield.com/product/beardive-lf-34/572/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 87,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-35",
+    "url": "https://www.lordfield.com/product/beardive-lf-35/573/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 88,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-36",
+    "url": "https://www.lordfield.com/product/beardive-lf-36/574/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 89,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-37",
+    "url": "https://www.lordfield.com/product/beardive-lf-37/575/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 90,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-38",
+    "url": "https://www.lordfield.com/product/beardive-lf-38/576/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 91,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-39",
+    "url": "https://www.lordfield.com/product/beardive-lf-39/577/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 92,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-4",
+    "url": "https://www.lordfield.com/product/beardive-lf-4/26/category/27/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 93,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-40",
+    "url": "https://www.lordfield.com/product/beardive-lf-40/578/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 94,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-41",
+    "url": "https://www.lordfield.com/product/beardive-lf-41/579/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 95,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-42",
+    "url": "https://www.lordfield.com/product/beardive-lf-42/580/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 96,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-43",
+    "url": "https://www.lordfield.com/product/beardive-lf-43/581/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 97,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-44",
+    "url": "https://www.lordfield.com/product/beardive-lf-44/582/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 98,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-45",
+    "url": "https://www.lordfield.com/product/beardive-lf-45/584/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 99,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-46",
+    "url": "https://www.lordfield.com/product/beardive-lf-46/585/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 100,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-47",
+    "url": "https://www.lordfield.com/product/beardive-lf-47/586/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 101,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-48",
+    "url": "https://www.lordfield.com/product/beardive-lf-48/587/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 102,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-49",
+    "url": "https://www.lordfield.com/product/beardive-lf-49/588/category/27/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 103,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-5",
+    "url": "https://www.lordfield.com/product/beardive-lf-5/27/category/27/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 104,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-50",
+    "url": "https://www.lordfield.com/product/beardive-lf-50/589/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 105,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-51",
+    "url": "https://www.lordfield.com/product/beardive-lf-51/590/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 106,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-52",
+    "url": "https://www.lordfield.com/product/beardive-lf-52/593/category/27/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 107,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-53",
+    "url": "https://www.lordfield.com/product/beardive-lf-53/702/category/27/display/1/",
+    "catalog_images_count": 25,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 108,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-54",
+    "url": "https://www.lordfield.com/product/beardive-lf-54/703/category/27/display/1/",
+    "catalog_images_count": 25,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 109,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-55",
+    "url": "https://www.lordfield.com/product/beardive-lf-55/704/category/27/display/1/",
+    "catalog_images_count": 25,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 110,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-56",
+    "url": "https://www.lordfield.com/product/beardive-lf-56/705/category/27/display/1/",
+    "catalog_images_count": 25,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 111,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-57",
+    "url": "https://www.lordfield.com/product/beardive-lf-57/706/category/27/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 112,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-58",
+    "url": "https://www.lordfield.com/product/beardive-lf-58/779/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 113,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-58",
+    "url": "https://www.lordfield.com/product/beardive-lf-58/779/category/93/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 114,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-59",
+    "url": "https://www.lordfield.com/product/beardive-lf-59/780/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 115,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-59",
+    "url": "https://www.lordfield.com/product/beardive-lf-59/780/category/93/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 116,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-6",
+    "url": "https://www.lordfield.com/product/beardive-lf-6/28/category/27/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 117,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-60",
+    "url": "https://www.lordfield.com/product/beardive-lf-60/781/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 118,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-60",
+    "url": "https://www.lordfield.com/product/beardive-lf-60/781/category/93/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 119,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-7",
+    "url": "https://www.lordfield.com/product/beardive-lf-7/29/category/27/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 120,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-8",
+    "url": "https://www.lordfield.com/product/beardive-lf-8/30/category/27/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 121,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "beardive-lf-9",
+    "url": "https://www.lordfield.com/product/beardive-lf-9/31/category/27/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 122,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-assemble",
+    "url": "https://www.lordfield.com/product/big-bro-assemble/789/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 123,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-assemble",
+    "url": "https://www.lordfield.com/product/big-bro-assemble/789/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 124,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-assemble",
+    "url": "https://www.lordfield.com/product/big-bro-assemble/789/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 125,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-big-guns",
+    "url": "https://www.lordfield.com/product/big-bro-big-guns/665/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 126,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-big-guns",
+    "url": "https://www.lordfield.com/product/big-bro-big-guns/665/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 127,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-burn-up-le",
+    "url": "https://www.lordfield.com/product/big-bro-burn-up-le/684/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 128,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-burn-up-le",
+    "url": "https://www.lordfield.com/product/big-bro-burn-up-le/684/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 129,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-burn-up",
+    "url": "https://www.lordfield.com/product/big-bro-burn-up/493/category/23/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 130,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-burn-up",
+    "url": "https://www.lordfield.com/product/big-bro-burn-up/493/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 131,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-flexin",
+    "url": "https://www.lordfield.com/product/big-bro-flexin/488/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 132,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-galaxy",
+    "url": "https://www.lordfield.com/product/big-bro-galaxy/492/category/23/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 133,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-galaxy",
+    "url": "https://www.lordfield.com/product/big-bro-galaxy/492/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 134,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-jacked",
+    "url": "https://www.lordfield.com/product/big-bro-jacked/596/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 135,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-jacked",
+    "url": "https://www.lordfield.com/product/big-bro-jacked/596/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 136,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-ko",
+    "url": "https://www.lordfield.com/product/big-bro-ko/645/category/23/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 137,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-ko",
+    "url": "https://www.lordfield.com/product/big-bro-ko/645/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 138,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-top-dog",
+    "url": "https://www.lordfield.com/product/big-bro-top-dog/718/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 139,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro-top-dog",
+    "url": "https://www.lordfield.com/product/big-bro-top-dog/718/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 140,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "big-bro",
+    "url": "https://www.lordfield.com/product/big-bro/486/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 141,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "black-dragon-pearl",
+    "url": "https://www.lordfield.com/product/black-dragon-pearl/823/category/23/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 142,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "black-dragon-pearl",
+    "url": "https://www.lordfield.com/product/black-dragon-pearl/823/category/44/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 143,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "black-dragon-pearl",
+    "url": "https://www.lordfield.com/product/black-dragon-pearl/823/category/93/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 144,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "black-dragon",
+    "url": "https://www.lordfield.com/product/black-dragon/819/category/23/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 145,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "black-dragon",
+    "url": "https://www.lordfield.com/product/black-dragon/819/category/44/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 146,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "black-dragon",
+    "url": "https://www.lordfield.com/product/black-dragon/819/category/93/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 147,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "blizzard-frozen",
+    "url": "https://www.lordfield.com/product/blizzard-frozen/583/category/23/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 148,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "blizzard-glacier",
+    "url": "https://www.lordfield.com/product/blizzard-glacier/786/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 149,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "blizzard-glacier",
+    "url": "https://www.lordfield.com/product/blizzard-glacier/786/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 150,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "blizzard-glacier",
+    "url": "https://www.lordfield.com/product/blizzard-glacier/786/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 151,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "blizzard-meltdown",
+    "url": "https://www.lordfield.com/product/blizzard-meltdown/646/category/23/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 152,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "blizzard-whiteout",
+    "url": "https://www.lordfield.com/product/blizzard-whiteout/659/category/23/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 153,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "blizzard-zero",
+    "url": "https://www.lordfield.com/product/blizzard-zero/714/category/23/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 154,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "blizzard-zero",
+    "url": "https://www.lordfield.com/product/blizzard-zero/714/category/44/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 155,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "blue-diamond-limited",
+    "url": "https://www.lordfield.com/product/blue-diamond-limited/613/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 156,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "buffalo",
+    "url": "https://www.lordfield.com/product/buffalo/708/category/23/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 157,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "buffalo",
+    "url": "https://www.lordfield.com/product/buffalo/708/category/44/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 158,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "buzzer-beater-purple",
+    "url": "https://www.lordfield.com/product/buzzer-beater-purple/817/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 159,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "buzzer-beater-purple",
+    "url": "https://www.lordfield.com/product/buzzer-beater-purple/817/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 160,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "buzzer-beater-purple",
+    "url": "https://www.lordfield.com/product/buzzer-beater-purple/817/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 161,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "buzzer-beater-red",
+    "url": "https://www.lordfield.com/product/buzzer-beater-red/771/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 162,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "buzzer-beater-red",
+    "url": "https://www.lordfield.com/product/buzzer-beater-red/771/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 163,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "buzzer-beater-red",
+    "url": "https://www.lordfield.com/product/buzzer-beater-red/771/category/93/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 164,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "buzzer-beater-solid",
+    "url": "https://www.lordfield.com/product/buzzer-beater-solid/688/category/23/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 165,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "buzzer-beater-solid",
+    "url": "https://www.lordfield.com/product/buzzer-beater-solid/688/category/44/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 166,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "buzzer-beater",
+    "url": "https://www.lordfield.com/product/buzzer-beater/660/category/23/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 167,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "buzzer-beater",
+    "url": "https://www.lordfield.com/product/buzzer-beater/660/category/44/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 168,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "craze-hybrid",
+    "url": "https://www.lordfield.com/product/craze-hybrid/830/category/23/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 169,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "craze-hybrid",
+    "url": "https://www.lordfield.com/product/craze-hybrid/830/category/44/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 170,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "craze-hybrid",
+    "url": "https://www.lordfield.com/product/craze-hybrid/830/category/93/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 171,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "craze-pearl",
+    "url": "https://www.lordfield.com/product/craze-pearl/839/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 172,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "craze-pearl",
+    "url": "https://www.lordfield.com/product/craze-pearl/839/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 173,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "craze-pearl",
+    "url": "https://www.lordfield.com/product/craze-pearl/839/category/93/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 174,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "craze-solid",
+    "url": "https://www.lordfield.com/product/craze-solid/840/category/23/display/1/",
+    "catalog_images_count": 23,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 175,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "craze-solid",
+    "url": "https://www.lordfield.com/product/craze-solid/840/category/44/display/1/",
+    "catalog_images_count": 23,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 176,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "craze-solid",
+    "url": "https://www.lordfield.com/product/craze-solid/840/category/93/display/1/",
+    "catalog_images_count": 23,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 177,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "cupping-band-plus-sling",
+    "url": "https://www.lordfield.com/product/cupping-band-plus-sling/385/category/24/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 178,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "cupping-band-sling",
+    "url": "https://www.lordfield.com/product/cupping-band-sling/381/category/24/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 179,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "dynamite-blaze",
+    "url": "https://www.lordfield.com/product/dynamite-blaze/733/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 180,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "dynamite-blaze",
+    "url": "https://www.lordfield.com/product/dynamite-blaze/733/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 181,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "dynamite-max",
+    "url": "https://www.lordfield.com/product/dynamite-max/661/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 182,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "dynamite-max",
+    "url": "https://www.lordfield.com/product/dynamite-max/661/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 183,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "dynamite-war",
+    "url": "https://www.lordfield.com/product/dynamite-war/802/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 184,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "dynamite-war",
+    "url": "https://www.lordfield.com/product/dynamite-war/802/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 185,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "dynamite-war",
+    "url": "https://www.lordfield.com/product/dynamite-war/802/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 186,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "dynamite",
+    "url": "https://www.lordfield.com/product/dynamite/617/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 187,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "dynamite",
+    "url": "https://www.lordfield.com/product/dynamite/617/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 188,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "e-ald-001",
+    "url": "https://www.lordfield.com/product/e-ald-001/728/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 189,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "e-ald-002",
+    "url": "https://www.lordfield.com/product/e-ald-002/729/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 190,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "e-ald-003",
+    "url": "https://www.lordfield.com/product/e-ald-003/730/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 191,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "e-ald-004",
+    "url": "https://www.lordfield.com/product/e-ald-004/731/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 192,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "fantasy-daze",
+    "url": "https://www.lordfield.com/product/fantasy-daze/642/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 193,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "fantasy-daze",
+    "url": "https://www.lordfield.com/product/fantasy-daze/642/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 194,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "fantasy-epic",
+    "url": "https://www.lordfield.com/product/fantasy-epic/762/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 195,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "fantasy-epic",
+    "url": "https://www.lordfield.com/product/fantasy-epic/762/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 196,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "fantasy-epic",
+    "url": "https://www.lordfield.com/product/fantasy-epic/762/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 197,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "fantasy-moonlight",
+    "url": "https://www.lordfield.com/product/fantasy-moonlight/814/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 198,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "fantasy-moonlight",
+    "url": "https://www.lordfield.com/product/fantasy-moonlight/814/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 199,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "fantasy-moonlight",
+    "url": "https://www.lordfield.com/product/fantasy-moonlight/814/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 200,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "fantasy-star",
+    "url": "https://www.lordfield.com/product/fantasy-star/484/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 201,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "fantasy",
+    "url": "https://www.lordfield.com/product/fantasy/38/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 207,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "geek-meme",
+    "url": "https://www.lordfield.com/product/geek-meme/667/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 208,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "geek-meme",
+    "url": "https://www.lordfield.com/product/geek-meme/667/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 209,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "geek-meme",
+    "url": "https://www.lordfield.com/product/geek-meme/668/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 210,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "geek-meme",
+    "url": "https://www.lordfield.com/product/geek-meme/668/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 211,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "geek",
+    "url": "https://www.lordfield.com/product/geek/619/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 212,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "geek",
+    "url": "https://www.lordfield.com/product/geek/619/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 213,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "geek",
+    "url": "https://www.lordfield.com/product/geek/620/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 214,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "geek",
+    "url": "https://www.lordfield.com/product/geek/620/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 215,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "goat",
+    "url": "https://www.lordfield.com/product/goat/787/category/23/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 216,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "goat",
+    "url": "https://www.lordfield.com/product/goat/787/category/44/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 217,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "goat",
+    "url": "https://www.lordfield.com/product/goat/787/category/93/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 218,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-artist",
+    "url": "https://www.lordfield.com/product/graffiti-artist/757/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 219,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-artist",
+    "url": "https://www.lordfield.com/product/graffiti-artist/757/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 220,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-artist",
+    "url": "https://www.lordfield.com/product/graffiti-artist/757/category/93/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 221,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-i-con",
+    "url": "https://www.lordfield.com/product/graffiti-i-con/529/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 222,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-i-con",
+    "url": "https://www.lordfield.com/product/graffiti-i-con/529/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 223,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-king",
+    "url": "https://www.lordfield.com/product/graffiti-king/816/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 224,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-king",
+    "url": "https://www.lordfield.com/product/graffiti-king/816/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 225,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-king",
+    "url": "https://www.lordfield.com/product/graffiti-king/816/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 226,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-pearl",
+    "url": "https://www.lordfield.com/product/graffiti-pearl/39/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 227,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-pop",
+    "url": "https://www.lordfield.com/product/graffiti-pop/643/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 228,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-pop",
+    "url": "https://www.lordfield.com/product/graffiti-pop/643/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 229,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-tracker",
+    "url": "https://www.lordfield.com/product/graffiti-tracker/682/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 230,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-tracker",
+    "url": "https://www.lordfield.com/product/graffiti-tracker/682/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 231,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-vandal",
+    "url": "https://www.lordfield.com/product/graffiti-vandal/831/category/23/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 232,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-vandal",
+    "url": "https://www.lordfield.com/product/graffiti-vandal/831/category/44/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 233,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti-vandal",
+    "url": "https://www.lordfield.com/product/graffiti-vandal/831/category/93/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 234,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "graffiti",
+    "url": "https://www.lordfield.com/product/graffiti/41/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 235,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "guardian-thumb-protection-tape-orange",
+    "url": "https://www.lordfield.com/product/guardian-thumb-protection-tape-orange/835/category/26/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 236,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "guardian-thumb-protection-tape-orange",
+    "url": "https://www.lordfield.com/product/guardian-thumb-protection-tape-orange/835/category/93/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 237,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "guardian-thumb-protection-tape-red",
+    "url": "https://www.lordfield.com/product/guardian-thumb-protection-tape-red/836/category/26/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 238,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "guardian-thumb-protection-tape-red",
+    "url": "https://www.lordfield.com/product/guardian-thumb-protection-tape-red/836/category/93/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 239,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "hellfire-flame",
+    "url": "https://www.lordfield.com/product/hellfire-flame/622/category/23/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 240,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "hidden-joker",
+    "url": "https://www.lordfield.com/product/hidden-joker/815/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 241,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "hidden-joker",
+    "url": "https://www.lordfield.com/product/hidden-joker/815/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 242,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "hidden-joker",
+    "url": "https://www.lordfield.com/product/hidden-joker/815/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 243,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "hip-star",
+    "url": "https://www.lordfield.com/product/hip-star/494/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 244,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "hip-star",
+    "url": "https://www.lordfield.com/product/hip-star/494/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 245,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "holicbluepurpleneon-green",
+    "url": "https://www.lordfield.com/product/holicbluepurpleneon-green/12/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 246,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "holicemeraldsilvermint",
+    "url": "https://www.lordfield.com/product/holicemeraldsilvermint/13/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 247,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "holicorangebluewhite",
+    "url": "https://www.lordfield.com/product/holicorangebluewhite/14/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 248,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "holicpinkpurplesilver",
+    "url": "https://www.lordfield.com/product/holicpinkpurplesilver/15/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 249,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "hype",
+    "url": "https://www.lordfield.com/product/hype/793/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 250,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "hype",
+    "url": "https://www.lordfield.com/product/hype/793/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 251,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "hype",
+    "url": "https://www.lordfield.com/product/hype/793/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 252,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-1",
+    "url": "https://www.lordfield.com/product/ike-b-lf-1/533/category/27/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 253,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-10",
+    "url": "https://www.lordfield.com/product/ike-b-lf-10/698/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 254,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-11",
+    "url": "https://www.lordfield.com/product/ike-b-lf-11/699/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 255,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-12",
+    "url": "https://www.lordfield.com/product/ike-b-lf-12/700/category/27/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 256,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-13",
+    "url": "https://www.lordfield.com/product/ike-b-lf-13/701/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 257,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-14",
+    "url": "https://www.lordfield.com/product/ike-b-lf-14/782/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 258,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-14",
+    "url": "https://www.lordfield.com/product/ike-b-lf-14/782/category/93/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 259,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-15",
+    "url": "https://www.lordfield.com/product/ike-b-lf-15/783/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 260,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-15",
+    "url": "https://www.lordfield.com/product/ike-b-lf-15/783/category/93/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 261,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-16",
+    "url": "https://www.lordfield.com/product/ike-b-lf-16/784/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 262,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-16",
+    "url": "https://www.lordfield.com/product/ike-b-lf-16/784/category/93/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 263,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-2",
+    "url": "https://www.lordfield.com/product/ike-b-lf-2/534/category/27/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 264,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-3",
+    "url": "https://www.lordfield.com/product/ike-b-lf-3/535/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 265,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-4",
+    "url": "https://www.lordfield.com/product/ike-b-lf-4/536/category/27/display/1/",
+    "catalog_images_count": 23,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 266,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-5",
+    "url": "https://www.lordfield.com/product/ike-b-lf-5/537/category/27/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 267,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-6",
+    "url": "https://www.lordfield.com/product/ike-b-lf-6/538/category/27/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 268,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-7",
+    "url": "https://www.lordfield.com/product/ike-b-lf-7/553/category/27/display/1/",
+    "catalog_images_count": 23,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 269,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-8",
+    "url": "https://www.lordfield.com/product/ike-b-lf-8/616/category/27/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 270,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "ike-b-lf-9",
+    "url": "https://www.lordfield.com/product/ike-b-lf-9/697/category/27/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 271,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-boom",
+    "url": "https://www.lordfield.com/product/incredible-boom/867/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 272,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-boom",
+    "url": "https://www.lordfield.com/product/incredible-boom/867/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 273,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-boom",
+    "url": "https://www.lordfield.com/product/incredible-boom/867/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 274,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-giant",
+    "url": "https://www.lordfield.com/product/incredible-giant/670/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 275,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-giant",
+    "url": "https://www.lordfield.com/product/incredible-giant/670/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 276,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-hero",
+    "url": "https://www.lordfield.com/product/incredible-hero/491/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 277,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-hero",
+    "url": "https://www.lordfield.com/product/incredible-hero/491/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 278,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-phenom",
+    "url": "https://www.lordfield.com/product/incredible-phenom/736/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 279,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-phenom",
+    "url": "https://www.lordfield.com/product/incredible-phenom/736/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 280,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-sweet",
+    "url": "https://www.lordfield.com/product/incredible-sweet/808/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 281,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-sweet",
+    "url": "https://www.lordfield.com/product/incredible-sweet/808/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 282,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-sweet",
+    "url": "https://www.lordfield.com/product/incredible-sweet/808/category/93/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 283,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-x",
+    "url": "https://www.lordfield.com/product/incredible-x/623/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 284,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible-x",
+    "url": "https://www.lordfield.com/product/incredible-x/623/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 285,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "incredible",
+    "url": "https://www.lordfield.com/product/incredible/487/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 286,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "iron-diamond-78d",
+    "url": "https://www.lordfield.com/product/iron-diamond-78d/837/category/23/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 287,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "iron-diamond-78d",
+    "url": "https://www.lordfield.com/product/iron-diamond-78d/837/category/93/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 288,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "jade-diamond",
+    "url": "https://www.lordfield.com/product/jade-diamond/810/category/23/display/1/",
+    "catalog_images_count": 23,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 289,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "jade-diamond",
+    "url": "https://www.lordfield.com/product/jade-diamond/810/category/93/display/1/",
+    "catalog_images_count": 23,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 290,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "jerk-hybrid",
+    "url": "https://www.lordfield.com/product/jerk-hybrid/685/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 291,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "jerk-hybrid",
+    "url": "https://www.lordfield.com/product/jerk-hybrid/685/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 292,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "jerk-pearl",
+    "url": "https://www.lordfield.com/product/jerk-pearl/687/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 293,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "jerk-pearl",
+    "url": "https://www.lordfield.com/product/jerk-pearl/687/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 294,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "jerk-solid",
+    "url": "https://www.lordfield.com/product/jerk-solid/686/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 295,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "jerk-solid",
+    "url": "https://www.lordfield.com/product/jerk-solid/686/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 296,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "joker-maniac",
+    "url": "https://www.lordfield.com/product/joker-maniac/662/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 297,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "joker-maniac",
+    "url": "https://www.lordfield.com/product/joker-maniac/662/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 298,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "joker-wild",
+    "url": "https://www.lordfield.com/product/joker-wild/621/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 299,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "joker-wild",
+    "url": "https://www.lordfield.com/product/joker-wild/621/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 300,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "joker",
+    "url": "https://www.lordfield.com/product/joker/40/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 341,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "mad-joker",
+    "url": "https://www.lordfield.com/product/mad-joker/760/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 342,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "mad-joker",
+    "url": "https://www.lordfield.com/product/mad-joker/760/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 343,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "mad-joker",
+    "url": "https://www.lordfield.com/product/mad-joker/760/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 344,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "mueller-tear-light-tape-black",
+    "url": "https://www.lordfield.com/product/mueller-tear-light-tape-black/829/category/26/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 345,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "mueller-tear-light-tape-black",
+    "url": "https://www.lordfield.com/product/mueller-tear-light-tape-black/829/category/93/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 346,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "mueller-tear-light-tape-white",
+    "url": "https://www.lordfield.com/product/mueller-tear-light-tape-white/828/category/26/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 347,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "mueller-tear-light-tape-white",
+    "url": "https://www.lordfield.com/product/mueller-tear-light-tape-white/828/category/93/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 348,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "no-graffiti",
+    "url": "https://www.lordfield.com/product/no-graffiti/489/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 349,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "pure-fantasy",
+    "url": "https://www.lordfield.com/product/pure-fantasy/669/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 350,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "pure-fantasy",
+    "url": "https://www.lordfield.com/product/pure-fantasy/669/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 351,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "royal-diamond",
+    "url": "https://www.lordfield.com/product/royal-diamond/719/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 352,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "royal-diamond",
+    "url": "https://www.lordfield.com/product/royal-diamond/719/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 353,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "sapphire-diamond",
+    "url": "https://www.lordfield.com/product/sapphire-diamond/872/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 354,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "sapphire-diamond",
+    "url": "https://www.lordfield.com/product/sapphire-diamond/872/category/93/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 355,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "saver-black",
+    "url": "https://www.lordfield.com/product/saver-black/763/category/23/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 356,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "saver-black",
+    "url": "https://www.lordfield.com/product/saver-black/763/category/93/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 357,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "saver-blackwhite",
+    "url": "https://www.lordfield.com/product/saver-blackwhite/689/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 358,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "saver-blueberry",
+    "url": "https://www.lordfield.com/product/saver-blueberry/765/category/23/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 359,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "saver-blueberry",
+    "url": "https://www.lordfield.com/product/saver-blueberry/765/category/93/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 360,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "saver-bluewhite",
+    "url": "https://www.lordfield.com/product/saver-bluewhite/680/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 361,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "saver-goldwhite",
+    "url": "https://www.lordfield.com/product/saver-goldwhite/721/category/23/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 362,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "saver-gooseberry",
+    "url": "https://www.lordfield.com/product/saver-gooseberry/766/category/23/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 363,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "saver-gooseberry",
+    "url": "https://www.lordfield.com/product/saver-gooseberry/766/category/93/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 364,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "saver-pinkwhite",
+    "url": "https://www.lordfield.com/product/saver-pinkwhite/679/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 365,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "saver-purplewhite",
+    "url": "https://www.lordfield.com/product/saver-purplewhite/678/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 366,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "saver-raspberry",
+    "url": "https://www.lordfield.com/product/saver-raspberry/764/category/23/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 367,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "saver-raspberry",
+    "url": "https://www.lordfield.com/product/saver-raspberry/764/category/93/display/1/",
+    "catalog_images_count": 17,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 368,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "secret-diamond",
+    "url": "https://www.lordfield.com/product/secret-diamond/624/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 369,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "serpent-hybrid",
+    "url": "https://www.lordfield.com/product/serpent-hybrid/856/category/23/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 370,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "serpent-hybrid",
+    "url": "https://www.lordfield.com/product/serpent-hybrid/856/category/44/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 371,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "serpent-hybrid",
+    "url": "https://www.lordfield.com/product/serpent-hybrid/856/category/93/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 372,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "shield-hybrid",
+    "url": "https://www.lordfield.com/product/shield-hybrid/715/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 373,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "shield-hybrid",
+    "url": "https://www.lordfield.com/product/shield-hybrid/715/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 374,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "shield-pearl",
+    "url": "https://www.lordfield.com/product/shield-pearl/717/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 375,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "shield-pearl",
+    "url": "https://www.lordfield.com/product/shield-pearl/717/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 376,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "shield-solid",
+    "url": "https://www.lordfield.com/product/shield-solid/716/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 377,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "shield-solid",
+    "url": "https://www.lordfield.com/product/shield-solid/716/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 378,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "show-me-the-money-black",
+    "url": "https://www.lordfield.com/product/show-me-the-money-black/644/category/23/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 379,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "show-me-the-money-black",
+    "url": "https://www.lordfield.com/product/show-me-the-money-black/644/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 380,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "show-me-the-money-bpw",
+    "url": "https://www.lordfield.com/product/show-me-the-money-bpw/838/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 381,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "show-me-the-money-bpw",
+    "url": "https://www.lordfield.com/product/show-me-the-money-bpw/838/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 382,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "show-me-the-money-bpw",
+    "url": "https://www.lordfield.com/product/show-me-the-money-bpw/838/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 383,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "show-me-the-money",
+    "url": "https://www.lordfield.com/product/show-me-the-money/490/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 384,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "show-me-the-money",
+    "url": "https://www.lordfield.com/product/show-me-the-money/490/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 385,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "sigmax-timing-tape-125cm5m-4roll",
+    "url": "https://www.lordfield.com/product/sigmax-timing-tape-125cm5m-4roll/349/category/26/display/1/",
+    "catalog_images_count": 23,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 386,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "sigmax-timing-tape-19cm5m-1-box",
+    "url": "https://www.lordfield.com/product/sigmax-timing-tape-19cm5m-1-box/495/category/26/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 387,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "sigmax-timing-tape-25cm5m-2roll",
+    "url": "https://www.lordfield.com/product/sigmax-timing-tape-25cm5m-2roll/348/category/26/display/1/",
+    "catalog_images_count": 23,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 388,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "sigmax-timing-tape-5cm5m-1-roll",
+    "url": "https://www.lordfield.com/product/sigmax-timing-tape-5cm5m-1-roll/347/category/26/display/1/",
+    "catalog_images_count": 23,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 389,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "silver-bell",
+    "url": "https://www.lordfield.com/product/silver-bell/19/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 390,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "skin-patch",
+    "url": "https://www.lordfield.com/product/skin-patch/335/category/26/display/1/",
+    "catalog_images_count": 23,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 391,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "smile-lordfield-bk",
+    "url": "https://www.lordfield.com/product/smile-lordfield-bk/776/category/23/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 392,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "smile-lordfield-bk",
+    "url": "https://www.lordfield.com/product/smile-lordfield-bk/776/category/93/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 393,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "smile-lordfield-red",
+    "url": "https://www.lordfield.com/product/smile-lordfield-red/777/category/23/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 394,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "smile-lordfield-red",
+    "url": "https://www.lordfield.com/product/smile-lordfield-red/777/category/93/display/1/",
+    "catalog_images_count": 21,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 395,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "smile-lordfield-tape-black",
+    "url": "https://www.lordfield.com/product/smile-lordfield-tape-black/792/category/26/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 396,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "smile-lordfield-tape-black",
+    "url": "https://www.lordfield.com/product/smile-lordfield-tape-black/792/category/93/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 397,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "smile-lordfield-tape-pink",
+    "url": "https://www.lordfield.com/product/smile-lordfield-tape-pink/790/category/26/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 398,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "smile-lordfield-tape-pink",
+    "url": "https://www.lordfield.com/product/smile-lordfield-tape-pink/790/category/93/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 399,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "smile-lordfield-tape-yellow",
+    "url": "https://www.lordfield.com/product/smile-lordfield-tape-yellow/791/category/26/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 400,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "smile-lordfield-tape-yellow",
+    "url": "https://www.lordfield.com/product/smile-lordfield-tape-yellow/791/category/93/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 403,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "sparkling-hybrid",
+    "url": "https://www.lordfield.com/product/sparkling-hybrid/754/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 404,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "sparkling-hybrid",
+    "url": "https://www.lordfield.com/product/sparkling-hybrid/754/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 405,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "sparkling-pearl",
+    "url": "https://www.lordfield.com/product/sparkling-pearl/756/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 406,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "sparkling-pearl",
+    "url": "https://www.lordfield.com/product/sparkling-pearl/756/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 407,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "sparkling-pearl",
+    "url": "https://www.lordfield.com/product/sparkling-pearl/756/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 408,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "sparkling-solid",
+    "url": "https://www.lordfield.com/product/sparkling-solid/755/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 409,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "sparkling-solid",
+    "url": "https://www.lordfield.com/product/sparkling-solid/755/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 441,
+    "brand": "SWAG",
+    "model_name": "로드필드",
+    "slug": "swagger-bomb",
+    "url": "https://www.lordfield.com/product/swagger-bomb/683/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 442,
+    "brand": "SWAG",
+    "model_name": "로드필드",
+    "slug": "swagger-bomb",
+    "url": "https://www.lordfield.com/product/swagger-bomb/683/category/44/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 443,
+    "brand": "SWAG",
+    "model_name": "로드필드",
+    "slug": "swagger-showoff",
+    "url": "https://www.lordfield.com/product/swagger-showoff/658/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 444,
+    "brand": "SWAG",
+    "model_name": "로드필드",
+    "slug": "swagger-showoff",
+    "url": "https://www.lordfield.com/product/swagger-showoff/658/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 445,
+    "brand": "SWAG",
+    "model_name": "로드필드",
+    "slug": "swagger",
+    "url": "https://www.lordfield.com/product/swagger/16/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 446,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "terminator-reboot",
+    "url": "https://www.lordfield.com/product/terminator-reboot/827/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 447,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "terminator-reboot",
+    "url": "https://www.lordfield.com/product/terminator-reboot/827/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 448,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-black-pearl-anchor",
+    "url": "https://www.lordfield.com/product/the-black-pearl-anchor/690/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 449,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-black-pearl-anchor",
+    "url": "https://www.lordfield.com/product/the-black-pearl-anchor/690/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 450,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-black-pearl-bloody-ocean",
+    "url": "https://www.lordfield.com/product/the-black-pearl-bloody-ocean/507/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 451,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-black-pearl-death",
+    "url": "https://www.lordfield.com/product/the-black-pearl-death/822/category/23/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 452,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-black-pearl-death",
+    "url": "https://www.lordfield.com/product/the-black-pearl-death/822/category/93/display/1/",
+    "catalog_images_count": 20,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 453,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-black-pearl-treasure",
+    "url": "https://www.lordfield.com/product/the-black-pearl-treasure/655/category/23/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 454,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-judge-pearl",
+    "url": "https://www.lordfield.com/product/the-judge-pearl/860/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 455,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-judge-pearl",
+    "url": "https://www.lordfield.com/product/the-judge-pearl/860/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 456,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-judge-pearl",
+    "url": "https://www.lordfield.com/product/the-judge-pearl/860/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 457,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-judge",
+    "url": "https://www.lordfield.com/product/the-judge/825/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 458,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-judge",
+    "url": "https://www.lordfield.com/product/the-judge/825/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 459,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-judge",
+    "url": "https://www.lordfield.com/product/the-judge/825/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 460,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-strap",
+    "url": "https://www.lordfield.com/product/the-strap/788/category/24/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 461,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "the-strap",
+    "url": "https://www.lordfield.com/product/the-strap/788/category/93/display/1/",
+    "catalog_images_count": 22,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 462,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "unreal",
+    "url": "https://www.lordfield.com/product/unreal/820/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 463,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "unreal",
+    "url": "https://www.lordfield.com/product/unreal/820/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 464,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "unreal",
+    "url": "https://www.lordfield.com/product/unreal/820/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 465,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "vulcan",
+    "url": "https://www.lordfield.com/product/vulcan/852/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 466,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "vulcan",
+    "url": "https://www.lordfield.com/product/vulcan/852/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 467,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "vulcan",
+    "url": "https://www.lordfield.com/product/vulcan/852/category/93/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 468,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "wiper",
+    "url": "https://www.lordfield.com/product/wiper/615/category/23/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 469,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "wiper",
+    "url": "https://www.lordfield.com/product/wiper/615/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 470,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "wiper",
+    "url": "https://www.lordfield.com/product/wiper/618/category/23/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 471,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "wiper",
+    "url": "https://www.lordfield.com/product/wiper/618/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 472,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "xxx-mas",
+    "url": "https://www.lordfield.com/product/xxx-mas/681/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 473,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "xxx-mas",
+    "url": "https://www.lordfield.com/product/xxx-mas/681/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 474,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "yolo-jomo",
+    "url": "https://www.lordfield.com/product/yolo-jomo/671/category/23/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 475,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "yolo-jomo",
+    "url": "https://www.lordfield.com/product/yolo-jomo/671/category/44/display/1/",
+    "catalog_images_count": 19,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 476,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "yolo-pearl",
+    "url": "https://www.lordfield.com/product/yolo-pearl/17/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 477,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "yolo-rocks",
+    "url": "https://www.lordfield.com/product/yolo-rocks/626/category/23/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 478,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "yolo-rocks",
+    "url": "https://www.lordfield.com/product/yolo-rocks/626/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  },
+  {
+    "idx": 479,
+    "brand": "Lord Field",
+    "model_name": "로드필드",
+    "slug": "yolo",
+    "url": "https://www.lordfield.com/product/yolo/18/category/44/display/1/",
+    "catalog_images_count": 18,
+    "ocr_status": "PROCESSED_OCR_FACT"
+  }
+]

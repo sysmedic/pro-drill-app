@@ -1,6 +1,6 @@
 import { loadCustomers, saveCustomers } from './customerStorage.js';
 import { getChartHistory, saveLocalChartHistory } from './indexedDbConnector.js';
-import { uploadBackupData, downloadBackupData, findBackupFile, isGoogleSignedIn, initGoogleApi, getGoogleUserEmail, ensureActiveGoogleToken } from './googleDriveBackup.js';
+import { uploadBackupData, downloadBackupData, findBackupFile, isGoogleSignedIn, initGoogleApi, getGoogleUserEmail, ensureActiveGoogleToken, signOutGoogle } from './googleDriveBackup.js';
 import { isLicenseCertified, isSyncAllowed } from './userLicenseManager.js';
 import { generateSignature, verifyBackupPackage } from './encryption.js';
 
@@ -161,9 +161,23 @@ export const packAppData = async (ownerEmailOverride = null) => {
     }
 
 
+    let customBowlingBalls = [];
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const rawCustom = window.localStorage.getItem('prodrill_bowling_balls_db_v1');
+        if (rawCustom) {
+          const parsed = JSON.parse(rawCustom);
+          if (Array.isArray(parsed)) customBowlingBalls = parsed;
+        }
+      } catch (e) {
+        console.warn("커스텀 볼링공 백업 읽기 알림:", e);
+      }
+    }
+
     const dataPayload = {
       customers: filteredCustomers,
-      chartHistories
+      chartHistories,
+      customBowlingBalls
     };
 
     const signature = generateSignature(dataPayload, ownerEmail);
@@ -183,10 +197,12 @@ export const packAppData = async (ownerEmailOverride = null) => {
 };
 
 // 2. 패키지 데이터 로컬 IndexedDB에 언팩 & 지능형 병합 (Merge)
-export const unpackAppData = async (payload, mode = 'merge', expectedEmail = null) => {
+export const unpackAppData = async (payload, mode = 'merge', expectedEmail = null, accountHashKey = null) => {
   if (!payload || payload.appId !== 'ProDrill') {
     throw new Error('INVALID_BACKUP_FORMAT');
   }
+
+  const resolvedAccountHash = accountHashKey || (typeof window !== 'undefined' ? localStorage.getItem('prodrill_certified_email_hash') : null);
 
   // 🛡️ 소유자 1:1 대조 및 HMAC 위변조 전자서명 검증
   const verification = verifyBackupPackage(payload, expectedEmail);
@@ -202,7 +218,26 @@ export const unpackAppData = async (payload, mode = 'merge', expectedEmail = nul
     throw new Error('INVALID_BACKUP_SIGNATURE');
   }
 
-  const { customers: incomingCustomers = [], chartHistories: incomingHistories = {} } = payload.data || {};
+  const { customers: incomingCustomers = [], chartHistories: incomingHistories = {}, customBowlingBalls: incomingCustomBalls = [] } = payload.data || {};
+
+  // 커스텀 입력 볼링공 복원 및 로컬 DB 캐시 병합
+  if (Array.isArray(incomingCustomBalls) && incomingCustomBalls.length > 0 && typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const LOCAL_STORAGE_KEY = 'prodrill_bowling_balls_db_v1';
+      const existingRaw = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+      let existingList = [];
+      if (existingRaw) {
+        try { existingList = JSON.parse(existingRaw); } catch { /* 무시 */ }
+      }
+      const map = new Map();
+      (Array.isArray(existingList) ? existingList : []).forEach(b => map.set(b.id, b));
+      incomingCustomBalls.forEach(b => map.set(b.id, b));
+      const mergedList = Array.from(map.values());
+      window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mergedList));
+    } catch (err) {
+      console.warn("커스텀 볼링공 복원 병합 실패:", err);
+    }
+  }
 
   try {
     if (mode === 'overwrite') {
@@ -227,10 +262,14 @@ export const unpackAppData = async (payload, mode = 'merge', expectedEmail = nul
         }
       }
 
-      await saveCustomers(incomingCustomers);
+      await saveCustomers(incomingCustomers, null, resolvedAccountHash);
       for (const customerId of Object.keys(incomingHistories)) {
         const historyList = incomingHistories[customerId] || [];
-        await saveLocalChartHistory(customerId, historyList);
+        try {
+          await saveLocalChartHistory(customerId, historyList, resolvedAccountHash);
+        } catch (err) {
+          console.warn("IndexedDB 차트 기록 복원 폴백 무시:", err);
+        }
         if (typeof window !== 'undefined' && window.localStorage) {
           try {
             window.localStorage.setItem(`chart_history_v8_${customerId}`, JSON.stringify(historyList));
@@ -255,7 +294,7 @@ export const unpackAppData = async (payload, mode = 'merge', expectedEmail = nul
     }
 
     // 병합(Merge) 모드: 고유 ID/이름 대조 및 최종 수정일(updatedAt/createdAt) 비교 세부 병합
-    const localCustomers = await loadCustomers();
+    const localCustomers = await loadCustomers(null, expectedEmail || '', resolvedAccountHash);
     const mergedCustomers = [...localCustomers];
 
     // 2.1 고객 목록 병합 (ID 또는 이름+연락처 매칭)
@@ -273,12 +312,12 @@ export const unpackAppData = async (payload, mode = 'merge', expectedEmail = nul
         }
       }
     }
-    await saveCustomers(mergedCustomers);
+    await saveCustomers(mergedCustomers, null, resolvedAccountHash);
 
     // 2.2 개별 지공 차트 기록 레코드 단위 병합 (ID 또는 차트명/볼이름 대조)
     for (const customerId of Object.keys(incomingHistories)) {
       const incomingList = incomingHistories[customerId] || [];
-      const localList = await getChartHistory(customerId);
+      const localList = await getChartHistory(customerId, resolvedAccountHash);
       const mergedList = [...localList];
 
       for (const incomingRecord of incomingList) {
@@ -321,7 +360,7 @@ export const unpackAppData = async (payload, mode = 'merge', expectedEmail = nul
         return getRecTime(b) - getRecTime(a);
       });
 
-      await saveLocalChartHistory(customerId, mergedList);
+      await saveLocalChartHistory(customerId, mergedList, resolvedAccountHash);
 
       // 🌟 [핵심 수정을 통한 이중 동기화]: localStorage 캐시 키도 함께 갱신하여 loadChartHistory 동기 조회 시 최신 데이터 보장
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -507,7 +546,6 @@ export const autoSyncOnLaunch = async (setFeedback) => {
     if (errorCode === 401 || errorCode === 403 || errorMsg.includes('auth') || errorMsg.includes('credential')) {
       console.warn("🔐 [자동 동기화] 구글 인증 만료 또는 권한 만료 감지. 안전한 연동해제 및 세션 정리를 수행합니다.");
       try {
-        const { signOutGoogle } = await import('./googleDriveBackup.js');
         await signOutGoogle();
       } catch (e) {
         console.error("구글 강제 로그아웃 실패:", e);

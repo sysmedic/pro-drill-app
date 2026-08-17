@@ -5,14 +5,24 @@ import { IconButton } from '../../components/ui/Button.jsx';
 import TaskbarHelpBalloon from '../../components/ui/TaskbarHelpBalloon.jsx';
 import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
 
-// 📍 Firestore 타임스탬프를 YYYY-MM-DD 형태로 변환하는 헬퍼 함수
-const formatDate = (timestamp) => {
-  if (!timestamp) return '';
-  if (typeof timestamp.toDate === 'function') {
-    const d = timestamp.toDate();
+// 📍 Firestore 타임스탬프 또는 ISO/일련번호 날짜 텍스트를 YYYY-MM-DD 형태로 변환하는 헬퍼 함수
+const formatDate = (rawDate) => {
+  if (!rawDate) return '';
+  if (typeof rawDate.toDate === 'function') {
+    const d = rawDate.toDate();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
-  return '';
+  if (typeof rawDate === 'string') {
+    const trimmed = rawDate.trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.substring(0, 10);
+    if (/^\d{8}$/.test(trimmed)) return `${trimmed.substring(0,4)}-${trimmed.substring(4,6)}-${trimmed.substring(6,8)}`;
+    const parsed = new Date(trimmed);
+    if (!isNaN(parsed.getTime())) {
+      return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+    }
+    return trimmed;
+  }
+  return String(rawDate);
 };
 
 const customerCardManualSections = [
