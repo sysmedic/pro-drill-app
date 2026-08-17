@@ -38,9 +38,10 @@ export default defineConfig({
   },
   base: process.env.VITE_BASE_PATH || '/',
   
-  // 빌드 시 크롬 개발자 도구에 원본 소스코드가 노출되는 것을 차단합니다.
+  // 빌드 시 크롬 개발자 도구에 원본 소스코드가 노출되는 것을 차단하고 청크 경고 제한을 상향합니다.
   build: {
     sourcemap: false,
+    chunkSizeWarningLimit: 6000,
   },
   
   server: {
