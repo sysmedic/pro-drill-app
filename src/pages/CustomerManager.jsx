@@ -21,18 +21,19 @@ import ProfileOnboardingModal from './customerManager/ProfileOnboardingModal.jsx
 import AppUpdateModal from './customerManager/AppUpdateModal.jsx'; // 🔄 앱 업데이트 모달 임포트
 import { isLicenseCertified, getUserProfile, fetchRemoteUserProfile, saveUserProfile } from '../lib/userLicenseManager.js';
 
-// 한글 초성 추출 헬퍼 (예: '김볼러' -> 'ㄱㅂㄹ')
+// 한글 초성 추출 헬퍼 (예: '김볼러' -> 'ㄱㅂㄹ', NFD/NFC 유니코드 정규화 포함)
 function getKoreanChoseong(str) {
   if (!str) return '';
+  const normalized = str.normalize('NFC');
   const CHOSEONG = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
   let result = '';
-  for (let i = 0; i < str.length; i++) {
-    const code = str.charCodeAt(i) - 44032;
+  for (let i = 0; i < normalized.length; i++) {
+    const code = normalized.charCodeAt(i) - 44032;
     if (code >= 0 && code <= 11172) {
       const choseongIndex = Math.floor(code / 588);
       result += CHOSEONG[choseongIndex];
     } else {
-      result += str[i];
+      result += normalized[i];
     }
   }
   return result;
@@ -209,23 +210,28 @@ export default function CustomerManagement({
   };
 
   const rawQuery = (searchQuery || '').trim();
-  const cleanQuery = rawQuery.toLowerCase().replace(/[-_ \s]/g, '');
+  const queryNfc = rawQuery.normalize('NFC').toLowerCase();
+  const queryNfd = rawQuery.normalize('NFD').toLowerCase();
+  const cleanQuery = queryNfc.replace(/[-_ \s]/g, '');
   const isChoseongOnly = /^[ㄱ-ㅎ]+$/.test(rawQuery);
 
   const filtered = customers.filter(c => {
     if (!rawQuery) return true;
-    const nameRaw = (c.name || '').toLowerCase();
-    const nameClean = nameRaw.replace(/[-_ \s]/g, '');
+    const nameStr = c.name || '';
+    const nameNfc = nameStr.normalize('NFC').toLowerCase();
+    const nameNfd = nameStr.normalize('NFD').toLowerCase();
+    const nameClean = nameNfc.replace(/[-_ \s]/g, '');
     const phoneRaw = (c.phone || '').replace(/[-_ \s]/g, '');
 
     // 1) 초성 자음(ㄱ, ㅎ 등) 검색어일 경우 초성 대조
     if (isChoseongOnly) {
-      const nameChoseong = getKoreanChoseong(c.name || '');
+      const nameChoseong = getKoreanChoseong(nameStr);
       if (nameChoseong.includes(rawQuery)) return true;
     }
 
-    // 2) 하이픈(-) 및 특수문자 양방향 정제 대조 (010- 치든 010 치든 100% 매칭)
-    return nameRaw.includes(rawQuery.toLowerCase()) || 
+    // 2) 완성형(NFC), 자소분리(NFD), 특수문자 제거(clean), 하이픈 무력화 통합 100% 매칭!
+    return nameNfc.includes(queryNfc) || 
+           nameNfd.includes(queryNfd) || 
            nameClean.includes(cleanQuery) || 
            phoneRaw.includes(cleanQuery) ||
            (c.phone || '').includes(rawQuery);

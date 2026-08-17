@@ -9,9 +9,8 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- CustomerManager 검색어 하이픈(-) 무력화 및 한글 초성/완성형 통합 정밀 필터 완치 (`CustomerManager.jsx`):
-  - **전화번호 하이픈(-) 양방향 정제 완치**: 지공사님이 `010-` 으로 입력하든 `010` 으로 입력하든 하이픈 유무에 상관없이 100% 실시간 동기화 검색 완치.
-  - **한글 자소/초성 대조 완치**: `"ㄱ"`, `"ㅎ"` 등 한글 단일 자음/초성을 치는 첫 글자부터 고객 이름의 초성(`getKoreanChoseong`)을 대조하여 100% 완벽 정밀 검색 완치.
+- CustomerManager 유니코드 NFD/NFC(자소분리/완성형) 한글 정규화 통합 검색 완치 (`CustomerManager.jsx`):
+  - **맥/윈도우/엑셀 유니코드 자소분리 완치**: `normalize('NFC')` 및 `normalize('NFD')` 정규화를 검색어와 고객 이름 양쪽에 통합 적용하여 `김승익` 등 맥OS/엑셀 기반 자소분리 고객 100% 실시간 정밀 검색 완치.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드 100% 성공 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
