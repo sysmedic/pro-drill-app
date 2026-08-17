@@ -38,54 +38,7 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
   const [showMoreSnapshots, setShowMoreSnapshots] = useState(false);
   const [selectedSnapshotId, setSelectedSnapshotId] = useState(null);
 
-  // 복원 모드 선택 관련 상태 (기존 차트에 덧붙이기 vs 전체 덮어쓰기)
-  const [pendingBackupPackage, setPendingBackupPackage] = useState(null);
-  const [showRestoreModeConfirm, setShowRestoreModeConfirm] = useState(false);
 
-
-
-  const handleFileRestoreSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      try {
-        const payload = JSON.parse(evt.target.result);
-        if (!payload || payload.appId !== 'ProDrill') {
-          onFeedback({ message: '올바른 ProDrill 백업 파일이 아닙니다.', tone: 'danger' });
-          return;
-        }
-        setPendingBackupPackage(payload);
-        setShowRestoreModeConfirm(true); // 복원 방식 선택 다이얼로그 모달 가동!
-      } catch (err) {
-        onFeedback({ message: '백업 파일 읽기 실패: ' + err.message, tone: 'danger' });
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  };
-
-  const handleExecuteRestoreMode = async (mode) => {
-    if (!pendingBackupPackage) return;
-    setGoogleLoading(true);
-    setShowRestoreModeConfirm(false);
-    try {
-      const { unpackAppData } = await import('../../lib/syncService.js');
-      const activeEmail = localStorage.getItem("prodrill_linked_email") || localStorage.getItem("prodrill_certified_email_plain") || "sysmedic3@gmail.com";
-      await unpackAppData(pendingBackupPackage, mode, activeEmail);
-      onFeedback({
-        message: mode === 'merge' 
-          ? '🎉 기존 지공 데이터를 100% 안전하게 보존하고, 백업 지공 차트 데이터를 성공적으로 덧붙였습니다!'
-          : '🎉 백업 데이터로 성공적으로 덮어쓰기 복원되었습니다.',
-        tone: 'success'
-      });
-    } catch (err) {
-      onFeedback({ message: '복원 실패: ' + err.message, tone: 'danger' });
-    } finally {
-      setGoogleLoading(false);
-      setPendingBackupPackage(null);
-    }
-  };
 
   const fetchSnapshots = async () => {
     if (!isGoogleSignedIn()) return;
@@ -366,29 +319,7 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
 
 
 
-              {/* 📤 로컬 백업 파일 직접 불러오기 (복원 선택 연동) */}
-              <div className="bg-indigo-50/70 border border-indigo-200 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black text-indigo-900 flex items-center gap-1.5">
-                    📤 로컬 백업 파일 직접 불러오기
-                  </h4>
-                  <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded">.json 복원</span>
-                </div>
-                <p className="text-[11px] text-indigo-800 leading-normal font-bold">
-                  변환되거나 저장된 백업 JSON 파일을 선택하여, 기존 차트에 덧붙이거나 전체 덮어쓰기 복원을 진행합니다.
-                </p>
-                <div className="pt-1">
-                  <label className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-xs font-black transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer">
-                    <span>📤 백업 파일 선택 및 복원</span>
-                    <input
-                      type="file"
-                      accept=".json"
-                      className="hidden"
-                      onChange={handleFileRestoreSelect}
-                    />
-                  </label>
-                </div>
-              </div>
+
 
               {/* 백업 스냅샷 목록 */}
               <div className="bg-white border border-slate-200/80 rounded-xl p-3 space-y-2.5">
@@ -477,63 +408,7 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
         />
       )}
 
-      {/* 2. 로컬 백업 파일 복원 모드 선택 모달 (기존 차트에 덧붙이기 vs 전체 덮어쓰기) */}
-      {showRestoreModeConfirm && (
-        <ModalShell
-          align="center"
-          onClose={() => { setShowRestoreModeConfirm(false); setPendingBackupPackage(null); }}
-          size="md"
-          title="백업 복원 방식 선택"
-          titleId="restore-mode-select-title"
-          variant="light"
-          zClassName="z-[160]"
-        >
-          <div className="p-5 space-y-4">
-            <p className="text-xs text-slate-600 font-bold leading-relaxed">
-              불러오려는 백업 데이터를 현재 프로드릴 앱에 적용할 방식을 선택해 주세요.
-            </p>
 
-            <div className="space-y-2.5 pt-1">
-              <button
-                type="button"
-                onClick={() => handleExecuteRestoreMode('merge')}
-                className="w-full p-3.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xl text-left transition-all active:scale-[0.98] cursor-pointer group"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-black text-emerald-900 group-hover:text-emerald-950 flex items-center gap-1.5">
-                    <span>➕ 기존 차트에 덧붙이기</span>
-                    <span className="bg-emerald-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded">권장</span>
-                  </span>
-                </div>
-                <p className="text-[11px] font-bold text-emerald-700 leading-normal">
-                  이미 작성해두신 기존 고객 카드나 지공 차트를 <strong>100% 보존</strong>하면서, 백업 및 엑셀 마이그레이션 데이터만 안전하게 추가합니다.
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleExecuteRestoreMode('overwrite')}
-                className="w-full p-3 bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl text-left transition-all active:scale-[0.98] cursor-pointer group"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-black text-slate-700 group-hover:text-rose-700">
-                    전체 덮어쓰기
-                  </span>
-                </div>
-                <p className="text-[11px] font-bold text-slate-500 group-hover:text-rose-600 leading-normal">
-                  현재 기기의 기존 데이터를 삭제하고, 불러온 백업 파일 데이터로 전체 교체합니다.
-                </p>
-              </button>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <Button onClick={() => { setShowRestoreModeConfirm(false); setPendingBackupPackage(null); }} size="sm" variant="secondary">
-                취소
-              </Button>
-            </div>
-          </div>
-        </ModalShell>
-      )}
 
     </>
   );

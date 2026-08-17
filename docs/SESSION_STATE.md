@@ -9,10 +9,10 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 엑셀 마이그레이션 독립 메뉴 신설 및 Vercel 프로덕션 100% 성공 배포 (`SettingsModal.jsx`):
-  - **기존 백업 100% 보존**: 기존 `.json` 로컬 백업/복원 기능 및 구글 드라이브 백업 스냅샷 영역을 단 1줄의 소손도 없이 100% 그대로 원본 보존.
-  - **신규 엑셀 마이그레이션 메뉴 신설 & 권한 노출**: 햄버거 메뉴 모달 내에 **[📊 엑셀 마이그레이션 및 엑셀 백업]** 카드를 별도 신설하고 허가된 관리자 계정(`sysmedic3@gmail.com`, `worms0529@gmail.com`)에만 100% 노출.
-  - **ON/OFF 스위치 제거**: 복잡했던 마이그레이션 ON/OFF 토글 스위치를 완전히 제거하여 권한 확인 시 원클릭으로 바로 작동하도록 직관적 단순화.
+- 로컬/클라우드 백업 모달 내 엑셀 변환 완전 제거 및 신설 독립 [📦 엑셀 마이그레이션] 모달/메뉴 Vercel 프로덕션 성공 배포 (`ExcelMigrationModal.jsx`, `CustomerHeader.jsx`, `BackupSettingsModal.jsx`, `SettingsModal.jsx`):
+  - **기존 백업 모달 100% 정제**: `BackupSettingsModal.jsx`(로컬 백업)와 `SettingsModal.jsx`(클라우드 백업) 양쪽 모달에서 엑셀 마이그레이션 변환/다운로드 관련 섹션을 100% 깔끔하게 제거.
+  - **신설 독립 엑셀 마이그레이션 모달**: 엑셀 폴더 선택 및 마이그레이션 백업 변환만을 처리하는 전용 모달 (`ExcelMigrationModal.jsx`) 신규 생성.
+  - **햄버거 메뉴 독립 버튼 & 권한 제어**: `CustomerHeader.jsx` 드로어 메뉴에 **[📦 엑셀 마이그레이션]** 독립 버튼을 신설하고 허가된 관리자 계정(`sysmedic3@gmail.com`, `worms0529@gmail.com`)에만 100% 노출.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 프로덕션 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
