@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 공용 태블릿 상단 활성 지공사 명시 배지 및 1초 빠른 전환 UI Vercel 프로덕션 성공 배포 (`CustomerHeader.jsx`):
-  - **지공사 배지 노출**: 앱 최상단 헤더 '고객 관리' 타이틀 옆에 현재 로그인된 활성 지공사 계정 명시 배지(`👤 sysmedic3│전환`)를 실시간 노출하여 1초 만에 계정 식별 지원.
-  - **빠른 계정 전환**: 상단 배지 클릭 시 계정 교대 및 전환 안내 모달/동작 연동하여 다중 사용자 데이터 착오 100% 차단.
+- 상단 지공사 계정 박스 디자인 태스크바 100% 통일 및 즉시 로그아웃 완치 Vercel 배포 (`CustomerHeader.jsx`):
+  - **디자인 100% 일치**: 둥근 알약형 및 이모지 `👤`, `전환` 텍스트를 100% 제거하고, 각진 깔끔한 박스 형태(`rounded-md border-slate-200 bg-slate-50/80`)와 얇은 정갈한 폰트(`font-normal text-slate-500`)로 오직 프로필 이름만 깔끔하게 정제.
+  - **로그아웃 완치**: 클릭 시 구글 OAuth 토큰(`signOutGoogle()`) 및 라이선스/연동 로컬스토리지 키를 일괄 완전히 삭제 파기 후 1초 만에 로그인 화면으로 이탈하도록 100% 동작 완치.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

@@ -278,45 +278,7 @@ export default function CustomerHeader({
           <div className="flex items-center gap-1.5 relative">
             <h1 className="text-xl font-bold text-slate-800 leading-none">고객 관리</h1>
             
-            {/* 💡 [지공사 계정 명시 박스 - 태스크바 디자인 100% 통일 & 100% 완벽 로그아웃] */}
-            {(() => {
-              const activeEmail = (typeof window !== "undefined"
-                ? (localStorage.getItem("prodrill_linked_email") || localStorage.getItem("prodrill_certified_email_plain") || "지공사")
-                : "지공사").trim();
-              const profileName = activeEmail.includes('@') ? activeEmail.split('@')[0] : activeEmail;
-
-              return (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    signOutGoogle();
-                    try {
-                      localStorage.removeItem('prodrill_user_profile');
-                      localStorage.removeItem('prodrill_license_certified');
-                      localStorage.removeItem('prodrill_linked_email');
-                      localStorage.removeItem('prodrill_trial_google_linked');
-                      localStorage.removeItem('prodrill_certified_email_hash');
-                      localStorage.removeItem('prodrill_certified_email_plain');
-                      localStorage.removeItem('prodrill_license_status');
-                      localStorage.removeItem('prodrill_first_time_setup_done');
-                      localStorage.removeItem('prodrill_google_access_token');
-                      localStorage.removeItem('prodrill_google_token_expiry');
-                    } catch { /* ignore */ }
-                    if (onLogout) onLogout();
-                    setTimeout(() => {
-                      window.location.reload();
-                    }, 50);
-                  }}
-                  className="inline-flex items-center border border-slate-200 bg-slate-50/80 hover:bg-slate-100 hover:border-slate-300 rounded-md px-2 py-0.5 text-xs font-normal text-slate-500 transition-colors active:scale-95 cursor-pointer ml-1 shadow-2xs"
-                  title="클릭 시 로그아웃"
-                >
-                  {profileName}
-                </button>
-              );
-            })()}
-
-            {/* 💡 [고객 관리 타이틀 수직 위치 100% 동기화 3초 맥동 도움말 버튼] */}
+            {/* 1. ? 가이드 도움말 버튼 (고객 관리 타이틀 바로 뒤 위치) */}
             {showManualHelpSetting && (
               <div className="relative inline-flex items-center justify-center shrink-0 ml-0.5">
                 <div className="relative flex items-center justify-center">
@@ -345,6 +307,55 @@ export default function CustomerHeader({
                 />
               </div>
             )}
+
+            {/* 2. 💡 [가이드 ? 버튼 바로 뒤 배치: 프로필 이름 1순위 ➔ 없을 때만 계정 이메일 ID 2순위 / 박스 제거 & 서체 확대] */}
+            {(() => {
+              let displayName = "";
+              try {
+                const profileRaw = localStorage.getItem("prodrill_user_profile");
+                if (profileRaw) {
+                  const profileObj = JSON.parse(profileRaw);
+                  displayName = profileObj.drillerName || profileObj.displayName || profileObj.name || "";
+                }
+              } catch { /* ignore */ }
+
+              if (!displayName.trim()) {
+                const activeEmail = (typeof window !== "undefined"
+                  ? (localStorage.getItem("prodrill_linked_email") || localStorage.getItem("prodrill_certified_email_plain") || "지공사")
+                  : "지공사").trim();
+                displayName = activeEmail.includes('@') ? activeEmail.split('@')[0] : activeEmail;
+              }
+
+              return (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    signOutGoogle();
+                    try {
+                      localStorage.removeItem('prodrill_user_profile');
+                      localStorage.removeItem('prodrill_license_certified');
+                      localStorage.removeItem('prodrill_linked_email');
+                      localStorage.removeItem('prodrill_trial_google_linked');
+                      localStorage.removeItem('prodrill_certified_email_hash');
+                      localStorage.removeItem('prodrill_certified_email_plain');
+                      localStorage.removeItem('prodrill_license_status');
+                      localStorage.removeItem('prodrill_first_time_setup_done');
+                      localStorage.removeItem('prodrill_google_access_token');
+                      localStorage.removeItem('prodrill_google_token_expiry');
+                    } catch { /* ignore */ }
+                    if (onLogout) onLogout();
+                    setTimeout(() => {
+                      window.location.reload();
+                    }, 50);
+                  }}
+                  className="text-sm sm:text-base font-medium text-slate-600 hover:text-indigo-600 transition-colors active:scale-95 cursor-pointer ml-1 sm:ml-1.5 underline decoration-slate-300/60 underline-offset-2"
+                  title="클릭 시 로그아웃"
+                >
+                  {displayName}
+                </button>
+              );
+            })()}
           </div>
         </div>
 
