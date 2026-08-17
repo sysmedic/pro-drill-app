@@ -353,7 +353,7 @@ export default function CustomerHeader({
                       align="center"
                       onClose={() => setShowLogoutConfirm(false)}
                       size="sm"
-                      title="🚪 계정 로그아웃"
+                      title="계정 로그아웃"
                       variant="light"
                     >
                       <div className="p-4 flex flex-col gap-5 text-center">
@@ -394,7 +394,7 @@ export default function CustomerHeader({
                               }, 50);
                             }}
                           >
-                            로그아웃 승인
+                            로그아웃
                           </Button>
                         </div>
                       </div>

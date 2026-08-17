@@ -124,8 +124,8 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
           {/* 차트 보호 */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
-              <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5 mb-0.5">
-                {"\uD83D\uDD12"} 차트 보호
+              <h4 className="text-sm font-black text-slate-800 mb-0.5">
+                차트 보호
               </h4>
               <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
                 앱 내 모든 빈 공간 3회 터치로 화면을 잠그며, 비활성화 시 도면 영역 3회 터치로만 잠급니다.
@@ -144,11 +144,11 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
             </button>
           </div>
 
-          {/* 타임라인 로그 자동 노출 */}
+          {/* 타임라인 로그 */}
           <div className="flex items-center justify-between gap-4 pt-3 border-t border-slate-200/60">
             <div className="flex-1">
-              <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5 mb-0.5">
-                {"\uD83D\uDCC1"} 타임라인 로그 자동 노출
+              <h4 className="text-sm font-black text-slate-800 mb-0.5">
+                타임라인 로그
               </h4>
               <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
                 차트 진입 시 최근 지공 변경 이력 팝업을 즉시 표시합니다.
@@ -167,15 +167,12 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
             </button>
           </div>
 
-          {/* 📋 입력창 아코디언 박스 펼치기 설정 영역 */}
+          {/* 입력창 아코디언 박스 설정 영역 */}
           <div className="pt-3 border-t border-slate-200/60 space-y-2.5">
             <div>
-              <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5 mb-0.5">
-                {"\uD83D\uDCCB"} 입력창 아코디언 박스 펼치기
+              <h4 className="text-sm font-black text-slate-800 mb-0.5">
+                입력창 아코디언 박스
               </h4>
-              <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
-                차트 편집 시 입력 섹션의 펼침 및 자동 접힘 동작 방식을 설정합니다.
-              </p>
             </div>
 
             <div className="space-y-2 pt-0.5">
@@ -221,11 +218,11 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
             </div>
           </div>
 
-          {/* 볼러스펙 카드 기본 펼치기 */}
+          {/* 볼러스펙 카드 */}
           <div className="flex items-center justify-between gap-4 pt-3 border-t border-slate-200/60">
             <div className="flex-1">
-              <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5 mb-0.5">
-                {"\uD83D\uDC64"} 볼러스펙 카드 기본 펼치기
+              <h4 className="text-sm font-black text-slate-800 mb-0.5">
+                볼러스펙 카드
               </h4>
               <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
                 차트 상단 볼러스펙 카드를 항상 접지 않고 펼쳐서 표시합니다.
@@ -244,10 +241,11 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
             </button>
           </div>
 
-          {/* 가이드 도움말 표시 */}
+          {/* 가이드 도움말 ? */}
           <div className="flex items-center justify-between gap-4 pt-3 border-t border-slate-200/60">
             <div className="flex-1">
-              <h4 className="text-sm font-black text-slate-800 flex items-center gap-2 mb-0.5">
+              <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5 mb-0.5">
+                <span>가이드 도움말</span>
                 <div className="relative flex items-center justify-center shrink-0">
                   <span 
                     className="absolute inline-flex h-full w-full rounded-full bg-indigo-400/40 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] pointer-events-none" 
@@ -257,7 +255,6 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
                     ?
                   </span>
                 </div>
-                가이드 도움말 표시
               </h4>
               <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
                 매뉴얼 가이드 도움말 버튼을 항시 노출합니다.
@@ -276,14 +273,14 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
             </button>
           </div>
 
-          {/* 👤 상단 프로필 이름 가리기 (기본 ON/활성화) */}
+          {/* 프로필 */}
           <div className="flex items-center justify-between gap-4 pt-3 border-t border-slate-200/60">
             <div className="flex-1">
-              <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5 mb-0.5">
-                {"\uD83D\uDC64"} 상단 프로필 이름 가리기
+              <h4 className="text-sm font-black text-slate-800 mb-0.5">
+                프로필
               </h4>
               <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
-                상단 테스크바에 지공사 프로필 이름 노출을 가립니다. (기본: 가림)
+                테스크바에 지공사 프로필 이름 노출을 가립니다
               </p>
             </div>
             

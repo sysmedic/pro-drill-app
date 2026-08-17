@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 프로필 이름 서체 +2px 확대 및 안전 로그아웃 승인/취소 경고 모달 도입 Vercel 배포 완료 (`CustomerHeader.jsx`):
-  - **서체 크기 +2px 확대**: 모바일 기본 14px ➔ 16px(`text-base`), 태블릿/PC 16px ➔ 18px(`sm:text-lg`)로 +2px 확대하여 가독성 강화.
-  - **실수 방지 안전 로그아웃 모달**: 프로필 이름 터치/클릭 시 실수로 튕기지 않도록 `[로그아웃 승인]` 및 `[취소]` 커스텀 모달 다이얼로그(`ModalShell`)를 띄워 100% 실수 방지 및 정식 로그아웃 보장.
+- 환경설정 모달 '👤 상단 프로필 이름 가리기' 토글 옵션 신설 및 기본 ON 연동 배포 (`GeneralSettingsModal.jsx`, `CustomerHeader.jsx`):
+  - **프로필 노출 제어**: ⚙️ 환경 설정 모달에 `👤 상단 프로필 이름 가리기` 토글 옵션을 추가하고 **기본 상태를 ON(활성화/프로필 가림)**으로 설정.
+  - **헤더 실시간 연동**: 기본 ON 상태에서는 상단 헤더의 프로필 이름을 100% 안전하게 가리고, 환경설정에서 토글을 OFF로 비활성화하면 가이드 `?` 바로 뒤에 프로필 이름이 다시 노출되는 실시간 연동 완성.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
