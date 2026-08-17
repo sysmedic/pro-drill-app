@@ -16,18 +16,22 @@ export default function CustomerHeader({
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showManualHelpSetting, setShowManualHelpSetting] = useState(true);
+  const [hideProfileSetting, setHideProfileSetting] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const syncedPingStyle = useSyncedPingStyle();
 
   useEffect(() => {
     const handleUpdateSetting = () => {
       setShowManualHelpSetting(localStorage.getItem('show_manual_help') !== 'false');
+      setHideProfileSetting(localStorage.getItem('hide_profile_name') !== 'false');
     };
     handleUpdateSetting();
     window.addEventListener('manual_help_setting_changed', handleUpdateSetting);
+    window.addEventListener('profile_hide_setting_changed', handleUpdateSetting);
     window.addEventListener('storage', handleUpdateSetting);
     return () => {
       window.removeEventListener('manual_help_setting_changed', handleUpdateSetting);
+      window.removeEventListener('profile_hide_setting_changed', handleUpdateSetting);
       window.removeEventListener('storage', handleUpdateSetting);
     };
   }, []);
@@ -311,8 +315,8 @@ export default function CustomerHeader({
               </div>
             )}
 
-            {/* 2. 💡 [가이드 ? 버튼 바로 뒤 배치: 프로필 이름 1순위 ➔ 없을 때만 계정 이메일 ID 2순위 / 박스 제거 & 서체 확대] */}
-            {(() => {
+            {/* 2. 💡 [가이드 ? 버튼 바로 뒤 배치: 프로필 이름 1순위 ➔ 없을 때만 계정 이메일 ID 2순위 / 프로필 가리기 설정 연동] */}
+            {!hideProfileSetting && (() => {
               let displayName = "";
               try {
                 const profileRaw = localStorage.getItem("prodrill_user_profile");

@@ -10,6 +10,7 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
   const [autoCollapseAccordions, setAutoCollapseAccordions] = useState(false);
   const [expandBowlerSpec, setExpandBowlerSpec] = useState(true);
   const [showManualHelp, setShowManualHelp] = useState(true);
+  const [hideProfileName, setHideProfileName] = useState(true);
   const syncedPingStyle = useSyncedPingStyle();
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
 
     setExpandBowlerSpec(localStorage.getItem("expandBowlerSpec") !== "false");
     setShowManualHelp(localStorage.getItem("show_manual_help") !== "false");
+    setHideProfileName(localStorage.getItem("hide_profile_name") !== "false");
   }, []);
 
   const handleToggleLockTrigger = () => {
@@ -99,6 +101,17 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
     window.dispatchEvent(new Event("manual_help_setting_changed"));
     onFeedback({
       message: "매뉴얼 가이드 도움말이 " + (nextVal ? "활성화" : "비활성화") + "되었습니다.",
+      tone: "success"
+    });
+  };
+
+  const handleToggleHideProfileName = () => {
+    const nextVal = !hideProfileName;
+    setHideProfileName(nextVal);
+    localStorage.setItem("hide_profile_name", nextVal ? "true" : "false");
+    window.dispatchEvent(new Event("profile_hide_setting_changed"));
+    onFeedback({
+      message: "상단 프로필 이름 가리기가 " + (nextVal ? "활성화(숨김)" : "비활성화(노출)") + "되었습니다.",
       tone: "success"
     });
   };
@@ -259,6 +272,29 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
             >
               <span
                 className={"pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out " + (showManualHelp ? "translate-x-4" : "translate-x-0")}
+              />
+            </button>
+          </div>
+
+          {/* 👤 상단 프로필 이름 가리기 (기본 ON/활성화) */}
+          <div className="flex items-center justify-between gap-4 pt-3 border-t border-slate-200/60">
+            <div className="flex-1">
+              <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5 mb-0.5">
+                {"\uD83D\uDC64"} 상단 프로필 이름 가리기
+              </h4>
+              <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
+                상단 테스크바에 지공사 프로필 이름 노출을 가립니다. (기본: 가림)
+              </p>
+            </div>
+            
+            <button
+              type="button"
+              onClick={handleToggleHideProfileName}
+              className={"relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none " + (hideProfileName ? "bg-indigo-600" : "bg-slate-300")}
+              aria-label="상단 프로필 이름 가리기 토글"
+            >
+              <span
+                className={"pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out " + (hideProfileName ? "translate-x-4" : "translate-x-0")}
               />
             </button>
           </div>
