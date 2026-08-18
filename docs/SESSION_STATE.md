@@ -9,10 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 새 지공 차트 저장 안내 모달 텍스트 및 입력 필드 16px 폰트 수술 Vercel 프로덕션 라이브 배포 (`ChartDetail.jsx`):
-  - **안내 문구 변경**: `"새지공 차트의 공 이름과 식별 날짜를 등록 및 확인해 주세요."` 직관적 문구로 100% 1:1 수술 적용.
-  - **폰트 크기 16px 적용 (`text-[16px]`)**: 공 이름 입력 `input` 필드 및 식별 날짜 `span` 폰트 크기를 `16px`로 확대 적용하여, 모바일 Safari/Chrome 자동 확대 방지 및 시인성 대폭 강화.
-  - **검증 완료**: 63개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
+- 키패드 작업 손대기 직전의 그 안정적이었던 100% 원본 상태로 강제 롤백(Hard Rollback) 완료 Vercel 라이브 프로덕션 반영 (`commit 203959d`):
+  - **롤백 타겟 커밋**: `203959d` (*"style: 모바일 소형 화면 새 차트 저장 모달 식별 날짜 반응형 자동 줄바꿈 수술 Vercel 프로덕션 라이브 배포"*)
+  - **100% 원복 완수**: 로컬 Git 브랜치(`8-6-이후-변경` 및 `main`) 및 Vercel 실서버 프로덕션(`https://drilling-chart-psi.vercel.app`) 모두 키패드 손대기 직전 순간으로 100% 완벽히 하드 롤백 복원.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
   - **Vercel 라이브 배포 완수**: 대칭/비대칭 선택 시 `bg-slate-700 border-slate-700 text-white` 적용 최신 프로덕션 배포 완수.

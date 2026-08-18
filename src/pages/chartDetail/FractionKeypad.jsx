@@ -82,14 +82,18 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
   };
 
   // 🟢 [수정 및 원복] 모든 문자(숫자, 기호) 입력을 모드에 맞게 제어하는 통합 핸들러
+  const isNoMinusField = title === 'RPM' || title?.includes('구속') || title?.includes('PAP') || mode === 'span' || title?.includes('Span');
+
   const handleCharacterInput = (char) => {
+    if (isNoMinusField && char === '-') return;
     if (isPreview) {
       setValue(char === ' ' ? '' : char);
       setIsPreview(false);
     } else {
       setValue((prev) => {
-        // 💡 오직 스팬 입력 모드일 때만 자동 띄어쓰기 및 슬래시 완성 자동화 작동
-        if (mode === 'span') {
+        // 💡 스팬 입력 모드 및 PAP 입력 모드일 때 자동 띄어쓰기 및 슬래시 완성 자동화 작동
+        const isFractionAutoMode = mode === 'span' || title?.includes('PAP');
+        if (isFractionAutoMode) {
           // 첫 번째 정수 입력 뒤 자동 띄어쓰기 유지
           let nextVal = prev;
           if (/^[0-9]$/.test(prev) && /^[0-9]$/.test(char)) {
@@ -124,7 +128,10 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
           return nextVal;
         }
 
-        // 💡 [원복 완료] 스팬 모드가 아닐 때(오발각도, 일반넘버)는 간섭 차단 및 순수 연속 결합 처리
+        // 💡 선행 0 자동 삭제 엔진: 단독 0 상태에서 숫자 입력 시 0을 자동 지우고 신규 숫자로 교체
+        if (prev === '0' && /^[0-9]$/.test(char)) {
+          return char;
+        }
         return prev + char;
       });
     }
@@ -146,6 +153,10 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
     if (!isOpen) return;
 
     const handleKeyDown = (e) => {
+      if (e.key === '-' && isNoMinusField) {
+        e.preventDefault();
+        return;
+      }
       if (e.key === 'Enter') {
         handleSubmit();
         e.preventDefault();
@@ -232,6 +243,22 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
           </div>
         </div>
 
+        {/* extraKeys (Up / Down) 전용 원터치 키패드 버튼 모듈 */}
+        {extraKeys && extraKeys.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            {extraKeys.map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleExtraKeyPress(key)}
+                className="h-12 rounded-xl font-extrabold text-base bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm"
+              >
+                {key === 'Up' ? '▲ Up' : key === 'Down' ? '▼ Down' : key}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* 원터치 가감 직통 버튼 모듈 (일반 스팬 모드) */}
         {mode === 'span' && (
           <div className="grid grid-cols-4 gap-2 mb-3 bg-slate-50 p-2 rounded-xl border border-slate-200 animate-fade-in">
@@ -264,13 +291,17 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
           {/* 4행 & 5행 하단 컨트롤 레이아웃 */}
           {mode === 'number' ? (
             <>
-              <button
-                type="button"
-                onClick={() => handleCharacterInput('-')}
-                className="h-14 sm:h-16 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center"
-              >
-                -
-              </button>
+              {!isNoMinusField ? (
+                <button
+                  type="button"
+                  onClick={() => handleCharacterInput('-')}
+                  className="h-14 sm:h-16 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center"
+                >
+                  -
+                </button>
+              ) : (
+                <div className="h-14 sm:h-16 opacity-0 pointer-events-none" />
+              )}
               <button
                 type="button"
                 onClick={() => handleCharacterInput('0')}
@@ -288,14 +319,18 @@ export default function FractionKeypad({ isOpen, onClose, onConfirm, initialValu
             </>
           ) : (
             <>
-              {/* 4행 1열: - (마이너스) */}
-              <button
-                type="button"
-                onClick={() => handleCharacterInput('-')}
-                className="h-14 sm:h-16 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center"
-              >
-                -
-              </button>
+              {/* 4행 1열: - (마이너스) 버튼 - 마이너스 미지원 입력 모달일 때는 100% 삭제 */}
+              {!isNoMinusField ? (
+                <button
+                  type="button"
+                  onClick={() => handleCharacterInput('-')}
+                  className="h-14 sm:h-16 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center"
+                >
+                  -
+                </button>
+              ) : (
+                <div className="h-14 sm:h-16 opacity-0 pointer-events-none" />
+              )}
 
               {/* 4행 2열: 0 */}
               <button
