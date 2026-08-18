@@ -9,11 +9,11 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- ☰ 햄버거 삼선 토큰 상태 색상 융합, 고객 관리 로그인 바인딩 및 클라우드 백업 지공사 프로필 복원 Vercel 프로덕션 라이브 배포 완료 (`CustomerHeader.jsx`, `SettingsModal.jsx`):
-  - **☰ 햄버거 삼선 토큰 색상 융합**: 구글 연동 백업 토큰 정상 시 에메랄드 녹색(`text-emerald-600`), 만료 시 깜빡임 없는 선명한 주황색(`text-amber-500`) 고정 이식.
+- 클라우드 백업 모달 백업 스냅샷 타이틀 문구 정제 Vercel 프로덕션 라이브 배포 완료 (`SettingsModal.jsx`):
+  - **스냅샷 타이틀 핀포인트 정제**: `백업 스냅샷 (최대 30개 보관)` 부연 문구를 지공사님 지시대로 **`백업 스냅샷`** 으로 핀포인트 단독 교체 완료.
+  - **☰ 햄버거 삼선 토큰 상태 색상 융합**: 구글 연동 백업 토큰 정상 시 에메랄드 녹색(`text-emerald-600`), 만료 시 깜빡임 없는 선명한 주황색(`text-amber-500`) 고정 이식.
   - **고객 관리 텍스트 클릭 시 구글 연동 갱신 로그인 바인딩**: `고객 관리` 헤더 글자 터치 시 `signInGoogle(true)` 구글 갱신 로그인 팝업 1초 가동.
   - **클라우드 백업 모달 내 지공사 프로필 100% 원상 복원**: `☁️ 클라우드 백업` 모달 내의 지공사 프로필(성함/샵이름 입력 및 라이선스 뱃지) 100% 원본 유지 복원 완수.
-  - **프로필 관련 메뉴만 선택 가림 (주석 보존)**: `⚙️ 환경 설정` 내 프로필 토글 및 고객 관리 매뉴얼 가이드 내 프로필 문구만 선택 가림 (추후 재개 주석 기록 100% 보존).
   - **검증 완료**: 63개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
