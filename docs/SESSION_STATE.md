@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- await readCustomers 비동기 완전 대기 및 Math.max 수학적 방어막 Vercel 프로덕션 라이브 배포 (`CustomerHistoryModal.jsx`):
-  - **`await readCustomers()` 비동기 완료 완전 대기**: 모달 진입 시 IndexedDB 조회가 완료되기 전에 빈 배열로 산출되던 원인을 `await` 키워드로 100% 비동기 대기 수술 완료 (`3 / 0` 버그 영구 소멸).
-  - **`Math.max` 수학적 무결성 방어막 이식**: 분모(전체 차트 수)가 분자(개인 차트 수 `3개`)보다 절대로 작아지거나 `0` 이 될 수 없도록 `Math.max(history.length, totalCount)` 방어막 완벽 이식 완료 (`3 / 345` 100% 명확 렌더링).
+- 타임라인 로그 탭 클릭 토글 미반응 완치 Vercel 프로덕션 라이브 배포 (`CustomerHistoryModal.jsx`):
+  - **탭 클릭 덮어쓰기 무한루프 완치**: `useEffect` 내에서 `setActiveTab`이 탭 클릭 시마다 무한히 덮어씌워지던 버그를 `prevIsOpenRef` 모달 오픈 싱글톤 패턴으로 수술 완수.
+  - **100% 자율 토글 반응 확립**: 상단 "타임라인 로그" 탭과 "지공 기록" 탭을 사용자가 클릭하는 즉시 딜레이 없이 100% 완벽하게 반응하고 전환됨.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

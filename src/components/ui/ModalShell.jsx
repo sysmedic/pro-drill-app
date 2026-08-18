@@ -117,7 +117,7 @@ export default function ModalShell({
       <div
         aria-labelledby={titleId}
         aria-modal="true"
-        className={cn('w-full overflow-hidden rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl animate-scale-up border border-slate-200', sizes[size], className)}
+        className={cn('w-full overflow-hidden rounded-3xl bg-white shadow-2xl animate-scale-up border border-slate-200', sizes[size], className)}
         onClick={(event) => event.stopPropagation()}
         ref={panelRef}
         role="dialog"
