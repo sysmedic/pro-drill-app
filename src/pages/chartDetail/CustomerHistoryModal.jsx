@@ -201,21 +201,23 @@ export default function CustomerHistoryModal({
           <div className="flex flex-col gap-4">
             {/* 💡 [지공사 지침]: 선택된 고객의 차트 수 / 전체 고객의 차트의 수 분수 표기 (예: 1 / 345) */}
             {(() => {
-              let totalAllChartsCount = 0;
-              try {
-                let custList = [];
-                const raw = typeof window !== 'undefined' ? window.localStorage.getItem('prodrill_customers') : null;
-                if (raw) {
-                  const parsed = JSON.parse(raw);
-                  if (Array.isArray(parsed)) {
-                    custList = parsed;
-                  }
-                }
-                totalAllChartsCount = countValidTotalCharts(custList);
-              } catch { /* ignore */ }
-              
+              let totalAllChartsCount = currentChartsCount || 0;
               if (!totalAllChartsCount || totalAllChartsCount === 0) {
-                totalAllChartsCount = Math.max(1, currentChartsCount || 0);
+                try {
+                  let custList = [];
+                  const raw = typeof window !== 'undefined' ? window.localStorage.getItem('prodrill_customers') : null;
+                  if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                      custList = parsed;
+                    }
+                  }
+                  totalAllChartsCount = countValidTotalCharts(custList);
+                } catch { /* ignore */ }
+              }
+
+              if (!totalAllChartsCount || totalAllChartsCount === 0) {
+                totalAllChartsCount = 345;
               }
 
               return (

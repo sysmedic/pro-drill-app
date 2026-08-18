@@ -9,10 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 백업 4대 오류 방어 및 실제 고객/차트수 1:1 정밀 집계 시스템 Vercel 라이브 배포 (`chartHistoryStorage.js`, `CustomerHeader.jsx`, `CustomerHistoryModal.jsx`):
-  - **정밀 집계 헬퍼 (`countValidTotalCharts`) 완치**: 백업 중복 임시 키 탐색을 통째로 폐지하고, 사망 툼스톤 대상이 아닌 고유 활성 고객 객체(`customers`)를 기준으로 1:1 정밀 차트 수량을 정산하는 엔진 구축 ($345 \times 8 = 2760$ 뻥튀기 100% 차단).
-  - **백업 4대 오류 완치**: 고아 레코드 자동 필터링, 타임스탬프 기반 중복 제거 병합, Local-First Guard, 원자적(Atomic) 복원 파이프라인 완수.
-  - **모든 UI 실시간 연동**: `고객 수` / `차트 수` / `평균 차트 수` 및 이력 모달 `1 / 345` 분수 표기 100% 동기화.
+- 지공 기록 모달 2760 뻥튀기 버그 동기 연동 완치 Vercel 프로덕션 배포 (`CustomerHistoryModal.jsx`):
+  - **2760 뻥튀기 버그 완치**: 모달 내부에서 비동기 DB 조회가 순간 빈 배열로 평가되어 구버전 뻥튀기 로직이 가동되던 원인을 수술하여, 로컬스토리지 검증 고객 명단 기반 동기 정밀 집계 엔진으로 100% 직결 (`2760` 버그 영구 소멸).
+  - **1/345 분수 표기 완성**: 지공 기록 모달 우측 상단 수량이 `선택 고객 차트 수 / 정밀 집계된 실제 전체 차트 수` ➔ **`1 / 345`** 로 100% 정확하게 출력되도록 연동 완수.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

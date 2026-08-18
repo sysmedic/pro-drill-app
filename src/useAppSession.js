@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { isLicenseCertified, MASTER_HASH, MASTER_EMAIL, checkRemoteLicenseStatus, updateTrialUserStats, calculateGracePeriod, getSha256Hash, certifyUserEmail, fetchRemoteUserProfile } from './lib/userLicenseManager.js';
+import { readCustomers } from './lib/customerStorage.js';
+import { countValidTotalCharts } from './lib/chartHistoryStorage.js';
 
 const resolveInitialTier = () => {
   if (typeof window === 'undefined') return 'trial';
@@ -52,18 +54,24 @@ export default function useAppSession() {
 
   const isAdmin = false; // 마스터제어실 제거에 따라 항상 false
 
-  // 실시간 차트 카운트 함수 (로컬 DB 카운트 계측)
+  // 실시간 차트 카운트 함수 (1:1 정밀 집계 엔진 이식)
   const refreshChartCount = useCallback(async (uid) => {
     if (!uid) return;
     try {
-      if (globalThis.indexedDbHelper) {
-        const count = await globalThis.indexedDbHelper.getChartsCount();
-        setCurrentChartsCount(count || 0);
-      } else {
-        const keys = Object.keys(localStorage);
-        const chartKeys = keys.filter(k => k.startsWith('chart_history_v8_'));
-        setCurrentChartsCount(chartKeys.length);
+      let custList = [];
+      const raw = typeof window !== 'undefined' ? window.localStorage.getItem('prodrill_customers') : null;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          custList = parsed;
+        }
       }
+      if (custList.length === 0) {
+        const res = readCustomers();
+        custList = Array.isArray(res) ? res : (res?.customers || []);
+      }
+      const count = countValidTotalCharts(custList);
+      setCurrentChartsCount(count);
     } catch (error) {
       console.error("카운트 조회 에러:", error);
     }
