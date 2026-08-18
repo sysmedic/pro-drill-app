@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 타임라인 로그 탭 클릭 토글 미반응 완치 Vercel 프로덕션 라이브 배포 (`CustomerHistoryModal.jsx`):
-  - **탭 클릭 덮어쓰기 무한루프 완치**: `useEffect` 내에서 `setActiveTab`이 탭 클릭 시마다 무한히 덮어씌워지던 버그를 `prevIsOpenRef` 모달 오픈 싱글톤 패턴으로 수술 완수.
-  - **100% 자율 토글 반응 확립**: 상단 "타임라인 로그" 탭과 "지공 기록" 탭을 사용자가 클릭하는 즉시 딜레이 없이 100% 완벽하게 반응하고 전환됨.
+- 모바일 및 작은 화면 사이즈 모달 4개 모서리 하단 라운딩 적용 Vercel 프로덕션 라이브 배포 (`ModalShell.jsx`):
+  - **작은 화면 모달 하단 라운딩 적용 완수**: 스마트폰 등 작은 모바일 화면 사이즈에서도 상단만 곡선이던 모서리를 4개 모서리 전체 하단 라운딩(`rounded-3xl` = 24px)으로 수술 완수.
+  - **세련된 팝업 스타일 완성**: 모든 기기와 화면 크기에서 모달이 예쁘고 세련되게 둥글둥글한 라운딩 모양으로 렌더링되도록 디자인 시스템 연동.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

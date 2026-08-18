@@ -566,7 +566,7 @@ export const autoSyncOnLaunch = async (setFeedback) => {
 // 6. 데이터 변경 발생 시 자동 백그라운드 백업 (Debounced Auto Save)
 export const autoSyncOnChange = () => {
   const autoSyncEnabled = localStorage.getItem('prodrill_auto_sync_enabled') !== 'false';
-  if (!autoSyncEnabled || !isLicenseCertified() || !isGoogleSignedIn() || (typeof navigator !== 'undefined' && !navigator.onLine)) return;
+  if (!autoSyncEnabled || !isSyncAllowed() || !isGoogleSignedIn() || (typeof navigator !== 'undefined' && !navigator.onLine)) return;
 
   if (debounceTimer) {
     clearTimeout(debounceTimer);
@@ -622,4 +622,24 @@ export const registerVisibilitySync = () => {
     window.removeEventListener('pagehide', handleFinalSync);
     window.removeEventListener('beforeunload', handleFinalSync);
   };
+};
+
+// 6. 데이터 변경 시 3초 디바운스 자동 백업 트리거
+export const triggerAutoBackup = (delayMs = 3000) => {
+  const isLoggedOut = typeof window !== 'undefined' && localStorage.getItem('prodrill_user_logged_out') === 'true';
+  const autoSyncEnabled = typeof window !== 'undefined' && localStorage.getItem('prodrill_auto_sync_enabled') !== 'false';
+  if (isLoggedOut || !autoSyncEnabled || !isSyncAllowed()) return;
+
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(async () => {
+    try {
+      if (isGoogleSignedIn()) {
+        console.log("☁️ [실시간 자동 백업] 데이터 변경 감지. 구글 드라이브 백업 전송 중...");
+        await performBackup();
+        console.log("☁️ [실시간 자동 백업] 백업 완료!");
+      }
+    } catch (err) {
+      console.warn("☁️ [실시간 자동 백업] 백업 알림:", err);
+    }
+  }, delayMs);
 };

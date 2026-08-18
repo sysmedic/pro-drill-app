@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import Button from "../../components/ui/Button.jsx";
-import { ConfirmModal } from "../../components/ui/Dialogs.jsx";
 import ModalShell from "../../components/ui/ModalShell.jsx";
 import { isLicenseCertified, calculateGracePeriod, getUserProfile, saveUserProfile, sanitizeString } from "../../lib/userLicenseManager.js";
 import { 
@@ -161,12 +160,15 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
     setShowSyncModeConfirm(true);
   };
 
-  const handleConfirmGoogleRestore = async () => {
+  const handleConfirmGoogleRestore = async (restoreMode = 'merge') => {
     setShowSyncModeConfirm(false);
     setGoogleLoading(true);
     try {
-      await performRestore(selectedSnapshotId, "overwrite");
-      onFeedback({ message: "선택한 백업 스냅샷 데이터로 100% 덮어쓰기 복원이 성공적으로 완료되었습니다!", tone: "success" });
+      await performRestore(selectedSnapshotId, restoreMode);
+      const msg = restoreMode === 'merge'
+        ? "선택한 백업 데이터와 현재 기기 데이터의 1:1 증분 병합 복원이 완료되었습니다!"
+        : "선택한 백업 스냅샷 데이터로 100% 덮어쓰기 복원이 성공적으로 완료되었습니다!";
+      onFeedback({ message: msg, tone: "success" });
       setTimeout(() => {
         window.location.reload();
       }, 800);
@@ -395,17 +397,42 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
         </div>
       </ModalShell>
 
-      {/* 1. 구글 드라이브 복원 컨펌 모달 */}
+      {/* 1. 구글 드라이브 복원 방식 선택 모달 */}
       {showSyncModeConfirm && (
-        <ConfirmModal
-          confirmLabel="동기화 병합 복원"
-          message="선택하신 백업 스냅샷과 현재 기기의 데이터를 중복 없이 하나로 통합(병합)합니다. 오프라인에서 새로 작업한 차트도 모두 안전하게 보존됩니다. 계속 진행하시겠습니까?"
-          onCancel={() => setShowSyncModeConfirm(false)}
-          onConfirm={handleConfirmGoogleRestore}
-          title="클라우드 통합 복원 확인"
-          titleId="google-restore-confirm-title"
+        <ModalShell
+          align="center"
+          onClose={() => setShowSyncModeConfirm(false)}
+          size="sm"
+          title="클라우드 백업 복원 선택"
+          variant="light"
           zClassName="z-[150]"
-        />
+        >
+          <div className="p-4 flex flex-col gap-3 text-center">
+            <p className="text-xs font-bold text-slate-600 mb-1">
+              복원 방식을 선택해 주세요.
+            </p>
+
+            <button
+              onClick={() => handleConfirmGoogleRestore('merge')}
+              className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-left hover:bg-indigo-100 transition-colors active:scale-95 cursor-pointer"
+            >
+              <span className="font-black text-indigo-700 text-xs block">[증분 복원] (병합 - 추천)</span>
+              <span className="text-[11px] text-indigo-600 block mt-0.5">
+                기존 내 기기 데이터와 클라우드 백업을 합쳐 타임스탬프 순으로 둘 다 보존합니다.
+              </span>
+            </button>
+
+            <button
+              onClick={() => handleConfirmGoogleRestore('overwrite')}
+              className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-left hover:bg-rose-100 transition-colors active:scale-95 cursor-pointer"
+            >
+              <span className="font-black text-rose-700 text-xs block">[덮어쓰기 복원]</span>
+              <span className="text-[11px] text-rose-600 block mt-0.5">
+                기존 내 기기 데이터를 지우고 클라우드 백업본 상태로 100% 동일하게 복원합니다.
+              </span>
+            </button>
+          </div>
+        </ModalShell>
       )}
 
 
