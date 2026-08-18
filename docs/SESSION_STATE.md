@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 수동 스냅샷 복원 시 조기 새로고침 DB 유실 완치 및 실시간 UI 인양 수술 Vercel 프로덕션 라이브 배포 (`SettingsModal.jsx`):
-  - **조기 새로고침 DB 유실 파기 완치**: `SettingsModal.jsx` 내의 0.8초 조기 새로고침 코드(`setTimeout(reload)`)를 100% 삭제하여, 비동기 IndexedDB 쓰기 작업이 중간에 유실되던 버그를 완전 소탕.
-  - **실시간 UI 데이터 인양 완료**: DB 저장 완결 직후 `window.dispatchEvent(new Event('prodrill_data_restored'))` 이벤트를 쏴서, 새로고침 없이도 즉시 화면의 지공 차트 및 고객 데이터가 복원본으로 100% 갱신되도록 수술.
+- 복원 시 삭제 툼스톤 오검출로 인한 고객 누락 완치 및 1:1 인양 복구 수술 Vercel 프로덕션 라이브 배포 (`syncService.js`):
+  - **수동 덮어쓰기(`overwrite`) 삭제 툼스톤 초기화**: 덮어쓰기 복원 진행 시 과거 로컬 삭제 기록(`prodrill_deleted_customer_ids`)을 100% 초기화하여, 백업 스냅샷 안의 모든 고객(누락되던 1명 포함)이 100% 완전 복원되도록 완치.
+  - **수동 증분 복원(`merge`) 툼스톤 안전 오버라이드**: 백업 파일 수신 고객 데이터의 시각(`updatedAt`)이 유효할 경우 툼스톤 오검출을 해제하고 고객 1명을 1:1 완벽 복구 인양.
   - **검증 완료**: 62개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

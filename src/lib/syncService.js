@@ -318,7 +318,13 @@ export const unpackAppData = async (payload, mode = 'merge', expectedEmail = nul
         }
       }
 
-      const localIdx = mergedCustomers.findIndex(c => c.id === incoming.id || (c.name && incoming.name && c.name === incoming.name && c.phone === incoming.phone));
+      const localIdx = mergedCustomers.findIndex(c => {
+        if (!c || !incoming) return false;
+        if (c.id && incoming.id && c.id === incoming.id) return true;
+        // 🟢 [완치 수술]: 이름과 전화번호가 둘 다 유효하게 존재하고 1:1 일치할 때만 동일인으로 매칭 (전화번호 빈값 "" 덮어쓰기 원천 차단)
+        if (c.name && incoming.name && c.phone && incoming.phone && c.name.trim() === incoming.name.trim() && c.phone.trim() === incoming.phone.trim()) return true;
+        return false;
+      });
       if (localIdx === -1) {
         // 로컬에 없는 신규 고객 -> 추가
         mergedCustomers.push(incoming);

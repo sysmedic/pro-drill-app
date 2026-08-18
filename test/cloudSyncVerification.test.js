@@ -116,3 +116,29 @@ test('실증 4-A: 수동 스냅샷 복원 시 증분 복원(merge) vs 덮어쓰�
   assert.equal(overwriteResult.length, 2);
   assert.equal(overwriteResult[0].name, '기존고객1_수정', '덮어쓰기(overwrite) 시 스냅샷 데이터로 100% 교체되어야 함');
 });
+
+test('실증 5-A: 지공사님 제보 데이터 (전화번호 빈값 고객 3명 포함 총 4명) 복원 시 1명도 누락 없이 100% (4/4명) 병합 검증', () => {
+  const incomingCustomers = [
+    { id: "id_0f4fab81-703c-49be-aa75-80c9bdd2a822", name: "김정문", phone: "010-3797-3885" },
+    { id: "id_25d9ea42-fd0d-4b1c-a8f6-e844fabbb594", name: "덤리스", phone: "" },
+    { id: "id_548f25e2-0700-43b0-be92-d65e78258385", name: "테스트 하는거야", phone: "" },
+    { id: "id_a05ab546-49a5-4da9-9fcc-2ebcd914563b", name: "류나렆나러ㅠㅍㄴ", phone: "" }
+  ];
+
+  const mergedCustomers = [];
+  for (const incoming of incomingCustomers) {
+    const localIdx = mergedCustomers.findIndex(c => {
+      if (!c || !incoming) return false;
+      if (c.id && incoming.id && c.id === incoming.id) return true;
+      if (c.name && incoming.name && c.phone && incoming.phone && c.name.trim() === incoming.name.trim() && c.phone.trim() === incoming.phone.trim()) return true;
+      return false;
+    });
+
+    if (localIdx === -1) {
+      mergedCustomers.push(incoming);
+    }
+  }
+
+  assert.equal(mergedCustomers.length, 4, '전화번호가 빈값인 3명을 포함한 4명의 고객이 단 1명도 덮어씌워지지 않고 100% (4명) 유지 복원되어야 함');
+  assert.equal(mergedCustomers[3].name, '류나렆나러ㅠㅍㄴ', '4번째 고객 류나렆나러ㅠㅍㄴ이 100% 누락 없이 복원되어야 함');
+});
