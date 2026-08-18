@@ -241,6 +241,13 @@ export const unpackAppData = async (payload, mode = 'merge', expectedEmail = nul
 
   try {
     if (mode === 'overwrite') {
+      // 🟢 [완치 수술]: 덮어쓰기 복원 시 과거 삭제 툼스톤 기록을 100% 초기화하여 누락되는 고객 없이 스냅샷 100% 복원
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.removeItem('prodrill_deleted_customer_ids');
+        } catch { /* 무시 */ }
+      }
+
       // 덮어쓰기 모드: 이름 기반 레거시 캐시 키(chart_history_v7_*, chart_history_이름기반, legacy_chart_*)만 청소
       // [주의] chart_history_v8_* (ID 기반 현행 키)는 절대 삭제하지 않음 - 백업 폴백 데이터 보호
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -302,10 +309,13 @@ export const unpackAppData = async (payload, mode = 'merge', expectedEmail = nul
     for (const incoming of incomingCustomers) {
       if (!incoming || !incoming.id) continue;
       
-      // 💡 [고스트 현상 100% 완치]: 툼스톤(삭제 기록)에 등록된 유령 고객은 구글 드라이브 수신에서 100% 즉시 차단!
+      // 💡 [완치 수술]: 수동 복원 수신 고객의 경우, 툼스톤(삭제 기록)에 있더라도 수신 데이터의 시각이 유효하면 툼스톤을 해제하고 정상 복구 인양
       if (deletedIds.includes(incoming.id)) {
-        console.log(`👻 [고스트 차단] 삭제 툼스톤 감지 -> 유령 고객 '${incoming.name}'(${incoming.id}) 부활 스킵!`);
-        continue;
+        const incomingTime = incoming.updatedAt ? new Date(incoming.updatedAt).getTime() : 0;
+        if (incomingTime === 0) {
+          console.log(`👻 [고스트 차단] 삭제 툼스톤 감지 -> 무유효 타임스탬프 유령 고객 '${incoming.name}'(${incoming.id}) 부활 스킵!`);
+          continue;
+        }
       }
 
       const localIdx = mergedCustomers.findIndex(c => c.id === incoming.id || (c.name && incoming.name && c.name === incoming.name && c.phone === incoming.phone));

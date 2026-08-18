@@ -9,11 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 수동 스냅샷 복원 시 `[증분 복원 (merge)]` vs `[덮어쓰기 복원 (overwrite)]` 1:1 정밀 실증 4-A 100% PASS 및 Vercel 프로덕션 라이브 배포 (`syncService.js` & `test/cloudSyncVerification.test.js`):
-  - **스모킹 건 매개변수 파싱 보강**: `performRestore(fileId, mode)` 실행 시 첫 번째 인자로 모드가 들어가거나 스냅샷 ID가 지정될 때 `targetMode` 가 엉키지 않도록 조건 파싱 보강 완수.
-  - **1:1 실증 테스트 100% PASS 입증 (`test/cloudSyncVerification.test.js`)**:
-    - **실증 4-A (증분 복원 `merge`)**: 기존 고객 + 스냅샷 신규 고객 1:1 병합 (0.37ms PASS).
-    - **실증 4-A (덮어쓰기 `overwrite`)**: 기존 데이터 완전 대체 및 스냅샷 교체 (PASS).
+- 수동 스냅샷 복원 시 조기 새로고침 DB 유실 완치 및 실시간 UI 인양 수술 Vercel 프로덕션 라이브 배포 (`SettingsModal.jsx`):
+  - **조기 새로고침 DB 유실 파기 완치**: `SettingsModal.jsx` 내의 0.8초 조기 새로고침 코드(`setTimeout(reload)`)를 100% 삭제하여, 비동기 IndexedDB 쓰기 작업이 중간에 유실되던 버그를 완전 소탕.
+  - **실시간 UI 데이터 인양 완료**: DB 저장 완결 직후 `window.dispatchEvent(new Event('prodrill_data_restored'))` 이벤트를 쏴서, 새로고침 없이도 즉시 화면의 지공 차트 및 고객 데이터가 복원본으로 100% 갱신되도록 수술.
   - **검증 완료**: 62개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
