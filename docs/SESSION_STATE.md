@@ -9,10 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 하드코딩 마이그레이션 임시 계정 정리 및 마스터 제어실 일원화 Vercel 프로덕션 라이브 배포 (`userLicenseManager.js` & `CustomerHeader.jsx`):
-  - **하드코딩 임시 계정 100% 정리 완수**: `getMigrationAllowedEmails` 내 하드코딩 임시 이메일(`sysmedic3`, `worms0529`)을 100% 완전 삭제하고, 오직 최고 마스터 계정(`sysmedic@gmail.com`)만 기본 유지.
-  - **권한 관리 마스터 제어실 동적 일원화**: 모든 마이그레이션 권한 부여/회수는 마스터 제어실(`AdminSettingsModal.jsx`)의 동적 이메일 추가/삭제 기능을 통해서만 이루어지도록 100% 일원화.
-  - **1순위 절대 방어막 연산자 괄호 수술 완수**: `isMigrationModeGloballyEnabled()` 방어막 괄호를 최우선 1순위로 묶어, 마스터 제어실에서 OFF 클릭 시 `sysmedic3` 계정을 포함한 모든 계정 화면에서 엑셀 마이그레이션 메뉴가 100% 즉시 숨겨지고 원격 차단됨.
+- 마스터 제어실 UI 정돈 ([실시간 앱 재배포] 삭제 & [마이그레이션 제어] 최하단 이동 배치) Vercel 프로덕션 라이브 배포 (`AdminSettingsModal.jsx`):
+  - **실시간 앱 재배포 섹션 100% 완전 삭제**: 오해의 소지가 있는 미사용 `🚀 Vercel 실시간 앱 재배포 제어` UI 카드 및 관련 함수 100% 깔끔 삭제 완료.
+  - **마이그레이션 제어 카드 모달 최하단 배치**: `📦 엑셀 마이그레이션 제어` 카드를 마스터 제어실 모달 스크롤 레이아웃의 맨 최하단(가장 아래쪽)으로 이동 배치 완수.
   - **검증 완료**: 61개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

@@ -229,7 +229,7 @@ export const fetchRemoteMigrationConfig = async () => {
   if (isTestEnv) return null;
 
   try {
-    const docRef = doc(licenseDb, 'admin_settings', 'migration_config');
+    const docRef = doc(licenseDb, 'users', 'admin_migration_config');
     const docSnap = await getDoc(docRef).catch(() => null);
     if (docSnap && docSnap.exists()) {
       const data = docSnap.data();
@@ -257,7 +257,7 @@ export const saveRemoteMigrationConfig = async (isMigrationModeOn, allowedEmails
   if (isTestEnv) return true;
 
   try {
-    const docRef = doc(licenseDb, 'admin_settings', 'migration_config');
+    const docRef = doc(licenseDb, 'users', 'admin_migration_config');
     await setDoc(docRef, {
       isMigrationModeOn: !!isMigrationModeOn,
       allowedEmails: Array.isArray(allowedEmails) ? allowedEmails : [],
