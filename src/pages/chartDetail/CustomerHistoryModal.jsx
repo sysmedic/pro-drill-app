@@ -62,28 +62,40 @@ export default function CustomerHistoryModal({
     return isManualOpen ? 'history' : 'timeline';
   });
 
-  // 🟢 [지공사 지침]: 모달 진입 시 바로 직통 1:1 계산하여 총 차트수 확정 주입 (0.002초)
+  // 🟢 [지공사 지침]: 모달 진입 시 await readCustomers() 비동기 완전 대기로 1:1 정밀 계산 (3 / 0 버그 영구 사멸)
   useEffect(() => {
     if (isOpen) {
       setActiveTab(isManualOpen ? 'history' : 'timeline');
-      let list = Array.isArray(allCustomers) && allCustomers.length > 0 ? allCustomers : [];
-      if (list.length === 0) {
-        try {
-          const raw = typeof window !== 'undefined' ? window.localStorage.getItem('prodrill_customers') : null;
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) list = parsed;
-          }
-        } catch { /* ignore */ }
-      }
-      if (list.length === 0) {
-        try {
-          const res = readCustomers();
-          list = Array.isArray(res) ? res : (res?.customers || []);
-        } catch { /* ignore */ }
-      }
-      const count = countValidTotalCharts(list);
-      setTotalAllChartsCount(count || 0);
+      let isMounted = true;
+
+      (async () => {
+        let list = Array.isArray(allCustomers) && allCustomers.length > 0 ? allCustomers : [];
+
+        if (list.length === 0) {
+          try {
+            const raw = typeof window !== 'undefined' ? window.localStorage.getItem('prodrill_customers') : null;
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed) && parsed.length > 0) list = parsed;
+            }
+          } catch { /* ignore */ }
+        }
+
+        // 💡 [핵심 완치]: await readCustomers() 비동기 완료를 100% 명확히 대기함!
+        if (list.length === 0) {
+          try {
+            const res = await readCustomers();
+            list = Array.isArray(res) ? res : (res?.customers || []);
+          } catch { /* ignore */ }
+        }
+
+        const count = countValidTotalCharts(list, true);
+        if (isMounted) {
+          setTotalAllChartsCount(count || 0);
+        }
+      })();
+
+      return () => { isMounted = false; };
     }
   }, [isOpen, isManualOpen, allCustomers]);
 
@@ -220,9 +232,10 @@ export default function CustomerHistoryModal({
         {/* 지공 기록 탭 컨텐츠 */}
         {activeTab === 'history' && (
           <div className="flex flex-col gap-4">
-            {/* 💡 [지공사 지침]: 모달 진입 시 1:1 직통 계산된 개인 차트 수 / 전체 저장 차트 수 표기 (예: 2 / 345) */}
+            {/* 💡 [지공사 지침]: 수학적 방어막(Math.max)이 이식된 개인 차트 수 / 전체 저장 차트 수 표기 (예: 3 / 345) */}
             {(() => {
-              const displayTotalCount = totalAllChartsCount || currentChartsCount || 0;
+              const baseTotal = totalAllChartsCount || currentChartsCount || 0;
+              const displayTotalCount = Math.max(history.length, baseTotal);
               return (
                 <div className="px-2 mb-2 flex justify-between items-center text-xs font-bold tracking-tight">
                   <span className="text-white/60">전체 기록 목록</span>
