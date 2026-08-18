@@ -42,29 +42,28 @@ export const normalizeChartHistory = (history) => (
 export const countValidTotalCharts = (customers) => {
   if (!Array.isArray(customers) || customers.length === 0) return 0;
 
-  let total = 0;
+  let totalActualCharts = 0;
   const store = typeof window !== 'undefined' 
     ? window.localStorage 
     : (typeof globalThis !== 'undefined' ? globalThis.localStorage : null);
 
+  if (!store) return 0;
+
   for (const customer of customers) {
     if (!customer || !customer.id) continue;
-    total += 1; // 활성 고객 기본 1개 차트
-
-    if (store) {
-      try {
-        const raw = store.getItem(`${CHART_HISTORY_PREFIX}${customer.id}`);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 1) {
-            total += (parsed.length - 1);
-          }
+    try {
+      const raw = store.getItem(`${CHART_HISTORY_PREFIX}${customer.id}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          // 💡 [지공사 지침]: 고객수가 아닌 오직 로컬 DB에 실제 작성되어 저장된 차트 객체 수량만 1:1 직접 가산!
+          totalActualCharts += parsed.length;
         }
-      } catch { /* ignore */ }
-    }
+      }
+    } catch { /* ignore */ }
   }
 
-  return total;
+  return totalActualCharts;
 };
 
 // 💡 [테스트 & 폴백 지원]: 마이그레이션 전이거나 테스트용 목 스토리지가 있는 경우 localStorage 동기 대조

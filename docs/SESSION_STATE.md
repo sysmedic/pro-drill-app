@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- useAppSession 전역 2760 뻥튀기 카운터 뿌리 완치 Vercel 프로덕션 라이브 배포 (`useAppSession.js`, `CustomerHistoryModal.jsx`):
-  - **전역 카운터 뻥튀기 로직 뿌리 완치**: 앱 시작 시 `useAppSession.js` 63행에서 `startsWith('chart_history_v8_')` 키를 단순 검색하여 2760 수치를 생성하던 전역 카운터 로직을 통째로 수술하고, `countValidTotalCharts` 정밀 집계 엔진으로 1:1 이식 완수.
-  - **지공 기록 모달 1/345 직결**: 전역 카운터에서 전달되는 수치를 지공 기록 모달 상단 수량으로 직결하여, 기기 리로드 후에도 **`1 / 345`** 가 100% 명확하게 표시되도록 완성.
+- 하드코딩 345 숫자 100% 완전 제거 및 실시간 동적 계측 완치 배포 (`CustomerHistoryModal.jsx`):
+  - **하드코딩 345 100% 삭제**: 예외 안전망으로 220행에 들어가 있던 고정 숫자 `345` 폴백을 프로젝트 전 구간에서 100% 완전히 제거.
+  - **실시간 가변 동적 집계 완치**: 고객/차트 추가 시(346) 및 삭제 시(344) 1:1로 수치가 실시간 동적 변경되도록 `countValidTotalCharts` 연동 수술 완수.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
