@@ -165,13 +165,17 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
     setGoogleLoading(true);
     try {
       await performRestore(selectedSnapshotId, restoreMode);
+      
+      // 🟢 [완치 수술]: 비동기 IDB 저장 완결 후 실시간 UI 갱신 이벤트 발행 (조기 새로고침으로 인한 유실 차단)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('prodrill_data_restored'));
+        window.dispatchEvent(new Event('storage'));
+      }
+
       const msg = restoreMode === 'merge'
         ? "선택한 백업 데이터와 현재 기기 데이터의 1:1 증분 병합 복원이 완료되었습니다!"
         : "선택한 백업 스냅샷 데이터로 100% 덮어쓰기 복원이 성공적으로 완료되었습니다!";
       onFeedback({ message: msg, tone: "success" });
-      setTimeout(() => {
-        window.location.reload();
-      }, 800);
     } catch (err) {
       console.error("구글 복원 실패:", err);
       onFeedback({ message: "복원 실패: 백업 파일을 읽는 도중 오류가 발생했습니다.", tone: "danger" });
