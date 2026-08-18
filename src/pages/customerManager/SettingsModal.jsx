@@ -176,6 +176,11 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
         ? "선택한 백업 데이터와 현재 기기 데이터의 1:1 증분 병합 복원이 완료되었습니다!"
         : "선택한 백업 스냅샷 데이터로 100% 덮어쓰기 복원이 성공적으로 완료되었습니다!";
       onFeedback({ message: msg, tone: "success" });
+
+      // 🟢 [완치 수술]: 복원 완료 시 설정 모달 자동 닫기
+      if (typeof onClose === 'function') {
+        onClose();
+      }
     } catch (err) {
       console.error("구글 복원 실패:", err);
       onFeedback({ message: "복원 실패: 백업 파일을 읽는 도중 오류가 발생했습니다.", tone: "danger" });

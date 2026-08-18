@@ -484,6 +484,15 @@ export const performRestore = async (fileId = null, mode = 'merge') => {
     const payload = await downloadBackupData(targetFileId);
     await unpackAppData(payload, targetMode, currentEmail);
     
+    // 🟢 [완치 수술]: 복원 완료 직후 병합 완료된 최신 로컬 DB 데이터를 구글 드라이브 스냅샷으로 즉시 1회 자동 업로드 갱신 (기기 간 꼬임 100% 예방)
+    try {
+      console.log("☁️ [복원 직후 스냅샷 동기화] 병합 완료된 최신 데이터를 구글 드라이브 스냅샷으로 즉시 갱신 중...");
+      await performBackup();
+      console.log("☁️ [복원 직후 스냅샷 동기화] 스냅샷 1:1 완벽 일치 동기화 완료!");
+    } catch (backupErr) {
+      console.warn("복원 직후 스냅샷 백업 갱신 경고 (복원 데이터는 무사함):", backupErr);
+    }
+
     if (payload.exportedAt) {
       localStorage.setItem('prodrill_last_backup_time', payload.exportedAt);
     }

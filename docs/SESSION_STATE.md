@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 전화번호 빈값(`phone: ""`) 고객 동일인 오인 덮어쓰기 버그 완치 및 4명 100% 인양 복원 Vercel 프로덕션 라이브 배포 (`syncService.js` & `test/cloudSyncVerification.test.js`):
-  - **전화번호 빈값 오인 덮어쓰기 버그 완치**: `syncService.js` 내의 고객 병합 조건(`findIndex`) 수술. 전화번호가 빈값(`""`)인 여러 고객이 존재할 때 동일인으로 오인되어 1명이 무조건 덮어씌워지던 수식 버그를 100% 소탕.
-  - **실증 5-A 100% PASS 입증**: 지공사님 제보 실제 데이터 4명(`김정문`, `덤리스`, `테스트 하는거야`, `류나렆나러ㅠㅍㄴ`) 복원 시 1명도 누락 없이 100% (4/4명) 완벽 복원 통과 (PASS).
+- 수동 백업 복원 시 과거 삭제 블랙리스트(`prodrill_deleted_customers`) 100% 완충 해제 수술 Vercel 프로덕션 라이브 배포 (`customerStorage.js` & `syncService.js`):
+  - **블랙리스트 해제 헬퍼 신설 (`clearDeletedCustomerTombstones`)**: `customerStorage.js` 에 툼스톤 초기화 헬퍼 함수를 구축.
+  - **복원 시 블랙리스트 자동 제거 완치**: `syncService.js` 의 `unpackAppData` 시작 시, 수신된 모든 고객 ID들을 삭제 블랙리스트 메모리(`prodrill_deleted_customers`)에서 100% 해제하여 `readCustomers()` 가 가동되어도 단 1명도 누락되지 않고 화면에 100% 완벽히 복원되도록 완치.
   - **검증 완료**: 63개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
