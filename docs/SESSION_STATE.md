@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 가이드 풍선 내 '👤 프로필' 타이틀 추가 및 전체 고객수 클릭 시 1:1 차트 현황 모달 연동 배포 (`CustomerHeader.jsx`, `CustomerManager.jsx`):
-  - **가이드 풍선 1:1 교정**: `?` 가이드 도움말 풍선 `1. ≡ 햄버거 메뉴` ➔ `⚙️ 환경 설정` 하단 리스트의 `가이드 보기` 바로 밑에 **`  - 👤 프로필`** 타이틀만 깔끔하게 추가.
-  - **차트 현황 1:1 팩트 모달 연동**: `전체 고객 {totalCount}명` 클릭 시 가동되는 📊 현황 모달 항목을 지공사님의 명확한 팩트 지침대로 1) **`선택된 고객의 차트 수`** (검색/필터된 고객 차트 총수량) 및 2) **`전체 고객의 차트의 수`** (전체 고객 저장 차트 총수량) 2가지 정밀 집계 카드로 완성.
+- 3카드(실제 고객수/총 차트수/평균 차트수) 종합 현황 모달 및 타임라인 로그 수량 1:1 보정 완치 배포 (`CustomerHeader.jsx`, `CustomerHistoryModal.jsx`):
+  - **3카드 종합 현황 보고 모달**: `전체 고객 {totalCount}명` 클릭 시 1) `👥 실제 등록 고객 수`({totalCount}명), 2) `📋 총 저장 지공 차트 수량`({totalChartsCount}개), 3) `📈 1인당 평균 차트 수`({average}개) 3개 요약 카드를 포함하는 `📊 고객 및 지공 차트 현황` 모달 정밀 가동.
+  - **클라우드 백업 오류 완치 보정**: 구글 드라이브 백업/복구 시 발생하는 타임라인 로그 모달 수량 엉킴 오류를 정밀 치료하기 위해, 정산된 실제 총 차트 수치를 타임라인 로그 모달(`CustomerHistoryModal.jsx`)의 "전체 기록 목록 (총 X개)"에 1:1 보정 연동 완료.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

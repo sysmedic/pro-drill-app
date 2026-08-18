@@ -470,30 +470,30 @@ export default function CustomerHeader({
               >
                 <div className="p-4 flex flex-col gap-4 text-center">
                   <div className="grid grid-cols-3 gap-2.5">
-                    {/* 카드 1: 실제 등록 고객 수 */}
+                    {/* 카드 1: 고객 수 */}
                     <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex flex-col items-center justify-center">
                       <span className="text-[11px] font-bold text-slate-500 block mb-1">
-                        실제 등록 고객 수
+                        고객 수
                       </span>
                       <span className="text-lg font-black text-slate-800">
                         {totalCount}명
                       </span>
                     </div>
 
-                    {/* 카드 2: 총 저장 지공 차트 수량 */}
+                    {/* 카드 2: 차트 수 */}
                     <div className="bg-indigo-50 border border-indigo-200 p-3 rounded-xl flex flex-col items-center justify-center">
                       <span className="text-[11px] font-bold text-indigo-600 block mb-1">
-                        총 저장 지공 차트 수량
+                        차트 수
                       </span>
                       <span className="text-lg font-black text-indigo-700">
                         {totalChartsCount}개
                       </span>
                     </div>
 
-                    {/* 카드 3: 1인당 평균 차트 수 */}
+                    {/* 카드 3: 평균 차트 수 */}
                     <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex flex-col items-center justify-center">
                       <span className="text-[11px] font-bold text-emerald-600 block mb-1">
-                        1인당 평균 차트 수
+                        평균 차트 수
                       </span>
                       <span className="text-lg font-black text-emerald-700">
                         {totalCount > 0 ? (totalChartsCount / totalCount).toFixed(1) : 0}개
