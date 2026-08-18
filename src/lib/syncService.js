@@ -582,20 +582,34 @@ export const registerVisibilitySync = () => {
     }
   };
 
+  const handleMobileAppResume = async () => {
+    try {
+      await initGoogleApi();
+      await autoSyncOnLaunch();
+    } catch { /* ignore */ }
+  };
+
   const handleVisibilityChange = () => {
     if (document.visibilityState === 'hidden') {
       handleFinalSync();
     } else if (document.visibilityState === 'visible') {
-      autoSyncOnLaunch();
+      handleMobileAppResume();
     }
   };
 
+  // 🟢 [모바일 & PWA 융합 완치]: Safari/Android PWA 특화 4종 라이프사이클 이벤트 바인딩
   window.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('pageshow', handleMobileAppResume);
+  window.addEventListener('focus', handleMobileAppResume);
+  window.addEventListener('online', handleMobileAppResume);
   window.addEventListener('pagehide', handleFinalSync);
   window.addEventListener('beforeunload', handleFinalSync);
 
   return () => {
     window.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('pageshow', handleMobileAppResume);
+    window.removeEventListener('focus', handleMobileAppResume);
+    window.removeEventListener('online', handleMobileAppResume);
     window.removeEventListener('pagehide', handleFinalSync);
     window.removeEventListener('beforeunload', handleFinalSync);
   };

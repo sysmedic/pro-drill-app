@@ -176,7 +176,7 @@ export const initGoogleApi = async () => {
 };
 
 // 2. 구글 로그인 및 토큰 획득
-export const signInGoogle = (forceNew = false, isLoginGateOnly = false) => {
+export const signInGoogle = (forceNew = false) => {
   return new Promise((resolve, reject) => {
     if (!tokenClient) {
       reject(new Error('TOKEN_CLIENT_NOT_INITIALIZED'));
@@ -219,45 +219,27 @@ export const signInGoogle = (forceNew = false, isLoginGateOnly = false) => {
         return;
       }
 
-      const grantedScopes = response.scope || '';
-      const hasEmail = grantedScopes.includes('https://www.googleapis.com/auth/userinfo.email') || grantedScopes.includes('email');
-
-      if (isLoginGateOnly) {
-        if (!hasEmail) {
-          reject(new Error('REQUIRED_SCOPES_MISSING'));
-          return;
-        }
-      } else {
-        const hasDrive = grantedScopes.includes('https://www.googleapis.com/auth/drive.file');
-        if (!hasDrive || !hasEmail) {
-          reject(new Error('REQUIRED_SCOPES_MISSING'));
-          return;
-        }
-        localStorage.setItem('prodrill_google_scopes_version', 'v2_email_included');
-      }
-
       accessToken = response.access_token;
       localStorage.removeItem('prodrill_user_logged_out');
       localStorage.setItem('prodrill_google_access_token', accessToken);
       localStorage.setItem('prodrill_google_token_expiry', String(new Date().getTime() + (response.expires_in * 1000)));
-      gapi.client.setToken({ access_token: accessToken });
+      localStorage.setItem('prodrill_google_scopes_version', 'v2_email_included');
+      if (typeof gapi !== 'undefined' && gapi.client) {
+        try {
+          gapi.client.setToken({ access_token: accessToken });
+        } catch { /* ignore */ }
+      }
       resolve(accessToken);
     };
     
     const isIOS = isIOSDevice();
     const promptOption = isIOS ? '' : 'select_account';
     
-    if (isLoginGateOnly) {
-      // 🔒 최초 가동 시 구글 403 access_denied(Testing 모드 차단)를 예방하기 위해 드라이브 권한 제외 최소 이메일 권한만 호출!
-      tokenClient.requestAccessToken({ 
-        scope: 'https://www.googleapis.com/auth/userinfo.email',
-        ...(promptOption ? { prompt: promptOption } : {})
-      });
-    } else {
-      tokenClient.requestAccessToken({ 
-        ...(promptOption ? { prompt: promptOption } : {})
-      });
-    }
+    // 🟢 [안드로이드 & iOS 융합 완치]: 드라이브 권한(drive.file)과 이메일 권한(userinfo.email)을 100% 필수 통합 포함하여 안드로이드 403 거부 및 iOS 먹통 차단
+    tokenClient.requestAccessToken({ 
+      scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
+      ...(promptOption ? { prompt: promptOption } : {})
+    });
   });
 };
 

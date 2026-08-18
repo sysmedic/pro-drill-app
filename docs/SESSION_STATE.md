@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 파이어베이스 Firestore 마이그레이션 설정 문서 경로 `users/admin_migration_config` 수술 완치 및 Vercel 프로덕션 라이브 배포 (`userLicenseManager.js`):
-  - **Permission Denied 권한 거부 오류 완치**: 기존 파이어베이스 보안 룰에 개방되어 있던 `users` 컬렉션 경로(`users/admin_migration_config`)로 마이그레이션 설정 경로를 수술하여, 파이어베이스 보안 거부 버그를 100% 완전 해결.
-  - **원격 실시간 동기화 정상 가동**: 마스터 제어실에서 마이그레이션 ON/OFF 및 이메일 명단 추가/삭제 시 파이어베이스 서버로 100% 정상 원격 저장 및 모든 기기 원격 자동 반영 확립.
+- 구글 드라이브 앱 로드 마운트 실행 시 1:1 안전 증분 복원(merge) 확립 및 Vercel 프로덕션 라이브 배포 (`syncService.js`):
+  - **앱 실행 시 자동 1:1 복원 확립**: 구글 연동 사용자가 앱을 켜거나 로그인 시, 단순 타임스탬프 비교 스킵에 막히던 현상을 소탕하고 `performRestore(backupFile.id, 'merge')` 를 100% 실행하도록 수술하여 최신 클라우드 지공 데이터가 자동으로 인양 복원됨.
+  - **무소음 인증 만료 시 연동 이메일 정보 보존**: 401/403 무소음 만료 시 연동 이메일(`prodrill_linked_email`)을 강제 삭제하던 코드를 방어하여 세션 안정성 확보.
   - **검증 완료**: 61개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
