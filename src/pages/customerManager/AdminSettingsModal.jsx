@@ -10,7 +10,8 @@ import {
   setMigrationModeGloballyEnabled,
   getMigrationAllowedEmails,
   addMigrationAllowedEmail,
-  removeMigrationAllowedEmail
+  removeMigrationAllowedEmail,
+  fetchRemoteMigrationConfig
 } from '../../lib/userLicenseManager.js';
 import Button from '../../components/ui/Button.jsx';
 import ModalShell from '../../components/ui/ModalShell.jsx';
@@ -73,6 +74,19 @@ export default function AdminSettingsModal({ onClose, onFeedback: propOnFeedback
   const loadAdminData = async () => {
     setLoading(true);
     
+    // (0) 원격 파이어베이스 마이그레이션 설정 로드 및 state 동기화
+    try {
+      const rConfig = await fetchRemoteMigrationConfig();
+      if (rConfig) {
+        if (typeof rConfig.isMigrationModeOn === 'boolean') {
+          setIsMigrationModeOn(rConfig.isMigrationModeOn);
+        }
+        if (Array.isArray(rConfig.allowedEmails)) {
+          setMigrationAllowedList(rConfig.allowedEmails);
+        }
+      }
+    } catch { /* ignore */ }
+
     // (1) 라이선스 유저 목록 조회 및 로컬 정렬
     try {
       const licensesRef = collection(licenseDb, 'licenses');

@@ -221,6 +221,56 @@ export const certifyUserEmail = async (email) => {
 };
 
 /**
+ * 엑셀 마이그레이션 원격 파이어베이스 (Firestore) 동기화 헬퍼
+ */
+export const fetchRemoteMigrationConfig = async () => {
+  if (typeof window === 'undefined') return null;
+  const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
+  if (isTestEnv) return null;
+
+  try {
+    const docRef = doc(licenseDb, 'admin_settings', 'migration_config');
+    const docSnap = await getDoc(docRef).catch(() => null);
+    if (docSnap && docSnap.exists()) {
+      const data = docSnap.data();
+      if (typeof data.isMigrationModeOn === 'boolean') {
+        localStorage.setItem('prodrill_migration_mode_enabled', data.isMigrationModeOn ? 'true' : 'false');
+      }
+      if (Array.isArray(data.allowedEmails)) {
+        localStorage.setItem('prodrill_migration_allowed_emails', JSON.stringify(data.allowedEmails));
+      }
+      return data;
+    }
+  } catch (err) {
+    console.warn("원격 마이그레이션 설정 로드 지연 (로컬 캐시 보존):", err);
+  }
+  return null;
+};
+
+export const saveRemoteMigrationConfig = async (isMigrationModeOn, allowedEmails) => {
+  if (typeof window === 'undefined') return false;
+  
+  localStorage.setItem('prodrill_migration_mode_enabled', isMigrationModeOn ? 'true' : 'false');
+  localStorage.setItem('prodrill_migration_allowed_emails', JSON.stringify(allowedEmails));
+
+  const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
+  if (isTestEnv) return true;
+
+  try {
+    const docRef = doc(licenseDb, 'admin_settings', 'migration_config');
+    await setDoc(docRef, {
+      isMigrationModeOn: !!isMigrationModeOn,
+      allowedEmails: Array.isArray(allowedEmails) ? allowedEmails : [],
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+    return true;
+  } catch (err) {
+    console.warn("원격 마이그레이션 설정 저장 실패:", err);
+    return false;
+  }
+};
+
+/**
  * 엑셀 마이그레이션 글로벌 모드 ON/OFF 헬퍼 (기본값: true)
  */
 export const isMigrationModeGloballyEnabled = () => {
@@ -231,6 +281,7 @@ export const isMigrationModeGloballyEnabled = () => {
 export const setMigrationModeGloballyEnabled = (enabled) => {
   if (typeof window === 'undefined') return;
   localStorage.setItem('prodrill_migration_mode_enabled', enabled ? 'true' : 'false');
+  saveRemoteMigrationConfig(enabled, getMigrationAllowedEmails());
 };
 
 /**
@@ -257,7 +308,7 @@ export const addMigrationAllowedEmail = (email) => {
   const current = getMigrationAllowedEmails();
   if (!current.includes(clean)) {
     const updated = [...current, clean];
-    localStorage.setItem('prodrill_migration_allowed_emails', JSON.stringify(updated));
+    saveRemoteMigrationConfig(isMigrationModeGloballyEnabled(), updated);
     return true;
   }
   return false;
@@ -268,7 +319,7 @@ export const removeMigrationAllowedEmail = (email) => {
   const clean = String(email).trim().toLowerCase();
   const current = getMigrationAllowedEmails();
   const updated = current.filter(e => e !== clean);
-  localStorage.setItem('prodrill_migration_allowed_emails', JSON.stringify(updated));
+  saveRemoteMigrationConfig(isMigrationModeGloballyEnabled(), updated);
   return true;
 };
 

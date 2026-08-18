@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { isLicenseCertified, MASTER_HASH, MASTER_EMAIL, checkRemoteLicenseStatus, updateTrialUserStats, calculateGracePeriod, getSha256Hash, certifyUserEmail, fetchRemoteUserProfile } from './lib/userLicenseManager.js';
+import { isLicenseCertified, MASTER_HASH, MASTER_EMAIL, checkRemoteLicenseStatus, updateTrialUserStats, calculateGracePeriod, getSha256Hash, certifyUserEmail, fetchRemoteUserProfile, fetchRemoteMigrationConfig } from './lib/userLicenseManager.js';
 import { readCustomers } from './lib/customerStorage.js';
 import { countValidTotalCharts } from './lib/chartHistoryStorage.js';
 
@@ -96,6 +96,12 @@ export default function useAppSession() {
     let lastCheckTimestamp = new Date().getTime();
 
     const syncLicenseAndStats = async () => {
+      try {
+        await fetchRemoteMigrationConfig();
+      } catch (err) {
+        console.warn("원격 마이그레이션 설정 동기화 지연:", err);
+      }
+
       const activeEmail = localStorage.getItem('prodrill_linked_email') || 
                           localStorage.getItem('prodrill_certified_email_plain') || '';
       if (activeEmail) {

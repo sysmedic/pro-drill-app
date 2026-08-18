@@ -9,8 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 엑셀 마이그레이션 메뉴 관리자 등급(master, admin) 권한 보강 Vercel 라이브 배포 (`CustomerHeader.jsx`):
-  - **관리자 권한 노출 완수**: 지정된 계정(`sysmedic3@gmail.com` 등)뿐만 아니라, 마스터/관리자 등급(`master`, `admin`) 계정에게도 **`📦 엑셀 마이그레이션`** 메뉴가 100% 노출되고 정상 가동되도록 권한 조건 보강.
+- 엑셀 마이그레이션 글로벌 ON/OFF 스위치 및 허가 명단 관리 UI Vercel 프로덕션 라이브 배포 (`AdminSettingsModal.jsx` & `userLicenseManager.js`):
+  - **마이그레이션 모드 글로벌 ON/OFF 스위치 완수**: 관리자 제어실에서 버튼 하나로 마이그레이션 모드를 앱 전체에서 100% 켜거나 끌 수 있는 스위치 장착 (OFF 시 전체 메뉴 숨김).
+  - **허가 계정 명단 동적 관리 UI 완수**: 마이그레이션 메뉴에 접근할 허가 이메일 명단을 실시간으로 추가(`+`)하거나 삭제(`삭제`)하여 자유롭게 정리할 수 있는 관리자 전용 코너 구현.
   - **검증 완료**: 61개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
