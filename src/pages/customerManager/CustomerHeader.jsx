@@ -218,12 +218,12 @@ export default function CustomerHeader({
                     🗂️ 로컬 백업
                   </button>
                 )}
-                {isMigrationAuthorizedEmail(
+                {(isMigrationAuthorizedEmail(
                   (typeof window !== "undefined"
                     ? (localStorage.getItem("prodrill_linked_email") || localStorage.getItem("prodrill_certified_email_plain") || "sysmedic3@gmail.com")
                     : "sysmedic3@gmail.com"
                   ).trim().toLowerCase()
-                ) && (
+                ) || ['master', 'admin'].includes(userTier?.toLowerCase())) && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

@@ -9,10 +9,11 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 모바일 및 작은 화면 사이즈 모달 4개 모서리 하단 라운딩 적용 Vercel 프로덕션 라이브 배포 (`ModalShell.jsx`):
-  - **작은 화면 모달 하단 라운딩 적용 완수**: 스마트폰 등 작은 모바일 화면 사이즈에서도 상단만 곡선이던 모서리를 4개 모서리 전체 하단 라운딩(`rounded-3xl` = 24px)으로 수술 완수.
-  - **세련된 팝업 스타일 완성**: 모든 기기와 화면 크기에서 모달이 예쁘고 세련되게 둥글둥글한 라운딩 모양으로 렌더링되도록 디자인 시스템 연동.
-  - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
+- 수동 복원 선택 모달 연동 및 자동 백업 스위치 완치 Vercel 프로덕션 라이브 배포 (`SettingsModal.jsx` & `syncService.js`):
+  - **수동 복원 선택 팝업 완수**: 수동 복원 시 `[증분 복원 (타임스탬프 병합)]` 과 `[덮어쓰기 복원]` 중 지공사님이 자유롭게 선택할 수 있는 팝업 모달 구현.
+  - **실시간 자동 백업 스위치 완치**: `autoSyncOnChange` 내 권한 체크를 `isSyncAllowed()`로 완치하여 모든 유휴/정식 라이선스 사용자에게 고객/차트 저장 시 3초 디바운스 실시간 자동 백업이 100% 자동 작동함.
+  - **타임스탬프 1:1 병합 보장**: `getRecTime()` 기반 시각 대조로 증분 복원 시 타임스탬프 유실 없이 최신순 자동 정렬 병합.
+  - **검증 완료**: 61개 전체 단위 테스트(실증 2-A, 3-A, 3-B 포함), ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
   - **Vercel 라이브 배포 완수**: 대칭/비대칭 선택 시 `bg-slate-700 border-slate-700 text-white` 적용 최신 프로덕션 배포 완수.
