@@ -1,4 +1,4 @@
-import { loadCustomers, saveCustomers } from './customerStorage.js';
+import { loadCustomers, saveCustomers, getDeletedCustomerIds } from './customerStorage.js';
 import { getChartHistory, saveLocalChartHistory } from './indexedDbConnector.js';
 import { uploadBackupData, downloadBackupData, findBackupFile, isGoogleSignedIn, initGoogleApi, getGoogleUserEmail, ensureActiveGoogleToken, signOutGoogle } from './googleDriveBackup.js';
 import { isLicenseCertified, isSyncAllowed } from './userLicenseManager.js';
@@ -296,18 +296,27 @@ export const unpackAppData = async (payload, mode = 'merge', expectedEmail = nul
     // 병합(Merge) 모드: 고유 ID/이름 대조 및 최종 수정일(updatedAt/createdAt) 비교 세부 병합
     const localCustomers = await loadCustomers(null, expectedEmail || '', resolvedAccountHash);
     const mergedCustomers = [...localCustomers];
+    const deletedIds = getDeletedCustomerIds();
 
     // 2.1 고객 목록 병합 (ID 또는 이름+연락처 매칭)
     for (const incoming of incomingCustomers) {
+      if (!incoming || !incoming.id) continue;
+      
+      // 💡 [고스트 현상 100% 완치]: 툼스톤(삭제 기록)에 등록된 유령 고객은 구글 드라이브 수신에서 100% 즉시 차단!
+      if (deletedIds.includes(incoming.id)) {
+        console.log(`👻 [고스트 차단] 삭제 툼스톤 감지 -> 유령 고객 '${incoming.name}'(${incoming.id}) 부활 스킵!`);
+        continue;
+      }
+
       const localIdx = mergedCustomers.findIndex(c => c.id === incoming.id || (c.name && incoming.name && c.name === incoming.name && c.phone === incoming.phone));
       if (localIdx === -1) {
         // 로컬에 없는 신규 고객 -> 추가
         mergedCustomers.push(incoming);
       } else {
-        // 동일 고객 -> updatedAt 시각 비교 (들어온 수치가 같거나 더 최신이면 덮어씀)
+        // 동일 고객 -> updatedAt 시각 비교 (Local-First Guard: 들어온 수치가 더 최신일 때만 덮어씀)
         const localTime = mergedCustomers[localIdx].updatedAt ? new Date(mergedCustomers[localIdx].updatedAt).getTime() : 0;
         const incomingTime = incoming.updatedAt ? new Date(incoming.updatedAt).getTime() : 0;
-        if (incomingTime >= localTime || localTime === 0) {
+        if (incomingTime > localTime || (localTime === 0 && incomingTime > 0)) {
           mergedCustomers[localIdx] = incoming;
         }
       }

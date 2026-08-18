@@ -2,6 +2,36 @@ import { getAllCustomers, saveLocalCustomers } from './indexedDbConnector.js';
 import { normalizeCustomers } from './customerSchema.js';
 import { CUSTOMERS_KEY } from './storageKeys.js';
 
+export const DELETED_CUSTOMERS_KEY = 'prodrill_deleted_customers';
+
+export const getDeletedCustomerIds = () => {
+  try {
+    const store = typeof window !== 'undefined' 
+      ? window.localStorage 
+      : (typeof globalThis !== 'undefined' ? globalThis.localStorage : null);
+    if (!store) return [];
+    const raw = store.getItem(DELETED_CUSTOMERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const registerDeletedCustomer = (customerId) => {
+  if (!customerId) return;
+  try {
+    const store = typeof window !== 'undefined' 
+      ? window.localStorage 
+      : (typeof globalThis !== 'undefined' ? globalThis.localStorage : null);
+    if (!store) return;
+    const list = getDeletedCustomerIds();
+    if (!list.includes(customerId)) {
+      list.push(customerId);
+      store.setItem(DELETED_CUSTOMERS_KEY, JSON.stringify(list));
+    }
+  } catch { /* ignore */ }
+};
+
 export const readCustomers = (storage, accountHashKey = null) => {
   // 💡 [SSR 격리 대응]: globalThis.localStorage 표준 폴백 대조 (global 에러 방지)
   const store = storage || (
@@ -10,6 +40,13 @@ export const readCustomers = (storage, accountHashKey = null) => {
       : (typeof globalThis !== 'undefined' ? globalThis.localStorage : null)
   );
   
+  const deletedIds = getDeletedCustomerIds();
+  const filterDeleted = (list) => {
+    if (!Array.isArray(list)) return [];
+    if (deletedIds.length === 0) return list;
+    return list.filter(c => c && c.id && !deletedIds.includes(c.id));
+  };
+
   const migrated = typeof window !== 'undefined' && window.localStorage.getItem('prodrill_db_migrated_v1') === 'true';
   if (store && (storage || !migrated)) {
     try {
@@ -17,7 +54,7 @@ export const readCustomers = (storage, accountHashKey = null) => {
       if (!raw) return { customers: [], status: 'ok' };
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) return { customers: [], status: 'invalid' };
-      const customers = normalizeCustomers(parsed);
+      const customers = filterDeleted(normalizeCustomers(parsed));
       return {
         customers,
         invalidCount: parsed.length - customers.length,
@@ -32,7 +69,7 @@ export const readCustomers = (storage, accountHashKey = null) => {
   return (async () => {
     try {
       const parsed = await getAllCustomers(accountHashKey);
-      const customers = normalizeCustomers(parsed);
+      const customers = filterDeleted(normalizeCustomers(parsed));
       return {
         customers,
         invalidCount: parsed.length - customers.length,

@@ -7,7 +7,7 @@ import ModalShell from '../components/ui/ModalShell.jsx';
 import CustomerHeader from './customerManager/CustomerHeader.jsx';
 import CustomerList from './customerManager/CustomerList.jsx';
 import CustomerFormModal from './customerManager/CustomerFormModal.jsx';
-import { loadCustomers, saveCustomers } from '../lib/customerStorage.js';
+import { loadCustomers, saveCustomers, registerDeletedCustomer } from '../lib/customerStorage.js';
 import { deleteChartHistory } from '../lib/chartHistoryStorage.js';
 import { createLocalId } from '../lib/ids.js';
 import { autoSyncOnChange } from '../lib/syncService.js'; // ☁️ 실시간 백업 트리거 임포트
@@ -438,6 +438,9 @@ export default function CustomerManagement({
               <button
                 onClick={async () => {
                   try {
+                    if (deleteRequest && deleteRequest.id) {
+                      registerDeletedCustomer(deleteRequest.id);
+                    }
                     await deleteChartHistory(deleteRequest);
 
                     const updatedCustomers = customers.filter(c => c.id !== deleteRequest.id);

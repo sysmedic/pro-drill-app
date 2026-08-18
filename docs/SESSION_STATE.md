@@ -9,8 +9,8 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 현황 모달 타이틀 이모지 100% 완전 제거 Vercel 프로덕션 라이브 배포 (`CustomerHeader.jsx`):
-  - **이모지 100% 제거**: `고객 및 지공 차트 현황` 모달 타이틀 앞의 `📊` 이모지를 100% 완전히 삭제하여 맑고 정갈한 텍스트 헤더 완성.
+- 지공 기록 모달 전체 기록 목록 분수 수량 표기 1/345 완치 배포 (`CustomerHistoryModal.jsx`):
+  - **수량 오류 완치 교정**: 기존 `총 1개`로 나오던 수량 표기를 지공사님의 팩트 지침대로 `선택된 고객의 차트 수 / 전체 고객의 차트 수` ➔ **`1 / 345`** 형태의 1:1 명확한 분수 표기로 수술 완치.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
