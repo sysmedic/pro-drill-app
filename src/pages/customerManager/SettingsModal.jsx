@@ -336,7 +336,7 @@ export default function SettingsModal({ onClose, onFeedback: propOnFeedback }) {
               <div className="bg-white border border-slate-200/80 rounded-xl p-3 space-y-2.5">
                 <div className="flex justify-between items-center">
                   <h4 className="text-xs font-black text-slate-800 flex items-center gap-1">
-                    백업 스냅샷 <span className="text-[10px] text-slate-400 font-bold">(최대 30개 보관)</span>
+                    백업 스냅샷
                   </h4>
                   {loadingSnapshots && <span className="text-[10px] text-indigo-600 font-bold animate-pulse">조회 중...</span>}
                 </div>
