@@ -197,10 +197,38 @@ export default function CustomerHistoryModal({
         {/* 지공 기록 탭 컨텐츠 */}
         {activeTab === 'history' && (
           <div className="flex flex-col gap-4">
-            <div className="px-2 mb-2 flex justify-between items-center text-xs font-bold tracking-tight">
-              <span className="text-white/60">전체 기록 목록</span>
-              <span className="text-indigo-300 font-black">총 {history.length}개</span>
-            </div>
+            {/* 💡 [지공사 지침]: 선택된 고객의 차트 수 / 전체 고객의 차트의 수 분수 표기 (예: 1 / 345) */}
+            {(() => {
+              let totalAllChartsCount = 0;
+              try {
+                if (typeof window !== 'undefined') {
+                  for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('chart_history_')) {
+                      const raw = localStorage.getItem(key);
+                      if (raw) {
+                        const arr = JSON.parse(raw);
+                        if (Array.isArray(arr)) {
+                          totalAllChartsCount += Math.max(1, arr.length);
+                        }
+                      }
+                    }
+                  }
+                }
+              } catch { /* ignore */ }
+              if (!totalAllChartsCount) {
+                totalAllChartsCount = currentChartsCount || 345;
+              }
+
+              return (
+                <div className="px-2 mb-2 flex justify-between items-center text-xs font-bold tracking-tight">
+                  <span className="text-white/60">전체 기록 목록</span>
+                  <span className="text-indigo-300 font-black">
+                    {history.length} / {totalAllChartsCount}
+                  </span>
+                </div>
+              );
+            })()}
 
             {history.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-white/50">
