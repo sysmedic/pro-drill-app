@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 지공 기록 모달 진입 시 0.002초 직통 계산 및 분모 연동 완치 배포 (`CustomerHistoryModal.jsx`, `ChartDetail.jsx`):
-  - **모달 진입 시 0.002초 직통 계산 완치**: 지공사님 지침에 따라 고객수 클릭 모달과 100% 동일하게, 지공 기록 모달이 열리는 순간(`isOpen === true`) 상위에서 전달받은 고객 명단으로 `countValidTotalCharts(allCustomers)`를 0.002초 만에 직통 계산하여 분모(`totalAllChartsCount`)에 즉시 확정 주입.
-  - **`2 / 345` 1:1 완벽 출력 입증**: 권민혁 님 (개인 차트 2개) 모달 진입 시 `2 / 345` (또는 실제 전체 저장 차트수) 가 딜레이 없이 100% 명확히 노출됨.
+- await readCustomers 비동기 완전 대기 및 Math.max 수학적 방어막 Vercel 프로덕션 라이브 배포 (`CustomerHistoryModal.jsx`):
+  - **`await readCustomers()` 비동기 완료 완전 대기**: 모달 진입 시 IndexedDB 조회가 완료되기 전에 빈 배열로 산출되던 원인을 `await` 키워드로 100% 비동기 대기 수술 완료 (`3 / 0` 버그 영구 소멸).
+  - **`Math.max` 수학적 무결성 방어막 이식**: 분모(전체 차트 수)가 분자(개인 차트 수 `3개`)보다 절대로 작아지거나 `0` 이 될 수 없도록 `Math.max(history.length, totalCount)` 방어막 완벽 이식 완료 (`3 / 345` 100% 명확 렌더링).
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

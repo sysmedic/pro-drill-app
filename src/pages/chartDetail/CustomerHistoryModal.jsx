@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { calculateGracePeriod } from '../../lib/userLicenseManager.js';
 import { countValidTotalCharts } from '../../lib/chartHistoryStorage.js';
 import { readCustomers } from '../../lib/customerStorage.js';
@@ -62,10 +62,16 @@ export default function CustomerHistoryModal({
     return isManualOpen ? 'history' : 'timeline';
   });
 
-  // 🟢 [지공사 지침]: 모달 진입 시 await readCustomers() 비동기 완전 대기로 1:1 정밀 계산 (3 / 0 버그 영구 사멸)
+  // 💡 [핵심 완치]: 최초 모달 오픈 시에만 단 1번 탭 초기화하여 클릭 시 덮어쓰기 방지
+  const prevIsOpenRef = useRef(false);
+
   useEffect(() => {
     if (isOpen) {
-      setActiveTab(isManualOpen ? 'history' : 'timeline');
+      if (!prevIsOpenRef.current) {
+        setActiveTab(isManualOpen ? 'history' : 'timeline');
+      }
+      prevIsOpenRef.current = true;
+
       let isMounted = true;
 
       (async () => {
@@ -96,6 +102,8 @@ export default function CustomerHistoryModal({
       })();
 
       return () => { isMounted = false; };
+    } else {
+      prevIsOpenRef.current = false;
     }
   }, [isOpen, isManualOpen, allCustomers]);
 
