@@ -32,6 +32,28 @@ export const registerDeletedCustomer = (customerId) => {
   } catch { /* ignore */ }
 };
 
+// 🟢 [완치 수술]: 복원 수신된 고객 ID들을 삭제 블랙리스트 명단에서 100% 해제 초기화
+export const clearDeletedCustomerTombstones = (idsToRestore = null) => {
+  try {
+    const store = typeof window !== 'undefined' 
+      ? window.localStorage 
+      : (typeof globalThis !== 'undefined' ? globalThis.localStorage : null);
+    if (!store) return;
+    
+    if (!idsToRestore || idsToRestore === 'all') {
+      store.removeItem(DELETED_CUSTOMERS_KEY);
+      store.removeItem('prodrill_deleted_customer_ids');
+      return;
+    }
+
+    if (Array.isArray(idsToRestore) && idsToRestore.length > 0) {
+      const list = getDeletedCustomerIds();
+      const nextList = list.filter(id => !idsToRestore.includes(id));
+      store.setItem(DELETED_CUSTOMERS_KEY, JSON.stringify(nextList));
+    }
+  } catch { /* ignore */ }
+};
+
 export const readCustomers = (storage, accountHashKey = null) => {
   // 💡 [SSR 격리 대응]: globalThis.localStorage 표준 폴백 대조 (global 에러 방지)
   const store = storage || (

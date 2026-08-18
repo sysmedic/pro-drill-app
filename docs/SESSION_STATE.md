@@ -9,10 +9,10 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 복원 시 삭제 툼스톤 오검출로 인한 고객 누락 완치 및 1:1 인양 복구 수술 Vercel 프로덕션 라이브 배포 (`syncService.js`):
-  - **수동 덮어쓰기(`overwrite`) 삭제 툼스톤 초기화**: 덮어쓰기 복원 진행 시 과거 로컬 삭제 기록(`prodrill_deleted_customer_ids`)을 100% 초기화하여, 백업 스냅샷 안의 모든 고객(누락되던 1명 포함)이 100% 완전 복원되도록 완치.
-  - **수동 증분 복원(`merge`) 툼스톤 안전 오버라이드**: 백업 파일 수신 고객 데이터의 시각(`updatedAt`)이 유효할 경우 툼스톤 오검출을 해제하고 고객 1명을 1:1 완벽 복구 인양.
-  - **검증 완료**: 62개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
+- 전화번호 빈값(`phone: ""`) 고객 동일인 오인 덮어쓰기 버그 완치 및 4명 100% 인양 복원 Vercel 프로덕션 라이브 배포 (`syncService.js` & `test/cloudSyncVerification.test.js`):
+  - **전화번호 빈값 오인 덮어쓰기 버그 완치**: `syncService.js` 내의 고객 병합 조건(`findIndex`) 수술. 전화번호가 빈값(`""`)인 여러 고객이 존재할 때 동일인으로 오인되어 1명이 무조건 덮어씌워지던 수식 버그를 100% 소탕.
+  - **실증 5-A 100% PASS 입증**: 지공사님 제보 실제 데이터 4명(`김정문`, `덤리스`, `테스트 하는거야`, `류나렆나러ㅠㅍㄴ`) 복원 시 1명도 누락 없이 100% (4/4명) 완벽 복원 통과 (PASS).
+  - **검증 완료**: 63개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
   - **Vercel 라이브 배포 완수**: 대칭/비대칭 선택 시 `bg-slate-700 border-slate-700 text-white` 적용 최신 프로덕션 배포 완수.

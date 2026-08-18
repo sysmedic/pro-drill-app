@@ -1,4 +1,4 @@
-import { loadCustomers, saveCustomers, getDeletedCustomerIds } from './customerStorage.js';
+import { loadCustomers, saveCustomers, getDeletedCustomerIds, clearDeletedCustomerTombstones } from './customerStorage.js';
 import { getChartHistory, saveLocalChartHistory } from './indexedDbConnector.js';
 import { uploadBackupData, downloadBackupData, findBackupFile, isGoogleSignedIn, initGoogleApi, getGoogleUserEmail, ensureActiveGoogleToken } from './googleDriveBackup.js';
 import { isLicenseCertified, isSyncAllowed } from './userLicenseManager.js';
@@ -219,6 +219,16 @@ export const unpackAppData = async (payload, mode = 'merge', expectedEmail = nul
   }
 
   const { customers: incomingCustomers = [], chartHistories: incomingHistories = {}, customBowlingBalls: incomingCustomBalls = [] } = payload.data || {};
+
+  // 🟢 [완치 수술]: 수동 복원 수신된 고객 ID들을 과거 삭제 블랙리스트(툼스톤) 명단에서 100% 해제 초기화
+  if (Array.isArray(incomingCustomers) && incomingCustomers.length > 0) {
+    const incomingIds = incomingCustomers.map(c => c?.id).filter(Boolean);
+    if (mode === 'overwrite') {
+      clearDeletedCustomerTombstones('all');
+    } else {
+      clearDeletedCustomerTombstones(incomingIds);
+    }
+  }
 
   // 커스텀 입력 볼링공 복원 및 로컬 DB 캐시 병합
   if (Array.isArray(incomingCustomBalls) && incomingCustomBalls.length > 0 && typeof window !== 'undefined' && window.localStorage) {
