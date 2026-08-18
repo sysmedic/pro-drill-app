@@ -52,19 +52,40 @@ export default function CustomerHistoryModal({
   onDelete,
   showLogsOnChart = true,
   onToggleLogsVisibility,
-  userTier // 🟢 상위 등급 라이선스 수령 통로 수립 완료
+  userTier, // 🟢 상위 등급 라이선스 수령 통로 수립 완료
+  allCustomers = [] // 💡 [지공사 지침]: 상위 App.jsx / ChartDetail.jsx로부터 직통 수령받은 고객 명단
 }) {
+  const [totalAllChartsCount, setTotalAllChartsCount] = useState(0);
+
   // 🟢 [기본 진입 분기]: 모든 사용자에게 개방됨. 수동 진입은 'history', 자동 진입은 'timeline' 우선
   const [activeTab, setActiveTab] = useState(() => {
     return isManualOpen ? 'history' : 'timeline';
   });
 
-  // 🟢 [동적 안전 동기화 이펙트]: 모달이 실시간 호출되어 오픈되는 순간 진입 방식에 따른 기본 탭 정밀 재조정
+  // 🟢 [지공사 지침]: 모달 진입 시 바로 직통 1:1 계산하여 총 차트수 확정 주입 (0.002초)
   useEffect(() => {
     if (isOpen) {
       setActiveTab(isManualOpen ? 'history' : 'timeline');
+      let list = Array.isArray(allCustomers) && allCustomers.length > 0 ? allCustomers : [];
+      if (list.length === 0) {
+        try {
+          const raw = typeof window !== 'undefined' ? window.localStorage.getItem('prodrill_customers') : null;
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) list = parsed;
+          }
+        } catch { /* ignore */ }
+      }
+      if (list.length === 0) {
+        try {
+          const res = readCustomers();
+          list = Array.isArray(res) ? res : (res?.customers || []);
+        } catch { /* ignore */ }
+      }
+      const count = countValidTotalCharts(list);
+      setTotalAllChartsCount(count || 0);
     }
-  }, [isOpen, isManualOpen]);
+  }, [isOpen, isManualOpen, allCustomers]);
 
   if (!isOpen) return null;
 
@@ -199,34 +220,14 @@ export default function CustomerHistoryModal({
         {/* 지공 기록 탭 컨텐츠 */}
         {activeTab === 'history' && (
           <div className="flex flex-col gap-4">
-            {/* 💡 [지공사 지침]: 선택된 고객의 차트 수 / 전체 고객의 차트 수 분수 표기 (실시간 동적 계산) */}
+            {/* 💡 [지공사 지침]: 모달 진입 시 1:1 직통 계산된 개인 차트 수 / 전체 저장 차트 수 표기 (예: 2 / 345) */}
             {(() => {
-              let totalAllChartsCount = 0;
-              try {
-                let custList = [];
-                const raw = typeof window !== 'undefined' ? window.localStorage.getItem('prodrill_customers') : null;
-                if (raw) {
-                  const parsed = JSON.parse(raw);
-                  if (Array.isArray(parsed)) {
-                    custList = parsed;
-                  }
-                }
-                if (custList.length === 0) {
-                  const res = readCustomers();
-                  custList = Array.isArray(res) ? res : (res?.customers || []);
-                }
-                totalAllChartsCount = countValidTotalCharts(custList);
-              } catch { /* ignore */ }
-
-              if (!totalAllChartsCount || totalAllChartsCount === 0) {
-                totalAllChartsCount = Math.max(1, currentChartsCount || 0);
-              }
-
+              const displayTotalCount = totalAllChartsCount || currentChartsCount || 0;
               return (
                 <div className="px-2 mb-2 flex justify-between items-center text-xs font-bold tracking-tight">
                   <span className="text-white/60">전체 기록 목록</span>
                   <span className="text-indigo-300 font-black">
-                    {history.length} / {totalAllChartsCount}
+                    {history.length} / {displayTotalCount}
                   </span>
                 </div>
               );

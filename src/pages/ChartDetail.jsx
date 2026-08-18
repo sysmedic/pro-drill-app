@@ -30,7 +30,7 @@ import useExitInterceptor from './chartDetail/useExitInterceptor.js';
 import { calculateGracePeriod, isLicenseCertified } from '../lib/userLicenseManager.js';
 
 export default function ChartDetail({ 
-  customer, initialChartId, onBack, maxChartsAllowed, currentChartsCount, userTier, refreshChartCount,
+  customer, allCustomers, initialChartId, onBack, maxChartsAllowed, currentChartsCount, userTier, refreshChartCount,
   onTriggerLock // 상위 App.jsx로부터 전송받은 락다운 원격 스위치 수령
 }) {
   // UI 상태 관리
@@ -616,6 +616,7 @@ export default function ChartDetail({
         isOpen={isHistoryOpen}
         isManualOpen={isTimelineModalOpen} // 💡 [진입 분기]: 수동 오픈 여부를 모달 내부로 전달
         userTier={userTier} 
+        allCustomers={allCustomers}
         onClose={() => {
           setIsTimelineModalOpen(false);
           setIsAutoModalOpen(false);
