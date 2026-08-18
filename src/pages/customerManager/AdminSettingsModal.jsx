@@ -598,64 +598,7 @@ export default function AdminSettingsModal({ onClose, onFeedback: propOnFeedback
             </div>
           </div>
 
-          {/* 🟢 📦 엑셀 마이그레이션 글로벌 ON/OFF 및 허가 명단 관리 */}
-          <div className="bg-emerald-50/60 p-4 rounded-xl border border-emerald-200 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="text-base">📦</span>
-                <h3 className="text-sm font-black text-emerald-950">엑셀 마이그레이션 제어</h3>
-              </div>
-              <button
-                type="button"
-                onClick={handleToggleMigrationMode}
-                className={`px-3 py-1 rounded-full text-xs font-black transition-all cursor-pointer shadow-2xs ${
-                  isMigrationModeOn ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
-                }`}
-              >
-                {isMigrationModeOn ? '기능 ON' : '기능 OFF'}
-              </button>
-            </div>
-            <p className="text-[11px] text-emerald-800 leading-normal">
-              마이그레이션 작업 완료 후 기능 OFF로 변경하시면 앱 전체에서 메뉴가 100% 비활성화됩니다.
-            </p>
 
-            <div className="pt-2 border-t border-emerald-200/60 space-y-2">
-              <span className="text-xs font-black text-emerald-900 block">허가 계정 이메일 명단 ({migrationAllowedList.length}개)</span>
-              
-              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-                {migrationAllowedList.map((email) => (
-                  <div key={email} className="bg-white p-2 rounded-lg border border-emerald-200 flex items-center justify-between gap-2 text-xs font-bold text-slate-700">
-                    <span className="truncate">{email}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveAllowedEmail(email)}
-                      className="text-rose-600 hover:text-rose-800 font-black text-[11px] shrink-0 cursor-pointer"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-2 pt-1">
-                <input
-                  type="email"
-                  placeholder="추가할 지공사 구글 이메일"
-                  value={newAllowedEmailInput}
-                  onChange={(e) => setNewAllowedEmailInput(e.target.value)}
-                  className="flex-1 px-3 py-1.5 bg-white border border-emerald-300 rounded-xl text-xs font-bold focus:ring-1 focus:ring-emerald-500 outline-none"
-                />
-                <Button
-                  variant="primary"
-                  size="xs"
-                  className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white shrink-0"
-                  onClick={handleAddAllowedEmail}
-                >
-                  추가
-                </Button>
-              </div>
-            </div>
-          </div>
 
           {/* A. 신규 지공사 라이선스 추가 폼 */}
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
@@ -836,38 +779,6 @@ export default function AdminSettingsModal({ onClose, onFeedback: propOnFeedback
 
           {/* D. 파이어베이스 현장 수집 볼링공 DB 실시간 검증 & 건별/일괄 승인 및 자동 정리 */}
           <div className="bg-indigo-50/40 p-4 rounded-xl border border-indigo-100 space-y-3">
-            {/* 🚀 상단 독립 Vercel 실시간 앱 재배포 제어 헤더 */}
-            <div className="p-3 bg-gradient-to-r from-indigo-900 to-slate-900 rounded-xl text-white space-y-2 shadow-sm">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm">🚀</span>
-                  <h4 className="text-xs font-black tracking-wide text-indigo-100">Vercel 실시간 앱 재배포 제어</h4>
-                </div>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (loading) return;
-                    setLoading(true);
-                    try {
-                      const deployUrl = import.meta.env?.VITE_VERCEL_DEPLOY_HOOK_URL || 'https://api.vercel.com/v1/integrations/deploy/prj_GdzRgcWWQ5qB6kFbCfiMRMZGi82C';
-                      await fetch(deployUrl, { method: 'POST', mode: 'no-cors' }).catch(() => {});
-                      onFeedback({ message: '🚀 Vercel 클라우드 즉시 재배포 명령이 정상 발송되었습니다! (약 1분 후 전체 라이브 반영)', tone: 'success' });
-                    } catch (e) {
-                      onFeedback({ message: '재배포 요청 구동: ' + e.message, tone: 'success' });
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  disabled={loading}
-                  className="px-3 py-1.5 bg-indigo-500 hover:bg-indigo-400 active:scale-95 text-white text-xs font-black rounded-lg transition-all shadow-sm cursor-pointer flex items-center gap-1"
-                >
-                  <span>🚀 실시간 앱 즉각 재배포</span>
-                </button>
-              </div>
-              <p className="text-[10px] text-indigo-200/80 leading-relaxed">
-                승인된 팩트 데이터를 전체 유저 앱 PWA에 라이브 릴리즈 배포하려면 이 버튼을 클릭하세요 (약 1분 소요).
-              </p>
-            </div>
 
             <div className="flex justify-between items-center flex-wrap gap-1.5 pt-1">
               <div className="flex items-center gap-1.5">
@@ -985,6 +896,65 @@ export default function AdminSettingsModal({ onClose, onFeedback: propOnFeedback
                   );
                 })
               )}
+            </div>
+          </div>
+
+          {/* 🟢 📦 엑셀 마이그레이션 글로벌 ON/OFF 및 허가 명단 관리 (모달 최하단 배치) */}
+          <div className="bg-emerald-50/60 p-4 rounded-xl border border-emerald-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">📦</span>
+                <h3 className="text-sm font-black text-emerald-950">엑셀 마이그레이션 제어</h3>
+              </div>
+              <button
+                type="button"
+                onClick={handleToggleMigrationMode}
+                className={`px-3 py-1 rounded-full text-xs font-black transition-all cursor-pointer shadow-2xs ${
+                  isMigrationModeOn ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
+                }`}
+              >
+                {isMigrationModeOn ? '기능 ON' : '기능 OFF'}
+              </button>
+            </div>
+            <p className="text-[11px] text-emerald-800 leading-normal">
+              마이그레이션 작업 완료 후 기능 OFF로 변경하시면 앱 전체에서 메뉴가 100% 비활성화됩니다.
+            </p>
+
+            <div className="pt-2 border-t border-emerald-200/60 space-y-2">
+              <span className="text-xs font-black text-emerald-900 block">허가 계정 이메일 명단 ({migrationAllowedList.length}개)</span>
+              
+              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                {migrationAllowedList.map((email) => (
+                  <div key={email} className="bg-white p-2 rounded-lg border border-emerald-200 flex items-center justify-between gap-2 text-xs font-bold text-slate-700">
+                    <span className="truncate">{email}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAllowedEmail(email)}
+                      className="text-rose-600 hover:text-rose-800 font-black text-[11px] shrink-0 cursor-pointer"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <input
+                  type="email"
+                  placeholder="추가할 지공사 구글 이메일"
+                  value={newAllowedEmailInput}
+                  onChange={(e) => setNewAllowedEmailInput(e.target.value)}
+                  className="flex-1 px-3 py-1.5 bg-white border border-emerald-300 rounded-xl text-xs font-bold focus:ring-1 focus:ring-emerald-500 outline-none"
+                />
+                <Button
+                  variant="primary"
+                  size="xs"
+                  className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white shrink-0"
+                  onClick={handleAddAllowedEmail}
+                >
+                  추가
+                </Button>
+              </div>
             </div>
           </div>
 

@@ -9,9 +9,10 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 구글 파이어베이스(Firestore) 원격 데이터베이스 기반 마이그레이션 설정 100% 원격 동기화 Vercel 프로덕션 라이브 배포 (`userLicenseManager.js` & `AdminSettingsModal.jsx`):
-  - **원격 Firestore 데이터베이스 연동 완수**: `admin_settings/migration_config` 문서를 원격 신설하여, 관리자가 제어실에서 마이그레이션 모드를 OFF 하거나 이메일을 추가/삭제 시 구글 서버로 100% 실시간 원격 저장.
-  - **모든 기기 원격 자동 동기화 완수**: 지공사들이 앱을 켤 때 원격 파이어베이스 설정을 `fetchRemoteMigrationConfig()` 로 100% 자동 동기화하여, 관리자가 OFF 설정 시 다른 모든 지공사 기기에서도 엑셀 마이그레이션 메뉴가 100% 원격 숨김 및 차단됨.
+- 하드코딩 마이그레이션 임시 계정 정리 및 마스터 제어실 일원화 Vercel 프로덕션 라이브 배포 (`userLicenseManager.js` & `CustomerHeader.jsx`):
+  - **하드코딩 임시 계정 100% 정리 완수**: `getMigrationAllowedEmails` 내 하드코딩 임시 이메일(`sysmedic3`, `worms0529`)을 100% 완전 삭제하고, 오직 최고 마스터 계정(`sysmedic@gmail.com`)만 기본 유지.
+  - **권한 관리 마스터 제어실 동적 일원화**: 모든 마이그레이션 권한 부여/회수는 마스터 제어실(`AdminSettingsModal.jsx`)의 동적 이메일 추가/삭제 기능을 통해서만 이루어지도록 100% 일원화.
+  - **1순위 절대 방어막 연산자 괄호 수술 완수**: `isMigrationModeGloballyEnabled()` 방어막 괄호를 최우선 1순위로 묶어, 마스터 제어실에서 OFF 클릭 시 `sysmedic3` 계정을 포함한 모든 계정 화면에서 엑셀 마이그레이션 메뉴가 100% 즉시 숨겨지고 원격 차단됨.
   - **검증 완료**: 61개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
