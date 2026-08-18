@@ -273,7 +273,7 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
             </button>
           </div>
 
-          {/* 프로필 */}
+          {/* 💡 [지공사님 지시: 추후 재사용을 위해 기록에 남김] 프로필 기능 일시 정지 및 메뉴 가리기
           <div className="flex items-center justify-between gap-4 pt-3 border-t border-slate-200/60">
             <div className="flex-1">
               <h4 className="text-sm font-black text-slate-800 mb-0.5">
@@ -295,6 +295,7 @@ export default function GeneralSettingsModal({ onClose, onFeedback: propOnFeedba
               />
             </button>
           </div>
+          */}
         </div>
 
         <div className="flex justify-end pt-1">

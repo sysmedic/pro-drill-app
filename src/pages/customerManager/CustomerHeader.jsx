@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import TopBarShell from '../../components/layout/TopBarShell.jsx';
 import ModalShell from '../../components/ui/ModalShell.jsx';
 import Button from '../../components/ui/Button.jsx';
-import { signOutGoogle, isGoogleSignedIn } from '../../lib/googleDriveBackup.js';
+import { signOutGoogle, isGoogleSignedIn, signInGoogle } from '../../lib/googleDriveBackup.js';
 import TaskbarHelpBalloon from '../../components/ui/TaskbarHelpBalloon.jsx';
 import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
 import { isMigrationAuthorizedEmail, isMigrationModeGloballyEnabled } from '../../lib/userLicenseManager.js';
@@ -63,12 +63,14 @@ export default function CustomerHeader({
             { emoji: "📁", label: "타임라인 로그" },
             { emoji: "📋", label: "입력창 펼치기" },
             { emoji: "👤", label: "볼러스펙 펼치기" },
-            { isHelpPing: true, label: "가이드 보기" },
+            { isHelpPing: true, label: "가이드 보기" }
+            /* 💡 [지공사님 지시: 추후 재사용을 위해 기록에 남김] 프로필 가림
             { emoji: "👤", label: "프로필" }
+            */
           ]
         },
         { title: "✨ ProDrill AI", desc: "AI 레이아웃 추천 알고리즘 활성을 위한 API 키를 생성 입력합니다." },
-        { title: "☁️ 클라우드 백업", desc: "지공사 프로필 관리 / 구글 드라이브 클라우드 동기화 및 복구를 진행합니다." },
+        { title: "☁️ 클라우드 백업", desc: "구글 드라이브 클라우드 동기화 및 복구를 진행합니다." },
         { title: "📂 로컬 백업", desc: "수동 JSON 파일 내보내기/불러오기로 백업 파일을 관리합니다." },
         { title: "🔄 업데이트", desc: "최신 배포본을 확인하고 앱을 즉시 갱신합니다." },
         { title: "🚪 로그아웃", desc: "사용자 계정 세션을 안전하게 종료하고 로그인 화면으로 이동합니다." }
@@ -161,11 +163,15 @@ export default function CustomerHeader({
       <div className="flex justify-between items-center mb-1.5 h-10">
         <div className="flex items-center gap-1.5 relative">
           <div className="z-[999] shrink-0 flex items-center relative">
-            {/* ☰ 햄버거 박스 (시작점 일치 -ml-1, 위쪽 이동 -mt-1.5 [1과 2 정중앙], 크기 10%+ 확대 w-10 h-10 text-2xl) */}
+            {/* ☰ 햄버거 박스 (토큰 정상: 에메랄드 녹색 / 만료: 깔끔한 주황색 고정) */}
             <button 
               onClick={(e) => { e.stopPropagation(); setIsHamburgerOpen(!isHamburgerOpen); }}
-              className="w-10 h-10 -ml-1 -mt-1.5 text-2xl text-slate-600 hover:bg-slate-100 rounded-xl transition-colors flex items-center justify-center leading-none"
-              title="메뉴"
+              className={`w-10 h-10 -ml-1 -mt-1.5 text-2xl font-black rounded-xl transition-colors flex items-center justify-center leading-none ${
+                isGoogleSignedIn()
+                  ? 'text-emerald-600 hover:bg-emerald-50'
+                  : 'text-amber-500 hover:bg-amber-50'
+              }`}
+              title={isGoogleSignedIn() ? "메뉴 (구글 인증 정상 - 녹색)" : "메뉴 (구글 백업 인증 만료됨 - 주황색)"}
               aria-label="메뉴"
             >
               ☰
@@ -290,9 +296,22 @@ export default function CustomerHeader({
           </div>
 
           <div className="flex items-center gap-1.5 relative">
-            <h1 className="text-xl font-bold text-slate-800 leading-none">고객 관리</h1>
+            <h1 
+              onClick={async (e) => {
+                e.stopPropagation();
+                try {
+                  await signInGoogle(true);
+                } catch (err) {
+                  console.error("Token refresh login error:", err);
+                }
+              }}
+              className="text-xl font-bold text-slate-800 leading-none cursor-pointer hover:text-indigo-600 transition-colors"
+              title="클릭 시 구글 연동 갱신 로그인을 진행합니다."
+            >
+              고객 관리
+            </h1>
             
-            {/* 1. ? 가이드 도움말 버튼 (고객 관리 타이틀 바로 뒤 위치) */}
+            {/* 1. ? 가이드 도움말 버튼 */}
             {showManualHelpSetting && (
               <div className="relative inline-flex items-center justify-center shrink-0 ml-0.5">
                 <div className="relative flex items-center justify-center">
@@ -322,7 +341,8 @@ export default function CustomerHeader({
               </div>
             )}
 
-            {/* 2. 💡 [가이드 ? 버튼 바로 뒤 배치: 프로필 이름 1순위 ➔ 없을 때만 계정 이메일 ID 2순위 / 프로필 가리기 설정 연동] */}
+            {/* 2. 💡 프로필 뱃지 렌더링 구역 (일시 정지) */}
+            {/*
             {!hideProfileSetting && (() => {
               let displayName = "";
               try {
@@ -331,7 +351,7 @@ export default function CustomerHeader({
                   const profileObj = JSON.parse(profileRaw);
                   displayName = profileObj.drillerName || profileObj.displayName || profileObj.name || "";
                 }
-              } catch { /* ignore */ }
+              } catch { }
 
               if (!displayName.trim()) {
                 const activeEmail = (typeof window !== "undefined"
@@ -341,31 +361,31 @@ export default function CustomerHeader({
               }
 
               return (
-                <>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowLogoutConfirm(true);
-                    }}
-                    className="text-base sm:text-lg font-medium text-slate-600 hover:text-indigo-600 transition-colors active:scale-95 cursor-pointer ml-1 sm:ml-1.5"
-                    title="클릭 시 로그아웃 안내"
-                  >
-                    {displayName}
-                  </button>
-
-                  {/* 💡 [실수 방지 로그아웃 승인 / 취소 선택 경고 모달 다이얼로그] */}
-                  {showLogoutConfirm && (
-                    <ModalShell
-                      align="center"
-                      onClose={() => setShowLogoutConfirm(false)}
-                      size="sm"
-                      title="계정 로그아웃"
-                      variant="light"
-                    >
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowLogoutConfirm(true);
+                  }}
+                  className="text-base sm:text-lg font-medium text-slate-600 hover:text-indigo-600 transition-colors active:scale-95 cursor-pointer ml-1 sm:ml-1.5"
+                  title="클릭 시 로그아웃 안내"
+                >
+                  {displayName}
+                </button>
+              );
+            })()} */}
+            {/* 💡 [실수 방지 로그아웃 승인 / 취소 선택 경고 모달 다이얼로그] */}
+            {showLogoutConfirm && (
+              <ModalShell
+                align="center"
+                onClose={() => setShowLogoutConfirm(false)}
+                size="sm"
+                title="계정 로그아웃"
+                variant="light"
+              >
                       <div className="p-4 flex flex-col gap-5 text-center">
                         <p className="text-sm font-bold text-slate-700 leading-relaxed">
-                          현재 <span className="text-indigo-600 font-extrabold">{displayName}</span> 지공사 계정 세션을 안전하게 종료하고 로그인 화면으로 이동하시겠습니까?
+                          현재 지공사 계정 세션을 안전하게 종료하고 로그인 화면으로 이동하시겠습니까?
                         </p>
                         <div className="flex gap-2.5 justify-center pt-2">
                           <Button
@@ -407,9 +427,6 @@ export default function CustomerHeader({
                       </div>
                     </ModalShell>
                   )}
-                </>
-              );
-            })()}
           </div>
         </div>
 

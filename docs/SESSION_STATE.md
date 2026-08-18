@@ -9,9 +9,12 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 키패드 작업 손대기 직전의 그 안정적이었던 100% 원본 상태로 강제 롤백(Hard Rollback) 완료 Vercel 라이브 프로덕션 반영 (`commit 203959d`):
-  - **롤백 타겟 커밋**: `203959d` (*"style: 모바일 소형 화면 새 차트 저장 모달 식별 날짜 반응형 자동 줄바꿈 수술 Vercel 프로덕션 라이브 배포"*)
-  - **100% 원복 완수**: 로컬 Git 브랜치(`8-6-이후-변경` 및 `main`) 및 Vercel 실서버 프로덕션(`https://drilling-chart-psi.vercel.app`) 모두 키패드 손대기 직전 순간으로 100% 완벽히 하드 롤백 복원.
+- 수치 키패드 마이너스 삭제/차단 및 PAP 고속 분수 자동 완성 Vercel 프로덕션 라이브 배포 완료 (`FractionKeypad.jsx`):
+  - **4종 수치 키패드 마이너스 방어막 결합 완수**: `RPM`, `구속 (km/h)`, `PAP (Over)`, `PAP (Up/Down)`, `Span (중지/약지/엄지)` 키패드 오픈 시 4행 1열의 `-` 버튼 100% 삭제(숨김) 및 물리/소프트웨어 키보드 `-` 타이핑 입력 100% 원천 차단 완치.
+  - **RPM/구속 선행 "0" 자동 삭제 결합**: `0` 이 있는 상태에서 숫자 입력 시 선행 `0` 을 자동 삭제하고 새 숫자로 교체 (`0350` -> `350`).
+  - **PAP (Over / Up/Down) 고속 분수 자동 합성 결합**: `4`, `1`, `2` 연달아 누르면 스페이스바/슬래시 없이 `4 1/2` 자동 완성.
+  - **PAP Up/Down 전용 버튼 결합**: 상단 `[ ▲ Up ] / [ ▼ Down ]` 방향 버튼 1초 원터치 바인딩.
+  - **검증 완료**: 63개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
   - **Vercel 라이브 배포 완수**: 대칭/비대칭 선택 시 `bg-slate-700 border-slate-700 text-white` 적용 최신 프로덕션 배포 완수.
