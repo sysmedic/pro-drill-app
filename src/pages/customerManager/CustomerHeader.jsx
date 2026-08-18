@@ -459,34 +459,44 @@ export default function CustomerHeader({
               <span>중 {(searchQuery || '').trim() ? '검색한' : '최근 등록/수정된'} {currentCount}명</span>
             </div>
 
-            {/* 📊 지공 차트 현황 정밀 모달 다이얼로그 */}
+            {/* 📊 고객 및 지공 차트 현황 (3카드 정밀 보고 모달) */}
             {showSummaryModal && (
               <ModalShell
                 align="center"
                 onClose={() => setShowSummaryModal(false)}
-                size="sm"
-                title="📊 지공 차트 현황"
+                size="md"
+                title="📊 고객 및 지공 차트 현황"
                 variant="light"
               >
                 <div className="p-4 flex flex-col gap-4 text-center">
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* 카운트 1: 선택된 고객의 차트 수 */}
-                    <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
-                      <span className="text-xs font-bold text-slate-500 block mb-1">
-                        선택된 고객의 차트 수
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {/* 카드 1: 실제 등록 고객 수 */}
+                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex flex-col items-center justify-center">
+                      <span className="text-[11px] font-bold text-slate-500 block mb-1">
+                        실제 등록 고객 수
                       </span>
-                      <span className="text-xl font-black text-slate-800">
-                        {selectedChartsCount}개
+                      <span className="text-lg font-black text-slate-800">
+                        {totalCount}명
                       </span>
                     </div>
 
-                    {/* 카운트 2: 전체 고객의 차트의 수 */}
-                    <div className="bg-indigo-50 border border-indigo-200 p-3.5 rounded-xl">
-                      <span className="text-xs font-bold text-indigo-600 block mb-1">
-                        전체 고객의 차트의 수
+                    {/* 카드 2: 총 저장 지공 차트 수량 */}
+                    <div className="bg-indigo-50 border border-indigo-200 p-3 rounded-xl flex flex-col items-center justify-center">
+                      <span className="text-[11px] font-bold text-indigo-600 block mb-1">
+                        총 저장 지공 차트 수량
                       </span>
-                      <span className="text-xl font-black text-indigo-700">
+                      <span className="text-lg font-black text-indigo-700">
                         {totalChartsCount}개
+                      </span>
+                    </div>
+
+                    {/* 카드 3: 1인당 평균 차트 수 */}
+                    <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex flex-col items-center justify-center">
+                      <span className="text-[11px] font-bold text-emerald-600 block mb-1">
+                        1인당 평균 차트 수
+                      </span>
+                      <span className="text-lg font-black text-emerald-700">
+                        {totalCount > 0 ? (totalChartsCount / totalCount).toFixed(1) : 0}개
                       </span>
                     </div>
                   </div>
@@ -494,7 +504,7 @@ export default function CustomerHeader({
                   <Button
                     variant="outline"
                     size="md"
-                    className="w-full"
+                    className="w-full mt-1"
                     onClick={() => setShowSummaryModal(false)}
                   >
                     확인

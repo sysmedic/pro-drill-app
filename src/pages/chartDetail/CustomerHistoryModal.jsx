@@ -198,8 +198,8 @@ export default function CustomerHistoryModal({
         {activeTab === 'history' && (
           <div className="flex flex-col gap-4">
             <div className="px-2 mb-2 flex justify-between items-center text-xs font-bold tracking-tight">
-              <span className="text-white/30">전체 기록 목록</span>
-              <span className="text-indigo-300 font-black">{history.length} / {currentChartsCount}</span>
+              <span className="text-white/60">전체 기록 목록</span>
+              <span className="text-indigo-300 font-black">총 {history.length}개</span>
             </div>
 
             {history.length === 0 ? (
