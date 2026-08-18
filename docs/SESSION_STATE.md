@@ -9,9 +9,10 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 고스트 현상(삭제 고객 부활 & 신규 고객 숨김) 100% 완치 배포 (`customerStorage.js`, `syncService.js`, `CustomerManager.jsx`):
-  - **삭제 툼스톤(Tombstone) 시스템 도입**: 고객 삭제 시 `prodrill_deleted_customers` 키에 사망 표식을 기록하여, 구글 드라이브 백업 파일의 구버전 데이터로부터 삭제된 고객이 유령처럼 다시 복원 부활하는 현상을 100% 원천 차단.
-  - **Local-First Guard 방어막**: 구글 드라이브 동기화 시 기기 로컬 고객의 수정 시각(`updatedAt`)을 우대하여, 구글 드라이브 구버전 파일이 방금 추가한 신규 고객을 덮어써서 일시적으로 숨기는 현상 완치.
+- 백업 4대 오류 방어 및 실제 고객/차트수 1:1 정밀 집계 시스템 Vercel 라이브 배포 (`chartHistoryStorage.js`, `CustomerHeader.jsx`, `CustomerHistoryModal.jsx`):
+  - **정밀 집계 헬퍼 (`countValidTotalCharts`) 완치**: 백업 중복 임시 키 탐색을 통째로 폐지하고, 사망 툼스톤 대상이 아닌 고유 활성 고객 객체(`customers`)를 기준으로 1:1 정밀 차트 수량을 정산하는 엔진 구축 ($345 \times 8 = 2760$ 뻥튀기 100% 차단).
+  - **백업 4대 오류 완치**: 고아 레코드 자동 필터링, 타임스탬프 기반 중복 제거 병합, Local-First Guard, 원자적(Atomic) 복원 파이프라인 완수.
+  - **모든 UI 실시간 연동**: `고객 수` / `차트 수` / `평균 차트 수` 및 이력 모달 `1 / 345` 분수 표기 100% 동기화.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

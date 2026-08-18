@@ -203,13 +203,19 @@ export default function CustomerHistoryModal({
             {(() => {
               let totalAllChartsCount = 0;
               try {
-                const customerData = readCustomers();
-                const custList = Array.isArray(customerData) ? customerData : (customerData?.customers || []);
+                let custList = [];
+                const raw = typeof window !== 'undefined' ? window.localStorage.getItem('prodrill_customers') : null;
+                if (raw) {
+                  const parsed = JSON.parse(raw);
+                  if (Array.isArray(parsed)) {
+                    custList = parsed;
+                  }
+                }
                 totalAllChartsCount = countValidTotalCharts(custList);
               } catch { /* ignore */ }
               
               if (!totalAllChartsCount || totalAllChartsCount === 0) {
-                totalAllChartsCount = currentChartsCount || 345;
+                totalAllChartsCount = Math.max(1, currentChartsCount || 0);
               }
 
               return (
