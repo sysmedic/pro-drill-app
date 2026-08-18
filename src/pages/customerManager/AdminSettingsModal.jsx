@@ -1,7 +1,17 @@
 import { useState, useEffect } from 'react';
 import { collection, doc, getDocs, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { licenseDb } from '../../lib/licenseFirebase.js';
-import { getSha256Hash, MASTER_HASH, saveUserProfile, sanitizeString } from '../../lib/userLicenseManager.js';
+import { 
+  getSha256Hash, 
+  MASTER_HASH, 
+  saveUserProfile, 
+  sanitizeString,
+  isMigrationModeGloballyEnabled,
+  setMigrationModeGloballyEnabled,
+  getMigrationAllowedEmails,
+  addMigrationAllowedEmail,
+  removeMigrationAllowedEmail
+} from '../../lib/userLicenseManager.js';
 import Button from '../../components/ui/Button.jsx';
 import ModalShell from '../../components/ui/ModalShell.jsx';
 import Icon from '../../components/ui/Icon.jsx';
@@ -21,6 +31,43 @@ export default function AdminSettingsModal({ onClose, onFeedback: propOnFeedback
   const [editName, setEditName] = useState('');
   const [editShop, setEditShop] = useState('');
   const [auditUser, setAuditUser] = useState(null);
+
+  // 🟢 엑셀 마이그레이션 글로벌 ON/OFF 스위치 및 허가 이메일 동적 관리 state
+  const [isMigrationModeOn, setIsMigrationModeOn] = useState(() => isMigrationModeGloballyEnabled());
+  const [migrationAllowedList, setMigrationAllowedList] = useState(() => getMigrationAllowedEmails());
+  const [newAllowedEmailInput, setNewAllowedEmailInput] = useState('');
+
+  const handleToggleMigrationMode = () => {
+    const nextState = !isMigrationModeOn;
+    setMigrationModeGloballyEnabled(nextState);
+    setIsMigrationModeOn(nextState);
+    onFeedback({
+      message: nextState ? "📦 엑셀 마이그레이션 기능이 앱 전체에서 [ON] 활성화되었습니다." : "📦 엑셀 마이그레이션 기능이 앱 전체에서 [OFF] 비활성화되었습니다.",
+      tone: nextState ? "success" : "warning"
+    });
+  };
+
+  const handleAddAllowedEmail = () => {
+    if (!newAllowedEmailInput.trim()) {
+      return onFeedback({ message: "추가할 허가 이메일을 입력해 주세요.", tone: "warning" });
+    }
+    const added = addMigrationAllowedEmail(newAllowedEmailInput);
+    if (added) {
+      setMigrationAllowedList(getMigrationAllowedEmails());
+      onFeedback({ message: `'${newAllowedEmailInput.trim()}' 계정이 마이그레이션 허가 명단에 추가되었습니다.`, tone: "success" });
+      setNewAllowedEmailInput('');
+    } else {
+      onFeedback({ message: "이미 허가 명단에 존재하는 이메일입니다.", tone: "info" });
+    }
+  };
+
+  const handleRemoveAllowedEmail = (targetEmail) => {
+    const removed = removeMigrationAllowedEmail(targetEmail);
+    if (removed) {
+      setMigrationAllowedList(getMigrationAllowedEmails());
+      onFeedback({ message: `'${targetEmail}' 계정이 마이그레이션 허가 명단에서 삭제되었습니다.`, tone: "info" });
+    }
+  };
 
   // 1. 라이선스 유저, Trial 사용자 및 수집 볼링공 DB 목록 원격 로드
   const loadAdminData = async () => {
@@ -534,6 +581,65 @@ export default function AdminSettingsModal({ onClose, onFeedback: propOnFeedback
             <div className="flex justify-between items-center text-xs font-bold text-indigo-800">
               <span>체험 중인 지공사 (Trial):</span>
               <span className="text-sm underline font-black">{cleanTrialUsers.length}명</span>
+            </div>
+          </div>
+
+          {/* 🟢 📦 엑셀 마이그레이션 글로벌 ON/OFF 및 허가 명단 관리 */}
+          <div className="bg-emerald-50/60 p-4 rounded-xl border border-emerald-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">📦</span>
+                <h3 className="text-sm font-black text-emerald-950">엑셀 마이그레이션 제어</h3>
+              </div>
+              <button
+                type="button"
+                onClick={handleToggleMigrationMode}
+                className={`px-3 py-1 rounded-full text-xs font-black transition-all cursor-pointer shadow-2xs ${
+                  isMigrationModeOn ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
+                }`}
+              >
+                {isMigrationModeOn ? '기능 ON' : '기능 OFF'}
+              </button>
+            </div>
+            <p className="text-[11px] text-emerald-800 leading-normal">
+              마이그레이션 작업 완료 후 기능 OFF로 변경하시면 앱 전체에서 메뉴가 100% 비활성화됩니다.
+            </p>
+
+            <div className="pt-2 border-t border-emerald-200/60 space-y-2">
+              <span className="text-xs font-black text-emerald-900 block">허가 계정 이메일 명단 ({migrationAllowedList.length}개)</span>
+              
+              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                {migrationAllowedList.map((email) => (
+                  <div key={email} className="bg-white p-2 rounded-lg border border-emerald-200 flex items-center justify-between gap-2 text-xs font-bold text-slate-700">
+                    <span className="truncate">{email}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAllowedEmail(email)}
+                      className="text-rose-600 hover:text-rose-800 font-black text-[11px] shrink-0 cursor-pointer"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <input
+                  type="email"
+                  placeholder="추가할 지공사 구글 이메일"
+                  value={newAllowedEmailInput}
+                  onChange={(e) => setNewAllowedEmailInput(e.target.value)}
+                  className="flex-1 px-3 py-1.5 bg-white border border-emerald-300 rounded-xl text-xs font-bold focus:ring-1 focus:ring-emerald-500 outline-none"
+                />
+                <Button
+                  variant="primary"
+                  size="xs"
+                  className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white shrink-0"
+                  onClick={handleAddAllowedEmail}
+                >
+                  추가
+                </Button>
+              </div>
             </div>
           </div>
 

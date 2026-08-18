@@ -221,17 +221,66 @@ export const certifyUserEmail = async (email) => {
 };
 
 /**
- * 엑셀 마이그레이션 보안 가시성 허용 계정 (sysmedic3@gmail.com, worms0529@gmail.com) 여부 체크
+ * 엑셀 마이그레이션 글로벌 모드 ON/OFF 헬퍼 (기본값: true)
+ */
+export const isMigrationModeGloballyEnabled = () => {
+  if (typeof window === 'undefined') return true;
+  return localStorage.getItem('prodrill_migration_mode_enabled') !== 'false';
+};
+
+export const setMigrationModeGloballyEnabled = (enabled) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('prodrill_migration_mode_enabled', enabled ? 'true' : 'false');
+};
+
+/**
+ * 엑셀 마이그레이션 동적 허용 이메일 목록 관리 헬퍼
+ */
+export const getMigrationAllowedEmails = () => {
+  const DEFAULT_EMAILS = ['sysmedic3@gmail.com', 'worms0529@gmail.com', 'sysmedic@gmail.com'];
+  if (typeof window === 'undefined') return DEFAULT_EMAILS;
+  try {
+    const raw = localStorage.getItem('prodrill_migration_allowed_emails');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(e => String(e).trim().toLowerCase());
+      }
+    }
+  } catch { /* ignore */ }
+  return DEFAULT_EMAILS;
+};
+
+export const addMigrationAllowedEmail = (email) => {
+  if (!email || typeof window === 'undefined') return false;
+  const clean = String(email).trim().toLowerCase();
+  const current = getMigrationAllowedEmails();
+  if (!current.includes(clean)) {
+    const updated = [...current, clean];
+    localStorage.setItem('prodrill_migration_allowed_emails', JSON.stringify(updated));
+    return true;
+  }
+  return false;
+};
+
+export const removeMigrationAllowedEmail = (email) => {
+  if (!email || typeof window === 'undefined') return false;
+  const clean = String(email).trim().toLowerCase();
+  const current = getMigrationAllowedEmails();
+  const updated = current.filter(e => e !== clean);
+  localStorage.setItem('prodrill_migration_allowed_emails', JSON.stringify(updated));
+  return true;
+};
+
+/**
+ * 엑셀 마이그레이션 보안 가시성 허용 계정 여부 체크 (글로벌 스위치 + 허가 목록 대조)
  */
 export const isMigrationAuthorizedEmail = (email) => {
+  if (!isMigrationModeGloballyEnabled()) return false;
   if (!email) return false;
   const clean = String(email).trim().toLowerCase();
-  const ALLOWED_EMAILS = [
-    'sysmedic3@gmail.com',
-    'worms0529@gmail.com',
-    'sysmedic@gmail.com'
-  ];
-  return ALLOWED_EMAILS.includes(clean);
+  const allowed = getMigrationAllowedEmails();
+  return allowed.includes(clean);
 };
 
 // 7. Trial 사용자 기기 통계 수집 및 서버 시각 기준 잔여일수 검증 (무한 연장 방어)

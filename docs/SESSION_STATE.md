@@ -9,11 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 수동 복원 선택 모달 연동 및 자동 백업 스위치 완치 Vercel 프로덕션 라이브 배포 (`SettingsModal.jsx` & `syncService.js`):
-  - **수동 복원 선택 팝업 완수**: 수동 복원 시 `[증분 복원 (타임스탬프 병합)]` 과 `[덮어쓰기 복원]` 중 지공사님이 자유롭게 선택할 수 있는 팝업 모달 구현.
-  - **실시간 자동 백업 스위치 완치**: `autoSyncOnChange` 내 권한 체크를 `isSyncAllowed()`로 완치하여 모든 유휴/정식 라이선스 사용자에게 고객/차트 저장 시 3초 디바운스 실시간 자동 백업이 100% 자동 작동함.
-  - **타임스탬프 1:1 병합 보장**: `getRecTime()` 기반 시각 대조로 증분 복원 시 타임스탬프 유실 없이 최신순 자동 정렬 병합.
-  - **검증 완료**: 61개 전체 단위 테스트(실증 2-A, 3-A, 3-B 포함), ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
+- 엑셀 마이그레이션 메뉴 관리자 등급(master, admin) 권한 보강 Vercel 라이브 배포 (`CustomerHeader.jsx`):
+  - **관리자 권한 노출 완수**: 지정된 계정(`sysmedic3@gmail.com` 등)뿐만 아니라, 마스터/관리자 등급(`master`, `admin`) 계정에게도 **`📦 엑셀 마이그레이션`** 메뉴가 100% 노출되고 정상 가동되도록 권한 조건 보강.
+  - **검증 완료**: 61개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
   - **Vercel 라이브 배포 완수**: 대칭/비대칭 선택 시 `bg-slate-700 border-slate-700 text-white` 적용 최신 프로덕션 배포 완수.
