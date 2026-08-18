@@ -791,7 +791,7 @@ export default function ChartDetail({
               </div>
               
               <p className="text-[11px] font-bold text-slate-500 leading-normal">
-                새로 작성할 지공 차트의 공 이름과 식별 날짜를 확인 및 수정해 주세요.
+                새지공 차트의 공 이름과 식별 날짜를 등록 및 확인해 주세요.
               </p>
 
               <div className="flex items-center w-full px-3 py-2.5 border border-slate-200 rounded-xl bg-white focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
@@ -799,11 +799,11 @@ export default function ChartDetail({
                   type="text"
                   value={exitInterceptor.newChartNameInput}
                   onChange={(e) => exitInterceptor.setNewChartNameInput(e.target.value)}
-                  className="flex-1 bg-transparent border-0 outline-none text-xs font-bold text-slate-800 placeholder-slate-400 focus:ring-0 p-0"
+                  className="flex-1 bg-transparent border-0 outline-none text-[16px] font-bold text-slate-800 placeholder-slate-400 focus:ring-0 p-0"
                   placeholder="공 이름 입력 (예: 코드블랙)"
                   autoFocus
                 />
-                <span className="text-xs font-bold text-slate-400/60 select-none pl-1 pointer-events-none unselectable">
+                <span className="text-[16px] font-bold text-slate-400/60 select-none pl-1 pointer-events-none unselectable">
                   &nbsp;{(() => {
                     const now = new Date();
                     const yy = String(now.getFullYear()).slice(-2);

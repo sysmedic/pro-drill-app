@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 수동 백업 복원 시 과거 삭제 블랙리스트(`prodrill_deleted_customers`) 100% 완충 해제 수술 Vercel 프로덕션 라이브 배포 (`customerStorage.js` & `syncService.js`):
-  - **블랙리스트 해제 헬퍼 신설 (`clearDeletedCustomerTombstones`)**: `customerStorage.js` 에 툼스톤 초기화 헬퍼 함수를 구축.
-  - **복원 시 블랙리스트 자동 제거 완치**: `syncService.js` 의 `unpackAppData` 시작 시, 수신된 모든 고객 ID들을 삭제 블랙리스트 메모리(`prodrill_deleted_customers`)에서 100% 해제하여 `readCustomers()` 가 가동되어도 단 1명도 누락되지 않고 화면에 100% 완벽히 복원되도록 완치.
+- 클라우드 복원 완료 직후 1회 스냅샷 즉시 자동 백업(`performBackup`) 및 설정 모달 자동 닫기(`onClose`) Vercel 프로덕션 라이브 배포 (`syncService.js` & `SettingsModal.jsx`):
+  - **기기 간 데이터 꼬임 100% 원천 봉쇄**: `syncService.js` 내 `performRestore` 완료 직후, 1:1 완벽 병합된 최신 DB 데이터를 구글 드라이브 스냅샷으로 즉시 1회 자동 업로드(`await performBackup()`)를 쏘아주어 구글 서버 파일과 로컬 DB 데이터를 100% 즉시 일치시킴.
+  - **복원 완료 시 설정 모달 자동 닫기 완수**: `SettingsModal.jsx` 에서 복원 성공 메시지 출동 후 설정 모달 창이 자동으로 깔끔하게 닫히도록(`onClose()`) 완치.
   - **검증 완료**: 63개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
