@@ -465,7 +465,7 @@ export default function CustomerHeader({
                 align="center"
                 onClose={() => setShowSummaryModal(false)}
                 size="md"
-                title="📊 고객 및 지공 차트 현황"
+                title="고객 및 지공 차트 현황"
                 variant="light"
               >
                 <div className="p-4 flex flex-col gap-4 text-center">
