@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { calculateGracePeriod } from '../../lib/userLicenseManager.js';
+import { countValidTotalCharts } from '../../lib/chartHistoryStorage.js';
+import { readCustomers } from '../../lib/customerStorage.js';
 
 const GlassBox = ({ children, onClick, className = '' }) => (
   <div 
@@ -201,22 +203,12 @@ export default function CustomerHistoryModal({
             {(() => {
               let totalAllChartsCount = 0;
               try {
-                if (typeof window !== 'undefined') {
-                  for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && key.startsWith('chart_history_')) {
-                      const raw = localStorage.getItem(key);
-                      if (raw) {
-                        const arr = JSON.parse(raw);
-                        if (Array.isArray(arr)) {
-                          totalAllChartsCount += Math.max(1, arr.length);
-                        }
-                      }
-                    }
-                  }
-                }
+                const customerData = readCustomers();
+                const custList = Array.isArray(customerData) ? customerData : (customerData?.customers || []);
+                totalAllChartsCount = countValidTotalCharts(custList);
               } catch { /* ignore */ }
-              if (!totalAllChartsCount) {
+              
+              if (!totalAllChartsCount || totalAllChartsCount === 0) {
                 totalAllChartsCount = currentChartsCount || 345;
               }
 

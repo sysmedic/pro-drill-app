@@ -6,6 +6,7 @@ import { signOutGoogle, isGoogleSignedIn } from '../../lib/googleDriveBackup.js'
 import TaskbarHelpBalloon from '../../components/ui/TaskbarHelpBalloon.jsx';
 import useSyncedPingStyle from '../../hooks/useSyncedPingStyle.js';
 import { isMigrationAuthorizedEmail } from '../../lib/userLicenseManager.js';
+import { countValidTotalCharts } from '../../lib/chartHistoryStorage.js';
 
 export default function CustomerHeader({ 
   totalCount, currentCount, onAdd, searchQuery, setSearchQuery, sortType, setSortType, 
@@ -422,24 +423,8 @@ export default function CustomerHeader({
 
       {/* 🟢 [스타일 및 시작점 일치 반영]: 전체 고객수 클릭 시 지공 차트 현황 정밀 모달 가동 */}
       {(() => {
-        const countCustomerCharts = (custList) => {
-          if (!Array.isArray(custList)) return 0;
-          return custList.reduce((acc, c) => {
-            let histCount = 0;
-            try {
-              const raw = localStorage.getItem(`chart_history_${c.id}`);
-              if (raw) {
-                const arr = JSON.parse(raw);
-                if (Array.isArray(arr)) histCount = arr.length;
-              }
-            } catch { /* ignore */ }
-            return acc + Math.max(1, histCount);
-          }, 0);
-        };
-
         const targetFiltered = (filteredCustomers && filteredCustomers.length > 0) ? filteredCustomers : customers;
-        const selectedChartsCount = countCustomerCharts(targetFiltered);
-        const totalChartsCount = countCustomerCharts(customers);
+        const totalChartsCount = countValidTotalCharts(customers);
 
         return (
           <>
