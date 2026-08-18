@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 클라우드 복원 완료 직후 1회 스냅샷 즉시 자동 백업(`performBackup`) 및 설정 모달 자동 닫기(`onClose`) Vercel 프로덕션 라이브 배포 (`syncService.js` & `SettingsModal.jsx`):
-  - **기기 간 데이터 꼬임 100% 원천 봉쇄**: `syncService.js` 내 `performRestore` 완료 직후, 1:1 완벽 병합된 최신 DB 데이터를 구글 드라이브 스냅샷으로 즉시 1회 자동 업로드(`await performBackup()`)를 쏘아주어 구글 서버 파일과 로컬 DB 데이터를 100% 즉시 일치시킴.
-  - **복원 완료 시 설정 모달 자동 닫기 완수**: `SettingsModal.jsx` 에서 복원 성공 메시지 출동 후 설정 모달 창이 자동으로 깔끔하게 닫히도록(`onClose()`) 완치.
+- 새 지공 차트 저장 안내 모달 텍스트 및 입력 필드 16px 폰트 수술 Vercel 프로덕션 라이브 배포 (`ChartDetail.jsx`):
+  - **안내 문구 변경**: `"새지공 차트의 공 이름과 식별 날짜를 등록 및 확인해 주세요."` 직관적 문구로 100% 1:1 수술 적용.
+  - **폰트 크기 16px 적용 (`text-[16px]`)**: 공 이름 입력 `input` 필드 및 식별 날짜 `span` 폰트 크기를 `16px`로 확대 적용하여, 모바일 Safari/Chrome 자동 확대 방지 및 시인성 대폭 강화.
   - **검증 완료**: 63개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
