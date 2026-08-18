@@ -249,6 +249,8 @@ export default function CustomerManagement({
       <CustomerHeader
         totalCount={totalCount}
         currentCount={displayedCustomers.length}
+        customers={customers}
+        filteredCustomers={filtered}
         onAdd={() => { 
           setEditId(null); 
           setCustomerData({ name: '', club: '', phone: '', gender: '', hand: '', style: '', styleExtra: '' }); 

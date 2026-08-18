@@ -11,13 +11,16 @@ export default function CustomerHeader({
   totalCount, currentCount, onAdd, searchQuery, setSearchQuery, sortType, setSortType, 
   onLogout, onOpenSettings, onOpenEnvironmentSettings,
   // eslint-disable-next-line no-unused-vars
-  onOpenAiSettings, onOpenBackupSettings, onOpenAdminSettings, onOpenExcelMigration, onCheckUpdate, userTier, isAiAllowed, isBackupAllowed, onNfcScan 
+  onOpenAiSettings, onOpenBackupSettings, onOpenAdminSettings, onOpenExcelMigration, onCheckUpdate, userTier, isAiAllowed, isBackupAllowed, onNfcScan,
+  customers = [],
+  filteredCustomers = []
 }) {
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showManualHelpSetting, setShowManualHelpSetting] = useState(true);
   const [hideProfileSetting, setHideProfileSetting] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
   const syncedPingStyle = useSyncedPingStyle();
 
   useEffect(() => {
@@ -59,7 +62,8 @@ export default function CustomerHeader({
             { emoji: "📁", label: "타임라인 로그" },
             { emoji: "📋", label: "입력창 펼치기" },
             { emoji: "👤", label: "볼러스펙 펼치기" },
-            { isHelpPing: true, label: "가이드 보기" }
+            { isHelpPing: true, label: "가이드 보기" },
+            { emoji: "👤", label: "프로필" }
           ]
         },
         { title: "✨ ProDrill AI", desc: "AI 레이아웃 추천 알고리즘 활성을 위한 API 키를 생성 입력합니다." },
@@ -416,10 +420,91 @@ export default function CustomerHeader({
         </div>
       </div>
 
-      {/* 🟢 [스타일 및 시작점 일치 반영]: 검색 상자 시작점과 수직 라인을 일치시켰습니다 (pl-0.5). */}
-      <div className="font-bold text-slate-500 text-[11px] mb-3.5 pl-0.5">
-        전체 고객 {totalCount}명 중 {(searchQuery || '').trim() ? '검색한' : '최근 등록/수정된'} {currentCount}명
-      </div>
+      {/* 🟢 [스타일 및 시작점 일치 반영]: 전체 고객수 클릭 시 지공 차트 현황 정밀 모달 가동 */}
+      {(() => {
+        const countCustomerCharts = (custList) => {
+          if (!Array.isArray(custList)) return 0;
+          return custList.reduce((acc, c) => {
+            let histCount = 0;
+            try {
+              const raw = localStorage.getItem(`chart_history_${c.id}`);
+              if (raw) {
+                const arr = JSON.parse(raw);
+                if (Array.isArray(arr)) histCount = arr.length;
+              }
+            } catch { /* ignore */ }
+            return acc + Math.max(1, histCount);
+          }, 0);
+        };
+
+        const targetFiltered = (filteredCustomers && filteredCustomers.length > 0) ? filteredCustomers : customers;
+        const selectedChartsCount = countCustomerCharts(targetFiltered);
+        const totalChartsCount = countCustomerCharts(customers);
+
+        return (
+          <>
+            <div className="font-bold text-slate-500 text-[11px] mb-3.5 pl-0.5 flex items-center gap-1">
+              <span>전체 고객</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSummaryModal(true);
+                }}
+                className="font-black text-indigo-600 hover:text-indigo-800 underline decoration-indigo-300 underline-offset-2 cursor-pointer transition-colors active:scale-95 px-0.5"
+                title="클릭 시 선택된 고객의 차트 수 및 전체 고객의 차트의 수 현황 확인"
+              >
+                {totalCount}명
+              </button>
+              <span>중 {(searchQuery || '').trim() ? '검색한' : '최근 등록/수정된'} {currentCount}명</span>
+            </div>
+
+            {/* 📊 지공 차트 현황 정밀 모달 다이얼로그 */}
+            {showSummaryModal && (
+              <ModalShell
+                align="center"
+                onClose={() => setShowSummaryModal(false)}
+                size="sm"
+                title="📊 지공 차트 현황"
+                variant="light"
+              >
+                <div className="p-4 flex flex-col gap-4 text-center">
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* 카운트 1: 선택된 고객의 차트 수 */}
+                    <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
+                      <span className="text-xs font-bold text-slate-500 block mb-1">
+                        선택된 고객의 차트 수
+                      </span>
+                      <span className="text-xl font-black text-slate-800">
+                        {selectedChartsCount}개
+                      </span>
+                    </div>
+
+                    {/* 카운트 2: 전체 고객의 차트의 수 */}
+                    <div className="bg-indigo-50 border border-indigo-200 p-3.5 rounded-xl">
+                      <span className="text-xs font-bold text-indigo-600 block mb-1">
+                        전체 고객의 차트의 수
+                      </span>
+                      <span className="text-xl font-black text-indigo-700">
+                        {totalChartsCount}개
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="md"
+                    className="w-full"
+                    onClick={() => setShowSummaryModal(false)}
+                  >
+                    확인
+                  </Button>
+                </div>
+              </ModalShell>
+            )}
+          </>
+        );
+      })()}
 
       <div className="flex gap-2">
         <div className="relative flex-1">
