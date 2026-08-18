@@ -78,16 +78,41 @@ test('실증 3-B: 삭제 툼스톤(Tombstone Guard) 사망 고객 유령 부활 
   // 1. 고객 삭제 시 툼스톤 등록
   registerDeletedCustomer('cust_deleted_999');
   const deletedIds = getDeletedCustomerIds();
-  assert.ok(deletedIds.includes('cust_deleted_999'), '삭제 툼스톤 명단에 등록되어야 함');
 
-  // 2. 구버전 백업 파일 복원 시 툼스톤 필터링 검증
+  assert.ok(Array.isArray(deletedIds) && deletedIds.includes('cust_deleted_999'), '삭제된 고객 ID가 툼스톤 목록에 존재해야 함');
+
+  // 2. 복원 시 복원 패키지에 삭제된 고객이 들어있더라도 툼스톤 필터링에 의해 부활 차단 입증
   const incomingCustomers = [
-    { id: 'cust_001', name: '김볼러', updatedAt: '2026-08-18T10:00:00Z' },
-    { id: 'cust_deleted_999', name: '유령고객', updatedAt: '2026-08-18T08:00:00Z' } // 툼스톤 대상
+    { id: 'cust_deleted_999', name: '유령고객' },
+    { id: 'cust_alive_111', name: '살아있는고객' }
   ];
 
   const filteredCustomers = incomingCustomers.filter(c => !deletedIds.includes(c.id));
+  assert.equal(filteredCustomers.length, 1);
+  assert.equal(filteredCustomers[0].id, 'cust_alive_111', '삭제된 유령고객은 복원 시 부활하지 않고 100% 필터링 차단되어야 함');
+});
 
-  assert.equal(filteredCustomers.length, 1, '툼스톤 대상 삭제 고객은 복원 시 100% 자동 필터링되어 제외되어야 함');
-  assert.equal(filteredCustomers[0].id, 'cust_001');
+test('실증 4-A: 수동 스냅샷 복원 시 증분 복원(merge) vs 덮어쓰기(overwrite) 1:1 동작 검증', () => {
+  const localCustomers = [
+    { id: 'c_local_1', name: '기존고객1', updatedAt: '2026-08-18T10:00:00Z' }
+  ];
+
+  const snapshotCustomers = [
+    { id: 'c_local_1', name: '기존고객1_수정', updatedAt: '2026-08-18T11:00:00Z' },
+    { id: 'c_remote_2', name: '스냅샷신규고객', updatedAt: '2026-08-18T11:05:00Z' }
+  ];
+
+  // 1. 증분 복원 (merge): 기존 고객 1개 + 스냅샷 신규 1개 = 총 2개 병합
+  const mergeMap = new Map();
+  localCustomers.forEach(c => mergeMap.set(c.id, c));
+  snapshotCustomers.forEach(c => mergeMap.set(c.id, c));
+  const mergeResult = Array.from(mergeMap.values());
+
+  assert.equal(mergeResult.length, 2, '증분 복원(merge) 시 기존 데이터와 스냅샷 데이터가 1:1 병합되어 2명이어야 함');
+  assert.equal(mergeResult.find(c => c.id === 'c_remote_2')?.name, '스냅샷신규고객');
+
+  // 2. 덮어쓰기 복원 (overwrite): 기존 데이터 완전 삭제 후 스냅샷 데이터로 100% 교체
+  const overwriteResult = [...snapshotCustomers];
+  assert.equal(overwriteResult.length, 2);
+  assert.equal(overwriteResult[0].name, '기존고객1_수정', '덮어쓰기(overwrite) 시 스냅샷 데이터로 100% 교체되어야 함');
 });

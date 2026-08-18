@@ -440,8 +440,20 @@ export const performRestore = async (fileId = null, mode = 'merge') => {
       }
     }
 
-    const targetFileId = typeof fileId === 'string' && fileId.trim() ? fileId.trim() : null;
-    const targetMode = typeof fileId === 'string' && (mode === 'merge' || mode === 'overwrite') ? mode : (typeof fileId === 'string' ? 'merge' : (mode || 'merge'));
+    let targetFileId = null;
+    let targetMode = 'merge';
+
+    if (typeof fileId === 'string' && (fileId === 'merge' || fileId === 'overwrite')) {
+      targetMode = fileId;
+      targetFileId = null;
+    } else {
+      if (typeof fileId === 'string' && fileId.trim()) {
+        targetFileId = fileId.trim();
+      }
+      if (mode === 'overwrite' || mode === 'merge') {
+        targetMode = mode;
+      }
+    }
 
     const payload = await downloadBackupData(targetFileId);
     await unpackAppData(payload, targetMode, currentEmail);

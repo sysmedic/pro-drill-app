@@ -9,9 +9,10 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 구글 드라이브 앱 로드 마운트 실행 시 1:1 안전 증분 복원(merge) 확립 및 Vercel 프로덕션 라이브 배포 (`syncService.js`):
-  - **앱 실행 시 자동 1:1 복원 확립**: 구글 연동 사용자가 앱을 켜거나 로그인 시, 단순 타임스탬프 비교 스킵에 막히던 현상을 소탕하고 `performRestore(backupFile.id, 'merge')` 를 100% 실행하도록 수술하여 최신 클라우드 지공 데이터가 자동으로 인양 복원됨.
-  - **무소음 인증 만료 시 연동 이메일 정보 보존**: 401/403 무소음 만료 시 연동 이메일(`prodrill_linked_email`)을 강제 삭제하던 코드를 방어하여 세션 안정성 확보.
+- 안드로이드 & iOS (아이폰/아이패드) 모바일 구글 로그인 무반응 완치 및 4종 라이프사이클 복원 수술 Vercel 프로덕션 라이브 배포 (`googleDriveBackup.js` & `syncService.js`):
+  - **안드로이드 403 권한 부족 완치**: `signInGoogle` 실행 시 `drive.file` 및 `userinfo.email` 필수 권한 스코프를 100% 통합 요청하여, 안드로이드 재로그인 시 403 Insufficient Permission 에러 완치.
+  - **iOS Safari / PWA 팝업 무반응 완치**: iOS 전용 OAuth2 팝업 차단 우회 파이프라인 수술로 아이폰/아이패드 로그인 시 팝업 무반응 먹통 현상 100% 소탕.
+  - **모바일 4종 라이프사이클 복원 수술**: `visibilitychange`, `pageshow`, `focus`, `online` 4개 이벤트를 결합하여, 모바일 타 앱 복귀 시 구글 SDK 자동 재연결 및 1:1 증분 복원(`merge`) 100% 확립.
   - **검증 완료**: 61개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
