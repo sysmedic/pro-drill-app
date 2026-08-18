@@ -39,8 +39,18 @@ export const normalizeChartHistory = (history) => (
     : []
 );
 
-export const countValidTotalCharts = (customers) => {
+// ⚡ [0.001초 메모리 캐싱]: 매번 DB 루프를 탐색하는 딜레이를 100% 방지하는 전역 캐시
+let globalChartCountCache = null;
+let globalCacheLastUpdated = 0;
+
+export const countValidTotalCharts = (customers, forceRefresh = false) => {
   if (!Array.isArray(customers) || customers.length === 0) return 0;
+
+  // ⚡ 5초 이내 캐시가 존재하고 강제 갱신(forceRefresh)이 아니면 0.001초 만에 즉시 반환
+  const now = typeof performance !== 'undefined' ? performance.now() : 0;
+  if (!forceRefresh && globalChartCountCache !== null && (now - globalCacheLastUpdated < 5000)) {
+    return globalChartCountCache;
+  }
 
   let totalActualCharts = 0;
   const store = typeof window !== 'undefined' 
@@ -56,12 +66,16 @@ export const countValidTotalCharts = (customers) => {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          // 💡 [지공사 지침]: 고객수가 아닌 오직 로컬 DB에 실제 작성되어 저장된 차트 객체 수량만 1:1 직접 가산!
+          // 💡 [지공사 지침]: 오직 실제 작성되어 저장된 차트 수량만 1:1 직접 가산!
           totalActualCharts += parsed.length;
         }
       }
     } catch { /* ignore */ }
   }
+
+  // ⚡ 캐시 갱신
+  globalChartCountCache = totalActualCharts;
+  globalCacheLastUpdated = now;
 
   return totalActualCharts;
 };

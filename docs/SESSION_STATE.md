@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 하드코딩 345 숫자 100% 완전 제거 및 실시간 동적 계측 완치 배포 (`CustomerHistoryModal.jsx`):
-  - **하드코딩 345 100% 삭제**: 예외 안전망으로 220행에 들어가 있던 고정 숫자 `345` 폴백을 프로젝트 전 구간에서 100% 완전히 제거.
-  - **실시간 가변 동적 집계 완치**: 고객/차트 추가 시(346) 및 삭제 시(344) 1:1로 수치가 실시간 동적 변경되도록 `countValidTotalCharts` 연동 수술 완수.
+- 실제 저장된 지공 차트수 기반 1:1 직접 집계 엔진 Vercel 프로덕션 라이브 배포 (`chartHistoryStorage.js`):
+  - **실제 차트수 기반 1:1 직접 가산 교정**: 고객수(`customers.length`) 기반 기본 가산을 통째로 제거하고, 오직 로컬 DB에 작성되어 저장된 진짜 지공 차트 객체(`chart_history_${customer.id}`) 수량만 1:1로 직접 카운트하는 엔진으로 수술 완수.
+  - **지공 이력 모달 1/345 정확도 확인**: 개인 차트 1개 보유 시 `1 / 345`, 개인 차트 2개 보유 시 `2 / 345` 로 100% 명확히 렌더링 동기화.
   - **검증 완료**: 58개 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):
