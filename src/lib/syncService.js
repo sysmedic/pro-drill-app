@@ -1,6 +1,6 @@
 import { loadCustomers, saveCustomers, getDeletedCustomerIds } from './customerStorage.js';
 import { getChartHistory, saveLocalChartHistory } from './indexedDbConnector.js';
-import { uploadBackupData, downloadBackupData, findBackupFile, isGoogleSignedIn, initGoogleApi, getGoogleUserEmail, ensureActiveGoogleToken, signOutGoogle } from './googleDriveBackup.js';
+import { uploadBackupData, downloadBackupData, findBackupFile, isGoogleSignedIn, initGoogleApi, getGoogleUserEmail, ensureActiveGoogleToken } from './googleDriveBackup.js';
 import { isLicenseCertified, isSyncAllowed } from './userLicenseManager.js';
 import { generateSignature, verifyBackupPackage } from './encryption.js';
 
@@ -489,22 +489,6 @@ export const autoSyncOnLaunch = async (setFeedback) => {
       return;
     }
 
-    // 최종 동기화 시간 비교
-    const driveTimeRaw = backupFile.modifiedTime; // 구글 드라이브 파일 수정시간
-    const localTimeRaw = localStorage.getItem('prodrill_last_backup_time');
-
-    if (!localTimeRaw) {
-      // 로컬에 마지막 동기화 기록이 없다면 무조건 다운로드 후 병합
-      console.log("☁️ [자동 동기화] 로컬 동기화 기록 미존재. 클라우드 백업 자동 인양 중...");
-      if (setFeedback) setFeedback({ message: '☁️ 구글 드라이브에서 백업 데이터를 자동으로 동기화합니다...', tone: 'info' });
-      await performRestore('merge');
-      if (setFeedback) setFeedback({ message: '☁️ 구글 드라이브 백업 데이터 동기화 완료!', tone: 'success' });
-      return;
-    }
-
-    const driveTime = new Date(driveTimeRaw).getTime();
-    const localTime = new Date(localTimeRaw).getTime();
-
     // [복원 직후 보호]: 방금 복원한 경우(30초 이내) autoSync의 자동 merge 스킵 → 복원 데이터 보호
     const lastRestoreRaw = localStorage.getItem('prodrill_last_restore_time');
     if (lastRestoreRaw) {
@@ -515,17 +499,11 @@ export const autoSyncOnLaunch = async (setFeedback) => {
       }
     }
 
-    // 클라우드가 1초 이상 더 최신이면 무조건 다운로드 & 병합
-    if (driveTime > localTime + 1000) {
-      console.log("☁️ [자동 동기화] 클라우드 데이터가 더 최신입니다. 자동 복원 병합 진행...");
-      if (setFeedback) setFeedback({ message: '☁️ 구글 드라이브의 최신 지공 기록을 자동으로 가져오는 중...', tone: 'info' });
-      await performRestore('merge');
-      if (setFeedback) setFeedback({ message: '☁️ 클라우드 동기화 완료!', tone: 'success' });
-    } else if (localTime > driveTime + 1000) {
-      // 로컬 데이터가 더 최신인 경우 -> 즉시 업로드하여 클라우드 갱신
-      console.log("☁️ [자동 동기화] 로컬 데이터가 더 최신입니다. 클라우드 자동 백업 진행...");
-      await performBackup();
-    }
+    // 🟢 [앱 실행 시 클라우드 복원 확립]: 클라우드 백업이 존재하고 토큰이 유효한 경우, 무조건 클라우드의 최신 지공 차트 및 고객 데이터를 안전 1:1 증분 병합(merge) 복원 수행
+    console.log("☁️ [자동 동기화] 구글 드라이브 백업 발견. 타임스탬프 기반 안전 자동 복원(merge) 실행 중...");
+    if (setFeedback) setFeedback({ message: '☁️ 구글 드라이브에서 최신 지공 차트 및 고객 데이터를 자동으로 복원 중...', tone: 'info' });
+    await performRestore(backupFile.id, 'merge');
+    if (setFeedback) setFeedback({ message: '☁️ 구글 드라이브 클라우드 복원 동기화 완료!', tone: 'success' });
   } catch (error) {
     // 구글 API 환경변수 미설정 혹은 견본 상태 시 조용히 로컬 모드로 구동 처리
     if (error && (error.message === 'GOOGLE_API_KEYS_MISSING' || error.message === 'GOOGLE_SDK_NOT_LOADED')) {
@@ -551,13 +529,12 @@ export const autoSyncOnLaunch = async (setFeedback) => {
 
     console.warn(`☁️ [자동 동기화 실패 사유]: (코드 ${errorCode || '알 수 없음'}) - ${errorMsg}`);
 
-    // 만약 401(인증 만료) 또는 403(권한 없음) 오류가 발생했다면 자동으로 구글 연동해제하여 유령 토큰 상태 정리
+    // 만약 401(인증 만료) 또는 403(권한 없음) 오류가 발생했다면 만료된 액세스 토큰만 비우고 연동 이메일 정보는 보존
     if (errorCode === 401 || errorCode === 403 || errorMsg.includes('auth') || errorMsg.includes('credential')) {
-      console.warn("🔐 [자동 동기화] 구글 인증 만료 또는 권한 만료 감지. 안전한 연동해제 및 세션 정리를 수행합니다.");
-      try {
-        await signOutGoogle();
-      } catch (e) {
-        console.error("구글 강제 로그아웃 실패:", e);
+      console.warn("🔐 [자동 동기화] 구글 인증 토큰 만료 감지. 연동 이메일 정보는 보존하며 만료된 토큰만 초기화합니다.");
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('prodrill_google_access_token');
+        localStorage.removeItem('prodrill_google_token_expiry');
       }
     }
   }
