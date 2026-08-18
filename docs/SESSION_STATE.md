@@ -9,9 +9,9 @@
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.
 4. GitHub remote 연결, branch protection, GitHub Pages 설정을 마무리한다.
 
-- 엑셀 마이그레이션 글로벌 ON/OFF 스위치 및 허가 명단 관리 UI Vercel 프로덕션 라이브 배포 (`AdminSettingsModal.jsx` & `userLicenseManager.js`):
-  - **마이그레이션 모드 글로벌 ON/OFF 스위치 완수**: 관리자 제어실에서 버튼 하나로 마이그레이션 모드를 앱 전체에서 100% 켜거나 끌 수 있는 스위치 장착 (OFF 시 전체 메뉴 숨김).
-  - **허가 계정 명단 동적 관리 UI 완수**: 마이그레이션 메뉴에 접근할 허가 이메일 명단을 실시간으로 추가(`+`)하거나 삭제(`삭제`)하여 자유롭게 정리할 수 있는 관리자 전용 코너 구현.
+- 구글 파이어베이스(Firestore) 원격 데이터베이스 기반 마이그레이션 설정 100% 원격 동기화 Vercel 프로덕션 라이브 배포 (`userLicenseManager.js` & `AdminSettingsModal.jsx`):
+  - **원격 Firestore 데이터베이스 연동 완수**: `admin_settings/migration_config` 문서를 원격 신설하여, 관리자가 제어실에서 마이그레이션 모드를 OFF 하거나 이메일을 추가/삭제 시 구글 서버로 100% 실시간 원격 저장.
+  - **모든 기기 원격 자동 동기화 완수**: 지공사들이 앱을 켤 때 원격 파이어베이스 설정을 `fetchRemoteMigrationConfig()` 로 100% 자동 동기화하여, 관리자가 OFF 설정 시 다른 모든 지공사 기기에서도 엑셀 마이그레이션 메뉴가 100% 원격 숨김 및 차단됨.
   - **검증 완료**: 61개 전체 단위 테스트, ESLint, Vite PWA 빌드, Vercel Production Deploy(`https://drilling-chart-psi.vercel.app`) 100% READY 입증.
 
 - 코어제원 선택 버튼 슬레이트 700 Vercel 프로덕션 라이브 배포 완료 (`AiRecommendationModal.jsx`):

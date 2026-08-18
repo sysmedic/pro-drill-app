@@ -288,7 +288,7 @@ export const setMigrationModeGloballyEnabled = (enabled) => {
  * 엑셀 마이그레이션 동적 허용 이메일 목록 관리 헬퍼
  */
 export const getMigrationAllowedEmails = () => {
-  const DEFAULT_EMAILS = ['sysmedic3@gmail.com', 'worms0529@gmail.com', 'sysmedic@gmail.com'];
+  const DEFAULT_EMAILS = ['sysmedic@gmail.com'];
   if (typeof window === 'undefined') return DEFAULT_EMAILS;
   try {
     const raw = localStorage.getItem('prodrill_migration_allowed_emails');
