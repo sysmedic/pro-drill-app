@@ -5,6 +5,8 @@ import ModalShell from '../../components/ui/ModalShell.jsx';
 import { ExitConfirmModal, MemoModal } from './ChartModals.jsx';
 import DrillingGuideView from './DrillingGuideView.jsx';
 import SettingsModal from '../customerManager/SettingsModal.jsx';
+import SpanConverterModal from './SpanConverterModal.jsx';
+import SpanGuideModal from './SpanGuideModal.jsx';
 
 export default function ChartModalManager({
   activeMemoId,
@@ -17,6 +19,10 @@ export default function ChartModalManager({
   sharePreview,
   showDrillingGuide,
   showSettingsModal,
+  showSpanConverter,
+  setShowSpanConverter,
+  showSpanGuide,
+  setShowSpanGuide,
   
   memos,
   history,
@@ -428,6 +434,26 @@ export default function ChartModalManager({
           onFeedback={setFeedback}
         />
       )}
+
+      {/* 만능 스판 변환기 모달 */}
+      <SpanConverterModal
+        isOpen={showSpanConverter}
+        onClose={() => setShowSpanConverter(false)}
+        data={chartData}
+        onApply={(convertedResult) => {
+          handleChartDataChange({
+            ...chartData,
+            ...convertedResult
+          });
+          setFeedback('스판 수치가 성공적으로 변환 및 반영되었습니다.');
+        }}
+      />
+
+      {/* 스판 연산 가이드 안내 모달 */}
+      <SpanGuideModal
+        isOpen={showSpanGuide}
+        onClose={() => setShowSpanGuide(false)}
+      />
     </>
   );
 }

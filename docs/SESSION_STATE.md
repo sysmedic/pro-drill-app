@@ -4,6 +4,12 @@
 
 ## 현재 우선순위
 
+- 도면 스판 가이드 모달 개요 설명 단락 추가 & 4가지 정제 항목 문구 완수 (`ChartBlueprintView.jsx`, `TaskbarHelpBalloon.jsx`):
+  - **개요 설명 단락 탑재 완수**: 모달 상단에 스판 변환 필요성의 핵심을 밝히는 전문 배경 개요 단락(*"볼링공의 스팬은 측정 방식에 따라..."*) 탑재.
+  - **4가지 정제 항목 리스트 피팅**: 문구 3종 교정 및 5번째 항목 삭제를 반영하여 4가지 정갈한 본문 리스트 피팅 완수.
+  - **단위 테스트 & 검증 완수**: 총 70개 테스트 suite 100% pass 및 `npm run check` 통과.
+  - **배포 지침 준수**: 기능 완성 전까지 Vercel 배포 진행하지 않는 로컬 개발 서버 상태 유지.
+
 1. 차트 입력폼을 `FingerPitchSection`, `ThumbSection`, `SpanSection`, `HandConditionSection` 단위로 분리한다.
 2. 고객 목록 화면의 검색/정렬/row UI를 공용 primitive 기준으로 정리한다.
 3. 주요 화면별 screenshot baseline 또는 DOM contract를 보강한다.

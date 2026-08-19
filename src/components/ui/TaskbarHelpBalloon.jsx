@@ -72,11 +72,16 @@ export default function TaskbarHelpBalloon({
         {/* 매뉴얼 본문 영역 */}
         <div className="space-y-3.5 overflow-y-auto pr-1 text-xs leading-relaxed flex-1 min-h-0">
           {sections.map((section, idx) => (
-            <div key={section.heading || idx} className="space-y-1.5">
+            <div key={section.heading || section.description || idx} className="space-y-2">
               {section.heading && (
                 <h4 className="font-bold text-slate-900 text-xs flex items-center gap-1 bg-slate-100/80 px-2 py-1 rounded-md">
                   {section.heading}
                 </h4>
+              )}
+              {section.description && (
+                <p className="text-slate-700 text-xs leading-relaxed bg-slate-50 border border-slate-200/70 p-2.5 rounded-xl text-justify mb-2 font-normal">
+                  {section.description}
+                </p>
               )}
               {section.items && (
                 <ul className="space-y-2 pl-0.5">
@@ -87,17 +92,19 @@ export default function TaskbarHelpBalloon({
                     const cleanTitle = rawTitle ? rawTitle.replace(/^:\s*/, '').replace(/:\s*$/, '') : '';
 
                     return (
-                      <li key={item.title || itemIdx} className="flex items-start gap-1.5 text-slate-600 leading-relaxed text-xs">
+                      <li key={item.title || item.desc || itemIdx} className="flex items-start gap-1.5 text-slate-600 leading-relaxed text-xs">
                         {item.iconName && (
                           <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-slate-50 border border-slate-200 text-slate-700 shadow-xs shrink-0 mt-0.5">
                             <Icon name={item.iconName} size={12} className="text-slate-700 shrink-0" />
                           </span>
                         )}
                         <div className="flex-1 min-w-0">
-                          <span className="font-bold text-slate-800">
-                            {numPrefix && <span className="font-bold text-slate-800 mr-1">{numPrefix}</span>}
-                            {cleanTitle}:{" "}
-                          </span>
+                          {cleanTitle ? (
+                            <span className="font-bold text-slate-800">
+                              {numPrefix && <span className="font-bold text-slate-800 mr-1">{numPrefix}</span>}
+                              {cleanTitle}:{" "}
+                            </span>
+                          ) : null}
                           <span className="text-slate-600 font-medium">{item.desc}</span>
                           {item.subItems && (
                             <div className="pl-2 mt-1.5 space-y-1 text-[11px]">

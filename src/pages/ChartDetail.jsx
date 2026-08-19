@@ -38,6 +38,8 @@ export default function ChartDetail({
   const [utilityState, setUtilityState] = useState('hidden');
   const [showDrillingGuide, setShowDrillingGuide] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showSpanConverter, setShowSpanConverter] = useState(false);
+  const [showSpanGuide, setShowSpanGuide] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(() => localStorage.getItem('expandBowlerSpec') !== 'false');
   const [isTaskOpen, setIsTaskOpen] = useState(true);
@@ -562,6 +564,8 @@ export default function ChartDetail({
               memosRenderer={memoManager.renderMemos('chart', chartRef)}
               isMemoActive={memoManager.isMemoActive}
               onGuideClick={() => setShowDrillingGuide(true)}
+              onSpanTypeClick={() => setShowSpanConverter(true)}
+              onSpanGuideClick={() => setShowSpanGuide(true)}
             />
           </div>
         )}
@@ -653,6 +657,10 @@ export default function ChartDetail({
         sharePreview={exportManager.sharePreview}
         showDrillingGuide={showDrillingGuide}
         showSettingsModal={showSettingsModal}
+        showSpanConverter={showSpanConverter}
+        setShowSpanConverter={setShowSpanConverter}
+        showSpanGuide={showSpanGuide}
+        setShowSpanGuide={setShowSpanGuide}
         memos={memoManager.memos}
         history={historyManager.history}
         maxChartsAllowed={maxChartsAllowed}

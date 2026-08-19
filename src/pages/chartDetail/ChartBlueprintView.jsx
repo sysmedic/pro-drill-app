@@ -21,6 +21,18 @@ const getChartBlueprintManualSections = (isThumbless) => [
   }
 ];
 
+const getSpanGuideManualSections = () => [
+  {
+    description: '볼링공의 스팬은 측정 방식에 따라 Actual Span, Cut-to-Cut, Center-to-Center 등 서로 다른 기준으로 표시될 수 있다. 특히 피치가 적용되면 홀의 위치와 방향이 달라지므로, 서로 다른 스팬 기준을 그대로 비교하면 오차가 발생한다. 따라서 각 측정 방식을 동일한 기준으로 변환해 주는 스판 타입 변환기가 필요하다.',
+    items: [
+      { desc: 'Actual / CTC / Center-to-Center 간 정확한 수치 변환' },
+      { desc: '피치와 홀 크기를 반영한 실제 손가락 스팬' },
+      { desc: '기존 지공 데이터와 새로운 지공 데이터의 정확한 비교' },
+      { desc: '드릴링 시 원하는 스팬을 재현' }
+    ]
+  }
+];
+
 const { PAGE_MAX_WIDTH_PX = 768, PAGE_PADDING_X_PX = { base: 16, sm: 32 } } = PageShell?.tokens || {};
 
 const parseFraction = (str) => {
@@ -115,7 +127,8 @@ export default function ChartBlueprintView({
   memosRenderer, 
   innerRef, 
   isMemoActive, 
-  onGuideClick
+  onGuideClick,
+  onSpanTypeClick
 }) {
   const isThumbless = data?.isThumbless || false;
   const isLeft = data?.handedness === 'left';
@@ -143,6 +156,7 @@ export default function ChartBlueprintView({
 
   const [scale, setScale] = useState(getExactScale);
   const [showHelp, setShowHelp] = useState(false);
+  const [showSpanHelp, setShowSpanHelp] = useState(false);
   const [showManualHelpSetting, setShowManualHelpSetting] = useState(true);
   const syncedPingStyle = useSyncedPingStyle();
 
@@ -398,13 +412,47 @@ export default function ChartBlueprintView({
         {!isThumbless && (
           <>
             <Abs x={270} y={spanLeftPos.y - 50} z={20}>
-              <div className="bg-white px-4 rounded-md text-[16px] font-bold text-black flex items-center gap-1.5">
-                {data?.spanType || ''}
-                <Icon name="check" className="text-black" size={15} strokeWidth={3} />
+              <div className="relative inline-flex flex-col items-center select-none">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setShowSpanHelp(prev => !prev);
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="absolute -top-[24px] left-1/2 z-30 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-200/60 hover:bg-slate-200/90 text-slate-700 border border-slate-300/50 backdrop-blur-xs shadow-xs flex items-center justify-center font-black text-xs sm:text-sm transition-transform active:scale-95 cursor-pointer focus:outline-none shrink-0"
+                  style={{ transform: `translateX(-50%) scale(${1 / (scale || 1)})`, transformOrigin: 'center center' }}
+                  aria-label="스판 연산 가이드"
+                  title="스판 연산 가이드"
+                >
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400/40 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] pointer-events-none" style={syncedPingStyle} />
+                  ?
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onSpanTypeClick?.();
+                  }}
+                  className="bg-white px-3.5 py-1 rounded-md text-[16px] font-bold text-slate-950 shadow-xs transition-transform duration-200 hover:scale-105 active:scale-95 cursor-pointer outline-none select-none"
+                  title="만능 스판 변환기 열기"
+                >
+                  {data?.spanType || 'Actual Span'}
+                </button>
+
+                <TaskbarHelpBalloon 
+                  isOpen={showSpanHelp} 
+                  onClose={() => setShowSpanHelp(false)} 
+                  title="📐 스팬타입을 클릭하면 계산을 시작합니다."
+                  sections={getSpanGuideManualSections()}
+                />
               </div>
             </Abs>
-            <Abs x={spanLeftPos.x} y={spanLeftPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass}`}>{isLeft ? data?.spanRight : data?.spanLeft || ''}</div></Abs>
-            <Abs x={spanRightPos.x} y={spanRightPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass}`}>{isLeft ? data?.spanLeft : data?.spanRight || ''}</div></Abs>
+            <Abs x={spanLeftPos.x} y={spanLeftPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass} text-slate-800 border-slate-400 font-extrabold`}>{isLeft ? data?.spanRight : data?.spanLeft || ''}</div></Abs>
+            <Abs x={spanRightPos.x} y={spanRightPos.y} z={20}><div className={`w-[85px] h-[36px] ${commonBoxClass} text-slate-800 border-slate-400 font-extrabold`}>{isLeft ? data?.spanLeft : data?.spanRight || ''}</div></Abs>
             
             {/* 엄지 구역 */}
             {thumbPitch?.up !== undefined && thumbPitch.up !== null && thumbPitch.up !== '' && (
