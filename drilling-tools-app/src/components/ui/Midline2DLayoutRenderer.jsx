@@ -565,11 +565,11 @@ export default function Midline2DLayoutRenderer({
         offCtx.save();
         offCtx.scale(dpr, dpr);
 
-        // Step 1. 활성화된 비트 원들을 오프스크린 캔버스에 면 채우기
+        // Step 1. 활성화된 비트 원들을 오프스크린 캔버스에 면 채우기 (에디트 모드: 1 ~ totalActiveBits 전체 즉시 합성)
         offCtx.fillStyle = '#ffffff';
         bitPositions.forEach((pos, idx) => {
           const rowIdx = idx + 1;
-          if (!isBitVisibleInCanvas(rowIdx)) return;
+          if (rowIdx > totalActiveBits) return;
 
           const bitDiameter = getBitDiameter(rowIdx);
           const bitRadiusPx = (bitDiameter / 2) * scale;
@@ -584,7 +584,7 @@ export default function Midline2DLayoutRenderer({
         offCtx.strokeStyle = '#ffffff';
         bitPositions.forEach((pos, idx) => {
           const rowIdx = idx + 1;
-          if (!isBitVisibleInCanvas(rowIdx)) return;
+          if (rowIdx > totalActiveBits) return;
 
           const bitDiameter = getBitDiameter(rowIdx);
           const bitRadiusPx = (bitDiameter / 2) * scale;
@@ -598,7 +598,7 @@ export default function Midline2DLayoutRenderer({
         offCtx.globalCompositeOperation = 'destination-out';
         bitPositions.forEach((pos, idx) => {
           const rowIdx = idx + 1;
-          if (!isBitVisibleInCanvas(rowIdx)) return;
+          if (rowIdx > totalActiveBits) return;
 
           const bitDiameter = getBitDiameter(rowIdx);
           const bitRadiusPx = (bitDiameter / 2) * scale;

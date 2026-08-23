@@ -171,9 +171,9 @@ export default function MidlineCalculatorView({ sharedState, updateSharedState }
           </div>
         </div>
 
-        {/* 2열 (10분할 중 2:4:4 비율 3단): [브릿지(2)] [중지 스판(4)] [약지 스판(4)] */}
-        <div className="grid grid-cols-10 gap-2 sm:gap-3 pt-1">
-          <div className="col-span-2">
+        {/* 2열 (30:35:35 비율 3단): [브릿지(30%)] [중지 스판(35%)] [약지 스판(35%)] */}
+        <div className="grid grid-cols-[30fr_35fr_35fr] gap-2 sm:gap-3 pt-1">
+          <div>
             <SelectField
               density="compact"
               label="브릿지"
@@ -189,7 +189,7 @@ export default function MidlineCalculatorView({ sharedState, updateSharedState }
             />
           </div>
 
-          <div className="col-span-4">
+          <div>
             <KeypadField
               density="compact"
               isRequiredMissing={isMidSpanMissing}
@@ -200,7 +200,7 @@ export default function MidlineCalculatorView({ sharedState, updateSharedState }
             />
           </div>
 
-          <div className="col-span-4">
+          <div>
             <KeypadField
               density="compact"
               isRequiredMissing={isRingSpanMissing}

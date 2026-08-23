@@ -4,11 +4,12 @@
 
 ## 현재 우선순위
 
-- **독립 PWA 웹 애플리케이션 'ProDrill Tools' 스판 변환기 [16분] / [32분] / [.5/16 (지공 눈금 모드)] 3-Way 분수 토글 시스템 구축 & Vercel 프로덕션 배포 완료 (`spanConverter.js`, `SpanResultModal.jsx`)**:
+- **독립 PWA 웹 애플리케이션 'ProDrill Tools' 오발 계산기 1단 35:35:30 황금비율 배치 및 에딧 모드 드릴비트 캔버스 가시성 락 장착 완수 (배포 대기 모드) (`OvalCalculatorView.jsx`, `Midline2DLayoutRenderer.jsx`)**:
   - **지공사님 핵심 지침 100% 완수**:
-    1) **16분 분모 + 0.5단위 지공 눈금 표기법 (`.5/16`) 탑재**: 32분 분수를 16분 눈금자 기준으로 환산하여 `17/32 ➔ 8.5/16`, `27/32 ➔ 13.5/16`, `1/32 ➔ 0.5/16`처럼 분모 16 고정으로 직관 표출.
-    2) **3-Way 슬레이트 토글 장착**: 결과 모달 상단에서 `[16분]`, `[32분]`, `[.5/16]`을 원터치로 실시간 전환 가능.
-  - **검증 및 배포 완료**: 71/71 전체 단위 테스트 PASS, Vite production build 성공 및 Vercel 프로덕션 배포 완료 (`https://drilling-tools-app.vercel.app`). 로컬 호스트(`http://192.168.0.11:5174`) 즉시 반영.
+    1) **오발 라벨 명칭 변경**: `"오발컷 1 (레프트)"` ➔ **`"오발컷 #1"`**, `"오발컷 2 (라이트)"` ➔ **`"오발컷 #2"`**.
+    2) **1단 35:35:30 황금비율 배치**: [오발컷 #1 (35%)], [오발컷 #2 (35%)], [오발 각도 (30%)]를 한 줄(1단)에 깔끔하게 압축 배치하여 세로 스크롤 공간 최적화.
+    3) **아이폰 에딧 모드 #4드릴 원 미표출 버그 100% 해결**: `isBitVisibleInCanvas`에 선택된 비트 강제 가시성 락(`selectedBitIndex === rowIdx || isBitActiveInChart(rowIdx)`)을 장착하고 칩 선택 시 `bitVisibilities` 즉시 동기화 적용.
+  - **검증 완료**: 71/71 전체 단위 테스트 PASS, Vite production build 성공 및 로컬 호스트(`http://192.168.0.11:5174`) 즉시 반영. (지공사님 배포 중지 지침 준수 🟢).
 
 1. 차트 입력폼을 `FingerPitchSection`, `ThumbSection`, `SpanSection`, `HandConditionSection` 단위로 분리한다.
 2. 고객 목록 화면의 검색/정렬/row UI를 공용 primitive 기준으로 정리한다.
