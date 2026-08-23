@@ -53,7 +53,13 @@ export default function OvalResultModal({
   });
 
   return createPortal(
-    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex flex-col items-center justify-center p-3 sm:p-6 select-none animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+      className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex flex-col items-center justify-center p-3 sm:p-6 select-none animate-fade-in"
+    >
       {/* 📌 [지공사님 핵심 수술 완수]: 셀 2개 추가 증설 (총 7개 로우 구조) 및 정밀도 / 기본 / 정밀 명칭 개편 */}
       <div className="w-full max-w-[540px] bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col justify-between gap-4 max-h-[95vh] overflow-y-auto">
         {/* 모달 상단 헤더 & 풀스크린 시뮬레이터 직통 전환 버튼 */}

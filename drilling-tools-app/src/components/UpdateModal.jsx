@@ -46,6 +46,10 @@ export default function UpdateModal({ isOpen, onClose }) {
 
   return createPortal(
     <div
+      role="dialog"
+      aria-modal="true"
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in"
       onClick={onClose}
     >

@@ -1129,12 +1129,21 @@ export default function Midline2DLayoutRenderer({
     if (!isFullScreenModalOpen) return null;
     return createPortal(
       <div
+        role="dialog"
+        aria-modal="true"
+        onTouchStart={(e) => {
+          e.stopPropagation();
+          handleDpadPointerMove(e);
+        }}
+        onTouchEnd={(e) => {
+          e.stopPropagation();
+          handleDpadPointerUp(e);
+        }}
         className="fixed inset-0 z-[100] w-full h-full bg-slate-950 select-none overflow-hidden animate-fade-in"
         style={{ touchAction: 'none' }}
         onMouseMove={handleDpadPointerMove}
         onTouchMove={handleDpadPointerMove}
         onMouseUp={handleDpadPointerUp}
-        onTouchEnd={handleDpadPointerUp}
       >
         <div
           ref={fullScreenContainerRef}

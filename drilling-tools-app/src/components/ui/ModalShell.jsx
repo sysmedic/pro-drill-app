@@ -30,10 +30,12 @@ export default function ModalShell({
   return createPortal(
     <div
       aria-modal="true"
+      role="dialog"
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
       className={`fixed inset-0 ${zClassName} bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fade-in ${
         isBottom ? 'items-end sm:items-center' : 'items-center'
       }`}
-      role="dialog"
     >
       <div
         className={`bg-white text-slate-900 border border-slate-200 shadow-2xl w-full ${sizeClass} overflow-hidden ${

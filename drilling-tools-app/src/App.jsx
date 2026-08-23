@@ -80,12 +80,34 @@ export default function App() {
   const touchStartYRef = useRef(null);
 
   const handleTouchStart = (e) => {
-    if (isStorageModalOpen || isUpdateModalOpen) return;
+    // 🔒 저장/업데이트 모달, 결과 모달, 키패드 등이 열려있거나 터치된 경우 배경 스와이프 전면 차단
+    if (
+      isStorageModalOpen ||
+      isUpdateModalOpen ||
+      document.querySelector('[role="dialog"]') ||
+      document.querySelector('.fixed.inset-0') ||
+      (e.target && e.target.closest && e.target.closest('[role="dialog"], .fixed, canvas, input, select, button'))
+    ) {
+      touchStartXRef.current = null;
+      touchStartYRef.current = null;
+      return;
+    }
     touchStartXRef.current = e.touches[0].clientX;
     touchStartYRef.current = e.touches[0].clientY;
   };
 
   const handleTouchEnd = (e) => {
+    if (
+      isStorageModalOpen ||
+      isUpdateModalOpen ||
+      document.querySelector('[role="dialog"]') ||
+      document.querySelector('.fixed.inset-0')
+    ) {
+      touchStartXRef.current = null;
+      touchStartYRef.current = null;
+      return;
+    }
+
     if (touchStartXRef.current === null || touchStartYRef.current === null) return;
     const diffX = e.changedTouches[0].clientX - touchStartXRef.current;
     const diffY = e.changedTouches[0].clientY - touchStartYRef.current;

@@ -19,7 +19,13 @@ export default function SpanResultModal({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex flex-col items-center justify-center p-3 sm:p-6 select-none animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+      className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex flex-col items-center justify-center p-3 sm:p-6 select-none animate-fade-in"
+    >
       <div className="w-full max-w-[540px] bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col justify-between gap-4">
         {/* 모달 상단 헤더 (산세리프 font-sans 현대적 서체 적용 & 16분/32분 분수 토글) */}
         <div className="border-b border-slate-100 pb-3 flex items-center justify-between gap-2">
