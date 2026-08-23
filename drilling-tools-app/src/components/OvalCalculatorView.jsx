@@ -298,6 +298,8 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
           {/* 섹션 2: 상세 제원 (📌 feature/dual-oval-cut: 오발컷1 / 오발컷2 세분화 필드) */}
           <div className="pt-3 border-t border-slate-200 space-y-2.5">
             <span className="text-xs font-bold text-slate-600 block">상세 제원</span>
+            
+            {/* 1단: 원홀 크기 & 오발 크기 (50:50 2단 그리드) */}
             <div className="grid grid-cols-2 gap-3">
               <SelectField
                 density="compact"
@@ -320,13 +322,15 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
                 placeholder=""
                 value={holeSize ? ovalSize : ''}
               />
+            </div>
 
-              {/* 📌 오발컷 1 (레프트) */}
+            {/* 2단: 오발컷 #1 (35%), 오발컷 #2 (35%), 오발 각도 (30%) 1단 3분할 배치 */}
+            <div className="grid grid-cols-[35fr_35fr_30fr] gap-2 items-end">
               <SelectField
                 density="compact"
                 disabled={!holeSize}
                 isRequiredMissing={isOvalCut1Missing}
-                label="오발컷 1 (레프트)"
+                label="오발컷 #1"
                 onChange={(v) => {
                   handleStateChange({
                     ovalCut1: v,
@@ -339,29 +343,25 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
                 value={holeSize ? ovalCut1 : ''}
               />
 
-              {/* 📌 오발컷 2 (라이트) */}
               <SelectField
                 density="compact"
                 disabled={!holeSize}
                 isRequiredMissing={isOvalCut2Missing}
-                label="오발컷 2 (라이트)"
+                label="오발컷 #2"
                 onChange={(v) => handleStateChange('ovalCut2', v)}
                 options={ovalCutOptions}
                 placeholder=""
                 value={holeSize ? ovalCut2 : ''}
               />
 
-              {/* 📌 오발 각도 (전폭) */}
-              <div className="col-span-2">
-                <KeypadField
-                  density="compact"
-                  isRequiredMissing={isOvalAngleMissing}
-                  label="오발 각도"
-                  onOpen={() => setActiveKeypad('angle')}
-                  placeholder="각도 입력"
-                  value={ovalAngle ? `${ovalAngle}°` : ''}
-                />
-              </div>
+              <KeypadField
+                density="compact"
+                isRequiredMissing={isOvalAngleMissing}
+                label="오발 각도"
+                onOpen={() => setActiveKeypad('angle')}
+                placeholder="각도 입력"
+                value={ovalAngle ? `${ovalAngle}°` : ''}
+              />
             </div>
           </div>
         </div>

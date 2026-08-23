@@ -4,10 +4,10 @@
 
 ## 현재 우선순위
 
-- **독립 PWA 웹 애플리케이션 'ProDrill Tools' 스판 변환기 계산 엔진 파라미터 매핑 정상화(계산값 표출 복구) 및 공유 텍스트 중복 각도 삭제 & Vercel 프로덕션 배포 완료 (`spanConverter.js`, `SpanConverterView.jsx`, `shareHelper.js`)**:
+- **독립 PWA 웹 애플리케이션 'ProDrill Tools' 스판 변환기 [16분] / [32분] / [.5/16 (지공 눈금 모드)] 3-Way 분수 토글 시스템 구축 & Vercel 프로덕션 배포 완료 (`spanConverter.js`, `SpanResultModal.jsx`)**:
   - **지공사님 핵심 지침 100% 완수**:
-    1) **스판 계산값 표출 복구**: `convertSpanValue` 함수 인자 매핑을 정밀화하여 스판 수치(`midSpanStr`, `ringSpanStr`) 및 인서트/홀컷/오발 제원이 계산 엔진에 1:1로 전달되도록 수정. 결과 모달에 16분/32분 정밀 계산값 완벽 표출.
-    2) **공유 텍스트 내 스판 섹션 중복 각도 삭제**: `[1. 스판 & 미드라인]`에서 오표기되던 `| 엄지 각도: 45°`를 완전히 제거하고 `• 브릿지: 1/4`로 정돈.
+    1) **16분 분모 + 0.5단위 지공 눈금 표기법 (`.5/16`) 탑재**: 32분 분수를 16분 눈금자 기준으로 환산하여 `17/32 ➔ 8.5/16`, `27/32 ➔ 13.5/16`, `1/32 ➔ 0.5/16`처럼 분모 16 고정으로 직관 표출.
+    2) **3-Way 슬레이트 토글 장착**: 결과 모달 상단에서 `[16분]`, `[32분]`, `[.5/16]`을 원터치로 실시간 전환 가능.
   - **검증 및 배포 완료**: 71/71 전체 단위 테스트 PASS, Vite production build 성공 및 Vercel 프로덕션 배포 완료 (`https://drilling-tools-app.vercel.app`). 로컬 호스트(`http://192.168.0.11:5174`) 즉시 반영.
 
 1. 차트 입력폼을 `FingerPitchSection`, `ThumbSection`, `SpanSection`, `HandConditionSection` 단위로 분리한다.

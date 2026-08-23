@@ -145,8 +145,14 @@ export default function Midline2DLayoutRenderer({
       e.stopPropagation();
     }
     if (isEditMode) {
-      // EDIT 모드: 단일 선택 및 재클릭 시 비활성화(null) 1:1 토글
-      setSelectedBitIndex((prev) => (prev === rowIdx ? null : rowIdx));
+      // EDIT 모드: 단일 선택 및 재클릭 시 비활성화(null) 1:1 토글, 선택된 비트는 가시성 true 100% 보장
+      setSelectedBitIndex((prev) => {
+        const next = prev === rowIdx ? null : rowIdx;
+        if (next !== null) {
+          setBitVisibilities((v) => ({ ...v, [next]: true }));
+        }
+        return next;
+      });
     } else {
       // PREVIEW 모드: 1~7번 비트 가림/노출 1:1 토글 (꺼진 비트만 클릭 시 켬)
       setBitVisibilities((prev) => {
@@ -481,9 +487,10 @@ export default function Midline2DLayoutRenderer({
         return FULL_PALETTE[idx] || '#10b981';
       });
 
-      // 📌 [EDIT & PREVIEW 모드 공통 도면 렌더링 가시성]: EDIT 모드에서 active 비트 100% 상시 표출 보전 (터치 시 사라짐 100% 방지)
+      // 📌 [EDIT & PREVIEW 모드 공통 도면 렌더링 가시성]: EDIT 모드에서 선택된 비트 및 active 비트 100% 상시 표출 보전 (터치 시 사라짐 100% 방지)
       const isBitVisibleInCanvas = (rowIdx) => {
         if (isEditMode) {
+          if (selectedBitIndex === rowIdx) return true;
           return isBitActiveInChart(rowIdx);
         }
         return isBitVisible(rowIdx);
@@ -562,7 +569,7 @@ export default function Midline2DLayoutRenderer({
         offCtx.fillStyle = '#ffffff';
         bitPositions.forEach((pos, idx) => {
           const rowIdx = idx + 1;
-          if (!isBitActiveInChart(rowIdx)) return;
+          if (!isBitVisibleInCanvas(rowIdx)) return;
 
           const bitDiameter = getBitDiameter(rowIdx);
           const bitRadiusPx = (bitDiameter / 2) * scale;
@@ -577,7 +584,7 @@ export default function Midline2DLayoutRenderer({
         offCtx.strokeStyle = '#ffffff';
         bitPositions.forEach((pos, idx) => {
           const rowIdx = idx + 1;
-          if (!isBitActiveInChart(rowIdx)) return;
+          if (!isBitVisibleInCanvas(rowIdx)) return;
 
           const bitDiameter = getBitDiameter(rowIdx);
           const bitRadiusPx = (bitDiameter / 2) * scale;
@@ -591,7 +598,7 @@ export default function Midline2DLayoutRenderer({
         offCtx.globalCompositeOperation = 'destination-out';
         bitPositions.forEach((pos, idx) => {
           const rowIdx = idx + 1;
-          if (!isBitActiveInChart(rowIdx)) return;
+          if (!isBitVisibleInCanvas(rowIdx)) return;
 
           const bitDiameter = getBitDiameter(rowIdx);
           const bitRadiusPx = (bitDiameter / 2) * scale;
