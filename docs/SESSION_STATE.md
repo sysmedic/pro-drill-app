@@ -4,11 +4,11 @@
 
 ## 현재 우선순위
 
-- **독립 PWA 웹 애플리케이션 'ProDrill Tools' 업데이트 확인 모달 내 빌드 일시(초 단위 시간) 자동 연동 표출 완수 (`vite.config.js`, `UpdateModal.jsx`)**:
+- **독립 PWA 웹 애플리케이션 'ProDrill Tools' 모달 내부 터치/스와이프 시 배경 화면 전환 및 모달 닫힘 현상 100% 원천 차단 완수 & Vercel 프로덕션 배포 완료 (`App.jsx`, `SpanResultModal.jsx`, `MidlineResultModal.jsx`, `OvalResultModal.jsx`, `StorageModal.jsx`, `UpdateModal.jsx`, `ModalShell.jsx`, `Midline2DLayoutRenderer.jsx`)**:
   - **지공사님 핵심 지침 100% 완수**:
-    1) **빌드 일시 자동 연동**: `vite.config.js`에서 빌드 시점의 KST 타임스탬프(`__BUILD_TIME__`)를 자동 주입하여 배포된 정확한 날짜 및 시:분:초(`2026.08.23 02:14:24`)를 표출.
-    2) **모달 표출 개선**: `빌드 일자` ➔ **`빌드 일시`** 로 명칭 변경 및 모노스페이스 폰트 적용.
-  - **검증 완료**: Vite production build 100% 성공. 로컬 호스트(`http://192.168.0.11:5174`) 즉시 반영.
+    1) **모달 터치 전파 완전 차단 (`e.stopPropagation()`)**: 모든 결과 모달, 키패드 쉘, 풀스크린 시뮬레이터에 터치 이벤트 버블링 차단 적용.
+    2) **배경 스와이프 엔진 모달 감지 가드**: 모달/팝업/키패드가 활성화된 상태에서는 배경의 탭 스와이프 제스처가 0.001%도 트리거되지 않도록 이중 락 장착.
+  - **검증 및 배포 완료**: 71/71 전체 단위 테스트 PASS, Vite production build 성공 및 Vercel 프로덕션 배포 완료 (`https://drilling-tools-app.vercel.app`). 로컬 호스트(`http://192.168.0.11:5174`) 즉시 반영.
 
 1. 차트 입력폼을 `FingerPitchSection`, `ThumbSection`, `SpanSection`, `HandConditionSection` 단위로 분리한다.
 2. 고객 목록 화면의 검색/정렬/row UI를 공용 primitive 기준으로 정리한다.

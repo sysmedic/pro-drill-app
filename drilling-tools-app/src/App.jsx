@@ -57,14 +57,34 @@ const loadInitialState = () => {
   return DEFAULT_SHARED_STATE;
 };
 
+import { decodeSharePayload } from './lib/shareHelper.js';
+import { createPortal } from 'react-dom';
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('span'); // 'span' | 'midline' | 'oval'
   const [slideDirection, setSlideDirection] = useState('left'); // 'left' (from right) | 'right' (from left)
   const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [incomingShareData, setIncomingShareData] = useState(null);
 
   // 🌟 [수치 상호 참조 전역 상태]: localStorage 영구 동기화
   const [sharedState, setSharedState] = useState(loadInitialState);
+
+  // 🔗 [딥링크 공유 수신 감지]: URL 파라미터(?share=... 또는 ?slot=...) 자동 파싱
+  useEffect(() => {
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const sharePayload = searchParams.get('share') || searchParams.get('slot');
+      if (sharePayload) {
+        const decoded = decodeSharePayload(sharePayload);
+        if (decoded && typeof decoded === 'object') {
+          setIncomingShareData(decoded);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to parse share URL param', e);
+    }
+  }, []);
 
   // 🚀 방향 감지 탭 전환 함수
   const switchTab = (nextTab) => {
@@ -274,6 +294,69 @@ export default function App() {
         isOpen={isUpdateModalOpen}
         onClose={() => setIsUpdateModalOpen(false)}
       />
+
+      {/* 📥 [공유받은 제원 수신 확인 모달] */}
+      {incomingShareData &&
+        createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-fade-in"
+          >
+            <div
+              className="bg-white border border-slate-200 rounded-3xl w-full max-w-sm p-5 sm:p-6 shadow-2xl space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-center space-y-2">
+                <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                  공유받은 제원 불러오기
+                </h2>
+                <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                  공유받은 지공 제원(스판, 미드라인, 오발 수치)을 현재 작업창에 1:1로 적용하시겠습니까?
+                </p>
+              </div>
+
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1 text-xs text-slate-700">
+                <div className="font-bold text-slate-900">
+                  • 스판: M {incomingShareData.midSpanStr || '-'} / R {incomingShareData.ringSpanStr || '-'}
+                </div>
+                <div className="font-bold text-slate-900">
+                  • 오발: {incomingShareData.holeSize || '-'} x {incomingShareData.ovalSize || '-'} @ {incomingShareData.ovalAngle || '0'}°
+                </div>
+                <div className="text-[11px] text-slate-500 font-semibold pt-0.5">
+                  • 보정값: 0 (표준 적용)
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIncomingShareData(null);
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                  }}
+                  className="flex-1 py-3 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSharedState(incomingShareData);
+                    setIncomingShareData(null);
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                  }}
+                  className="flex-1 py-3 px-3 bg-[#1e293b] hover:bg-black text-white font-black text-xs rounded-xl transition-all shadow-md cursor-pointer active:scale-98"
+                >
+                  제원 불러오기
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { encodeSharePayload, generateShareText } from '../lib/shareHelper.js';
 
 const STORAGE_SLOTS_KEY = 'prodrill_tools_saved_slots';
 
@@ -89,6 +90,44 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
       localStorage.setItem(STORAGE_SLOTS_KEY, JSON.stringify(nextSlots));
     } catch (err) {
       console.error('Delete failed', err);
+    }
+  };
+
+  // 📤 슬롯 공유 핸들러 (보정값 0 기준 제원표 + 딥링크 생성 및 Web Share/클립보드 연동)
+  const handleShareSlot = async (e, slot) => {
+    if (e) e.stopPropagation();
+    const stateToShare = slot?.data || currentSharedState;
+    const titleToShare = slot?.title || '현재 제원 세팅';
+
+    try {
+      const payload = encodeSharePayload(stateToShare);
+      const shareUrl = `${window.location.origin}/?share=${payload}`;
+      const shareText = generateShareText(titleToShare, stateToShare, shareUrl);
+
+      if (navigator.share) {
+        await navigator.share({
+          title: `[ProDrill Tools] ${titleToShare}`,
+          text: shareText,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        setFeedbackMsg('카카오톡/문자용 제원표와 링크가 클립보드에 복사되었습니다!');
+        setTimeout(() => setFeedbackMsg(null), 3000);
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        try {
+          const payload = encodeSharePayload(stateToShare);
+          const shareUrl = `${window.location.origin}/?share=${payload}`;
+          const shareText = generateShareText(titleToShare, stateToShare, shareUrl);
+          await navigator.clipboard.writeText(shareText);
+          setFeedbackMsg('카카오톡/문자용 제원표와 링크가 복사되었습니다!');
+          setTimeout(() => setFeedbackMsg(null), 3000);
+        } catch (copyErr) {
+          console.error('Share failed', copyErr);
+          setFeedbackMsg('공유 중 오류가 발생했습니다.');
+        }
+      }
     }
   };
 
@@ -183,17 +222,32 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
                 )}
               </div>
 
-              <button
-                type="submit"
-                className="w-full py-3 px-4 bg-[#1e293b] hover:bg-[#0f172a] text-white font-black text-sm rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer active:scale-98 shrink-0"
-              >
-                저장
-              </button>
+              <div className="space-y-2 shrink-0">
+                <button
+                  type="submit"
+                  className="w-full py-3 px-4 bg-[#1e293b] hover:bg-[#0f172a] text-white font-black text-sm rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer active:scale-98"
+                >
+                  저장
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => handleShareSlot(e, { title: slotTitle || '현재 제원', data: currentSharedState })}
+                  className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all flex items-center justify-center cursor-pointer active:scale-98 border border-slate-200"
+                >
+                  현재 제원 즉시 공유
+                </button>
+              </div>
             </form>
           )}
 
           {modalTab === 'load' && (
             <div className="space-y-2 py-1">
+              {feedbackMsg && (
+                <div className="p-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold text-center animate-fade-in">
+                  {feedbackMsg}
+                </div>
+              )}
+
               {slots.length === 0 ? (
                 <div className="py-16 text-center text-slate-400 space-y-2">
                   <div className="text-xs font-bold">저장된 제원 기록이 없습니다.</div>
@@ -225,6 +279,14 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         type="button"
+                        onClick={(e) => handleShareSlot(e, slot)}
+                        className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-lg transition-all"
+                        title="카카오톡/문자 제원표 및 원클릭 복원 링크 공유"
+                      >
+                        공유
+                      </button>
+                      <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleLoadSlot(slot);
@@ -253,3 +315,4 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
     document.body
   );
 }
+
