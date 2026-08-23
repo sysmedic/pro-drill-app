@@ -156,9 +156,28 @@ export function computeOvalMatrixForShare(state) {
 }
 
 /**
- * 📝 카카오톡/문자 전송용 정갈한 지공 제원표 텍스트 생성
+ * 📁 텍스트 파일(.txt) 브라우저 다운로드 유틸리티
  */
-export function generateShareText(title, state, shareUrl) {
+export function downloadTextFile(filename, text) {
+  try {
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('File download failed', err);
+  }
+}
+
+/**
+ * 📝 카카오톡/문자 전송 및 텍스트 파일 저장용 순수 지공 제원표 텍스트 생성 (링크 삭제)
+ */
+export function generateShareText(title, state) {
   const {
     midSpanStr = '',
     ringSpanStr = '',
@@ -224,13 +243,9 @@ export function generateShareText(title, state, shareUrl) {
       const vp = `${row.vertPitch}`;
       text += `${idx}│ ${bit} │ ${hp} │ ${vp}\n`;
     });
-    text += `\n`;
   }
 
-  // 4. 원클릭 딥링크
   text += `━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `👇 링크를 누르면 ProDrill 앱에서 제원이 자동으로 채워집니다:\n`;
-  text += `${shareUrl}\n`;
 
   return text;
 }

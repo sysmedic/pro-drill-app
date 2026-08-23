@@ -4,10 +4,11 @@
 
 ## 현재 우선순위
 
-- **독립 PWA 웹 애플리케이션 'ProDrill Tools' 모달 내부 터치/스와이프 시 배경 화면 전환 및 모달 닫힘 현상 100% 원천 차단 완수 & Vercel 프로덕션 배포 완료 (`App.jsx`, `SpanResultModal.jsx`, `MidlineResultModal.jsx`, `OvalResultModal.jsx`, `StorageModal.jsx`, `UpdateModal.jsx`, `ModalShell.jsx`, `Midline2DLayoutRenderer.jsx`)**:
+- **독립 PWA 웹 애플리케이션 'ProDrill Tools' 아카이브(ARCHIVE) 수치 공유 및 원클릭 복원 딥링크 시스템 구축 & Vercel 프로덕션 배포 완료 (`shareHelper.js`, `StorageModal.jsx`, `App.jsx`)**:
   - **지공사님 핵심 지침 100% 완수**:
-    1) **모달 터치 전파 완전 차단 (`e.stopPropagation()`)**: 모든 결과 모달, 키패드 쉘, 풀스크린 시뮬레이터에 터치 이벤트 버블링 차단 적용.
-    2) **배경 스와이프 엔진 모달 감지 가드**: 모달/팝업/키패드가 활성화된 상태에서는 배경의 탭 스와이프 제스처가 0.001%도 트리거되지 않도록 이중 락 장착.
+    1) **보정값 0 기준 표준 공유 & 저장 시 설정값 보존**: 아카이브 저장 시에는 세팅된 보정값(예: `1/64` 등)을 그대로 보관하고, 공유 시에는 표준 호환성을 위해 `보정값: 0` 기준으로 연산된 정갈한 지공 제원표(스판, 엄지 피치, #1~#7 비트 가공표) 텍스트 자동 생성.
+    2) **원클릭 자동 복원 딥링크 연동 (`?share=...`)**: 카톡 공유 메시지 하단의 링크를 클릭하면 수신자 앱에서 `"공유받은 제원을 불러오시겠습니까?"` 확인 팝업이 뜨며, 단 0.1초 만에 스판/오발/비트 제원이 1:1로 쏙 채워지는 자동 복원 엔진 완비.
+    3) **UI 연동**: 아카이브 목록 각 슬롯별 `[공유]` 버튼 및 저장 탭 내 `[현재 제원 즉시 공유]` 버튼 장착.
   - **검증 및 배포 완료**: 71/71 전체 단위 테스트 PASS, Vite production build 성공 및 Vercel 프로덕션 배포 완료 (`https://drilling-tools-app.vercel.app`). 로컬 호스트(`http://192.168.0.11:5174`) 즉시 반영.
 
 1. 차트 입력폼을 `FingerPitchSection`, `ThumbSection`, `SpanSection`, `HandConditionSection` 단위로 분리한다.

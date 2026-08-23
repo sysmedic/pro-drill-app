@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { encodeSharePayload, generateShareText } from '../lib/shareHelper.js';
+import { generateShareText, downloadTextFile } from '../lib/shareHelper.js';
 
 const STORAGE_SLOTS_KEY = 'prodrill_tools_saved_slots';
 
@@ -93,35 +93,41 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
     }
   };
 
-  // 📤 슬롯 공유 핸들러 (보정값 0 기준 제원표 + 딥링크 생성 및 Web Share/클립보드 연동)
+  // 📤 슬롯 공유 핸들러 (모바일: 카톡/문자 텍스트 공유, 데스크탑: .txt 파일 다운로드 + 클립보드 복사)
   const handleShareSlot = async (e, slot) => {
     if (e) e.stopPropagation();
     const stateToShare = slot?.data || currentSharedState;
     const titleToShare = slot?.title || '현재 제원 세팅';
 
     try {
-      const payload = encodeSharePayload(stateToShare);
-      const shareUrl = `${window.location.origin}/?share=${payload}`;
-      const shareText = generateShareText(titleToShare, stateToShare, shareUrl);
+      const shareText = generateShareText(titleToShare, stateToShare);
+      const isMobile =
+        /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+        ('ontouchstart' in window && navigator.maxTouchPoints > 1);
 
-      if (navigator.share) {
+      if (isMobile && navigator.share) {
         await navigator.share({
           title: `[ProDrill Tools] ${titleToShare}`,
           text: shareText,
         });
       } else {
+        // 데스크탑: 텍스트 파일(.txt) 자동 다운로드 + 클립보드 복사
+        const safeTitle = (titleToShare || '제원').replace(/[/\\?%*:|"<>]/g, '_');
+        const filename = `ProDrill_지공제원_${safeTitle}.txt`;
+        downloadTextFile(filename, shareText);
         await navigator.clipboard.writeText(shareText);
-        setFeedbackMsg('카카오톡/문자용 제원표와 링크가 클립보드에 복사되었습니다!');
+        setFeedbackMsg('제원 파일(.txt)이 저장되고 클립보드에 복사되었습니다!');
         setTimeout(() => setFeedbackMsg(null), 3000);
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
         try {
-          const payload = encodeSharePayload(stateToShare);
-          const shareUrl = `${window.location.origin}/?share=${payload}`;
-          const shareText = generateShareText(titleToShare, stateToShare, shareUrl);
+          const shareText = generateShareText(titleToShare, stateToShare);
+          const safeTitle = (titleToShare || '제원').replace(/[/\\?%*:|"<>]/g, '_');
+          const filename = `ProDrill_지공제원_${safeTitle}.txt`;
+          downloadTextFile(filename, shareText);
           await navigator.clipboard.writeText(shareText);
-          setFeedbackMsg('카카오톡/문자용 제원표와 링크가 복사되었습니다!');
+          setFeedbackMsg('제원 파일(.txt)이 저장되고 클립보드에 복사되었습니다!');
           setTimeout(() => setFeedbackMsg(null), 3000);
         } catch (copyErr) {
           console.error('Share failed', copyErr);
