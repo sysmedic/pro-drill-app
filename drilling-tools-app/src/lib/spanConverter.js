@@ -143,31 +143,45 @@ export class SpanConverter {
   }
 }
 
-export function convertSpanValue({
-  spanValueStr,
-  spanVal,
-  fromType,
-  toType,
-  fingerDrillDiamStr = '31/32',
-  fingerInsertDiamStr = '43/64',
-  thumbDrillDiamStr = '1 1/4',
-  thumbEffectiveDiamStr = '31/32',
-  ovalCutDiamStr = '',
-  ovalAngleDeg = 0,
-  denomMode = 32
-}) {
-  const targetStr = spanValueStr || spanVal || '';
+export function convertSpanValue(options = {}) {
+  const {
+    spanValueStr,
+    spanVal,
+    inputValueStr,
+    fromType,
+    toType,
+    fingerDrillDiamStr = '31/32',
+    holeCutStr,
+    fingerInsertDiamStr = '43/64',
+    insertStr,
+    thumbDrillDiamStr = '1 1/4',
+    thumbHoleCutStr,
+    thumbEffectiveDiamStr = '31/32',
+    thumbEffectiveStr,
+    ovalCutDiamStr = '',
+    ovalCutStr,
+    ovalAngleDeg = 0,
+    denomMode = 32
+  } = options;
+
+  const targetStr = spanValueStr || spanVal || inputValueStr || '';
   const decimalVal = parseSpanFraction(targetStr);
   if (!decimalVal || decimalVal <= 0) return targetStr || '';
   if (fromType === toType) return targetStr;
 
-  const fingerDrillRadius = (parseSpanFraction(fingerDrillDiamStr) || (31 / 32)) / 2;
-  const fingerInsertRadius = (parseSpanFraction(fingerInsertDiamStr) || (43 / 64)) / 2;
-  const thumbDrillRadius = (parseSpanFraction(thumbDrillDiamStr) || (1 + 1 / 4)) / 2;
+  const finalFingerDrill = holeCutStr || fingerDrillDiamStr || '31/32';
+  const finalFingerInsert = insertStr || fingerInsertDiamStr || '43/64';
+  const finalThumbDrill = thumbHoleCutStr || thumbDrillDiamStr || '1 1/4';
+  const finalThumbEffective = thumbEffectiveStr || thumbEffectiveDiamStr || '31/32';
+  const finalOvalCut = ovalCutStr || ovalCutDiamStr || '';
+
+  const fingerDrillRadius = (parseSpanFraction(finalFingerDrill) || (31 / 32)) / 2;
+  const fingerInsertRadius = (parseSpanFraction(finalFingerInsert) || (43 / 64)) / 2;
+  const thumbDrillRadius = (parseSpanFraction(finalThumbDrill) || (1 + 1 / 4)) / 2;
 
   // 📐 타원 투영 수식: 오발 각도(ovalAngleDeg) 반영
-  const ovalCutDiam = parseSpanFraction(ovalCutDiamStr) || parseSpanFraction(thumbEffectiveDiamStr) || (31 / 32);
-  const ovalMajorDiam = parseSpanFraction(thumbEffectiveDiamStr) || ovalCutDiam;
+  const ovalCutDiam = parseSpanFraction(finalOvalCut) || parseSpanFraction(finalThumbEffective) || (31 / 32);
+  const ovalMajorDiam = parseSpanFraction(finalThumbEffective) || ovalCutDiam;
   const angleDeg = parseFloat(ovalAngleDeg) || 0;
   const rad = (angleDeg * Math.PI) / 180;
 

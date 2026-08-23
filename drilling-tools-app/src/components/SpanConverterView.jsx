@@ -101,13 +101,19 @@ export default function SpanConverterView({ sharedState, updateSharedState }) {
   // 📐 실시간 3종 스판 상호 변환 수식 연산 (Hub 법칙 적용)
   const midConverted = useMemo(() => {
     return convertSpanValue({
+      spanValueStr: midSpanStr,
       inputValueStr: midSpanStr,
       fromType,
       toType,
+      fingerDrillDiamStr: midHoleCut,
       holeCutStr: midHoleCut,
+      fingerInsertDiamStr: midInsert,
       insertStr: midInsert,
+      thumbDrillDiamStr: thumbHoleCut,
       thumbHoleCutStr: thumbHoleCut,
+      thumbEffectiveDiamStr: ovalSize || holeSize,
       thumbEffectiveStr: ovalSize || holeSize,
+      ovalCutDiamStr: ovalCut || holeSize,
       ovalCutStr: ovalCut || holeSize,
       ovalAngleDeg: ovalAngle,
       denomMode,
@@ -128,13 +134,19 @@ export default function SpanConverterView({ sharedState, updateSharedState }) {
 
   const ringConverted = useMemo(() => {
     return convertSpanValue({
+      spanValueStr: ringSpanStr,
       inputValueStr: ringSpanStr,
       fromType,
       toType,
+      fingerDrillDiamStr: ringHoleCut,
       holeCutStr: ringHoleCut,
+      fingerInsertDiamStr: ringInsert,
       insertStr: ringInsert,
+      thumbDrillDiamStr: thumbHoleCut,
       thumbHoleCutStr: thumbHoleCut,
+      thumbEffectiveDiamStr: ovalSize || holeSize,
       thumbEffectiveStr: ovalSize || holeSize,
+      ovalCutDiamStr: ovalCut || holeSize,
       ovalCutStr: ovalCut || holeSize,
       ovalAngleDeg: ovalAngle,
       denomMode,

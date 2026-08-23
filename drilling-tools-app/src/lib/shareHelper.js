@@ -184,7 +184,6 @@ export function generateShareText(title, state) {
     midHoleCut = '31/32',
     ringHoleCut = '31/32',
     bridgeStr = '1/4',
-    thumbAngle = '45',
     fromType = 'Actual Span',
     toType = 'Center to Center',
     markingType = 'Cut to Cut',
@@ -214,7 +213,7 @@ export function generateShareText(title, state) {
   text += `[1. 스판 & 미드라인]\n`;
   text += `• 중지: ${midSpanStr || '-'} (홀: ${midHoleCut})\n`;
   text += `• 약지: ${ringSpanStr || '-'} (홀: ${ringHoleCut})\n`;
-  text += `• 브릿지: ${bridgeStr} | 엄지 각도: ${thumbAngle}°\n`;
+  text += `• 브릿지: ${bridgeStr}\n`;
   text += `• 스판 기준: ${fromType} ➔ ${toType} (${markingType})\n\n`;
 
   // 2. 엄지 제원
