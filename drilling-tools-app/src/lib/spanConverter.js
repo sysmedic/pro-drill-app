@@ -63,10 +63,22 @@ function gcd(a, b) {
 }
 
 /**
- * 소수점 스판 인치 수치를 지정된 분모 모드(32분법, 16분법 등) 기준 기약분수 문자열로 변환합니다.
+ * 소수점 스판 인치 수치를 지정된 분모 모드(16분, 32분, .5/16 지공눈금 모드) 기준 분수 문자열로 변환합니다.
  */
 export function formatFractionByDenom(decimalValue, denomMode = 32) {
   if (!decimalValue || isNaN(decimalValue) || decimalValue <= 0) return '0';
+
+  // 📏 16분 분모 + 0.5단위 분자 지공 눈금 표기법 (예: 27/32 -> 13.5/16, 17/32 -> 8.5/16)
+  if (denomMode === 'half16' || denomMode === '16half') {
+    const rounded32 = Math.round(decimalValue * 32);
+    if (rounded32 <= 0) return '0';
+    const whole = Math.floor(rounded32 / 32);
+    const rem32 = rounded32 % 32;
+    if (rem32 === 0) return `${whole}`;
+    const num16 = rem32 / 2;
+    if (whole === 0) return `${num16}/16`;
+    return `${whole} ${num16}/16`;
+  }
 
   const denom = Number(denomMode) || 32;
   const roundedParts = Math.round(decimalValue * denom);

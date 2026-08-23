@@ -27,18 +27,18 @@ export default function SpanResultModal({
       className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex flex-col items-center justify-center p-3 sm:p-6 select-none animate-fade-in"
     >
       <div className="w-full max-w-[540px] bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col justify-between gap-4">
-        {/* 모달 상단 헤더 (산세리프 font-sans 현대적 서체 적용 & 16분/32분 분수 토글) */}
+        {/* 모달 상단 헤더 (산세리프 font-sans 현대적 서체 적용 & 16분 / 32분 / .5/16 3-Way 분수 토글) */}
         <div className="border-b border-slate-100 pb-3 flex items-center justify-between gap-2">
           <h2 className="text-base sm:text-lg font-black text-slate-900 font-sans tracking-tight leading-tight">
             {fromType} ➔ {toType}
           </h2>
 
-          {/* 16분 | 32분 슬레이트 토글 */}
+          {/* 16분 | 32분 | .5/16 슬레이트 3-Way 토글 */}
           <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-2xs shrink-0">
             <button
               type="button"
               onClick={() => setDenomMode(16)}
-              className={`px-3 py-1 text-xs font-black rounded-md transition-all cursor-pointer ${
+              className={`px-2.5 py-1 text-xs font-black rounded-md transition-all cursor-pointer ${
                 denomMode === 16
                   ? 'bg-slate-800 text-white shadow-2xs'
                   : 'text-slate-500 hover:text-slate-800 font-bold'
@@ -49,13 +49,24 @@ export default function SpanResultModal({
             <button
               type="button"
               onClick={() => setDenomMode(32)}
-              className={`px-3 py-1 text-xs font-black rounded-md transition-all cursor-pointer ${
+              className={`px-2.5 py-1 text-xs font-black rounded-md transition-all cursor-pointer ${
                 denomMode === 32
                   ? 'bg-slate-800 text-white shadow-2xs'
                   : 'text-slate-500 hover:text-slate-800 font-bold'
               }`}
             >
               32분
+            </button>
+            <button
+              type="button"
+              onClick={() => setDenomMode('half16')}
+              className={`px-2.5 py-1 text-xs font-black rounded-md transition-all cursor-pointer ${
+                denomMode === 'half16'
+                  ? 'bg-slate-800 text-white shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-800 font-bold'
+              }`}
+            >
+              .5/16
             </button>
           </div>
         </div>

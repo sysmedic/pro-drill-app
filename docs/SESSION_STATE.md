@@ -4,12 +4,10 @@
 
 ## 현재 우선순위
 
-- **독립 PWA 웹 애플리케이션 'ProDrill Tools' 아카이브 순수 수치 전용 텍스트 공유(링크 삭제) 및 데스크탑 텍스트 파일(.txt) 자동 다운로드 시스템 구축 & Vercel 프로덕션 배포 완료 (`shareHelper.js`, `StorageModal.jsx`)**:
+- **독립 PWA 웹 애플리케이션 'ProDrill Tools' 스판 변환기 계산 엔진 파라미터 매핑 정상화(계산값 표출 복구) 및 공유 텍스트 중복 각도 삭제 & Vercel 프로덕션 배포 완료 (`spanConverter.js`, `SpanConverterView.jsx`, `shareHelper.js`)**:
   - **지공사님 핵심 지침 100% 완수**:
-    1) **링크 완전 삭제 & 순수 제원 수치 전용 텍스트 생성**: 불필요한 URL 링크를 100% 제거하고, 스판·미드라인·엄지 피치 및 #1~#7 비트 가공 수치표(보정값 0 기본)만 깔끔하게 구성.
-    2) **모바일 / 데스크탑 환경별 맞춤형 공유**:
-       - 모바일: 카카오톡 / 문자 메시지 / 메모장 등으로 순수 수치 텍스트 즉시 전송 (`navigator.share`).
-       - 데스크탑: `ProDrill_지공제원_[슬롯명].txt` 파일로 다운로드 폴더에 자동 저장 + 클립보드 자동 복사.
+    1) **스판 계산값 표출 복구**: `convertSpanValue` 함수 인자 매핑을 정밀화하여 스판 수치(`midSpanStr`, `ringSpanStr`) 및 인서트/홀컷/오발 제원이 계산 엔진에 1:1로 전달되도록 수정. 결과 모달에 16분/32분 정밀 계산값 완벽 표출.
+    2) **공유 텍스트 내 스판 섹션 중복 각도 삭제**: `[1. 스판 & 미드라인]`에서 오표기되던 `| 엄지 각도: 45°`를 완전히 제거하고 `• 브릿지: 1/4`로 정돈.
   - **검증 및 배포 완료**: 71/71 전체 단위 테스트 PASS, Vite production build 성공 및 Vercel 프로덕션 배포 완료 (`https://drilling-tools-app.vercel.app`). 로컬 호스트(`http://192.168.0.11:5174`) 즉시 반영.
 
 1. 차트 입력폼을 `FingerPitchSection`, `ThumbSection`, `SpanSection`, `HandConditionSection` 단위로 분리한다.
