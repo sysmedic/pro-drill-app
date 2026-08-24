@@ -86,9 +86,9 @@ export default function Midline2DLayoutRenderer({
   const [bitToDelete, setBitToDelete] = useState(null);
   const longPressTimerRef = useRef(null);
 
-  // 📌 [지공사님 지침 100% 반영]: 180° 회전 뷰 상태 (기본값: false - 상향 화살표 ▲ 기본 지정)
-  const [isFlipped180, setIsFlipped180] = useState(false);
-  const isFlipped180Ref = useRef(false);
+  // 📌 [지공사님 지침 100% 반영]: 180° 회전 뷰 상태 (기본값: true - 하향 화살표 ▼ 기본 지정)
+  const [isFlipped180, setIsFlipped180] = useState(true);
+  const isFlipped180Ref = useRef(true);
 
   const handleSetRotation = (flipVal) => {
     isFlipped180Ref.current = flipVal;
@@ -342,12 +342,12 @@ export default function Midline2DLayoutRenderer({
     requestAnimationFrame(() => requestDirectRender());
   };
 
-  // 📌 EDIT 모드 전환 핸들러 (시뮬레이터 기본 켜짐 출발(끌 수 있음), 나머지 드릴 꺼짐 출발(선택 비트만 켜짐), 상향 화살표 기본 지정)
+  // 📌 EDIT 모드 전환 핸들러 (시뮬레이터 기본 켜짐 출발(끌 수 있음), 나머지 드릴 꺼짐 출발(선택 비트만 켜짐), 하향 화살표 기본 지정)
   const handleSwitchToEditMode = (e) => {
     e?.stopPropagation();
     setIsEditMode(true);
     setIsCheckFillMode(true); // 📌 [지공사님 지침]: 에디트 모드의 시뮬레이터는 기본 켜짐으로 시작 (끌 수 있음)
-    handleSetRotation(false); // 📌 [지공사님 지침]: 에딧 모드 기본값 화살표 위쪽(▲) 설정
+    handleSetRotation(true); // 📌 [지공사님 지침]: 에딧 모드 기본값 화살표 아래쪽(▼) 설정
     setSelectedBitIndex(null); // 📌 [지공사님 지침]: 나머지 드릴은 꺼짐 출발 (선택 비트만 켜짐)
     setRefreshKey((prev) => prev + 1);
     requestAnimationFrame(() => requestDirectRender());
