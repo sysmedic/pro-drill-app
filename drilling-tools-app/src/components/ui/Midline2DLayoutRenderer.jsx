@@ -785,74 +785,93 @@ export default function Midline2DLayoutRenderer({
         // Safe fallback guard to prevent graphics context crash
       }
 
-      // E) 📌 [지공사님 테스트 전용] 1·2번 절삭면 및 원홀 반영 실제 오발선 (#fbbf24 골드/앰버 라인)
+      // E) 📌 [지공사님 테스트 전용] 1·2번 절삭면 및 원홀을 매끄럽게(꺾임 없이) 연결한 실제 오발선 (#fbbf24 골드/앰버 라인)
       if (isActualOvalMode && !isEditMode) {
         try {
-          if (!offscreenCanvasRef.current) {
-            offscreenCanvasRef.current = document.createElement('canvas');
-          }
-          const offCanvas = offscreenCanvasRef.current;
-          if (offCanvas.width !== targetCanvas.width || offCanvas.height !== targetCanvas.height) {
-            offCanvas.width = targetCanvas.width;
-            offCanvas.height = targetCanvas.height;
-          }
-
-          const offCtx = offCanvas.getContext('2d');
-          offCtx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
-          offCtx.save();
-          offCtx.scale(dpr, dpr);
+          const uX = Math.cos(actualCutAngle);
+          const uY = Math.sin(actualCutAngle);
+          const vX = -Math.sin(actualCutAngle);
+          const vY = Math.cos(actualCutAngle);
 
           const r1Diameter = getBitDiameter(1);
           const r1RadiusPx = (r1Diameter / 2) * scale;
           const r2Diameter = getBitDiameter(2);
           const r2RadiusPx = (r2Diameter / 2) * scale;
-          const masterHoleRadiusPx = (holeNum / 2) * scale;
+          const holeRadiusPx = (holeNum / 2) * scale;
+          const halfOvalPx = (ovalNum / 2) * scale;
 
-          // 1) 3개 절삭원 면 채우기 (#1, #2, 중심 원홀)
-          offCtx.fillStyle = '#fbbf24';
-          offCtx.beginPath();
-          offCtx.arc(r1Pos.x, r1Pos.y, r1RadiusPx, 0, Math.PI * 2);
-          offCtx.fill();
-          offCtx.beginPath();
-          offCtx.arc(r2Pos.x, r2Pos.y, r2RadiusPx, 0, Math.PI * 2);
-          offCtx.fill();
-          offCtx.beginPath();
-          offCtx.arc(cx, cy, masterHoleRadiusPx, 0, Math.PI * 2);
-          offCtx.fill();
+          // #1번 상단 끝점 거리 (고정 오발 전장과 완벽 일치)
+          const L1 = Math.max(halfOvalPx, calcOffset1 + r1RadiusPx);
+          // #2번 하단 끝점 거리 (고정 오발 전장과 완벽 일치)
+          const L2 = Math.max(halfOvalPx, calcOffset2 + r2RadiusPx);
+          // 중심 원홀 가로 허리 반경
+          const W = holeRadiusPx > 0 ? holeRadiusPx : ((r1RadiusPx + r2RadiusPx) / 2);
 
-          // 2) 골드 외곽선 1.8px 생성
-          offCtx.lineWidth = 1.8;
-          offCtx.strokeStyle = '#fbbf24';
-          offCtx.beginPath();
-          offCtx.arc(r1Pos.x, r1Pos.y, r1RadiusPx, 0, Math.PI * 2);
-          offCtx.stroke();
-          offCtx.beginPath();
-          offCtx.arc(r2Pos.x, r2Pos.y, r2RadiusPx, 0, Math.PI * 2);
-          offCtx.stroke();
-          offCtx.beginPath();
-          offCtx.arc(cx, cy, masterHoleRadiusPx, 0, Math.PI * 2);
-          offCtx.stroke();
+          // 4대 정점 좌표
+          const Ax = cx + L1 * uX;
+          const Ay = cy + L1 * uY;
+          const Bx = cx - L2 * uX;
+          const By = cy - L2 * uY;
+          const Rx = cx + W * vX;
+          const Ry = cy + W * vY;
+          const Lx = cx - W * vX;
+          const Ly = cy - W * vY;
 
-          // 3) 내부 소거 ➔ #1, #2, 원홀이 형성하는 [실제 가공 결합 외곽선]만 완벽 보존
-          offCtx.globalCompositeOperation = 'destination-out';
-          offCtx.beginPath();
-          offCtx.arc(r1Pos.x, r1Pos.y, r1RadiusPx, 0, Math.PI * 2);
-          offCtx.fill();
-          offCtx.beginPath();
-          offCtx.arc(r2Pos.x, r2Pos.y, r2RadiusPx, 0, Math.PI * 2);
-          offCtx.fill();
-          offCtx.beginPath();
-          offCtx.arc(cx, cy, masterHoleRadiusPx, 0, Math.PI * 2);
-          offCtx.fill();
+          // 3차 베지에 매끄러운 곡률 계수
+          const KAPPA = 0.55228475;
 
-          offCtx.restore();
-
-          // 4) 메인 캔버스에 선명한 골드 앰버 오발선 오버레이
           ctx.save();
-          ctx.setTransform(1, 0, 0, 1, 0, 0);
-          ctx.shadowColor = 'rgba(251, 191, 36, 0.7)';
+          ctx.beginPath();
+
+          // 1. 상단 정점 A에서 시작
+          ctx.moveTo(Ax, Ay);
+
+          // 2. 1사분면 (상단 A ➔ 우측 허리 R 매끄러운 곡선)
+          ctx.bezierCurveTo(
+            Ax + KAPPA * W * vX,
+            Ay + KAPPA * W * vY,
+            Rx + KAPPA * L1 * uX,
+            Ry + KAPPA * L1 * uY,
+            Rx,
+            Ry
+          );
+
+          // 3. 2사분면 (우측 허리 R ➔ 하단 B 매끄러운 곡선)
+          ctx.bezierCurveTo(
+            Rx - KAPPA * L2 * uX,
+            Ry - KAPPA * L2 * uY,
+            Bx + KAPPA * W * vX,
+            By + KAPPA * W * vY,
+            Bx,
+            By
+          );
+
+          // 4. 3사분면 (하단 B ➔ 좌측 허리 L 매끄러운 곡선)
+          ctx.bezierCurveTo(
+            Bx - KAPPA * W * vX,
+            By - KAPPA * W * vY,
+            Lx - KAPPA * L2 * uX,
+            Ly - KAPPA * L2 * uY,
+            Lx,
+            Ly
+          );
+
+          // 5. 4사분면 (좌측 허리 L ➔ 상단 A 매끄러운 곡선 복귀)
+          ctx.bezierCurveTo(
+            Lx + KAPPA * L1 * uX,
+            Ly + KAPPA * L1 * uY,
+            Ax - KAPPA * W * vX,
+            Ay - KAPPA * W * vY,
+            Ax,
+            Ay
+          );
+
+          ctx.closePath();
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 1.2;
+          ctx.shadowColor = 'rgba(251, 191, 36, 0.6)';
           ctx.shadowBlur = 4;
-          ctx.drawImage(offCanvas, 0, 0);
+          ctx.stroke();
           ctx.restore();
         } catch (err) {
           // Safe fallback guard
