@@ -26,6 +26,7 @@ export default function SelectField({
   options = [],
   placeholder = '',
   value,
+  displayValue = null,
   style = {},
   disabled = false,
   ...props
@@ -56,35 +57,59 @@ export default function SelectField({
     ? { color: '#94a3b8', fontWeight: '400', ...style }
     : { color: '#0f172a', fontWeight: '600', ...style };
 
+  const hasDisplayValue = displayValue !== null && displayValue !== undefined;
+
   return (
-    <div className={cn('flex flex-col w-full', className)}>
+    <div className={cn('flex flex-col w-full relative', className)}>
       {label && (
         <label className={cn(labelClass, labelClassName, isRequiredMissing && !disabled && 'text-amber-800 font-extrabold')} htmlFor={id}>
           {label}
         </label>
       )}
-      <select
-        className={cn(baseControlClass, stateBorderAndBgStyle, textStyleClass, controlClassName)}
-        disabled={disabled}
-        id={id}
-        onChange={handleChange}
-        style={combinedStyle}
-        value={currentValue}
-        {...props}
-      >
-        <option value="" className="text-slate-400 font-normal bg-white">
-          {placeholder || ''}
-        </option>
-        {options.map((option) => {
-          const optionValue = getOptionValue(option);
-          const optionLabel = getOptionLabel(option);
-          return (
-            <option key={optionValue} value={optionValue} className="text-slate-900 font-semibold bg-white">
-              {optionLabel}
+      <div className="relative w-full">
+        {hasDisplayValue && (
+          <div
+            className={cn(
+              baseControlClass,
+              textStyleClass,
+              controlClassName,
+              'absolute inset-0 pointer-events-none flex items-center justify-center pr-6 bg-transparent border-transparent shadow-none'
+            )}
+            style={combinedStyle}
+          >
+            <span className="truncate">{displayValue}</span>
+          </div>
+        )}
+        <select
+          className={cn(
+            baseControlClass,
+            stateBorderAndBgStyle,
+            hasDisplayValue ? 'text-transparent' : textStyleClass,
+            controlClassName
+          )}
+          disabled={disabled}
+          id={id}
+          onChange={handleChange}
+          style={hasDisplayValue ? { ...combinedStyle, color: 'transparent' } : combinedStyle}
+          value={currentValue}
+          {...props}
+        >
+          {placeholder && (
+            <option value="" className="text-slate-400 font-normal bg-white">
+              {placeholder}
             </option>
-          );
-        })}
-      </select>
+          )}
+          {options.map((option) => {
+            const optionValue = getOptionValue(option);
+            const optionLabel = getOptionLabel(option);
+            return (
+              <option key={optionValue} value={optionValue} className="text-slate-900 font-semibold bg-white">
+                {optionLabel}
+              </option>
+            );
+          })}
+        </select>
+      </div>
     </div>
   );
 }
