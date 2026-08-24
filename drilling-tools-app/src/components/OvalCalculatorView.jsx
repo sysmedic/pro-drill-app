@@ -102,13 +102,15 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
     (pitchLeft ? parseSpanFraction(pitchLeft) : 0) -
     (pitchRight ? parseSpanFraction(pitchRight) : 0);
 
-  // 📌 드릴 비트 규격 연산 (Row 1~7 동적 연산 지원 & 도면 커스텀 규격 반영)
+  // 📌 정밀도 3단계 모드 ('basic': 3, 'detailed': 5, 'ultra': 7)
+  const precisionMode = sharedState?.precisionMode || (isDetailedMode ? 'detailed' : 'basic');
+  const baseBitsCount = precisionMode === 'ultra' ? 7 : (precisionMode === 'detailed' ? 5 : 3);
+  const extraCount = sharedState?.extraBitCount || 0;
+  const totalActiveBits = Math.min(8, baseBitsCount + extraCount);
+
+  // 📌 드릴 비트 규격 연산 (Row 1~8 동적 연산 지원 & 도면 커스텀 규격 반영)
   const getDrillBitValue = (rowIndex) => {
     if (!baseHoleSizeNum || !ovalCutNum1 || !ovalCutNum2) return '-';
-
-    const baseBitsCount = isDetailedMode ? 5 : 3;
-    const extraCount = sharedState?.extraBitCount || 0;
-    const totalActiveBits = Math.min(7, baseBitsCount + extraCount);
 
     if (rowIndex > totalActiveBits) return '-';
 
@@ -125,19 +127,28 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
 
     if (rowIndex === 1) return toFraction64(ovalCutNum1);
     if (rowIndex === 2) return toFraction64(ovalCutNum2);
-    if (rowIndex === 3) return toFraction64((ovalCutNum2 + baseHoleSizeNum) / 2);
-    if (rowIndex === 4) return toFraction64((ovalCutNum1 + baseHoleSizeNum) / 2);
-    if (rowIndex >= 5 && rowIndex <= 7) return toFraction64(ovalCutNum1);
-    return '-';
+
+    if (precisionMode === 'ultra') {
+      // 7드릴 초정밀 모드 (#3·#4 하단, #5·#6 상단)
+      if (rowIndex === 3) return toFraction64(baseHoleSizeNum + (ovalCutNum2 - baseHoleSizeNum) * (2 / 3));
+      if (rowIndex === 4) return toFraction64(baseHoleSizeNum + (ovalCutNum2 - baseHoleSizeNum) * (1 / 3));
+      if (rowIndex === 5) return toFraction64(baseHoleSizeNum + (ovalCutNum1 - baseHoleSizeNum) * (1 / 3));
+      if (rowIndex === 6) return toFraction64(baseHoleSizeNum + (ovalCutNum1 - baseHoleSizeNum) * (2 / 3));
+      return toFraction64(ovalCutNum1);
+    } else if (precisionMode === 'detailed') {
+      // 5드릴 정밀 모드 (#3 하단, #4 상단)
+      if (rowIndex === 3) return toFraction64((ovalCutNum2 + baseHoleSizeNum) / 2);
+      if (rowIndex === 4) return toFraction64((ovalCutNum1 + baseHoleSizeNum) / 2);
+      return toFraction64(ovalCutNum1);
+    } else {
+      // 3드릴 기본 모드
+      return toFraction64(ovalCutNum1);
+    }
   };
 
-  // 📌 수평 피치 연산 (Row 1~7 동적 연산 & 도면 D-Pad 오프셋 1:1 합성 반영)
+  // 📌 수평 피치 연산 (Row 1~8 동적 연산 & 도면 D-Pad 오프셋 1:1 합성 반영)
   const getHorizontalValue = (rowIndex) => {
     if (isCalculationBlocked || !oval || !ovalCutNum1 || !ovalCutNum2) return '-';
-
-    const baseBitsCount = isDetailedMode ? 5 : 3;
-    const extraCount = sharedState?.extraBitCount || 0;
-    const totalActiveBits = Math.min(7, baseBitsCount + extraCount);
 
     if (rowIndex > totalActiveBits) return '-';
 
@@ -154,10 +165,16 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
       baseH = thumbHorizontal - calcValue1;
     } else if (rowIndex === 2) {
       baseH = thumbHorizontal + calcValue2;
-    } else if (rowIndex === 3) {
-      baseH = thumbHorizontal + (calcValue2 / 2);
-    } else if (rowIndex === 4) {
-      baseH = thumbHorizontal - (calcValue1 / 2);
+    } else if (precisionMode === 'ultra') {
+      if (rowIndex === 3) baseH = thumbHorizontal + calcValue2 * (2 / 3);
+      else if (rowIndex === 4) baseH = thumbHorizontal + calcValue2 * (1 / 3);
+      else if (rowIndex === 5) baseH = thumbHorizontal - calcValue1 * (1 / 3);
+      else if (rowIndex === 6) baseH = thumbHorizontal - calcValue1 * (2 / 3);
+      else baseH = thumbHorizontal;
+    } else if (precisionMode === 'detailed') {
+      if (rowIndex === 3) baseH = thumbHorizontal + (calcValue2 / 2);
+      else if (rowIndex === 4) baseH = thumbHorizontal - (calcValue1 / 2);
+      else baseH = thumbHorizontal;
     } else {
       baseH = thumbHorizontal;
     }
@@ -165,13 +182,9 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
     return formatCalculatedValue(baseH + customOffX);
   };
 
-  // 📌 수직 피치 연산 (Row 1~7 동적 연산 & 도면 D-Pad 오프셋 1:1 합성 반영)
+  // 📌 수직 피치 연산 (Row 1~8 동적 연산 & 도면 D-Pad 오프셋 1:1 합성 반영)
   const getVerticalValue = (rowIndex) => {
     if (isCalculationBlocked || !oval || !ovalCutNum1 || !ovalCutNum2) return '-';
-
-    const baseBitsCount = isDetailedMode ? 5 : 3;
-    const extraCount = sharedState?.extraBitCount || 0;
-    const totalActiveBits = Math.min(7, baseBitsCount + extraCount);
 
     if (rowIndex > totalActiveBits) return '-';
 
@@ -188,10 +201,16 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
       baseV = thumbVertical + calcValue1;
     } else if (rowIndex === 2) {
       baseV = thumbVertical - calcValue2;
-    } else if (rowIndex === 3) {
-      baseV = thumbVertical - (calcValue2 / 2);
-    } else if (rowIndex === 4) {
-      baseV = thumbVertical + (calcValue1 / 2);
+    } else if (precisionMode === 'ultra') {
+      if (rowIndex === 3) baseV = thumbVertical - calcValue2 * (2 / 3);
+      else if (rowIndex === 4) baseV = thumbVertical - calcValue2 * (1 / 3);
+      else if (rowIndex === 5) baseV = thumbVertical + calcValue1 * (1 / 3);
+      else if (rowIndex === 6) baseV = thumbVertical + calcValue1 * (2 / 3);
+      else baseV = thumbVertical;
+    } else if (precisionMode === 'detailed') {
+      if (rowIndex === 3) baseV = thumbVertical - (calcValue2 / 2);
+      else if (rowIndex === 4) baseV = thumbVertical + (calcValue1 / 2);
+      else baseV = thumbVertical;
     } else {
       baseV = thumbVertical;
     }
@@ -400,10 +419,26 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
         getVerticalValue={getVerticalValue}
         isCalculationBlocked={isCalculationBlocked}
         isDetailedMode={isDetailedMode}
+        precisionMode={precisionMode}
+        setPrecisionMode={(mode) => {
+          if (updateSharedState) {
+            updateSharedState({
+              precisionMode: mode,
+              isDetailedMode: mode !== 'basic',
+            });
+          }
+        }}
         isOpen={isModalOpen}
         onConfirm={() => setIsModalOpen(false)}
         ovalCorrection={ovalCorrection}
-        setIsDetailedMode={(mode) => updateSharedState('isDetailedMode', mode)}
+        setIsDetailedMode={(mode) => {
+          if (updateSharedState) {
+            updateSharedState({
+              isDetailedMode: mode,
+              precisionMode: mode ? 'detailed' : 'basic',
+            });
+          }
+        }}
         setOvalCorrection={(v) => updateSharedState('ovalCorrection', v)}
         holeSize={holeSize}
         ovalSize={ovalSize}

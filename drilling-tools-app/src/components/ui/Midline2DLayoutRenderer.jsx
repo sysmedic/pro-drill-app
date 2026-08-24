@@ -2,8 +2,8 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { parseSpanFraction, formatFractionByDenom } from '../../lib/spanConverter.js';
 
-// 📌 7-Bit 마스터 전용 컬러 팔레트 (1:Red, 2:Amber, 3:Purple, 4:Blue, 5:Pink, 6:Lime, 7:Emerald)
-const FULL_PALETTE = ['#ef4444', '#f59e0b', '#a855f7', '#3b82f6', '#ec4899', '#84cc16', '#10b981'];
+// 📌 8-Bit 마스터 전용 컬러 팔레트 (#1:Red, #2:Amber, #3:Purple, #4:Blue, #5:Pink, #6:Cyan, #7:Yellow, #8:Lime)
+const FULL_PALETTE = ['#ef4444', '#f59e0b', '#a855f7', '#3b82f6', '#ec4899', '#06b6d4', '#eab308', '#84cc16'];
 
 export default function Midline2DLayoutRenderer({
   holeSize = '',
@@ -16,6 +16,7 @@ export default function Midline2DLayoutRenderer({
   results = null,
   getDrillBitValue = () => '-',
   isDetailedMode = true,
+  precisionMode: propPrecisionMode = null,
   onDetailedModeChange = null,
   height = 360,
   thumbHoleCut = '',
@@ -38,35 +39,38 @@ export default function Midline2DLayoutRenderer({
   // 📌 [지공사님 핵심 수술]: 좌상단 [ 🔓 오발 수정 ] / [ 🔒 오발 고정 ] 스위치 모드 (기본값: false - 프리뷰 모드)
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // 📌 현재 선택된 원 비트 인덱스 (1: 1번 오발컷1, 2: 2번 오발컷2, 3: 3번, 4: 4번, 5: 5번, null: 전체 비선택)
+  // 📌 현재 선택된 원 비트 인덱스
   const [selectedBitIndex, setSelectedBitIndex] = useState(1);
 
-  // 📌 비트 개별 커스텀 오프셋 (3번, 4번, 5번 비트의 자유 이동 지원)
+  // 📌 비트 개별 커스텀 오프셋 (자유 이동 지원)
   const [bitCustomOffsets, setBitCustomOffsets] = useState({
     3: { x: 0, y: 0 },
     4: { x: 0, y: 0 },
     5: { x: 0, y: 0 },
+    6: { x: 0, y: 0 },
+    7: { x: 0, y: 0 },
+    8: { x: 0, y: 0 },
   });
 
-  // 📌 비트 개별 커스텀 크기 (3번, 4번 비트 자유 크기 지원)
+  // 📌 비트 개별 커스텀 크기 (자유 크기 지원)
   const [bitCustomSizes, setBitCustomSizes] = useState({
     3: null,
     4: null,
+    5: null,
+    6: null,
+    7: null,
+    8: null,
   });
 
   // 리프레시 키 (모드 전환 및 리사이즈 시 즉시 캔버스 리프레시 강제 트리거)
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // 📌 1, 2, 3, 4, 5번 각 드릴 비트 독립 개별 활성화 상태
-  const [showBit1, setShowBit1] = useState(true);
-  const [showBit2, setShowBit2] = useState(true);
-  const [showBit3, setShowBit3] = useState(isDetailedMode);
-  const [showBit4, setShowBit4] = useState(isDetailedMode);
-  const [showBit5, setShowBit5] = useState(true);
+  // 📌 정밀도 3단계 모드 ('basic': 3, 'detailed': 5, 'ultra': 7)
+  const precisionMode = propPrecisionMode || sharedState?.precisionMode || (isDetailedMode ? 'detailed' : 'basic');
 
-  // 📌 드릴 비트 추가 증설 카운트 (지공사님 지침: 3컷/5컷 공통 총 7개 비트 도달 시까지 + 클릭 증설, 7개 도달 시 + 버튼 자동 소거)
+  // 📌 드릴 비트 추가 증설 카운트 (최대 8개 도달 시까지 + 클릭 증설 지원)
   const [extraBitCount, setExtraBitCount] = useState(0);
-  const [bitVisibilities, setBitVisibilities] = useState({ 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true });
+  const [bitVisibilities, setBitVisibilities] = useState({ 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true });
 
   // 📌 D-Pad 길게 눌러 자유 위치 이동 (Repositioning) 상태
   const [dpadOffset, setDpadOffset] = useState({ x: 0, y: 0 });
@@ -205,9 +209,9 @@ export default function Midline2DLayoutRenderer({
     [isEditMode, selectedBitIndex, bitVisibilities]
   );
 
-  // 📌 현재 활성화된 총 비트 수 연산 (기본: 3컷 모드 3개 / 5컷 모드 5개 + extraBitCount, MAX 7개 제한)
-  const baseBitsCount = isDetailedMode ? 5 : 3;
-  const totalActiveBits = Math.min(7, baseBitsCount + extraBitCount);
+  // 📌 현재 활성화된 총 비트 수 연산 (기본: 3컷 / 정밀: 5컷 / 초정밀: 7컷 + extraBitCount, MAX 8개 제한)
+  const baseBitsCount = precisionMode === 'ultra' ? 7 : (precisionMode === 'detailed' ? 5 : 3);
+  const totalActiveBits = Math.min(8, baseBitsCount + extraBitCount);
 
   // 📌 D-Pad 컨트롤러 버튼 비활성화(잠금) 상태 계산
   const isSelectedBitSizeDisabled = selectedBitIndex === null || selectedBitIndex === totalActiveBits;
@@ -230,7 +234,7 @@ export default function Midline2DLayoutRenderer({
         return next;
       });
     } else {
-      // PREVIEW 모드: 1~7번 비트 가림/노출 1:1 토글 (꺼진 비트만 클릭 시 켬)
+      // PREVIEW 모드: 1~8번 비트 가림/노출 1:1 토글 (꺼진 비트만 클릭 시 켬)
       setBitVisibilities((prev) => {
         const isCurrentlyHidden = prev[rowIdx] === false;
         return {
@@ -243,12 +247,12 @@ export default function Midline2DLayoutRenderer({
     requestAnimationFrame(() => requestDirectRender());
   };
 
-  // 📌 신규 드릴 비트 추가 (+) 핸들러 (초기 Cut1 64분율 규격 고정 등록으로 1스톱 조절 보장)
+  // 📌 신규 드릴 비트 추가 (+) 핸들러 (최대 8개 도달 시까지 증설 지원)
   const handleAddExtraBit = (e) => {
     e?.stopPropagation();
-    if (totalActiveBits >= 7) return;
+    if (totalActiveBits >= 8) return;
 
-    // 현재 totalActiveBits (예: 3)가 새로 추가되는 비트의 인덱스가 됨 (원홀은 4로 자동 릴레이 이동)
+    // 현재 totalActiveBits (예: 3)가 새로 추가되는 비트의 인덱스가 됨 (원홀은 다음 번호로 자동 릴레이 이동)
     const newBitIdx = totalActiveBits;
     const initialSizeStr = (getDrillBitValue && getDrillBitValue(newBitIdx) !== '-')
       ? getDrillBitValue(newBitIdx)
@@ -493,20 +497,50 @@ export default function Midline2DLayoutRenderer({
       const effectiveRadians = radians + (isFlipped180 ? Math.PI : 0);
       const flipSign = isFlipped180 ? -1 : 1;
 
-      // 📌 지공사님 지침 반영: 최대 7개 비트 동적 위치 배열 구성 (180도 회전 시 flipSign 1:1 대칭 합성)
+      // 📌 지공사님 지침 반영: 최대 8개 비트 동적 위치 배열 구성 (180도 회전 시 flipSign 1:1 대칭 합성)
       const bitPositions = [];
-      // 1번 (Cut 1)
+      // 1번 (Cut 1 - 상단 끝)
       bitPositions.push({ x: cx + calcOffset1 * Math.cos(effectiveRadians) * handSign, y: cy + calcOffset1 * Math.sin(effectiveRadians) });
-      // 2번 (Cut 2)
+      // 2번 (Cut 2 - 하단 끝)
       bitPositions.push({ x: cx - calcOffset2 * Math.cos(effectiveRadians) * handSign, y: cy - calcOffset2 * Math.sin(effectiveRadians) });
 
-      if (isDetailedMode) {
-        // 3번 (중간비트 1)
+      if (precisionMode === 'ultra') {
+        // 7드릴 초정밀 모드 (#3·#4 하단 가공 ➔ #5·#6 상단 가공 순차 경로)
+        // 3번 (하단 외곽 2/3)
+        bitPositions.push({
+          x: cx - (calcOffset2 * 2 / 3) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[3]?.x || 0) * scale * flipSign,
+          y: cy - (calcOffset2 * 2 / 3) * Math.sin(effectiveRadians) + (bitCustomOffsets[3]?.y || 0) * scale * flipSign,
+        });
+        // 4번 (하단 내측 1/3)
+        bitPositions.push({
+          x: cx - (calcOffset2 * 1 / 3) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[4]?.x || 0) * scale * flipSign,
+          y: cy - (calcOffset2 * 1 / 3) * Math.sin(effectiveRadians) + (bitCustomOffsets[4]?.y || 0) * scale * flipSign,
+        });
+        // 5번 (상단 내측 1/3)
+        bitPositions.push({
+          x: cx + (calcOffset1 * 1 / 3) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[5]?.x || 0) * scale * flipSign,
+          y: cy + (calcOffset1 * 1 / 3) * Math.sin(effectiveRadians) + (bitCustomOffsets[5]?.y || 0) * scale * flipSign,
+        });
+        // 6번 (상단 외곽 2/3)
+        bitPositions.push({
+          x: cx + (calcOffset1 * 2 / 3) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[6]?.x || 0) * scale * flipSign,
+          y: cy + (calcOffset1 * 2 / 3) * Math.sin(effectiveRadians) + (bitCustomOffsets[6]?.y || 0) * scale * flipSign,
+        });
+        // 7번 ~ (totalActiveBits - 1)번: 신규 추가된 드릴비트 (원홀 중심 위치 기본)
+        for (let b = 7; b < totalActiveBits; b++) {
+          bitPositions.push({
+            x: cx + (bitCustomOffsets[b]?.x || 0) * scale * flipSign,
+            y: cy + (bitCustomOffsets[b]?.y || 0) * scale * flipSign,
+          });
+        }
+      } else if (precisionMode === 'detailed') {
+        // 5드릴 정밀 모드 (#3 하단 1/2, #4 상단 1/2)
+        // 3번 (중간비트 1 - 하단)
         bitPositions.push({
           x: cx - (calcOffset2 / 2) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[3]?.x || 0) * scale * flipSign,
           y: cy - (calcOffset2 / 2) * Math.sin(effectiveRadians) + (bitCustomOffsets[3]?.y || 0) * scale * flipSign,
         });
-        // 4번 (중간비트 2)
+        // 4번 (중간비트 2 - 상단)
         bitPositions.push({
           x: cx + (calcOffset1 / 2) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[4]?.x || 0) * scale * flipSign,
           y: cy + (calcOffset1 / 2) * Math.sin(effectiveRadians) + (bitCustomOffsets[4]?.y || 0) * scale * flipSign,
@@ -519,7 +553,7 @@ export default function Midline2DLayoutRenderer({
           });
         }
       } else {
-        // 3번 ~ (totalActiveBits - 1)번: 신규 추가된 드릴비트 (원홀 중심 위치 기본)
+        // 3드릴 기본 모드: 3번 ~ (totalActiveBits - 1)번 신규 추가된 드릴비트
         for (let b = 3; b < totalActiveBits; b++) {
           bitPositions.push({
             x: cx + (bitCustomOffsets[b]?.x || 0) * scale * flipSign,
@@ -537,12 +571,20 @@ export default function Midline2DLayoutRenderer({
         if (rowIdx === 1) return cutNum1;
         if (rowIdx === 2) return cutNum2;
         if (rowIdx === totalActiveBits) return holeNum; // 마스터 원홀 사이즈
-        if (isDetailedMode) {
-          if (rowIdx === 3) return bitCustomSizes[3] ? parseSpanFraction(bitCustomSizes[3]) : (cutNum2 + holeNum) / 2;
-          if (rowIdx === 4) return bitCustomSizes[4] ? parseSpanFraction(bitCustomSizes[4]) : (cutNum1 + holeNum) / 2;
-          return bitCustomSizes[rowIdx] ? parseSpanFraction(bitCustomSizes[rowIdx]) : cutNum1; // 📌 지공사님 지침: 레프트 오발컷 사이즈 기본
+        if (bitCustomSizes[rowIdx]) return parseSpanFraction(bitCustomSizes[rowIdx]);
+
+        if (precisionMode === 'ultra') {
+          if (rowIdx === 3) return (cutNum2 * 2 + holeNum * 1) / 3;
+          if (rowIdx === 4) return (cutNum2 * 1 + holeNum * 2) / 3;
+          if (rowIdx === 5) return (cutNum1 * 1 + holeNum * 2) / 3;
+          if (rowIdx === 6) return (cutNum1 * 2 + holeNum * 1) / 3;
+          return cutNum1;
+        } else if (precisionMode === 'detailed') {
+          if (rowIdx === 3) return (cutNum2 + holeNum) / 2;
+          if (rowIdx === 4) return (cutNum1 + holeNum) / 2;
+          return cutNum1;
         } else {
-          return bitCustomSizes[rowIdx] ? parseSpanFraction(bitCustomSizes[rowIdx]) : cutNum1; // 📌 지공사님 지침: 레프트 오발컷 사이즈 기본
+          return cutNum1;
         }
       };
 
@@ -556,11 +598,11 @@ export default function Midline2DLayoutRenderer({
       const r1Pos = bitPositions[0];
       const r2Pos = bitPositions[1];
 
-      // 7색 전용 시그니처 컬러 팔레트 (원홀 비트는 항상 마지막 비트로서 Emerald Green #10b981 고정)
+      // 8색 전용 시그니처 컬러 팔레트 (원홀 비트는 항상 마지막 비트로서 Emerald Green #10b981 고정)
       const bitColors = bitPositions.map((_, idx) => {
         const rowIdx = idx + 1;
         if (rowIdx === totalActiveBits) return '#10b981';
-        return FULL_PALETTE[idx] || '#a855f7';
+        return FULL_PALETTE[idx] || '#84cc16';
       });
 
       // 📌 [EDIT & PREVIEW 모드 공통 도면 렌더링 가시성]: EDIT 모드에서 선택된 비트 및 active 비트 100% 상시 표출 보전 (터치 시 사라짐 100% 방지)
@@ -1138,11 +1180,46 @@ export default function Midline2DLayoutRenderer({
     const rad = (angleNum * Math.PI) / 180;
     const handMult = hand === 'left' ? -1 : 1;
 
-    // 상단(#4, #6: 짝수 비트) vs 하단(#3, #5, #7: 홀수 비트) 영역 100% 명확 판별
-    const isUpper = (targetBit % 2 === 0);
+    // 상단 vs 하단 영역 및 기본 축선 기준점 판별
+    let isUpper = false;
+    let baseDefaultAxialY = 0;
+
+    if (precisionMode === 'ultra') {
+      // 7드릴 모드: #3(하단 2/3), #4(하단 1/3), #5(상단 1/3), #6(상단 2/3)
+      if (targetBit === 5) {
+        isUpper = true;
+        baseDefaultAxialY = L1 * (1 / 3);
+      } else if (targetBit === 6) {
+        isUpper = true;
+        baseDefaultAxialY = L1 * (2 / 3);
+      } else if (targetBit === 3) {
+        isUpper = false;
+        baseDefaultAxialY = -L2 * (2 / 3);
+      } else if (targetBit === 4) {
+        isUpper = false;
+        baseDefaultAxialY = -L2 * (1 / 3);
+      } else {
+        isUpper = (targetBit % 2 === 0);
+        baseDefaultAxialY = isUpper ? (L1 / 2) : (-L2 / 2);
+      }
+    } else if (precisionMode === 'detailed') {
+      // 5드릴 모드: #3(하단 1/2), #4(상단 1/2)
+      if (targetBit === 4) {
+        isUpper = true;
+        baseDefaultAxialY = L1 / 2;
+      } else if (targetBit === 3) {
+        isUpper = false;
+        baseDefaultAxialY = -L2 / 2;
+      } else {
+        isUpper = (targetBit % 2 === 0);
+        baseDefaultAxialY = isUpper ? (L1 / 2) : (-L2 / 2);
+      }
+    } else {
+      isUpper = (targetBit % 2 === 0);
+      baseDefaultAxialY = isUpper ? (L1 / 2) : (-L2 / 2);
+    }
 
     // 0) 현재 선택된 비트의 축선상 현재 위치(currentAxialY) 산출
-    let baseDefaultAxialY = isUpper ? (L1 / 2) : (-L2 / 2);
     const curOff = bitCustomOffsets[targetBit] || { x: 0, y: 0 };
     const curAxialProj = (curOff.y * Math.sin(rad)) - (curOff.x * Math.cos(rad) * handMult);
     const currentAxialY = baseDefaultAxialY + curAxialProj;
@@ -1162,7 +1239,20 @@ export default function Midline2DLayoutRenderer({
         const kDiameter = getBitDiameter(k);
         const kR = kDiameter / 2;
         const kOff = bitCustomOffsets[k] || { x: 0, y: 0 };
-        let kBaseY = (k % 2 === 0) ? (L1 / 2) : (-L2 / 2);
+        let kBaseY = 0;
+        if (precisionMode === 'ultra') {
+          if (k === 3) kBaseY = -L2 * (2 / 3);
+          else if (k === 4) kBaseY = -L2 * (1 / 3);
+          else if (k === 5) kBaseY = L1 * (1 / 3);
+          else if (k === 6) kBaseY = L1 * (2 / 3);
+          else kBaseY = (k % 2 === 0) ? (L1 / 2) : (-L2 / 2);
+        } else if (precisionMode === 'detailed') {
+          if (k === 3) kBaseY = -L2 / 2;
+          else if (k === 4) kBaseY = L1 / 2;
+          else kBaseY = (k % 2 === 0) ? (L1 / 2) : (-L2 / 2);
+        } else {
+          kBaseY = (k % 2 === 0) ? (L1 / 2) : (-L2 / 2);
+        }
         const axialProj = (kOff.y * Math.sin(rad)) - (kOff.x * Math.cos(rad) * handMult);
         const ky = kBaseY + axialProj;
         existingCuts.push({ y: ky, r: kR });
@@ -1633,9 +1723,9 @@ export default function Midline2DLayoutRenderer({
             {Array.from({ length: totalActiveBits }).map((_, idx) => {
               const rowIdx = idx + 1;
               const isHoleBit = rowIdx === totalActiveBits;
-              const bitValStr = bitCustomSizes[rowIdx] || getDrillBitValue(rowIdx);
-              const color = isHoleBit ? '#10b981' : FULL_PALETTE[idx] || '#a855f7';
-              const label = isHoleBit ? `#${rowIdx} (원홀)` : `#${rowIdx} (${bitValStr || '규격'})`;
+              const bitValStr = bitCustomSizes[rowIdx] || (isHoleBit ? (holeSize || getDrillBitValue(rowIdx)) : getDrillBitValue(rowIdx));
+              const color = isHoleBit ? '#10b981' : FULL_PALETTE[idx] || '#84cc16';
+              const label = isHoleBit ? `#${rowIdx} (원홀 ${bitValStr || ''})` : `#${rowIdx} (${bitValStr || '규격'})`;
               const isSelected = selectedBitIndex === rowIdx;
               const isActive = isBitActiveInChart(rowIdx);
 
@@ -2031,9 +2121,9 @@ export default function Midline2DLayoutRenderer({
           {Array.from({ length: totalActiveBits }).map((_, idx) => {
             const rowIdx = idx + 1;
             const isHoleBit = rowIdx === totalActiveBits;
-            const bitValStr = bitCustomSizes[rowIdx] || getDrillBitValue(rowIdx);
-            const color = isHoleBit ? '#10b981' : FULL_PALETTE[idx] || '#a855f7';
-            const label = isHoleBit ? `#${rowIdx} (원홀)` : `#${rowIdx} (${bitValStr || '규격'})`;
+            const bitValStr = bitCustomSizes[rowIdx] || (isHoleBit ? (holeSize || getDrillBitValue(rowIdx)) : getDrillBitValue(rowIdx));
+            const color = isHoleBit ? '#10b981' : FULL_PALETTE[idx] || '#84cc16';
+            const label = isHoleBit ? `#${rowIdx} (원홀 ${bitValStr || ''})` : `#${rowIdx} (${bitValStr || '규격'})`;
             const isSelected = selectedBitIndex === rowIdx;
             const isActive = isBitActiveInChart(rowIdx);
 
