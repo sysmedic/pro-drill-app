@@ -66,7 +66,7 @@ export default function SpanResultModal({
                   : 'text-slate-500 hover:text-slate-800 font-bold'
               }`}
             >
-              .5/16
+              .5/16분
             </button>
           </div>
         </div>
