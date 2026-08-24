@@ -5,7 +5,7 @@ import Midline2DLayoutRenderer from './ui/Midline2DLayoutRenderer.jsx';
 import { useModalLock } from '../hooks/useModalLock.js';
 
 const OVAL_CORRECTION_OPTIONS = [
-  { value: '0', label: '0' },
+  { value: '0', label: '' },
   { value: '1/128', label: '1/128' },
   { value: '1/64', label: '1/64' },
   { value: '3/128', label: '3/128' },
