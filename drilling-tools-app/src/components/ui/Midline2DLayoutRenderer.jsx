@@ -1042,7 +1042,7 @@ export default function Midline2DLayoutRenderer({
   };
 
   // 📌 [지공사님 핵심 지침 100% 반영]: 선택 비트 전용 오토 핏 (AUTO FIT)
-  // 가장 큰 공백 탐색 + 오발 곡률 기반 최대 내접 직경(1/64" 무조건 내림) 및 최적 이동거리(Y*) 동시 연산 피팅
+  // [지공사님 공백 정의]: 실제 오발선과 선택된 비트를 제외한 모든 비트의 외곽선 차이(미절삭 잔여 살)가 가장 큰 지점을 정밀 스캔하여 오발 곡률 내접 최적 직경 & 이동거리(Y*) 동시 연산
   const handleAutoFitBit = () => {
     if (!isEditMode || selectedBitIndex === null) return;
     const targetBit = selectedBitIndex;
@@ -1052,30 +1052,121 @@ export default function Midline2DLayoutRenderer({
 
     // 기본 제원 수치 확인 (유효성 가드)
     const hNum = holeNum > 0 ? holeNum : 0.75;
+    const oNum = ovalNum > 0 ? ovalNum : (hNum + 0.125);
     const c1 = cutNum1 > 0 ? cutNum1 : hNum;
     const c2 = cutNum2 > 0 ? cutNum2 : hNum;
+
+    const R0 = hNum / 2;
+    const R1 = c1 / 2;
+    const R2 = c2 / 2;
+    const L1 = (oNum - c1) / 2;
+    const L2 = (oNum - c2) / 2;
+
+    const rad = (angleNum * Math.PI) / 180;
+    const handMult = hand === 'left' ? -1 : 1;
 
     // 상단(원홀~#1번) vs 하단(원홀~#2번) 영역 판별
     const cur = bitCustomOffsets[targetBit] || { x: 0, y: 0 };
     const isUpper = (targetBit === 4 || targetBit === 6 || (cur.y < 0 && isFlipped180) || (cur.y > 0 && !isFlipped180));
 
-    let fitDiameter = hNum;
-    if (isUpper) {
-      // 상단 공백: 원홀(hNum)과 #1 비트(c1) 사이의 최대 내접 직경 연산
-      const idealDiameter = (hNum + c1) / 2;
-      const bit64 = Math.max(32, Math.floor(idealDiameter * 64)); // 1/64" 단위 무조건 내림(Floor)
-      fitDiameter = bit64 / 64;
-    } else {
-      // 하단 공백: 원홀(hNum)과 #2 비트(c2) 사이의 최대 내접 직경 연산
-      const idealDiameter = (hNum + c2) / 2;
-      const bit64 = Math.max(32, Math.floor(idealDiameter * 64)); // 1/64" 단위 무조건 내림(Floor)
-      fitDiameter = bit64 / 64;
+    // 1) 선택된 비트를 제외한 다른 모든 비트들의 (중심거리 y, 반경 R) 목록 수집
+    const existingCuts = [];
+    // - 원홀: y = 0, R = R0
+    existingCuts.push({ y: 0, r: R0 });
+    // - #1번 비트: y = +L1, R = R1
+    existingCuts.push({ y: L1, r: R1 });
+    // - #2번 비트: y = -L2, R = R2
+    existingCuts.push({ y: -L2, r: R2 });
+
+    // - 다른 활성화된 중간 비트들 (k !== targetBit)
+    for (let k = 3; k < totalActiveBits; k++) {
+      if (k !== targetBit && isBitVisible(k)) {
+        const kDiameter = getBitDiameter(k);
+        const kR = kDiameter / 2;
+        const kOff = bitCustomOffsets[k] || { x: 0, y: 0 };
+        let kBaseY = 0;
+        if (k === 4) kBaseY = L1 / 2;
+        else if (k === 3) kBaseY = -L2 / 2;
+        const axialProj = (kOff.y * Math.sin(rad)) - (kOff.x * Math.cos(rad) * handMult);
+        const ky = kBaseY + axialProj;
+        existingCuts.push({ y: ky, r: kR });
+      }
     }
 
+    // 2) 실제 오발 외곽선 반폭 함수 W_oval(y)
+    const getOvalHalfWidth = (y) => {
+      if (y >= 0) {
+        if (y >= L1) {
+          const dy = y - L1;
+          return dy < R1 ? Math.sqrt(Math.max(0, R1 * R1 - dy * dy)) : 0;
+        }
+        // 0 <= y < L1 (허리 스플라인 테이퍼 보간)
+        const t = y / (L1 > 0.001 ? L1 : 0.001);
+        return R0 + (R1 - R0) * t;
+      } else {
+        const ay = Math.abs(y);
+        if (ay >= L2) {
+          const dy = ay - L2;
+          return dy < R2 ? Math.sqrt(Math.max(0, R2 * R2 - dy * dy)) : 0;
+        }
+        // -L2 < y < 0
+        const t = ay / (L2 > 0.001 ? L2 : 0.001);
+        return R0 + (R2 - R0) * t;
+      }
+    };
+
+    // 3) 기존 비트들에 의한 절삭 반폭 함수 W_cut(y)
+    const getCutHalfWidth = (y) => {
+      let maxW = 0;
+      for (const cut of existingCuts) {
+        const dy = Math.abs(y - cut.y);
+        if (dy < cut.r) {
+          const w = Math.sqrt(Math.max(0, cut.r * cut.r - dy * dy));
+          if (w > maxW) maxW = w;
+        }
+      }
+      return maxW;
+    };
+
+    // 4) 타겟 구역에서 100개 샘플링 지점 스캔하여 잔여 살(Gap = W_oval - W_cut) 최대 지점 탐색
+    let bestY = isUpper ? (L1 / 2) : (-L2 / 2);
+    let maxGap = -1;
+
+    const sampleSteps = 100;
+    const yStart = isUpper ? (L1 * 0.05) : (-L2 * 0.95);
+    const yEnd = isUpper ? (L1 * 0.95) : (-L2 * 0.05);
+
+    for (let i = 0; i <= sampleSteps; i++) {
+      const sampleY = yStart + (yEnd - yStart) * (i / sampleSteps);
+      const wOval = getOvalHalfWidth(sampleY);
+      const wCut = getCutHalfWidth(sampleY);
+      const gap = Math.max(0, wOval - wCut);
+
+      if (gap > maxGap) {
+        maxGap = gap;
+        bestY = sampleY;
+      }
+    }
+
+    // 5) 최대 공백 지점 bestY에서의 오발 외곽선 내접 직경 연산
+    const wAtBestY = getOvalHalfWidth(bestY);
+    const idealDiameter = wAtBestY * 2;
+    // 1/64" 단위 무조건 내림(Floor) 적용 (절대 오발선 돌출 금지)
+    const bit64 = Math.max(32, Math.floor(idealDiameter * 64));
+    const fitDiameter = bit64 / 64;
     const fitDiameterStr = formatFractionByDenom(fitDiameter, 64);
+
+    // 6) bestY 축선 위치에 정확히 안착시키기 위한 D-Pad 오프셋 델타 연산
+    let baseDefaultAxialY = 0;
+    if (targetBit === 4) baseDefaultAxialY = L1 / 2;
+    else if (targetBit === 3) baseDefaultAxialY = -L2 / 2;
+
+    const axialDelta = bestY - baseDefaultAxialY;
+    const targetOffY = axialDelta * Math.sin(rad);
+    const targetOffX = -axialDelta * Math.cos(rad) * handMult;
+
     const nextSizes = { ...bitCustomSizes, [targetBit]: fitDiameterStr };
-    // 오프셋을 0으로 리셋하여 축선상 최적 중심 접점 좌표에 1:1 완벽 밀착 안착
-    const nextOffsets = { ...bitCustomOffsets, [targetBit]: { x: 0, y: 0 } };
+    const nextOffsets = { ...bitCustomOffsets, [targetBit]: { x: targetOffX, y: targetOffY } };
 
     setBitCustomSizes(nextSizes);
     setBitCustomOffsets(nextOffsets);
