@@ -97,8 +97,8 @@ export default function Midline2DLayoutRenderer({
 
   // 📌 [지공사님 지침]: 프리뷰 모드에서 시뮬레이터는 기본 꺼짐(false)으로 시작 (버튼 클릭으로 켜기/끄기 가능)
   const [isCheckFillMode, setIsCheckFillMode] = useState(false);
-  // 📌 [지공사님 지침]: #1, #2 절삭면 및 원홀 반영 실제 오발선 토글 상태 (프리뷰 테스트용)
-  const [isActualOvalMode, setIsActualOvalMode] = useState(false);
+  // 📌 [지공사님 핵심 지침]: 베이스 오발선 가이드 모드 ('theoretical': 🟢 이론상선 vs 'actual': 🟡 실제선)
+  const [ovalGuideType, setOvalGuideType] = useState('theoretical');
 
   // 부모의 isDetailedMode 변경 시 3~4 중간비트 동기화
   useEffect(() => {
@@ -759,34 +759,35 @@ export default function Midline2DLayoutRenderer({
       }
       ctx.restore();
 
-      // D) 0.6px 초록 오발 타원 라인(#10b981) 상시 표출 (최박선)
-      try {
-        const rawDist = (r1Pos && r2Pos && Number.isFinite(r1Pos.x) && Number.isFinite(r2Pos.x) && Number.isFinite(r1Pos.y) && Number.isFinite(r2Pos.y))
-          ? Math.hypot(r1Pos.x - r2Pos.x, r1Pos.y - r2Pos.y)
-          : 0;
-        const distR1R2 = Number.isFinite(rawDist) ? rawDist : 0;
-        const rawRx = distR1R2 / 2 + (((cutNum1 + cutNum2) / 4)) * scale;
-        const rawRy = (holeNum / 2) * scale;
+      // D) 📌 [오발선 베이스 가이드라인]: 모든 상황에서 베이스로 상시 표출 (이론상선 vs 실제선 라디오 전환)
+      if (ovalGuideType === 'theoretical') {
+        // D-1) 0.6px 초록 이론상 오발 타원 라인 (#10b981)
+        try {
+          const rawDist = (r1Pos && r2Pos && Number.isFinite(r1Pos.x) && Number.isFinite(r2Pos.x) && Number.isFinite(r1Pos.y) && Number.isFinite(r2Pos.y))
+            ? Math.hypot(r1Pos.x - r2Pos.x, r1Pos.y - r2Pos.y)
+            : 0;
+          const distR1R2 = Number.isFinite(rawDist) ? rawDist : 0;
+          const rawRx = distR1R2 / 2 + (((cutNum1 + cutNum2) / 4)) * scale;
+          const rawRy = (holeNum / 2) * scale;
 
-        const rxPx = (Number.isFinite(rawRx) && rawRx > 0) ? rawRx : 10;
-        const ryPx = (Number.isFinite(rawRy) && rawRy > 0) ? rawRy : 10;
+          const rxPx = (Number.isFinite(rawRx) && rawRx > 0) ? rawRx : 10;
+          const ryPx = (Number.isFinite(rawRy) && rawRy > 0) ? rawRy : 10;
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.setLineDash([]);
-        ctx.ellipse(cx, cy, rxPx, ryPx, actualCutAngle, 0, Math.PI * 2);
-        ctx.strokeStyle = '#10b981';
-        ctx.lineWidth = 0.5; // 초록 오발 타원선 0.5px
-        ctx.shadowColor = 'rgba(16, 185, 129, 0.4)';
-        ctx.shadowBlur = 4;
-        ctx.stroke();
-        ctx.restore();
-      } catch (err) {
-        // Safe fallback guard to prevent graphics context crash
-      }
-
-      // E) 📌 [지공사님 테스트 전용] 1·2번 절삭면 및 원홀을 매끄럽게(꺾임 없이) 연결한 실제 오발선 (#fbbf24 골드/앰버 라인)
-      if (isActualOvalMode && !isEditMode) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([]);
+          ctx.ellipse(cx, cy, rxPx, ryPx, actualCutAngle, 0, Math.PI * 2);
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 0.6; // 초록 오발 타원선 0.6px
+          ctx.shadowColor = 'rgba(16, 185, 129, 0.4)';
+          ctx.shadowBlur = 4;
+          ctx.stroke();
+          ctx.restore();
+        } catch (err) {
+          // Safe fallback guard to prevent graphics context crash
+        }
+      } else {
+        // D-2) 1.0px 골드 실제 오발선 (1, 2번 절삭면 및 원홀 꺾임 없는 매끄러운 3차 베지에 스플라인 #fbbf24)
         try {
           const uX = Math.cos(actualCutAngle);
           const uY = Math.sin(actualCutAngle);
@@ -800,14 +801,10 @@ export default function Midline2DLayoutRenderer({
           const holeRadiusPx = (holeNum / 2) * scale;
           const halfOvalPx = (ovalNum / 2) * scale;
 
-          // #1번 상단 끝점 거리 (고정 오발 전장과 완벽 일치)
           const L1 = Math.max(halfOvalPx, calcOffset1 + r1RadiusPx);
-          // #2번 하단 끝점 거리 (고정 오발 전장과 완벽 일치)
           const L2 = Math.max(halfOvalPx, calcOffset2 + r2RadiusPx);
-          // 중심 원홀 가로 허리 반경
           const W = holeRadiusPx > 0 ? holeRadiusPx : ((r1RadiusPx + r2RadiusPx) / 2);
 
-          // 4대 정점 좌표
           const Ax = cx + L1 * uX;
           const Ay = cy + L1 * uY;
           const Bx = cx - L2 * uX;
@@ -817,16 +814,11 @@ export default function Midline2DLayoutRenderer({
           const Lx = cx - W * vX;
           const Ly = cy - W * vY;
 
-          // 3차 베지에 매끄러운 곡률 계수
           const KAPPA = 0.55228475;
 
           ctx.save();
           ctx.beginPath();
-
-          // 1. 상단 정점 A에서 시작
           ctx.moveTo(Ax, Ay);
-
-          // 2. 1사분면 (상단 A ➔ 우측 허리 R 매끄러운 곡선)
           ctx.bezierCurveTo(
             Ax + KAPPA * W * vX,
             Ay + KAPPA * W * vY,
@@ -835,8 +827,6 @@ export default function Midline2DLayoutRenderer({
             Rx,
             Ry
           );
-
-          // 3. 2사분면 (우측 허리 R ➔ 하단 B 매끄러운 곡선)
           ctx.bezierCurveTo(
             Rx - KAPPA * L2 * uX,
             Ry - KAPPA * L2 * uY,
@@ -845,8 +835,6 @@ export default function Midline2DLayoutRenderer({
             Bx,
             By
           );
-
-          // 4. 3사분면 (하단 B ➔ 좌측 허리 L 매끄러운 곡선)
           ctx.bezierCurveTo(
             Bx - KAPPA * W * vX,
             By - KAPPA * W * vY,
@@ -855,8 +843,6 @@ export default function Midline2DLayoutRenderer({
             Lx,
             Ly
           );
-
-          // 5. 4사분면 (좌측 허리 L ➔ 상단 A 매끄러운 곡선 복귀)
           ctx.bezierCurveTo(
             Lx + KAPPA * L1 * uX,
             Ly + KAPPA * L1 * uY,
@@ -865,10 +851,10 @@ export default function Midline2DLayoutRenderer({
             Ax,
             Ay
           );
-
           ctx.closePath();
+
           ctx.strokeStyle = '#fbbf24';
-          ctx.lineWidth = 1.2;
+          ctx.lineWidth = 1.0;
           ctx.shadowColor = 'rgba(251, 191, 36, 0.6)';
           ctx.shadowBlur = 4;
           ctx.stroke();
@@ -881,7 +867,7 @@ export default function Midline2DLayoutRenderer({
       // 📌 [ctx.save() 스택 누출 100% 차단]: 함수 최상단 ctx.save()/ctx.scale(dpr,dpr) 짝 복구
       ctx.restore();
     },
-    [holeNum, ovalNum, cutNum1, cutNum2, angleNum, hand, results, getDrillBitValue, holeSize, slugNum, isBitVisible, isBitActiveInChart, isCheckFillMode, isActualOvalMode, thumbHoleCut, isEditMode, selectedBitIndex, bitCustomOffsets, bitCustomSizes, isFlipped180]
+    [holeNum, ovalNum, cutNum1, cutNum2, angleNum, hand, results, getDrillBitValue, holeSize, slugNum, isBitVisible, isBitActiveInChart, isCheckFillMode, ovalGuideType, thumbHoleCut, isEditMode, selectedBitIndex, bitCustomOffsets, bitCustomSizes, isFlipped180]
   );
 
   // 📌 [Direct Canvas GPU Render Trigger]: 클로저 래핑 무관 100% Direct Canvas Drawing 보장
@@ -1267,19 +1253,60 @@ export default function Midline2DLayoutRenderer({
           />
 
           {/* 📌 풀스크린 좌상단 툴바: [ PREVIEW / EDIT ] 토글 스위치 + 우측 [ 180° ROTATE ] 회전 버튼 */}
-          <div className="absolute top-3 left-3 z-20 flex items-center gap-2 select-none">
-            {/* 1) [ PREVIEW ] 전용 독립 버튼 */}
-            <button
-              type="button"
-              onClick={handleSwitchToPreviewMode}
-              className={`h-8 px-2.5 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border ${
-                !isEditMode
-                  ? 'bg-slate-800 text-cyan-400 border-cyan-500/60 font-extrabold'
-                  : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
-              }`}
-            >
-              PREVIEW
-            </button>
+          <div className="absolute top-3 left-3 z-20 flex items-start gap-2 select-none">
+            {/* 1) [ PREVIEW ] 컬럼: PREVIEW 버튼 + 그 밑에 수직 2단 무명 컬러 버튼 (이론상 Green vs 실제 Gold) */}
+            <div className="flex flex-col gap-1 items-stretch">
+              <button
+                type="button"
+                onClick={handleSwitchToPreviewMode}
+                className={`h-8 px-2.5 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border ${
+                  !isEditMode
+                    ? 'bg-slate-800 text-cyan-400 border-cyan-500/60 font-extrabold'
+                    : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
+                }`}
+              >
+                PREVIEW
+              </button>
+
+              {/* 프리뷰 버튼 밑 2개의 수직 배치 무명 컬러 버튼 (라디오 전환) */}
+              <div className="flex flex-col gap-1 w-full pt-0.5">
+                {/* 🟢 이론상 오발선 버튼 (Green) */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOvalGuideType('theoretical');
+                    requestDirectRender();
+                  }}
+                  className={`h-4.5 w-full rounded-md border flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                    ovalGuideType === 'theoretical'
+                      ? 'bg-emerald-500/30 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400/90 shadow-emerald-500/40'
+                      : 'bg-slate-900/80 border-slate-700/60 hover:border-emerald-600/40 opacity-40 hover:opacity-75'
+                  }`}
+                  title="이론상 오발선 (초록 타원선)"
+                >
+                  <span className={`w-4 h-1.5 rounded-full ${ovalGuideType === 'theoretical' ? 'bg-emerald-400 shadow-emerald-400/80' : 'bg-emerald-600'}`} />
+                </button>
+
+                {/* 🟡 실제 오발선 버튼 (Gold/Amber) */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOvalGuideType('actual');
+                    requestDirectRender();
+                  }}
+                  className={`h-4.5 w-full rounded-md border flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                    ovalGuideType === 'actual'
+                      ? 'bg-amber-500/30 border-amber-400 text-amber-300 ring-1 ring-amber-400/90 shadow-amber-500/40'
+                      : 'bg-slate-900/80 border-slate-700/60 hover:border-amber-600/40 opacity-40 hover:opacity-75'
+                  }`}
+                  title="실제 오발선 (골드 매끄러운 곡선)"
+                >
+                  <span className={`w-4 h-1.5 rounded-full ${ovalGuideType === 'actual' ? 'bg-amber-400 shadow-amber-400/80' : 'bg-amber-600'}`} />
+                </button>
+              </div>
+            </div>
 
             {/* 2) [ EDIT ] 전용 독립 버튼 */}
             <button
@@ -1402,28 +1429,6 @@ export default function Midline2DLayoutRenderer({
                 <div className="flex items-center space-x-2 truncate">
                   <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isCheckFillMode ? 'bg-white ring-1 ring-white/60' : 'bg-slate-600'}`} />
                   <span className="truncate">시뮬레이터</span>
-                </div>
-              </button>
-            )}
-
-            {/* 🟡 실제 오발선 칩 (지공사님 테스트용: 프리뷰 칩 배열 마지막 배치) */}
-            {!isEditMode && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsActualOvalMode((prev) => !prev);
-                  requestDirectRender();
-                }}
-                className={`w-[130px] h-8 flex items-center justify-between px-2.5 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[11px] sm:text-xs font-bold ${
-                  isActualOvalMode
-                    ? 'bg-amber-950/90 text-amber-300 border-amber-400/90 ring-1 ring-amber-400/60 shadow-amber-500/20 font-black opacity-100'
-                    : 'bg-slate-950/80 text-slate-400 border-slate-700/80 hover:border-slate-600 opacity-60'
-                }`}
-                title="1·2번 절삭면 및 원홀 반영 실제 오발선 표출"
-              >
-                <div className="flex items-center space-x-2 truncate">
-                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isActualOvalMode ? 'bg-amber-400 ring-1 ring-amber-300' : 'bg-slate-600'}`} />
-                  <span className="truncate">실제 오발선</span>
                 </div>
               </button>
             )}
@@ -1608,22 +1613,63 @@ export default function Midline2DLayoutRenderer({
         />
 
         {/* 📌 인라인 좌상단 툴바: [ PREVIEW / EDIT ] 토글 스위치 + 우측 [ 180° ROTATE ] 회전 버튼 */}
-        <div className="absolute top-3 left-3 z-20 flex items-center gap-2 select-none">
-          {/* 1) [ PREVIEW ] 전용 독립 버튼 (3번 버튼과 100% 디자인 통일) */}
-          <button
-            type="button"
-            onClick={handleSwitchToPreviewMode}
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            className={`h-8 px-2.5 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
-              !isEditMode
-                ? 'bg-slate-800 text-cyan-400 border-cyan-500/60 font-extrabold'
-                : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70 font-medium'
-            }`}
-            title="PREVIEW 고정 모드. 클릭 시 PREVIEW 모드로 전환"
-          >
-            PREVIEW
-          </button>
+        <div className="absolute top-3 left-3 z-20 flex items-start gap-2 select-none">
+          {/* 1) [ PREVIEW ] 컬럼: PREVIEW 버튼 + 그 밑에 수직 2단 무명 컬러 버튼 (이론상 Green vs 실제 Gold) */}
+          <div className="flex flex-col gap-1 items-stretch">
+            <button
+              type="button"
+              onClick={handleSwitchToPreviewMode}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              className={`h-8 px-2.5 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
+                !isEditMode
+                  ? 'bg-slate-800 text-cyan-400 border-cyan-500/60 font-extrabold'
+                  : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70 font-medium'
+              }`}
+              title="PREVIEW 고정 모드. 클릭 시 PREVIEW 모드로 전환"
+            >
+              PREVIEW
+            </button>
+
+            {/* 프리뷰 버튼 밑 2개의 수직 배치 무명 컬러 버튼 (라디오 전환) */}
+            <div className="flex flex-col gap-1 w-full pt-0.5">
+              {/* 🟢 이론상 오발선 버튼 (Green) */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOvalGuideType('theoretical');
+                  requestDirectRender();
+                }}
+                className={`h-4.5 w-full rounded-md border flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                  ovalGuideType === 'theoretical'
+                    ? 'bg-emerald-500/30 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400/90 shadow-emerald-500/40'
+                    : 'bg-slate-900/80 border-slate-700/60 hover:border-emerald-600/40 opacity-40 hover:opacity-75'
+                }`}
+                title="이론상 오발선 (초록 타원선)"
+              >
+                <span className={`w-4 h-1.5 rounded-full ${ovalGuideType === 'theoretical' ? 'bg-emerald-400 shadow-emerald-400/80' : 'bg-emerald-600'}`} />
+              </button>
+
+              {/* 🟡 실제 오발선 버튼 (Gold/Amber) */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOvalGuideType('actual');
+                  requestDirectRender();
+                }}
+                className={`h-4.5 w-full rounded-md border flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                  ovalGuideType === 'actual'
+                    ? 'bg-amber-500/30 border-amber-400 text-amber-300 ring-1 ring-amber-400/90 shadow-amber-500/40'
+                    : 'bg-slate-900/80 border-slate-700/60 hover:border-amber-600/40 opacity-40 hover:opacity-75'
+                }`}
+                title="실제 오발선 (골드 매끄러운 곡선)"
+              >
+                <span className={`w-4 h-1.5 rounded-full ${ovalGuideType === 'actual' ? 'bg-amber-400 shadow-amber-400/80' : 'bg-amber-600'}`} />
+              </button>
+            </div>
+          </div>
 
           {/* 2) [ EDIT ] 전용 독립 버튼 (3번 버튼과 100% 디자인 통일) */}
           <button
@@ -1759,28 +1805,6 @@ export default function Midline2DLayoutRenderer({
               <div className="flex items-center space-x-1.5 truncate">
                 <span className={`w-2 h-2 rounded-full shrink-0 ${isCheckFillMode ? 'bg-white ring-1 ring-white/60' : 'bg-slate-600'}`} />
                 <span className="truncate">시뮬레이터</span>
-              </div>
-            </button>
-          )}
-
-          {/* 🟡 실제 오발선 칩 (지공사님 테스트용: 프리뷰 칩 배열 마지막 배치) */}
-          {!isEditMode && (
-            <button
-              type="button"
-              onClick={() => {
-                setIsActualOvalMode((prev) => !prev);
-                requestDirectRender();
-              }}
-              className={`w-[115px] sm:w-[130px] h-7 flex items-center justify-between px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[10px] sm:text-xs font-bold ${
-                isActualOvalMode
-                  ? 'bg-amber-950/90 text-amber-300 border-amber-400/90 ring-1 ring-amber-400/60 shadow-amber-500/20 font-black opacity-100'
-                  : 'bg-slate-950/80 text-slate-400 border-slate-700/80 hover:border-slate-600 opacity-60'
-              }`}
-              title="1·2번 절삭면 및 원홀 반영 실제 오발선 표출"
-            >
-              <div className="flex items-center space-x-1.5 truncate">
-                <span className={`w-2 h-2 rounded-full shrink-0 ${isActualOvalMode ? 'bg-amber-400 ring-1 ring-amber-300' : 'bg-slate-600'}`} />
-                <span className="truncate">실제 오발선</span>
               </div>
             </button>
           )}
