@@ -787,78 +787,52 @@ export default function Midline2DLayoutRenderer({
           // Safe fallback guard to prevent graphics context crash
         }
       } else {
-        // D-2) 1.0px 골드 실제 오발선 (1, 2번 절삭면 및 원홀 꺾임 없는 매끄러운 3차 베지에 스플라인 #fbbf24)
+        // D-2) 1.0px 골드 실제 오발선 (#1, #2 비트의 실제 원형 절삭호 + 공통 외접선 캡슐 기하학 #fbbf24)
         try {
-          const uX = Math.cos(actualCutAngle);
-          const uY = Math.sin(actualCutAngle);
-          const vX = -Math.sin(actualCutAngle);
-          const vY = Math.cos(actualCutAngle);
-
           const r1Diameter = getBitDiameter(1);
-          const r1RadiusPx = (r1Diameter / 2) * scale;
+          const R1 = (r1Diameter / 2) * scale;
           const r2Diameter = getBitDiameter(2);
-          const r2RadiusPx = (r2Diameter / 2) * scale;
-          const holeRadiusPx = (holeNum / 2) * scale;
-          const halfOvalPx = (ovalNum / 2) * scale;
+          const R2 = (r2Diameter / 2) * scale;
 
-          const L1 = Math.max(halfOvalPx, calcOffset1 + r1RadiusPx);
-          const L2 = Math.max(halfOvalPx, calcOffset2 + r2RadiusPx);
-          const W = holeRadiusPx > 0 ? holeRadiusPx : ((r1RadiusPx + r2RadiusPx) / 2);
+          const p1 = r1Pos;
+          const p2 = r2Pos;
 
-          const Ax = cx + L1 * uX;
-          const Ay = cy + L1 * uY;
-          const Bx = cx - L2 * uX;
-          const By = cy - L2 * uY;
-          const Rx = cx + W * vX;
-          const Ry = cy + W * vY;
-          const Lx = cx - W * vX;
-          const Ly = cy - W * vY;
+          if (p1 && p2 && Number.isFinite(p1.x) && Number.isFinite(p2.x) && Number.isFinite(p1.y) && Number.isFinite(p2.y)) {
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            const dist = Math.hypot(dx, dy);
 
-          const KAPPA = 0.55228475;
+            ctx.save();
+            ctx.beginPath();
 
-          ctx.save();
-          ctx.beginPath();
-          ctx.moveTo(Ax, Ay);
-          ctx.bezierCurveTo(
-            Ax + KAPPA * W * vX,
-            Ay + KAPPA * W * vY,
-            Rx + KAPPA * L1 * uX,
-            Ry + KAPPA * L1 * uY,
-            Rx,
-            Ry
-          );
-          ctx.bezierCurveTo(
-            Rx - KAPPA * L2 * uX,
-            Ry - KAPPA * L2 * uY,
-            Bx + KAPPA * W * vX,
-            By + KAPPA * W * vY,
-            Bx,
-            By
-          );
-          ctx.bezierCurveTo(
-            Bx - KAPPA * W * vX,
-            By - KAPPA * W * vY,
-            Lx - KAPPA * L2 * uX,
-            Ly - KAPPA * L2 * uY,
-            Lx,
-            Ly
-          );
-          ctx.bezierCurveTo(
-            Lx + KAPPA * L1 * uX,
-            Ly + KAPPA * L1 * uY,
-            Ax - KAPPA * W * vX,
-            Ay - KAPPA * W * vY,
-            Ax,
-            Ay
-          );
-          ctx.closePath();
+            if (dist > 0.001) {
+              const theta = Math.atan2(dy, dx);
+              const deltaR = R1 - R2;
 
-          ctx.strokeStyle = '#fbbf24';
-          ctx.lineWidth = 1.0;
-          ctx.shadowColor = 'rgba(251, 191, 36, 0.6)';
-          ctx.shadowBlur = 4;
-          ctx.stroke();
-          ctx.restore();
+              // 두 원의 공통 외접선 각도 연산
+              const ratio = Math.max(-1, Math.min(1, deltaR / dist));
+              const beta = Math.asin(ratio);
+
+              const gammaR = theta + Math.PI / 2 - beta;
+              const gammaL = theta - Math.PI / 2 + beta;
+
+              // 1) 2번 원의 하단 원형 절삭호 (우측 접점 -> 하단 정점 -> 좌측 접점)
+              ctx.arc(p2.x, p2.y, R2, gammaR, gammaL, false);
+              // 2) 1번 원의 상단 원형 절삭호 (좌측 접점 -> 상단 정점 -> 우측 접점, 좌측 접선은 자동 연결)
+              ctx.arc(p1.x, p1.y, R1, gammaL, gammaR, false);
+              // 3) 닫힌 캡슐 패스 완성 (우측 접선 자동 연결)
+              ctx.closePath();
+            } else {
+              ctx.arc(cx, cy, Math.max(R1, R2), 0, Math.PI * 2);
+            }
+
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 1.0;
+            ctx.shadowColor = 'rgba(251, 191, 36, 0.6)';
+            ctx.shadowBlur = 4;
+            ctx.stroke();
+            ctx.restore();
+          }
         } catch (err) {
           // Safe fallback guard
         }
