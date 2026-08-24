@@ -210,14 +210,6 @@ export default function App() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={handleResetAll}
-                className="px-3.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl transition-all cursor-pointer shadow-2xs"
-                title="모든 입력 수치 초기화"
-              >
-                초기화
-              </button>
-              <button
-                type="button"
                 onClick={() => setIsStorageModalOpen(true)}
                 className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#1e293b] hover:bg-[#0f172a] rounded-xl transition-all cursor-pointer shadow-2xs"
                 title="아카이브 관리 (저장 및 불러오기)"

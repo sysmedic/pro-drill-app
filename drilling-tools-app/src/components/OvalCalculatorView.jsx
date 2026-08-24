@@ -290,7 +290,7 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
               <button
                 type="button"
                 onClick={handleClearAllInputs}
-                className="text-[11px] sm:text-xs font-bold text-slate-500 hover:text-rose-600 px-2 py-0.5 rounded-md hover:bg-rose-50 border border-slate-200 transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                className="text-[11px] sm:text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 px-2 py-0.5 rounded-md transition-all cursor-pointer flex items-center justify-center shadow-2xs"
                 title="원홀, 오발, 컷, 각도, 피치 등 모든 오발 수치 공란 초기화"
               >
                 <span>수치 초기화</span>

@@ -171,6 +171,25 @@ export default function SpanConverterView({ sharedState, updateSharedState }) {
     }
   };
 
+  // 🔄 스판 변환기 입력 수치 초기화 함수
+  const handleClearInputs = () => {
+    updateSharedState({
+      midSpanStr: '',
+      ringSpanStr: '',
+      midHoleCut: '31/32',
+      midInsert: '',
+      ringHoleCut: '31/32',
+      ringInsert: '',
+      thumbHoleCut: '1 1/4',
+      holeSize: '',
+      ovalSize: '',
+      ovalCut: '',
+      ovalCut1: '',
+      ovalCut2: '',
+      ovalAngle: '',
+    });
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
       {/* 카드 1: 스판 타입 선택 및 손방향 배치 (스냅샷 2번 원안 100% 복원) */}
@@ -185,9 +204,18 @@ export default function SpanConverterView({ sharedState, updateSharedState }) {
             value={fromType}
           />
 
-          {/* 손방향 토글 스위치 */}
+          {/* 손방향 토글 스위치 & 우측 끝단 수치 초기화 버튼 */}
           <div className="flex flex-col w-full">
-            <label className="text-xs font-bold text-slate-600 mb-1">손방향</label>
+            <div className="flex items-center justify-end mb-1">
+              <button
+                type="button"
+                onClick={handleClearInputs}
+                className="text-[11px] sm:text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 px-2 py-0.5 rounded-md transition-all cursor-pointer flex items-center justify-center shadow-2xs"
+                title="스판 변환 입력 수치 초기화"
+              >
+                <span>수치 초기화</span>
+              </button>
+            </div>
             <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-10 w-full shadow-2xs">
               <button
                 type="button"
