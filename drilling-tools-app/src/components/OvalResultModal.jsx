@@ -192,14 +192,14 @@ export default function OvalResultModal({
             OVAL PITCH MATRIX
           </h2>
           <div className="flex items-center space-x-2">
-            {/* 🔴 리셋 버튼 (시뮬레이터 버튼과 동일한 컨셉, 좌측 배치) */}
+            {/* 🔴 RE SET 버튼 (시뮬레이터 버튼과 동일한 컨셉, 좌측 배치) */}
             <button
               type="button"
               onClick={() => setIsResetConfirmModalOpen(true)}
               className="h-10 px-3.5 text-xs sm:text-sm font-black rounded-md bg-gradient-to-r from-slate-900 via-slate-800 to-rose-950/90 text-rose-300 hover:text-white hover:from-slate-800 hover:to-rose-900 border border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.25)] hover:shadow-[0_0_20px_rgba(244,63,94,0.4)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center space-x-1.5"
               title="원홀, #1·#2 비트 수치 및 초기 추천 모드로 복원"
             >
-              <span>리셋</span>
+              <span>RE SET</span>
             </button>
 
             {/* 🔵 시뮬레이터 버튼 (우측 배치) */}
@@ -454,7 +454,7 @@ export default function OvalResultModal({
                 ⚠️
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-base font-black text-white">오발 매트릭스 리셋</h3>
+                <h3 className="text-base font-black text-white">오발 매트릭스 RE SET</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   원홀, #1·#2 비트 수치 및 모든 이동/추가 내역이 취소되고, 차트 최초 입력 당시의 기본(3드릴) 상태로 복원됩니다. 정말 초기화하시겠습니까?
                 </p>
@@ -472,7 +472,7 @@ export default function OvalResultModal({
                   onClick={handleConfirmReset}
                   className="h-10 rounded-md bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-lg shadow-rose-950/50 transition-all cursor-pointer active:scale-95"
                 >
-                  리셋
+                  RE SET
                 </button>
               </div>
             </div>
