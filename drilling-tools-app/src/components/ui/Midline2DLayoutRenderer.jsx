@@ -1300,20 +1300,20 @@ export default function Midline2DLayoutRenderer({
           {/* 📌 풀스크린 좌상단 툴바: [ PREVIEW / EDIT ] 토글 스위치 + 우측 [ 180° ROTATE ] 회전 버튼 */}
           <div className="absolute top-3 left-3 z-20 flex items-start gap-2 select-none">
             {/* 1) [ PREVIEW ] 컬럼: PREVIEW 버튼 + 그 밑에 [ GUIDE LINE ] 스위치 */}
-            <div className="flex flex-col gap-1 items-stretch">
+            <div className="flex flex-col gap-1 items-stretch w-[98px]">
               <button
                 type="button"
                 onClick={handleSwitchToPreviewMode}
-                className={`h-8 px-2.5 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border ${
+                className={`h-8 w-full px-2 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
                   !isEditMode
-                    ? 'bg-slate-800 text-cyan-400 border-cyan-500/60 font-extrabold'
+                    ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
                     : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
                 }`}
               >
                 PREVIEW
               </button>
 
-              {/* 프리뷰 버튼 밑 단일 골드 이론적 오발선 토글 스위치 (PREVIEW 버튼 디자인 1:1 차용) */}
+              {/* 프리뷰 버튼 밑 단일 골드 이론적 오발선 토글 스위치 (활성 램프 탑재) */}
               <div className="flex flex-col gap-1 w-full pt-1">
                 <button
                   type="button"
@@ -1322,14 +1322,19 @@ export default function Midline2DLayoutRenderer({
                     setShowGuideLine((prev) => !prev);
                     requestDirectRender();
                   }}
-                  className={`h-8 px-2.5 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border whitespace-nowrap ${
+                  className={`h-8 w-full px-2 text-[11px] font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none whitespace-nowrap ${
                     showGuideLine
-                      ? 'bg-slate-800 text-amber-400 border-amber-500/60 font-extrabold shadow-amber-950/30'
-                      : 'text-slate-400 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70 font-medium'
+                      ? 'bg-slate-800 text-amber-400 border-amber-500/60 shadow-amber-950/30'
+                      : 'text-slate-400 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
                   }`}
                   title="이론적 오발 가이드 라인 (골드 타원선) 표시 전환"
                 >
-                  GUIDE LINE
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
+                      showGuideLine ? 'scale-110 shadow-[0_0_6px_rgba(251,191,36,0.9)] bg-amber-400' : 'bg-slate-700'
+                    }`}
+                  />
+                  <span className="tracking-tight">GUIDE LINE</span>
                 </button>
               </div>
             </div>
@@ -1338,9 +1343,9 @@ export default function Midline2DLayoutRenderer({
             <button
               type="button"
               onClick={handleSwitchToEditMode}
-              className={`h-8 px-2.5 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border ${
+              className={`h-8 w-[58px] px-2 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
                 isEditMode
-                  ? 'bg-slate-800 text-cyan-400 border-cyan-500/60 font-extrabold'
+                  ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
                   : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
               }`}
             >
@@ -1354,9 +1359,9 @@ export default function Midline2DLayoutRenderer({
                 e.stopPropagation();
                 handleSetRotation(true);
               }}
-              className={`w-8 h-8 text-xs font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border ${
+              className={`w-8 h-8 text-xs font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
                 isFlipped180
-                  ? 'bg-slate-800 text-cyan-400 border-cyan-500/60 font-extrabold'
+                  ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
                   : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
               }`}
             >
@@ -1370,9 +1375,9 @@ export default function Midline2DLayoutRenderer({
                 e.stopPropagation();
                 handleSetRotation(false);
               }}
-              className={`w-8 h-8 text-xs font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border ${
+              className={`w-8 h-8 text-xs font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
                 !isFlipped180
-                  ? 'bg-slate-800 text-cyan-400 border-cyan-500/60 font-extrabold'
+                  ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
                   : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
               }`}
             >
@@ -1641,23 +1646,23 @@ export default function Midline2DLayoutRenderer({
         {/* 📌 인라인 좌상단 툴바: [ PREVIEW / EDIT ] 토글 스위치 + 우측 [ 180° ROTATE ] 회전 버튼 */}
         <div className="absolute top-3 left-3 z-20 flex items-start gap-2 select-none">
           {/* 1) [ PREVIEW ] 컬럼: PREVIEW 버튼 + 그 밑에 [ GUIDE LINE ] 스위치 */}
-          <div className="flex flex-col gap-1 items-stretch">
+          <div className="flex flex-col gap-1 items-stretch w-[98px]">
             <button
               type="button"
               onClick={handleSwitchToPreviewMode}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              className={`h-8 px-2.5 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
+              className={`h-8 w-full px-2 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
                 !isEditMode
-                  ? 'bg-slate-800 text-cyan-400 border-cyan-500/60 font-extrabold'
-                  : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70 font-medium'
+                  ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
+                  : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
               }`}
               title="PREVIEW 고정 모드. 클릭 시 PREVIEW 모드로 전환"
             >
               PREVIEW
             </button>
 
-            {/* 프리뷰 버튼 밑 단일 골드 이론적 오발선 토글 스위치 (PREVIEW 버튼 디자인 1:1 차용) */}
+            {/* 프리뷰 버튼 밑 단일 골드 이론적 오발선 토글 스위치 (활성 램프 탑재) */}
             <div className="flex flex-col gap-1 w-full pt-1">
               <button
                 type="button"
@@ -1668,14 +1673,19 @@ export default function Midline2DLayoutRenderer({
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
-                className={`h-8 px-2.5 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none whitespace-nowrap ${
+                className={`h-8 w-full px-2 text-[11px] font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none whitespace-nowrap ${
                   showGuideLine
-                    ? 'bg-slate-800 text-amber-400 border-amber-500/60 font-extrabold shadow-amber-950/30'
-                    : 'text-slate-400 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70 font-medium'
+                    ? 'bg-slate-800 text-amber-400 border-amber-500/60 shadow-amber-950/30'
+                    : 'text-slate-400 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
                 }`}
                 title="이론적 오발 가이드 라인 (골드 타원선) 표시 전환"
               >
-                GUIDE LINE
+                <span
+                  className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
+                    showGuideLine ? 'scale-110 shadow-[0_0_6px_rgba(251,191,36,0.9)] bg-amber-400' : 'bg-slate-700'
+                  }`}
+                />
+                <span className="tracking-tight">GUIDE LINE</span>
               </button>
             </div>
           </div>
@@ -1686,10 +1696,10 @@ export default function Midline2DLayoutRenderer({
             onClick={handleSwitchToEditMode}
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
-            className={`h-8 px-2.5 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
+            className={`h-8 w-[58px] px-2 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
               isEditMode
-                ? 'bg-slate-800 text-cyan-400 border-cyan-500/60 font-extrabold'
-                : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70 font-medium'
+                ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
+                : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
             }`}
             title="EDIT 모드 가동 (단일 비트 선택 및 D-Pad 조작 가능). 클릭 시 EDIT 모드로 전환"
           >
@@ -1707,8 +1717,8 @@ export default function Midline2DLayoutRenderer({
             onTouchStart={(e) => e.stopPropagation()}
             className={`w-8 h-8 text-xs font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
               isFlipped180
-                ? 'bg-slate-800 text-cyan-400 border-cyan-500/60 font-extrabold'
-                : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70 font-medium'
+                ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
+                : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
             }`}
             title="기본 뷰 (하향 화살표 ▼ - 중약지 아래 방향 기본)"
           >
@@ -1726,8 +1736,8 @@ export default function Midline2DLayoutRenderer({
             onTouchStart={(e) => e.stopPropagation()}
             className={`w-8 h-8 text-xs font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
               !isFlipped180
-                ? 'bg-slate-800 text-cyan-400 border-cyan-500/60 font-extrabold'
-                : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70 font-medium'
+                ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
+                : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
             }`}
             title="180° 반전 뷰 (상향 화살표 ▲)"
           >
