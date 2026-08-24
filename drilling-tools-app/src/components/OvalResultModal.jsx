@@ -275,18 +275,18 @@ export default function OvalResultModal({
                     isRowDisabled ? 'bg-slate-50/70' : 'hover:bg-slate-50'
                   }`}
                 >
-                  {/* 📌 드릴 비트 열 [col-span-4] (원홀 비트의 경우 규격과 명칭 확실히 표기) */}
+                  {/* 📌 드릴 비트 열 [col-span-4] */}
                   <div
                     className={`col-span-4 py-3 px-3.5 border-r border-slate-200 font-sans flex items-center justify-between tracking-[0.05em] ${
-                      isRowDisabled ? 'text-slate-400/30 font-bold' : isHoleBit ? 'text-emerald-700 font-black' : 'text-indigo-700 font-black'
+                      isRowDisabled ? 'text-slate-400/30 font-bold' : isHoleBit ? 'text-slate-900 font-black' : 'text-indigo-700 font-black'
                     }`}
                   >
                     {!isRowDisabled && drillBitStr !== '-' ? (
                       <>
-                        <span className={`text-sm sm:text-base font-black select-none shrink-0 ${isHoleBit ? 'text-emerald-800' : 'text-slate-900'}`}>
-                          #{targetBitIndex} {isHoleBit && <span className="text-xs text-emerald-600 font-bold">(원홀)</span>}
+                        <span className="text-sm sm:text-base font-black select-none shrink-0 text-slate-900">
+                          #{targetBitIndex}
                         </span>
-                        <span className={`flex-1 text-center font-black ${isHoleBit ? 'text-emerald-700' : 'text-indigo-700'}`}>{drillBitStr}</span>
+                        <span className={`flex-1 text-center font-black ${isHoleBit ? 'text-slate-900' : 'text-indigo-700'}`}>{drillBitStr}</span>
                       </>
                     ) : (
                       <span className="w-full text-center">{drillBitStr}</span>
