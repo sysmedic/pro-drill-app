@@ -4,11 +4,12 @@
 
 ## 현재 우선순위
 
-- **독립 PWA 웹 애플리케이션 'ProDrill Tools' [상단 툴바 꿀렁거림 방지 고정 폭 & GUIDE LINE 원형 LED 활성램프 탑재] 완료 (지공사님 지침에 따라 Vercel 배포는 보류 상태) (`Midline2DLayoutRenderer.jsx`)**:
+- **독립 PWA 웹 애플리케이션 'ProDrill Tools' [PREVIEW 및 EDIT 버튼 활성 LED 램프 탑재 & 툴바 안정성] 완료 (지공사님 지침에 따라 Vercel 배포는 보류 상태) (`Midline2DLayoutRenderer.jsx`)**:
   - **지공사님 핵심 지침 100% 완수**:
-    1) **화면 꿀렁거림(Layout Shift) 100% 제거**: `PREVIEW` 및 `GUIDE LINE` 컬럼에 고정 폭(`w-[98px]`), `EDIT`에 고정 폭(`w-[58px]`), 회전 버튼(`w-8 h-8`)을 부여하고 활성화 시 텍스트 너비 변동을 제거하여 버튼 클릭 시 화면이나 인접 버튼이 조금도 밀리지 않고 완벽히 고정.
-    2) **GUIDE LINE 문구 앞 원형 LED 활성램프 탑재**: 하단 드릴 비트 칩 스타일과 100% 동일한 LED 원형 램프(`w-2.5 h-2.5`)를 문구 앞에 탑재하여 스위치 ON 시 밝은 골드 램프 점등(`bg-amber-400`, `shadow-[0_0_6px_rgba(251,191,36,0.9)]`), 스위치 OFF 시 꺼진 램프(`bg-slate-700`)로 직관적 표출.
-    3) **선 색상 및 원호(#1/#2) 보존 엔진 유지**: 실제 오발선 🟢 초록(#10b981), 이론적 오발선 🟡 골드(#fbbf24) 및 완벽한 원호 밀착 절삭면 유지.
+    1) **PREVIEW 버튼 활성 LED 램프 탑재**: 기본 프리뷰 모드 활성 시 🔵 **빛나는 시안 LED 램프(`bg-cyan-400`, `shadow-[0_0_6px_rgba(34,211,238,0.9)]`)** 점등, EDIT 모드 시 꺼진 램프(`bg-slate-700`)로 전환.
+    2) **EDIT 버튼 활성 LED 램프 탑재**: EDIT 모드 활성 시 🔵 **빛나는 시안 LED 램프(`bg-cyan-400`)** 점등, 프리뷰 모드 시 꺼진 램프(`bg-slate-700`)로 전환.
+    3) **GUIDE LINE 버튼 활성 LED 램프 유지**: 스위치 ON 시 🟡 **빛나는 골드 LED 램프(`bg-amber-400`)** 점등.
+    4) **고정 폭을 통한 화면 꿀렁거림(Layout Shift) 0% 완벽 보장**: `PREVIEW`/`GUIDE LINE`(`w-[98px]`), `EDIT`(`w-[70px]`), 회전(`w-8 h-8`) 고정 규격으로 바위처럼 견고한 툴바 동작.
   - **검증 완료**: 70/70 전체 단위 테스트 PASS, Vite production build 성공 및 로컬 호스트(`http://192.168.0.11:5174`) 즉시 반영. (지공사님 배포 보류 지침 준수 🟢).
 
 1. 차트 입력폼을 `FingerPitchSection`, `ThumbSection`, `SpanSection`, `HandConditionSection` 단위로 분리한다.
