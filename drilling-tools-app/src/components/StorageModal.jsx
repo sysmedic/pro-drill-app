@@ -332,9 +332,9 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
                 ⚠️
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-base font-black text-white">아카이브 제원 삭제</h3>
+                <h3 className="text-base font-black text-white">아카이브 삭제</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  선택하신 <span className="text-slate-200 font-bold">[{slotToDelete.title}]</span> 제원 기록이 영구적으로 삭제됩니다. 정말 삭제하시겠습니까?
+                  <span className="text-slate-200 font-bold">[{slotToDelete.title}]</span> 기록이 영구적으로 삭제됩니다.
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2.5 pt-1">
