@@ -15,7 +15,7 @@ const OVAL_CORRECTION_OPTIONS = [
 
 // 📌 [지공사님 핵심 지침 100% 반영]: 시인성이 강화된 파스텔 골드 16각 별모양(Starburst) 추천 라벨 배지 (텍스트 블랙)
 const StarburstRecommendBadge = () => (
-  <div className="absolute -top-4 -right-3 z-20 pointer-events-none flex items-center justify-center filter drop-shadow-[0_1px_3px_rgba(217,119,6,0.3)]">
+  <div className="relative flex items-center justify-center filter drop-shadow-[0_1px_3px_rgba(217,119,6,0.3)]">
     <svg viewBox="0 0 48 48" className="w-9 h-9 fill-amber-200 stroke-amber-400" strokeWidth="1.3">
       <polygon points="24,2 29.7,10.1 39.6,8.4 37.9,18.3 46,24 37.9,29.7 39.6,39.6 29.7,37.9 24,46 18.3,37.9 8.4,39.6 10.1,29.7 2,24 10.1,18.3 8.4,8.4 18.3,10.1" />
     </svg>
@@ -83,6 +83,20 @@ export default function OvalResultModal({
     if (maxL <= 0.0625) return 'basic';
     if (maxL <= 0.125) return 'detailed';
     return 'ultra';
+  }, [maxL]);
+
+  // 📌 [지공사님 핵심 지침 100% 반영]: 추천 뱃지(별모양) 위치 스펙트럼 동적 연산:
+  // L_max <= 0.035" -> 16.7% (기본 중앙)
+  // 0.035" < L_max <= 0.0625" -> 33.3% (기본과 정밀 중간 경계)
+  // 0.0625" < L_max <= 0.095" -> 50.0% (정밀 중앙)
+  // 0.095" < L_max <= 0.125" -> 66.7% (정밀과 초정밀 중간 경계)
+  // L_max > 0.125" -> 83.3% (초정밀 중앙)
+  const badgePositionPercent = useMemo(() => {
+    if (maxL <= 0.035) return 16.7;
+    if (maxL <= 0.0625) return 33.3;
+    if (maxL <= 0.095) return 50.0;
+    if (maxL <= 0.125) return 66.7;
+    return 83.3;
   }, [maxL]);
 
   // 📌 [지공사님 핵심 지침 100% 반영]: 모달 재진입 시 최신 수치 스냅샷 갱신 및 최적 추천 모드로 자동 재연산 세팅
@@ -205,7 +219,15 @@ export default function OvalResultModal({
           <div className="grid grid-cols-10 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 items-end">
             <div className="col-span-7 flex flex-col w-full">
               <label className="text-xs font-bold text-slate-600 mb-1">정밀도</label>
-              <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-10 w-full shadow-2xs overflow-visible">
+              <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-10 w-full shadow-2xs relative overflow-visible">
+                {/* 💥 [지공사님 핵심 지침 100% 반영]: 가공 이동거리 스펙트럼 기반 동적 플로팅 추천 뱃지 */}
+                <div
+                  style={{ left: `${badgePositionPercent}%` }}
+                  className="absolute -top-4 -translate-x-1/2 z-20 pointer-events-none transition-all duration-300 ease-out"
+                >
+                  <StarburstRecommendBadge />
+                </div>
+
                 {(() => {
                   const hasExtraBits = (sharedState?.extraBitCount || 0) > 0;
                   return (
@@ -214,7 +236,7 @@ export default function OvalResultModal({
                         type="button"
                         disabled={hasExtraBits}
                         onClick={() => handlePrecisionChange('basic')}
-                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center relative overflow-visible ${
+                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center relative ${
                           hasExtraBits
                             ? 'opacity-40 cursor-not-allowed text-slate-400'
                             : 'cursor-pointer'
@@ -226,14 +248,13 @@ export default function OvalResultModal({
                         title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '기본 (3드릴) 모드'}
                       >
                         <span>기본</span>
-                        {recommendedMode === 'basic' && <StarburstRecommendBadge />}
                       </button>
                       <div className={`w-[1px] h-3.5 bg-slate-300/80 shrink-0 mx-0.5 transition-opacity ${currentPrecision === 'basic' || currentPrecision === 'detailed' ? 'opacity-0' : 'opacity-100'}`} />
                       <button
                         type="button"
                         disabled={hasExtraBits}
                         onClick={() => handlePrecisionChange('detailed')}
-                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center relative overflow-visible ${
+                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center relative ${
                           hasExtraBits
                             ? 'opacity-40 cursor-not-allowed text-slate-400'
                             : 'cursor-pointer'
@@ -245,14 +266,13 @@ export default function OvalResultModal({
                         title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '정밀 (5드릴) 모드'}
                       >
                         <span>정밀</span>
-                        {recommendedMode === 'detailed' && <StarburstRecommendBadge />}
                       </button>
                       <div className={`w-[1px] h-3.5 bg-slate-300/80 shrink-0 mx-0.5 transition-opacity ${currentPrecision === 'detailed' || currentPrecision === 'ultra' ? 'opacity-0' : 'opacity-100'}`} />
                       <button
                         type="button"
                         disabled={hasExtraBits}
                         onClick={() => handlePrecisionChange('ultra')}
-                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center relative overflow-visible ${
+                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center relative ${
                           hasExtraBits
                             ? 'opacity-40 cursor-not-allowed text-slate-400'
                             : 'cursor-pointer'
@@ -264,7 +284,6 @@ export default function OvalResultModal({
                         title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '초정밀 (7드릴) 모드'}
                       >
                         <span>초정밀</span>
-                        {recommendedMode === 'ultra' && <StarburstRecommendBadge />}
                       </button>
                     </>
                   );

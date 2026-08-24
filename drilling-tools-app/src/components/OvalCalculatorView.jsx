@@ -355,9 +355,10 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
                 isRequiredMissing={isHoleSizeMissing}
                 label="원홀 (Hole Size)"
                 onChange={(v) => {
-                  handleStateChange({ holeSize: v, ovalCut1: '', ovalCut2: '', ovalCut: '' });
+                  handleStateChange({ holeSize: v, ovalSize: '', ovalCut1: '', ovalCut2: '', ovalCut: '' });
                 }}
                 options={HOLE_OPTIONS}
+                placeholder=""
                 value={holeSize}
               />
 
@@ -366,7 +367,7 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
                 disabled={!holeSize}
                 isRequiredMissing={isOvalSizeMissing}
                 label="오발 크기"
-                onChange={(v) => handleStateChange('ovalSize', v)}
+                onChange={(v) => handleStateChange({ ovalSize: v, ovalCut1: '', ovalCut2: '', ovalCut: '' })}
                 options={dynamicOvalOptions}
                 placeholder=""
                 value={holeSize ? ovalSize : ''}
@@ -377,30 +378,30 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
             <div className="grid grid-cols-[35fr_35fr_30fr] gap-2 items-end">
               <SelectField
                 density="compact"
-                disabled={!holeSize}
+                disabled={!holeSize || !ovalSize}
                 isRequiredMissing={isOvalCut1Missing}
                 label="오발컷 #1"
                 onChange={(v) => {
                   handleStateChange({
                     ovalCut1: v,
                     ovalCut: v,
-                    ovalCut2: ovalCut2 || v, // ovalCut2 미선택시 자동 동기화
+                    ovalCut2: v, // 📌 [지공사님 지침 100% 반영]: #1 선택 시 #2 자동 동기화 (이후 #2 개별 수정 가능)
                   });
                 }}
                 options={ovalCutOptions}
                 placeholder=""
-                value={holeSize ? ovalCut1 : ''}
+                value={holeSize && ovalSize ? ovalCut1 : ''}
               />
 
               <SelectField
                 density="compact"
-                disabled={!holeSize}
+                disabled={!holeSize || !ovalSize}
                 isRequiredMissing={isOvalCut2Missing}
                 label="오발컷 #2"
                 onChange={(v) => handleStateChange('ovalCut2', v)}
                 options={ovalCutOptions}
                 placeholder=""
-                value={holeSize ? ovalCut2 : ''}
+                value={holeSize && ovalSize ? ovalCut2 : ''}
               />
 
               <KeypadField
