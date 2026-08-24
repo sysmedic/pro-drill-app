@@ -787,96 +787,124 @@ export default function Midline2DLayoutRenderer({
           // Safe fallback guard to prevent graphics context crash
         }
       } else {
-        // D-2) 1.0px 골드 실제 오발선 (#1번 R1 및 #2번 R2 고유 절삭면 100% 밀착 스플라인 #fbbf24)
+        // D-2) 1.0px 골드 실제 오발선 (#1번 및 #2번 원호 100% 직접 보존 + 원홀 허리 스무딩 스플라인 #fbbf24)
         try {
-          const uX = Math.cos(actualCutAngle);
-          const uY = Math.sin(actualCutAngle);
-          const vX = -Math.sin(actualCutAngle);
-          const vY = Math.cos(actualCutAngle);
-
           const r1Diameter = getBitDiameter(1);
-          const r1RadiusPx = (r1Diameter / 2) * scale;
+          const R1 = (r1Diameter / 2) * scale;
           const r2Diameter = getBitDiameter(2);
-          const r2RadiusPx = (r2Diameter / 2) * scale;
+          const R2 = (r2Diameter / 2) * scale;
           const holeRadiusPx = (holeNum / 2) * scale;
-          const halfOvalPx = (ovalNum / 2) * scale;
 
-          // #1번 상단 끝점 (고정 오발 전장과 100% 일치 접촉)
-          const L1 = Math.max(halfOvalPx, calcOffset1 + r1RadiusPx);
-          // #2번 하단 끝점 (고정 오발 전장과 100% 일치 접촉)
-          const L2 = Math.max(halfOvalPx, calcOffset2 + r2RadiusPx);
-          // 중심 원홀 실제 허리 반경
-          const W = holeRadiusPx > 0 ? holeRadiusPx : ((r1RadiusPx + r2RadiusPx) / 2);
+          const p1 = r1Pos;
+          const p2 = r2Pos;
 
-          // 4대 정점 (상단, 우측 허리, 하단, 좌측 허리)
-          const Ax = cx + L1 * uX;
-          const Ay = cy + L1 * uY;
-          const Bx = cx - L2 * uX;
-          const By = cy - L2 * uY;
-          const Rx = cx + W * vX;
-          const Ry = cy + W * vY;
-          const Lx = cx - W * vX;
-          const Ly = cy - W * vY;
+          if (p1 && p2 && Number.isFinite(p1.x) && Number.isFinite(p2.x) && Number.isFinite(p1.y) && Number.isFinite(p2.y)) {
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            const dist = Math.hypot(dx, dy);
 
-          // 3차 베지에 매끄러운 곡률 계수
-          const KAPPA = 0.55228475;
+            const theta = dist > 0.001 ? Math.atan2(dy, dx) : actualCutAngle;
+            const uX = Math.cos(theta);
+            const uY = Math.sin(theta);
+            const vX = -Math.sin(theta);
+            const vY = Math.cos(theta);
 
-          // 각 정점별 비트 고유 반경 기반 제어점 가중치
-          const R1_eff = Math.max(r1RadiusPx, W * 0.7);
-          const R2_eff = Math.max(r2RadiusPx, W * 0.7);
+            // 허리 폭 반경 W (중심 원홀 반경)
+            const W = holeRadiusPx > 0 ? holeRadiusPx : ((R1 + R2) / 2);
+            const RwX = cx + W * vX;
+            const RwY = cy + W * vY;
+            const LwX = cx - W * vX;
+            const LwY = cy - W * vY;
 
-          ctx.save();
-          ctx.beginPath();
-          ctx.moveTo(Ax, Ay);
+            // #1번 원호 각도 (상단 apex 기준 +-60도)
+            const a1_end = theta + Math.PI / 3;
+            const a1_start = theta - Math.PI / 3;
+            const ArX = p1.x + R1 * Math.cos(a1_end);
+            const ArY = p1.y + R1 * Math.sin(a1_end);
+            const AlX = p1.x + R1 * Math.cos(a1_start);
+            const AlY = p1.y + R1 * Math.sin(a1_start);
 
-          // 1사분면 (상단 A ➔ 우측 허리 R 부드러운 곡선: 상단은 R1 비트 곡률 반영)
-          ctx.bezierCurveTo(
-            Ax + KAPPA * R1_eff * vX,
-            Ay + KAPPA * R1_eff * vY,
-            Rx + KAPPA * L1 * uX,
-            Ry + KAPPA * L1 * uY,
-            Rx,
-            Ry
-          );
+            // #2번 원호 각도 (하단 apex 기준 +-60도)
+            const a2_start = theta + (2 * Math.PI) / 3;
+            const a2_end = theta + (4 * Math.PI) / 3;
+            const BrX = p2.x + R2 * Math.cos(a2_start);
+            const BrY = p2.y + R2 * Math.sin(a2_start);
+            const BlX = p2.x + R2 * Math.cos(a2_end);
+            const BlY = p2.y + R2 * Math.sin(a2_end);
 
-          // 2사분면 (우측 허리 R ➔ 하단 B 부드러운 곡선: 하단은 R2 비트 곡률 반영)
-          ctx.bezierCurveTo(
-            Rx - KAPPA * L2 * uX,
-            Ry - KAPPA * L2 * uY,
-            Bx + KAPPA * R2_eff * vX,
-            By + KAPPA * R2_eff * vY,
-            Bx,
-            By
-          );
+            // 접선 단위 벡터
+            const t1rX = -Math.sin(a1_end);
+            const t1rY = Math.cos(a1_end);
+            const t2rX = -Math.sin(a2_start);
+            const t2rY = Math.cos(a2_start);
+            const t2lX = -Math.sin(a2_end);
+            const t2lY = Math.cos(a2_end);
+            const t1lX = -Math.sin(a1_start);
+            const t1lY = Math.cos(a1_start);
 
-          // 3사분면 (하단 B ➔ 좌측 허리 L 부드러운 곡선: 하단은 R2 비트 곡률 반영)
-          ctx.bezierCurveTo(
-            Bx - KAPPA * R2_eff * vX,
-            By - KAPPA * R2_eff * vY,
-            Lx - KAPPA * L2 * uX,
-            Ly - KAPPA * L2 * uY,
-            Lx,
-            Ly
-          );
+            const d1 = Math.hypot(RwX - ArX, RwY - ArY) * 0.35;
+            const d2 = Math.hypot(BrX - RwX, BrY - RwY) * 0.35;
+            const d3 = Math.hypot(LwX - BlX, LwY - BlY) * 0.35;
+            const d4 = Math.hypot(AlX - LwX, AlY - LwY) * 0.35;
 
-          // 4사분면 (좌측 허리 L ➔ 상단 A 부드러운 곡선 복귀: 상단은 R1 비트 곡률 반영)
-          ctx.bezierCurveTo(
-            Lx + KAPPA * L1 * uX,
-            Ly + KAPPA * L1 * uY,
-            Ax - KAPPA * R1_eff * vX,
-            Ay - KAPPA * R1_eff * vY,
-            Ax,
-            Ay
-          );
+            ctx.save();
+            ctx.beginPath();
 
-          ctx.closePath();
+            // 1. #1번 상단 원형 호 (좌측 접점 -> 상단 정점 -> 우측 접점)
+            ctx.arc(p1.x, p1.y, R1, a1_start, a1_end, false);
 
-          ctx.strokeStyle = '#fbbf24';
-          ctx.lineWidth = 1.0;
-          ctx.shadowColor = 'rgba(251, 191, 36, 0.6)';
-          ctx.shadowBlur = 4;
-          ctx.stroke();
-          ctx.restore();
+            // 2. 우측 상단 곡선 (#1번 우측 접점 -> 우측 허리 Rw)
+            ctx.bezierCurveTo(
+              ArX + d1 * t1rX,
+              ArY + d1 * t1rY,
+              RwX + d1 * uX,
+              RwY + d1 * uY,
+              RwX,
+              RwY
+            );
+
+            // 3. 우측 하단 곡선 (우측 허리 Rw -> #2번 우측 접점)
+            ctx.bezierCurveTo(
+              RwX - d2 * uX,
+              RwY - d2 * uY,
+              BrX - d2 * t2rX,
+              BrY - d2 * t2rY,
+              BrX,
+              BrY
+            );
+
+            // 4. #2번 하단 원형 호 (우측 접점 -> 하단 정점 -> 좌측 접점)
+            ctx.arc(p2.x, p2.y, R2, a2_start, a2_end, false);
+
+            // 5. 좌측 하단 곡선 (#2번 좌측 접점 -> 좌측 허리 Lw)
+            ctx.bezierCurveTo(
+              BlX + d3 * t2lX,
+              BlY + d3 * t2lY,
+              LwX - d3 * uX,
+              LwY - d3 * uY,
+              LwX,
+              LwY
+            );
+
+            // 6. 좌측 상단 곡선 (좌측 허리 Lw -> #1번 좌측 접점)
+            ctx.bezierCurveTo(
+              LwX + d4 * uX,
+              LwY + d4 * uY,
+              AlX - d4 * t1lX,
+              AlY - d4 * t1lY,
+              AlX,
+              AlY
+            );
+
+            ctx.closePath();
+
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 1.0;
+            ctx.shadowColor = 'rgba(251, 191, 36, 0.6)';
+            ctx.shadowBlur = 4;
+            ctx.stroke();
+            ctx.restore();
+          }
         } catch (err) {
           // Safe fallback guard
         }
