@@ -6,7 +6,7 @@ import { useModalLock } from '../hooks/useModalLock.js';
 import { parseSpanFraction } from '../lib/spanConverter.js';
 
 const OVAL_CORRECTION_OPTIONS = [
-  { value: '0', label: '0' },
+  { value: '0', label: '0 (보정 없음)' },
   { value: '1/128', label: '1/128' },
   { value: '1/64', label: '1/64' },
   { value: '3/128', label: '3/128' },
