@@ -5,11 +5,11 @@ import Midline2DLayoutRenderer from './ui/Midline2DLayoutRenderer.jsx';
 import { useModalLock } from '../hooks/useModalLock.js';
 
 const OVAL_CORRECTION_OPTIONS = [
-  { value: '0', label: '' },
-  { value: '1/128', label: '1/128' },
-  { value: '1/64', label: '1/64' },
-  { value: '3/128', label: '3/128' },
-  { value: '1/32', label: '1/32' },
+  { value: '0', label: '보정' },
+  { value: '1/128', label: '보정 1/128' },
+  { value: '1/64', label: '보정 1/64' },
+  { value: '3/128', label: '보정 3/128' },
+  { value: '1/32', label: '보정 1/32' },
 ];
 
 export default function OvalResultModal({
@@ -225,15 +225,13 @@ export default function OvalResultModal({
             </div>
           </div>
 
-          <div className="col-span-3">
+          <div className="col-span-3 flex flex-col justify-end">
             <SelectField
               density="compact"
-              label="보정"
-              labelClassName="text-left font-bold text-slate-600 text-xs mb-1 block"
               onChange={(v) => setOvalCorrection(v)}
               options={OVAL_CORRECTION_OPTIONS}
               value={ovalCorrection}
-              controlClassName="text-center font-black [text-align-last:center]"
+              controlClassName="text-center font-bold [text-align-last:center]"
               style={{ textAlign: 'center', textAlignLast: 'center' }}
             />
           </div>
