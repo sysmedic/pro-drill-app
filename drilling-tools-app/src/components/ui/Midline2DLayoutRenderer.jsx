@@ -1138,9 +1138,8 @@ export default function Midline2DLayoutRenderer({
     const rad = (angleNum * Math.PI) / 180;
     const handMult = hand === 'left' ? -1 : 1;
 
-    // 상단(원홀~#1번) vs 하단(원홀~#2번) 영역 판별
-    const cur = bitCustomOffsets[targetBit] || { x: 0, y: 0 };
-    const isUpper = (targetBit === 4 || targetBit === 6 || (cur.y < 0 && isFlipped180) || (cur.y > 0 && !isFlipped180));
+    // 상단(#4, #6: 짝수 비트) vs 하단(#3, #5, #7: 홀수 비트) 영역 100% 명확 판별
+    const isUpper = (targetBit % 2 === 0);
 
     // 1) 선택된 비트를 제외한 다른 모든 비트들의 (중심거리 y, 반경 R) 목록 수집
     const existingCuts = [];
@@ -1158,8 +1157,8 @@ export default function Midline2DLayoutRenderer({
         const kR = kDiameter / 2;
         const kOff = bitCustomOffsets[k] || { x: 0, y: 0 };
         let kBaseY = 0;
-        if (k === 4) kBaseY = L1 / 2;
-        else if (k === 3) kBaseY = -L2 / 2;
+        if (k % 2 === 0) kBaseY = L1 / 2;
+        else kBaseY = -L2 / 2;
         const axialProj = (kOff.y * Math.sin(rad)) - (kOff.x * Math.cos(rad) * handMult);
         const ky = kBaseY + axialProj;
         existingCuts.push({ y: ky, r: kR });
@@ -1173,7 +1172,7 @@ export default function Midline2DLayoutRenderer({
           const dy = y - L1;
           return dy < R1 ? Math.sqrt(Math.max(0, R1 * R1 - dy * dy)) : 0;
         }
-        // 0 <= y < L1 (허리 스플라인 테이퍼 보간)
+        // 0 <= y < L1 (상단 허리 테이퍼 보간)
         const t = y / (L1 > 0.001 ? L1 : 0.001);
         return R0 + (R1 - R0) * t;
       } else {
@@ -1182,7 +1181,7 @@ export default function Midline2DLayoutRenderer({
           const dy = ay - L2;
           return dy < R2 ? Math.sqrt(Math.max(0, R2 * R2 - dy * dy)) : 0;
         }
-        // -L2 < y < 0
+        // -L2 < y < 0 (하단 허리 테이퍼 보간)
         const t = ay / (L2 > 0.001 ? L2 : 0.001);
         return R0 + (R2 - R0) * t;
       }
@@ -1254,8 +1253,8 @@ export default function Midline2DLayoutRenderer({
 
     // 7) bestContactY 축선 위치에 정확히 안착시키기 위한 D-Pad 오프셋 델타 연산
     let baseDefaultAxialY = 0;
-    if (targetBit === 4) baseDefaultAxialY = L1 / 2;
-    else if (targetBit === 3) baseDefaultAxialY = -L2 / 2;
+    if (isUpper) baseDefaultAxialY = L1 / 2;
+    else baseDefaultAxialY = -L2 / 2;
 
     const axialDelta = bestContactY - baseDefaultAxialY;
     const targetOffY = Math.round(axialDelta * Math.sin(rad) * 1000) / 1000;
