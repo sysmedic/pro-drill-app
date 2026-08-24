@@ -2,8 +2,8 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { parseSpanFraction, formatFractionByDenom } from '../../lib/spanConverter.js';
 
-// 📌 7-Bit 마스터 전용 컬러 팔레트 (1:Red, 2:Amber, 3:Emerald, 4:Purple, 5:Pink, 6:Lime, 7:Blue)
-const FULL_PALETTE = ['#ef4444', '#f59e0b', '#10b981', '#a855f7', '#ec4899', '#84cc16', '#3b82f6'];
+// 📌 7-Bit 마스터 전용 컬러 팔레트 (1:Red, 2:Amber, 3:Purple, 4:Blue, 5:Pink, 6:Lime, 7:Emerald)
+const FULL_PALETTE = ['#ef4444', '#f59e0b', '#a855f7', '#3b82f6', '#ec4899', '#84cc16', '#10b981'];
 
 export default function Midline2DLayoutRenderer({
   holeSize = '',
@@ -480,11 +480,11 @@ export default function Midline2DLayoutRenderer({
       const r1Pos = bitPositions[0];
       const r2Pos = bitPositions[1];
 
-      // 7색 전용 시그니처 컬러 팔레트 (원홀 비트는 항상 마지막 비트로서 Blue #3b82f6 고정)
+      // 7색 전용 시그니처 컬러 팔레트 (원홀 비트는 항상 마지막 비트로서 Emerald Green #10b981 고정)
       const bitColors = bitPositions.map((_, idx) => {
         const rowIdx = idx + 1;
-        if (rowIdx === totalActiveBits) return '#3b82f6';
-        return FULL_PALETTE[idx] || '#10b981';
+        if (rowIdx === totalActiveBits) return '#10b981';
+        return FULL_PALETTE[idx] || '#a855f7';
       });
 
       // 📌 [EDIT & PREVIEW 모드 공통 도면 렌더링 가시성]: EDIT 모드에서 선택된 비트 및 active 비트 100% 상시 표출 보전 (터치 시 사라짐 100% 방지)
@@ -1250,7 +1250,7 @@ export default function Midline2DLayoutRenderer({
               const rowIdx = idx + 1;
               const isHoleBit = rowIdx === totalActiveBits;
               const bitValStr = bitCustomSizes[rowIdx] || getDrillBitValue(rowIdx);
-              const color = isHoleBit ? '#3b82f6' : FULL_PALETTE[idx] || '#10b981';
+              const color = isHoleBit ? '#10b981' : FULL_PALETTE[idx] || '#a855f7';
               const label = isHoleBit ? `#${rowIdx} (원홀)` : `#${rowIdx} (${bitValStr || '규격'})`;
               const isSelected = selectedBitIndex === rowIdx;
               const isActive = isBitActiveInChart(rowIdx);
@@ -1584,7 +1584,7 @@ export default function Midline2DLayoutRenderer({
             const rowIdx = idx + 1;
             const isHoleBit = rowIdx === totalActiveBits;
             const bitValStr = bitCustomSizes[rowIdx] || getDrillBitValue(rowIdx);
-            const color = isHoleBit ? '#3b82f6' : FULL_PALETTE[idx] || '#10b981';
+            const color = isHoleBit ? '#10b981' : FULL_PALETTE[idx] || '#a855f7';
             const label = isHoleBit ? `#${rowIdx} (원홀)` : `#${rowIdx} (${bitValStr || '규격'})`;
             const isSelected = selectedBitIndex === rowIdx;
             const isActive = isBitActiveInChart(rowIdx);
