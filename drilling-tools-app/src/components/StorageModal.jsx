@@ -198,10 +198,7 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
           {modalTab === 'save' && (
             <form onSubmit={handleSaveCurrent} className="space-y-4 py-1 flex flex-col justify-between h-full">
               <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">
-                    슬롯 이름 / 메모
-                  </label>
+                <div>
                   <input
                     type="text"
                     value={slotTitle}
@@ -211,7 +208,7 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
                   />
                 </div>
 
-                {/* 현재 데이터 요약 카드 (상단 타이틀 삭제) */}
+                {/* 현재 데이터 요약 카드 */}
                 <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1 text-xs">
                   <div className="font-bold text-slate-900 text-sm">
                     {generateSummary(currentSharedState)}
@@ -238,9 +235,9 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
                 <button
                   type="button"
                   onClick={(e) => handleShareSlot(e, { title: slotTitle || '현재 제원', data: currentSharedState })}
-                  className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-md transition-all flex items-center justify-center cursor-pointer active:scale-98 border border-slate-200"
+                  className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-md transition-all flex items-center justify-center cursor-pointer active:scale-98 border border-slate-300"
                 >
-                  현재 제원 즉시 공유
+                  공유
                 </button>
               </div>
             </form>
