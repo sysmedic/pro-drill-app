@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import SelectField from './ui/SelectField.jsx';
 import Midline2DLayoutRenderer from './ui/Midline2DLayoutRenderer.jsx';
 import { useModalLock } from '../hooks/useModalLock.js';
+import { parseSpanFraction } from '../lib/spanConverter.js';
 
 const OVAL_CORRECTION_OPTIONS = [
   { value: '0', label: '0' },
@@ -64,7 +65,41 @@ export default function OvalResultModal({
   // 📌 매트릭스 리셋 안전 확인 모달 오픈 상태
   const [isResetConfirmModalOpen, setIsResetConfirmModalOpen] = useState(false);
 
+  // 📌 실제 가공 이동 거리(L_max) 및 권장 정밀도 모드 실시간 산출
+  const hNum = parseSpanFraction(holeSize) || 0.75;
+  const oNum = parseSpanFraction(ovalSize) || (hNum + 0.125);
+  const c1Num = parseSpanFraction(ovalCut1 || ovalCut) || hNum;
+  const c2Num = parseSpanFraction(ovalCut2 || ovalCut || ovalCut1) || c1Num;
+
+  const L1 = Math.max(0, (oNum - c1Num) / 2);
+  const L2 = Math.max(0, (oNum - c2Num) / 2);
+  const maxL = Math.max(L1, L2);
+
+  // 1) L_max <= 0.047" (3/64" 이하, 약 1.2mm) -> basic (3드릴)
+  // 2) 0.047" < L_max <= 0.080" (5/64" 이하, 약 2.0mm) -> detailed (5드릴)
+  // 3) L_max > 0.080" (약 2.0mm 초과) -> ultra (7드릴)
+  const recommendedMode = useMemo(() => {
+    if (maxL <= 0.047) return 'basic';
+    if (maxL <= 0.080) return 'detailed';
+    return 'ultra';
+  }, [maxL]);
+
+  // 📌 모달 진입 시 권장 모드로 초기 세팅 (기존 설정값이 없거나 기본 진입 시)
+  const initialModeSetRef = useRef(false);
+  useEffect(() => {
+    if (isOpen && !initialModeSetRef.current) {
+      initialModeSetRef.current = true;
+      if (!sharedState?.precisionMode && !precisionMode) {
+        handlePrecisionChange(recommendedMode);
+      }
+    }
+  }, [isOpen, recommendedMode]);
+
   const currentPrecision = precisionMode || (sharedState?.precisionMode) || (isDetailedMode ? 'detailed' : 'basic');
+
+  // 📌 가공 이동 거리 대비 드릴 수가 적은 부적격(드릴 수 부족) 선택 감지
+  const modeRank = { basic: 3, detailed: 5, ultra: 7 };
+  const isUnderDrilling = (modeRank[currentPrecision] || 3) < (modeRank[recommendedMode] || 3);
 
   const handlePrecisionChange = (mode) => {
     if (setPrecisionMode) {
@@ -160,84 +195,111 @@ export default function OvalResultModal({
         </div>
 
         {/* 📌 [지공사님 핵심 지침 100% 반영: 정밀도 3단계 7 : 보정 3 비율 배치] */}
-        <div className="grid grid-cols-10 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 items-end">
-          <div className="col-span-7 flex flex-col w-full">
-            <label className="text-xs font-bold text-slate-600 mb-1">정밀도</label>
-            <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-10 w-full shadow-2xs">
-              {(() => {
-                const hasExtraBits = (sharedState?.extraBitCount || 0) > 0;
-                return (
-                  <>
-                    <button
-                      type="button"
-                      disabled={hasExtraBits}
-                      onClick={() => handlePrecisionChange('basic')}
-                      className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center ${
-                        hasExtraBits
-                          ? 'opacity-40 cursor-not-allowed text-slate-400'
-                          : 'cursor-pointer'
-                      } ${
-                        currentPrecision === 'basic'
-                          ? 'bg-slate-800 text-white shadow-2xs font-black z-10'
-                          : 'text-slate-500 hover:text-slate-800 font-bold'
-                      }`}
-                      title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '기본 (3드릴) 모드'}
-                    >
-                      기본
-                    </button>
-                    <div className={`w-[1px] h-3.5 bg-slate-300/80 shrink-0 mx-0.5 transition-opacity ${currentPrecision === 'basic' || currentPrecision === 'detailed' ? 'opacity-0' : 'opacity-100'}`} />
-                    <button
-                      type="button"
-                      disabled={hasExtraBits}
-                      onClick={() => handlePrecisionChange('detailed')}
-                      className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center ${
-                        hasExtraBits
-                          ? 'opacity-40 cursor-not-allowed text-slate-400'
-                          : 'cursor-pointer'
-                      } ${
-                        currentPrecision === 'detailed'
-                          ? 'bg-slate-800 text-white shadow-2xs font-black z-10'
-                          : 'text-slate-500 hover:text-slate-800 font-bold'
-                      }`}
-                      title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '정밀 (5드릴) 모드'}
-                    >
-                      정밀
-                    </button>
-                    <div className={`w-[1px] h-3.5 bg-slate-300/80 shrink-0 mx-0.5 transition-opacity ${currentPrecision === 'detailed' || currentPrecision === 'ultra' ? 'opacity-0' : 'opacity-100'}`} />
-                    <button
-                      type="button"
-                      disabled={hasExtraBits}
-                      onClick={() => handlePrecisionChange('ultra')}
-                      className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center ${
-                        hasExtraBits
-                          ? 'opacity-40 cursor-not-allowed text-slate-400'
-                          : 'cursor-pointer'
-                      } ${
-                        currentPrecision === 'ultra'
-                          ? 'bg-slate-800 text-white shadow-2xs font-black z-10'
-                          : 'text-slate-500 hover:text-slate-800 font-bold'
-                      }`}
-                      title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '초정밀 (7드릴) 모드'}
-                    >
-                      초정밀
-                    </button>
-                  </>
-                );
-              })()}
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-10 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 items-end">
+            <div className="col-span-7 flex flex-col w-full">
+              <label className="text-xs font-bold text-slate-600 mb-1">정밀도</label>
+              <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-10 w-full shadow-2xs">
+                {(() => {
+                  const hasExtraBits = (sharedState?.extraBitCount || 0) > 0;
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        disabled={hasExtraBits}
+                        onClick={() => handlePrecisionChange('basic')}
+                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center gap-1 ${
+                          hasExtraBits
+                            ? 'opacity-40 cursor-not-allowed text-slate-400'
+                            : 'cursor-pointer'
+                        } ${
+                          currentPrecision === 'basic'
+                            ? 'bg-slate-800 text-white shadow-2xs font-black z-10'
+                            : 'text-slate-500 hover:text-slate-800 font-bold'
+                        }`}
+                        title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '기본 (3드릴) 모드'}
+                      >
+                        <span>기본</span>
+                        {recommendedMode === 'basic' && (
+                          <span className={`text-[9px] font-black px-1 py-0.2 rounded-full leading-tight ${currentPrecision === 'basic' ? 'bg-amber-400 text-slate-950' : 'bg-amber-200 text-amber-900 border border-amber-400'}`}>
+                            추천
+                          </span>
+                        )}
+                      </button>
+                      <div className={`w-[1px] h-3.5 bg-slate-300/80 shrink-0 mx-0.5 transition-opacity ${currentPrecision === 'basic' || currentPrecision === 'detailed' ? 'opacity-0' : 'opacity-100'}`} />
+                      <button
+                        type="button"
+                        disabled={hasExtraBits}
+                        onClick={() => handlePrecisionChange('detailed')}
+                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center gap-1 ${
+                          hasExtraBits
+                            ? 'opacity-40 cursor-not-allowed text-slate-400'
+                            : 'cursor-pointer'
+                        } ${
+                          currentPrecision === 'detailed'
+                            ? 'bg-slate-800 text-white shadow-2xs font-black z-10'
+                            : 'text-slate-500 hover:text-slate-800 font-bold'
+                        }`}
+                        title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '정밀 (5드릴) 모드'}
+                      >
+                        <span>정밀</span>
+                        {recommendedMode === 'detailed' && (
+                          <span className={`text-[9px] font-black px-1 py-0.2 rounded-full leading-tight ${currentPrecision === 'detailed' ? 'bg-amber-400 text-slate-950' : 'bg-amber-200 text-amber-900 border border-amber-400'}`}>
+                            추천
+                          </span>
+                        )}
+                      </button>
+                      <div className={`w-[1px] h-3.5 bg-slate-300/80 shrink-0 mx-0.5 transition-opacity ${currentPrecision === 'detailed' || currentPrecision === 'ultra' ? 'opacity-0' : 'opacity-100'}`} />
+                      <button
+                        type="button"
+                        disabled={hasExtraBits}
+                        onClick={() => handlePrecisionChange('ultra')}
+                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center gap-1 ${
+                          hasExtraBits
+                            ? 'opacity-40 cursor-not-allowed text-slate-400'
+                            : 'cursor-pointer'
+                        } ${
+                          currentPrecision === 'ultra'
+                            ? 'bg-slate-800 text-white shadow-2xs font-black z-10'
+                            : 'text-slate-500 hover:text-slate-800 font-bold'
+                        }`}
+                        title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '초정밀 (7드릴) 모드'}
+                      >
+                        <span>초정밀</span>
+                        {recommendedMode === 'ultra' && (
+                          <span className={`text-[9px] font-black px-1 py-0.2 rounded-full leading-tight ${currentPrecision === 'ultra' ? 'bg-amber-400 text-slate-950' : 'bg-amber-200 text-amber-900 border border-amber-400'}`}>
+                            추천
+                          </span>
+                        )}
+                      </button>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+
+            <div className="col-span-3 flex flex-col justify-end">
+              <SelectField
+                density="compact"
+                onChange={(v) => setOvalCorrection(v)}
+                options={OVAL_CORRECTION_OPTIONS}
+                value={ovalCorrection || '0'}
+                displayValue={!ovalCorrection || ovalCorrection === '0' ? '보정' : `${ovalCorrection} 보정`}
+                controlClassName="text-center font-bold [text-align-last:center] focus:ring-0 focus:outline-none focus:border-slate-300 ring-0 outline-none"
+                style={{ textAlign: 'center', textAlignLast: 'center' }}
+              />
             </div>
           </div>
 
-          <div className="col-span-3 flex flex-col justify-end">
-            <SelectField
-              density="compact"
-              onChange={(v) => setOvalCorrection(v)}
-              options={OVAL_CORRECTION_OPTIONS}
-              value={ovalCorrection || '0'}
-              displayValue={!ovalCorrection || ovalCorrection === '0' ? '보정' : `${ovalCorrection} 보정`}
-              controlClassName="text-center font-bold [text-align-last:center] focus:ring-0 focus:outline-none focus:border-slate-300 ring-0 outline-none"
-              style={{ textAlign: 'center', textAlignLast: 'center' }}
-            />
-          </div>
+          {/* ⚠️ 가공 이동 거리 대비 드릴 수가 적을 때 부드러운 경고 안내 */}
+          {isUnderDrilling && (
+            <div className="text-[11px] sm:text-xs font-bold text-amber-800 bg-amber-50/90 border border-amber-300 rounded-xl px-3 py-2 flex items-center gap-2 shadow-2xs animate-fade-in select-none">
+              <span className="text-sm shrink-0">⚠️</span>
+              <span className="leading-snug">
+                가공 이동거리({maxL.toFixed(3)}&quot;) 대비 드릴 수가 적어 잔여 턱(오차)이 발생할 수 있습니다. <b>[{recommendedMode === 'ultra' ? '초정밀 (7드릴)' : '정밀 (5드릴)'}]</b>을 권장합니다.
+              </span>
+            </div>
+          )}
         </div>
 
         {/* 📌 피치 매트릭스 수치표 (4:3:3 비율 [grid-cols-10] & 최대 #8 비트 확장 지원) */}
