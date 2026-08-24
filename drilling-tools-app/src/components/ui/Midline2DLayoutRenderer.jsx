@@ -97,6 +97,8 @@ export default function Midline2DLayoutRenderer({
 
   // 📌 [지공사님 지침]: 프리뷰 모드에서 시뮬레이터는 기본 꺼짐(false)으로 시작 (버튼 클릭으로 켜기/끄기 가능)
   const [isCheckFillMode, setIsCheckFillMode] = useState(false);
+  // 📌 [지공사님 지침]: #1, #2 절삭면 및 원홀 반영 실제 오발선 토글 상태 (프리뷰 테스트용)
+  const [isActualOvalMode, setIsActualOvalMode] = useState(false);
 
   // 부모의 isDetailedMode 변경 시 3~4 중간비트 동기화
   useEffect(() => {
@@ -783,10 +785,84 @@ export default function Midline2DLayoutRenderer({
         // Safe fallback guard to prevent graphics context crash
       }
 
+      // E) 📌 [지공사님 테스트 전용] 1·2번 절삭면 및 원홀 반영 실제 오발선 (#fbbf24 골드/앰버 라인)
+      if (isActualOvalMode && !isEditMode) {
+        try {
+          if (!offscreenCanvasRef.current) {
+            offscreenCanvasRef.current = document.createElement('canvas');
+          }
+          const offCanvas = offscreenCanvasRef.current;
+          if (offCanvas.width !== targetCanvas.width || offCanvas.height !== targetCanvas.height) {
+            offCanvas.width = targetCanvas.width;
+            offCanvas.height = targetCanvas.height;
+          }
+
+          const offCtx = offCanvas.getContext('2d');
+          offCtx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+          offCtx.save();
+          offCtx.scale(dpr, dpr);
+
+          const r1Diameter = getBitDiameter(1);
+          const r1RadiusPx = (r1Diameter / 2) * scale;
+          const r2Diameter = getBitDiameter(2);
+          const r2RadiusPx = (r2Diameter / 2) * scale;
+          const masterHoleRadiusPx = (holeNum / 2) * scale;
+
+          // 1) 3개 절삭원 면 채우기 (#1, #2, 중심 원홀)
+          offCtx.fillStyle = '#fbbf24';
+          offCtx.beginPath();
+          offCtx.arc(r1Pos.x, r1Pos.y, r1RadiusPx, 0, Math.PI * 2);
+          offCtx.fill();
+          offCtx.beginPath();
+          offCtx.arc(r2Pos.x, r2Pos.y, r2RadiusPx, 0, Math.PI * 2);
+          offCtx.fill();
+          offCtx.beginPath();
+          offCtx.arc(cx, cy, masterHoleRadiusPx, 0, Math.PI * 2);
+          offCtx.fill();
+
+          // 2) 골드 외곽선 1.8px 생성
+          offCtx.lineWidth = 1.8;
+          offCtx.strokeStyle = '#fbbf24';
+          offCtx.beginPath();
+          offCtx.arc(r1Pos.x, r1Pos.y, r1RadiusPx, 0, Math.PI * 2);
+          offCtx.stroke();
+          offCtx.beginPath();
+          offCtx.arc(r2Pos.x, r2Pos.y, r2RadiusPx, 0, Math.PI * 2);
+          offCtx.stroke();
+          offCtx.beginPath();
+          offCtx.arc(cx, cy, masterHoleRadiusPx, 0, Math.PI * 2);
+          offCtx.stroke();
+
+          // 3) 내부 소거 ➔ #1, #2, 원홀이 형성하는 [실제 가공 결합 외곽선]만 완벽 보존
+          offCtx.globalCompositeOperation = 'destination-out';
+          offCtx.beginPath();
+          offCtx.arc(r1Pos.x, r1Pos.y, r1RadiusPx, 0, Math.PI * 2);
+          offCtx.fill();
+          offCtx.beginPath();
+          offCtx.arc(r2Pos.x, r2Pos.y, r2RadiusPx, 0, Math.PI * 2);
+          offCtx.fill();
+          offCtx.beginPath();
+          offCtx.arc(cx, cy, masterHoleRadiusPx, 0, Math.PI * 2);
+          offCtx.fill();
+
+          offCtx.restore();
+
+          // 4) 메인 캔버스에 선명한 골드 앰버 오발선 오버레이
+          ctx.save();
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.shadowColor = 'rgba(251, 191, 36, 0.7)';
+          ctx.shadowBlur = 4;
+          ctx.drawImage(offCanvas, 0, 0);
+          ctx.restore();
+        } catch (err) {
+          // Safe fallback guard
+        }
+      }
+
       // 📌 [ctx.save() 스택 누출 100% 차단]: 함수 최상단 ctx.save()/ctx.scale(dpr,dpr) 짝 복구
       ctx.restore();
     },
-    [holeNum, ovalNum, cutNum1, cutNum2, angleNum, hand, results, getDrillBitValue, holeSize, slugNum, isBitVisible, isBitActiveInChart, isCheckFillMode, thumbHoleCut, isEditMode, selectedBitIndex, bitCustomOffsets, bitCustomSizes, isFlipped180]
+    [holeNum, ovalNum, cutNum1, cutNum2, angleNum, hand, results, getDrillBitValue, holeSize, slugNum, isBitVisible, isBitActiveInChart, isCheckFillMode, isActualOvalMode, thumbHoleCut, isEditMode, selectedBitIndex, bitCustomOffsets, bitCustomSizes, isFlipped180]
   );
 
   // 📌 [Direct Canvas GPU Render Trigger]: 클로저 래핑 무관 100% Direct Canvas Drawing 보장
@@ -1298,7 +1374,7 @@ export default function Midline2DLayoutRenderer({
                   setIsCheckFillMode((prev) => !prev);
                   requestDirectRender();
                 }}
-                className={`w-[140px] h-8 flex items-center justify-between px-2.5 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[11px] sm:text-xs font-bold ${
+                className={`w-[130px] h-8 flex items-center justify-between px-2.5 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[11px] sm:text-xs font-bold ${
                   isCheckFillMode
                     ? 'bg-slate-900/95 text-white border-white/90 ring-1 ring-white/60 shadow-white/20 font-black opacity-100'
                     : 'bg-slate-950/80 text-slate-400 border-slate-700/80 hover:border-slate-600 opacity-60'
@@ -1307,6 +1383,28 @@ export default function Midline2DLayoutRenderer({
                 <div className="flex items-center space-x-2 truncate">
                   <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isCheckFillMode ? 'bg-white ring-1 ring-white/60' : 'bg-slate-600'}`} />
                   <span className="truncate">시뮬레이터</span>
+                </div>
+              </button>
+            )}
+
+            {/* 🟡 실제 오발선 칩 (지공사님 테스트용: 프리뷰 칩 배열 마지막 배치) */}
+            {!isEditMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsActualOvalMode((prev) => !prev);
+                  requestDirectRender();
+                }}
+                className={`w-[130px] h-8 flex items-center justify-between px-2.5 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[11px] sm:text-xs font-bold ${
+                  isActualOvalMode
+                    ? 'bg-amber-950/90 text-amber-300 border-amber-400/90 ring-1 ring-amber-400/60 shadow-amber-500/20 font-black opacity-100'
+                    : 'bg-slate-950/80 text-slate-400 border-slate-700/80 hover:border-slate-600 opacity-60'
+                }`}
+                title="1·2번 절삭면 및 원홀 반영 실제 오발선 표출"
+              >
+                <div className="flex items-center space-x-2 truncate">
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isActualOvalMode ? 'bg-amber-400 ring-1 ring-amber-300' : 'bg-slate-600'}`} />
+                  <span className="truncate">실제 오발선</span>
                 </div>
               </button>
             )}
@@ -1632,7 +1730,7 @@ export default function Midline2DLayoutRenderer({
                 setIsCheckFillMode((prev) => !prev);
                 requestDirectRender();
               }}
-              className={`w-[125px] sm:w-[140px] h-7 flex items-center justify-between px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[10px] sm:text-xs font-bold ${
+              className={`w-[115px] sm:w-[130px] h-7 flex items-center justify-between px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[10px] sm:text-xs font-bold ${
                 isCheckFillMode
                   ? 'bg-slate-900/95 text-white border-white/90 ring-1 ring-white/60 shadow-white/20 font-black opacity-100'
                   : 'bg-slate-950/80 text-slate-400 border-slate-700/80 hover:border-slate-600 opacity-60'
@@ -1642,6 +1740,28 @@ export default function Midline2DLayoutRenderer({
               <div className="flex items-center space-x-1.5 truncate">
                 <span className={`w-2 h-2 rounded-full shrink-0 ${isCheckFillMode ? 'bg-white ring-1 ring-white/60' : 'bg-slate-600'}`} />
                 <span className="truncate">시뮬레이터</span>
+              </div>
+            </button>
+          )}
+
+          {/* 🟡 실제 오발선 칩 (지공사님 테스트용: 프리뷰 칩 배열 마지막 배치) */}
+          {!isEditMode && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsActualOvalMode((prev) => !prev);
+                requestDirectRender();
+              }}
+              className={`w-[115px] sm:w-[130px] h-7 flex items-center justify-between px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[10px] sm:text-xs font-bold ${
+                isActualOvalMode
+                  ? 'bg-amber-950/90 text-amber-300 border-amber-400/90 ring-1 ring-amber-400/60 shadow-amber-500/20 font-black opacity-100'
+                  : 'bg-slate-950/80 text-slate-400 border-slate-700/80 hover:border-slate-600 opacity-60'
+              }`}
+              title="1·2번 절삭면 및 원홀 반영 실제 오발선 표출"
+            >
+              <div className="flex items-center space-x-1.5 truncate">
+                <span className={`w-2 h-2 rounded-full shrink-0 ${isActualOvalMode ? 'bg-amber-400 ring-1 ring-amber-300' : 'bg-slate-600'}`} />
+                <span className="truncate">실제 오발선</span>
               </div>
             </button>
           )}
