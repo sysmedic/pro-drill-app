@@ -177,11 +177,6 @@ export default function Midline2DLayoutRenderer({
   // 📌 [지공사님 핵심 지침]: 실제 오발선은 상시 기본 표출되며, 이론적 오발선(초록 타원선)은 GUIDE LINE 스위치 ON 시에만 표출
   const [showGuideLine, setShowGuideLine] = useState(false);
 
-  // 부모의 isDetailedMode 변경 시 3~4 중간비트 동기화
-  useEffect(() => {
-    setShowBit3(isDetailedMode);
-    setShowBit4(isDetailedMode);
-  }, [isDetailedMode]);
 
   // 📌 부모 sharedState 수치 1:1 동기화
   useEffect(() => {
@@ -1060,30 +1055,6 @@ export default function Midline2DLayoutRenderer({
   const setInitialOvalView = () => {
     zoomRef.current = fitZoomRef.current;
     panRef.current = { x: 0, y: 0 };
-    requestDirectRender();
-  };
-
-  // 📌 3회 드릴링 마스터 연동
-  const set3CutDrillMode = () => {
-    setShowBit1(true);
-    setShowBit2(true);
-    setShowBit3(false);
-    setShowBit4(false);
-    setShowBit5(true);
-    setIsCheckFillMode(false);
-    if (onDetailedModeChange) onDetailedModeChange(false);
-    requestDirectRender();
-  };
-
-  // 📌 5회 드릴링 마스터 연동
-  const set5CutDrillMode = () => {
-    setShowBit1(true);
-    setShowBit2(true);
-    setShowBit3(true);
-    setShowBit4(true);
-    setShowBit5(true);
-    setIsCheckFillMode(false);
-    if (onDetailedModeChange) onDetailedModeChange(true);
     requestDirectRender();
   };
 
