@@ -10,7 +10,7 @@ export const PITCH_OPTIONS_32 = [
 ];
 export const SPAN_TYPE_OPTIONS = ["Actual Span", "Cut to Cut", "Center to Center"];
 export const MARKING_TYPE_OPTIONS = ["Cut to Cut", "Center to Center"];
-export const BRIDGE_OPTIONS = ["1/8", "3/16", "1/4", "직접입력"];
+export const BRIDGE_OPTIONS = ["1/8", "3/16", "1/4", "5/16", "직접입력"];
 export const LATERAL_DIR_OPTIONS = [{ value: 'left', label: '◀ Left' }, { value: 'right', label: 'Right ▶' }];
 export const THUMB_VERTICAL_DIR_OPTIONS = [{ value: 'reverse', label: '▼ Reverse' }, { value: 'forward', label: '▲ Forward' }];
 

@@ -556,7 +556,7 @@ export default function ChartInputForm({
           className="max-w-[180px] sm:max-w-[200px]"
           customPrompt="브릿지 수치를 직접 입력하세요:"
           label=""
-          options={['1/8', '3/16', '1/4']}
+          options={['1/8', '3/16', '1/4', '5/16']}
           value={bridge || ''}
           onChange={(v) => onChange({ ...data, bridge: v })}
         />
