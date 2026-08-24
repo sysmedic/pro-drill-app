@@ -456,7 +456,7 @@ export default function OvalResultModal({
               <div className="space-y-1.5">
                 <h3 className="text-base font-black text-white">오발 매트릭스 RE SET</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  원홀, #1·#2 비트 수치 및 모든 이동/추가 내역이 취소되고, 차트 최초 입력 당시의 기본(3드릴) 상태로 복원됩니다. 정말 초기화하시겠습니까?
+                  모든 이동/추가 내역이 취소되고, 오발 피치 메트릭스 추천 상태로 복원됩니다.
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2.5 pt-1">
