@@ -86,9 +86,9 @@ export default function Midline2DLayoutRenderer({
   const [bitToDelete, setBitToDelete] = useState(null);
   const longPressTimerRef = useRef(null);
 
-  // 📌 180도 도면 회전 상태 토글 (지공사님 전역 절대 정의: 아래쪽을 향하는 상태 [▼]가 기본 기본값 true)
-  const [isFlipped180, setIsFlipped180] = useState(true);
-  const isFlipped180Ref = useRef(true);
+  // 📌 [지공사님 지침 100% 반영]: 180° 회전 뷰 상태 (기본값: false - 상향 화살표 ▲ 기본 지정)
+  const [isFlipped180, setIsFlipped180] = useState(false);
+  const isFlipped180Ref = useRef(false);
 
   const handleSetRotation = (flipVal) => {
     isFlipped180Ref.current = flipVal;
@@ -342,11 +342,12 @@ export default function Midline2DLayoutRenderer({
     requestAnimationFrame(() => requestDirectRender());
   };
 
-  // 📌 EDIT 모드 전환 핸들러 (시뮬레이터 기본 켜짐 출발(끌 수 있음), 나머지 드릴 꺼짐 출발(선택 비트만 켜짐))
+  // 📌 EDIT 모드 전환 핸들러 (시뮬레이터 기본 켜짐 출발(끌 수 있음), 나머지 드릴 꺼짐 출발(선택 비트만 켜짐), 상향 화살표 기본 지정)
   const handleSwitchToEditMode = (e) => {
     e?.stopPropagation();
     setIsEditMode(true);
     setIsCheckFillMode(true); // 📌 [지공사님 지침]: 에디트 모드의 시뮬레이터는 기본 켜짐으로 시작 (끌 수 있음)
+    handleSetRotation(false); // 📌 [지공사님 지침]: 에딧 모드 기본값 화살표 위쪽(▲) 설정
     setSelectedBitIndex(null); // 📌 [지공사님 지침]: 나머지 드릴은 꺼짐 출발 (선택 비트만 켜짐)
     setRefreshKey((prev) => prev + 1);
     requestAnimationFrame(() => requestDirectRender());
@@ -1448,36 +1449,38 @@ export default function Midline2DLayoutRenderer({
               <span className="tracking-tight">EDIT</span>
             </button>
 
-            {/* 3) [ ▼ ] 하향 화살표 전용 독립 버튼 */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSetRotation(true);
-              }}
-              className={`w-8 h-8 text-xs font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
-                isFlipped180
-                  ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
-                  : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
-              }`}
-            >
-              ▼
-            </button>
-
-            {/* 4) [ ▲ ] 상향 화살표 전용 독립 버튼 */}
+            {/* 3) [ ▲ ] 상향 화살표 전용 독립 버튼 (1번 배치) */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 handleSetRotation(false);
               }}
-              className={`w-8 h-8 text-xs font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
+              className={`w-8 h-8 text-xs font-bold rounded-md flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
                 !isFlipped180
                   ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
                   : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
               }`}
+              title="상향 화살표 (▲ - 기본 지정)"
             >
               ▲
+            </button>
+
+            {/* 4) [ ▼ ] 하향 화살표 전용 독립 버튼 (2번 배치) */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSetRotation(true);
+              }}
+              className={`w-8 h-8 text-xs font-bold rounded-md flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
+                isFlipped180
+                  ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
+                  : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
+              }`}
+              title="180° 반전 뷰 (하향 화살표 ▼)"
+            >
+              ▼
             </button>
           </div>
 
@@ -1812,26 +1815,7 @@ export default function Midline2DLayoutRenderer({
             <span className="tracking-tight">EDIT</span>
           </button>
 
-          {/* 📌 [ ▼ ] 하향 화살표 전용 독립 버튼 (기본 지정: 3번 버튼과 100% 색상 및 반응 동일) */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSetRotation(true);
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            className={`w-8 h-8 text-xs font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
-              isFlipped180
-                ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
-                : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
-            }`}
-            title="기본 뷰 (하향 화살표 ▼ - 중약지 아래 방향 기본)"
-          >
-            ▼
-          </button>
-
-          {/* 📌 [ ▲ ] 상향 화살표 전용 독립 버튼 (3번 버튼과 100% 색상 및 반응 동일) */}
+          {/* 📌 [ ▲ ] 상향 화살표 전용 독립 버튼 (1번 배치) */}
           <button
             type="button"
             onClick={(e) => {
@@ -1840,14 +1824,33 @@ export default function Midline2DLayoutRenderer({
             }}
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
-            className={`w-8 h-8 text-xs font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
+            className={`w-8 h-8 text-xs font-bold rounded-md flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
               !isFlipped180
                 ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
                 : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
             }`}
-            title="180° 반전 뷰 (상향 화살표 ▲)"
+            title="상향 화살표 (▲ - 기본 지정)"
           >
             ▲
+          </button>
+
+          {/* 📌 [ ▼ ] 하향 화살표 전용 독립 버튼 (2번 배치) */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSetRotation(true);
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            className={`w-8 h-8 text-xs font-bold rounded-md flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
+              isFlipped180
+                ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
+                : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
+            }`}
+            title="180° 반전 뷰 (하향 화살표 ▼)"
+          >
+            ▼
           </button>
         </div>
 
