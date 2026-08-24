@@ -1141,6 +1141,12 @@ export default function Midline2DLayoutRenderer({
     // 상단(#4, #6: 짝수 비트) vs 하단(#3, #5, #7: 홀수 비트) 영역 100% 명확 판별
     const isUpper = (targetBit % 2 === 0);
 
+    // 0) 현재 선택된 비트의 축선상 현재 위치(currentAxialY) 산출
+    let baseDefaultAxialY = isUpper ? (L1 / 2) : (-L2 / 2);
+    const curOff = bitCustomOffsets[targetBit] || { x: 0, y: 0 };
+    const curAxialProj = (curOff.y * Math.sin(rad)) - (curOff.x * Math.cos(rad) * handMult);
+    const currentAxialY = baseDefaultAxialY + curAxialProj;
+
     // 1) 선택된 비트를 제외한 다른 모든 비트들의 (중심거리 y, 반경 R) 목록 수집
     const existingCuts = [];
     // - 원홀: y = 0, R = R0
@@ -1156,9 +1162,7 @@ export default function Midline2DLayoutRenderer({
         const kDiameter = getBitDiameter(k);
         const kR = kDiameter / 2;
         const kOff = bitCustomOffsets[k] || { x: 0, y: 0 };
-        let kBaseY = 0;
-        if (k % 2 === 0) kBaseY = L1 / 2;
-        else kBaseY = -L2 / 2;
+        let kBaseY = (k % 2 === 0) ? (L1 / 2) : (-L2 / 2);
         const axialProj = (kOff.y * Math.sin(rad)) - (kOff.x * Math.cos(rad) * handMult);
         const ky = kBaseY + axialProj;
         existingCuts.push({ y: ky, r: kR });
@@ -1200,63 +1204,51 @@ export default function Midline2DLayoutRenderer({
       return maxW;
     };
 
-    // 4) 타겟 구역에서 0.001인치 단위로 정밀 스캔하여 미절삭 잔여 살(Gap = W_oval - W_cut) 최대 정점 탐색
-    let bestY = isUpper ? (L1 / 2) : (-L2 / 2);
-    let maxGap = -1;
-
+    // 4) [지공사님 핵심 지침 100% 반영]: 현 위치(currentAxialY)에서 가장 가까운 미절삭 빈 공간 정점 탐색
     const yStart = isUpper ? (L1 * 0.05) : (-L2 * 0.95);
     const yEnd = isUpper ? (L1 * 0.95) : (-L2 * 0.05);
     const minScanY = Math.min(yStart, yEnd);
     const maxScanY = Math.max(yStart, yEnd);
     const stepScan = 0.001; // 0.001인치(0.0254mm) 고정밀 스캔
 
+    let bestVoidY = currentAxialY;
+    let bestScore = -999999;
+    let maxRawGap = -1;
+
     for (let scanY = minScanY; scanY <= maxScanY; scanY += stepScan) {
       const wOval = getOvalHalfWidth(scanY);
       const wCut = getCutHalfWidth(scanY);
       const gap = Math.max(0, wOval - wCut);
+      const dist = Math.abs(scanY - currentAxialY);
 
-      if (gap > maxGap) {
-        maxGap = gap;
-        bestY = scanY;
+      if (gap > maxRawGap) {
+        maxRawGap = gap;
+      }
+
+      // 💡 현 위치 가중치: 빈 공간(gap)이 크면서 현재 비트 위치(dist)와 가장 가까운 지점에 최고점 부여
+      const score = (gap * 10) - (dist * 2.5);
+      if (score > bestScore) {
+        bestScore = score;
+        bestVoidY = scanY;
       }
     }
 
-    // 5) 최대 공백 지점 bestY에서의 오발 외곽선 최대 내접 비트 직경 결정
-    const wAtBestY = getOvalHalfWidth(bestY);
-    const idealDiameter = wAtBestY * 2;
+    const selectedVoidY = (maxRawGap > 0.002) ? bestVoidY : currentAxialY;
+
+    // 5) 선택된 빈 공간(selectedVoidY)에서의 오발 외곽선 최대 내접 비트 직경 결정
+    const wAtVoid = getOvalHalfWidth(selectedVoidY);
+    const idealDiameter = wAtVoid * 2;
     // 1/64" 단위 무조건 내림(Floor) 적용 (절대 오발선 돌출 금지)
     const bit64 = Math.max(32, Math.floor(idealDiameter * 64));
     const fitDiameter = bit64 / 64;
     const fitRadius = fitDiameter / 2;
     const fitDiameterStr = formatFractionByDenom(fitDiameter, 64);
 
-    // 6) [지공사님 핵심 지침 100% 반영: 0.001" 단위 오발선 1:1 칼밀착(Tangency) 위치 역산]
-    // 내림된 비트(fitRadius)의 외곽선이 초록색 실제 오발선 내벽과 1:1로 정확히 맞닿는 최적 축선 위치(bestContactY) 정밀 탐색
-    let bestContactY = bestY;
-    let minWallGap = 999;
+    // 6) [0.001" 단위 오발선 1:1 칼밀착 스냅]: selectedVoidY 위치를 0.001인치 단위로 정밀 안착
+    const finalContactY = Math.round(selectedVoidY * 1000) / 1000;
 
-    for (let scanY = minScanY; scanY <= maxScanY; scanY += stepScan) {
-      const w = getOvalHalfWidth(scanY);
-      // 비트가 오발선 밖으로 돌출되지 않는 안전 조건 (w >= fitRadius)
-      if (w >= fitRadius - 0.0001) {
-        const wallGap = Math.abs(w - fitRadius);
-        // 오발선과의 틈새가 최소(1:1 칼밀착)가 되는 위치를 0.001인치 단위로 포착
-        if (wallGap < minWallGap) {
-          minWallGap = wallGap;
-          bestContactY = scanY;
-        }
-      }
-    }
-
-    // 0.001" 단위 정밀 반올림 안착
-    bestContactY = Math.round(bestContactY * 1000) / 1000;
-
-    // 7) bestContactY 축선 위치에 정확히 안착시키기 위한 D-Pad 오프셋 델타 연산
-    let baseDefaultAxialY = 0;
-    if (isUpper) baseDefaultAxialY = L1 / 2;
-    else baseDefaultAxialY = -L2 / 2;
-
-    const axialDelta = bestContactY - baseDefaultAxialY;
+    // 7) finalContactY 축선 위치에 정확히 안착시키기 위한 D-Pad 오프셋 델타 연산
+    const axialDelta = finalContactY - baseDefaultAxialY;
     const targetOffY = Math.round(axialDelta * Math.sin(rad) * 1000) / 1000;
     const targetOffX = Math.round(-axialDelta * Math.cos(rad) * handMult * 1000) / 1000;
 
