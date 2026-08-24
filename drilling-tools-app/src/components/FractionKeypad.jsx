@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import ModalShell from './ui/ModalShell.jsx';
 
 export default function FractionKeypad({
