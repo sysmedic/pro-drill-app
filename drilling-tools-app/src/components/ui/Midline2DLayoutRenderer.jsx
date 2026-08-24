@@ -870,9 +870,9 @@ export default function Midline2DLayoutRenderer({
 
           ctx.closePath();
 
-          ctx.strokeStyle = '#fbbf24';
+          ctx.strokeStyle = '#10b981';
           ctx.lineWidth = 1.0;
-          ctx.shadowColor = 'rgba(251, 191, 36, 0.6)';
+          ctx.shadowColor = 'rgba(16, 185, 129, 0.6)';
           ctx.shadowBlur = 4;
           ctx.stroke();
           ctx.restore();
@@ -881,7 +881,7 @@ export default function Midline2DLayoutRenderer({
         // Safe fallback guard
       }
 
-      // D-2) 📌 [이론적 오발선]: GUIDE LINE 스위치가 켜졌을 때만 도면 위에 오버레이 표출 (#10b981)
+      // D-2) 📌 [이론적 오발선]: GUIDE LINE 스위치가 켜졌을 때만 도면 위에 오버레이 표출 (골드/앰버 #fbbf24)
       if (showGuideLine) {
         try {
           const rawDist = (r1Pos && r2Pos && Number.isFinite(r1Pos.x) && Number.isFinite(r2Pos.x) && Number.isFinite(r1Pos.y) && Number.isFinite(r2Pos.y))
@@ -898,9 +898,9 @@ export default function Midline2DLayoutRenderer({
           ctx.beginPath();
           ctx.setLineDash([]);
           ctx.ellipse(cx, cy, rxPx, ryPx, actualCutAngle, 0, Math.PI * 2);
-          ctx.strokeStyle = '#10b981';
-          ctx.lineWidth = 0.6; // 초록 오발 타원선 0.6px
-          ctx.shadowColor = 'rgba(16, 185, 129, 0.4)';
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 0.6; // 골드 오발 타원선 0.6px
+          ctx.shadowColor = 'rgba(251, 191, 36, 0.4)';
           ctx.shadowBlur = 4;
           ctx.stroke();
           ctx.restore();
@@ -1313,7 +1313,7 @@ export default function Midline2DLayoutRenderer({
                 PREVIEW
               </button>
 
-              {/* 프리뷰 버튼 밑 단일 초록 이론적 오발선 토글 스위치 (GUIDE LINE) */}
+              {/* 프리뷰 버튼 밑 단일 골드 이론적 오발선 토글 스위치 (PREVIEW 버튼 디자인 1:1 차용) */}
               <div className="flex flex-col gap-1 w-full pt-1">
                 <button
                   type="button"
@@ -1322,19 +1322,14 @@ export default function Midline2DLayoutRenderer({
                     setShowGuideLine((prev) => !prev);
                     requestDirectRender();
                   }}
-                  className={`h-7 w-full flex items-center justify-center gap-1.5 px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[10px] font-bold ${
+                  className={`h-8 px-2.5 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border whitespace-nowrap ${
                     showGuideLine
-                      ? 'bg-slate-900/95 text-emerald-300 border-emerald-400 ring-1 ring-emerald-400/60 shadow-emerald-950/40 opacity-100'
-                      : 'bg-slate-950/80 text-slate-400 border-slate-800/80 opacity-60 hover:opacity-100'
+                      ? 'bg-slate-800 text-amber-400 border-amber-500/60 font-extrabold shadow-amber-950/30'
+                      : 'text-slate-400 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70 font-medium'
                   }`}
-                  title="이론적 오발 가이드 라인 (초록 타원선) 표시 전환"
+                  title="이론적 오발 가이드 라인 (골드 타원선) 표시 전환"
                 >
-                  <span
-                    className={`w-2 h-2 rounded-full shrink-0 transition-transform duration-150 ${
-                      showGuideLine ? 'scale-110 shadow-[0_0_6px_rgba(16,185,129,0.9)] bg-emerald-400' : 'bg-slate-600'
-                    }`}
-                  />
-                  <span className="tracking-tight whitespace-nowrap">GUIDE LINE</span>
+                  GUIDE LINE
                 </button>
               </div>
             </div>
@@ -1662,7 +1657,7 @@ export default function Midline2DLayoutRenderer({
               PREVIEW
             </button>
 
-            {/* 프리뷰 버튼 밑 단일 초록 이론적 오발선 토글 스위치 (GUIDE LINE) */}
+            {/* 프리뷰 버튼 밑 단일 골드 이론적 오발선 토글 스위치 (PREVIEW 버튼 디자인 1:1 차용) */}
             <div className="flex flex-col gap-1 w-full pt-1">
               <button
                 type="button"
@@ -1673,19 +1668,14 @@ export default function Midline2DLayoutRenderer({
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
-                className={`h-7 w-full flex items-center justify-center gap-1.5 px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[10px] font-bold ${
+                className={`h-8 px-2.5 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none whitespace-nowrap ${
                   showGuideLine
-                    ? 'bg-slate-900/95 text-emerald-300 border-emerald-400 ring-1 ring-emerald-400/60 shadow-emerald-950/40 opacity-100'
-                    : 'bg-slate-950/80 text-slate-400 border-slate-800/80 opacity-60 hover:opacity-100'
+                    ? 'bg-slate-800 text-amber-400 border-amber-500/60 font-extrabold shadow-amber-950/30'
+                    : 'text-slate-400 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70 font-medium'
                 }`}
-                title="이론적 오발 가이드 라인 (초록 타원선) 표시 전환"
+                title="이론적 오발 가이드 라인 (골드 타원선) 표시 전환"
               >
-                <span
-                  className={`w-2 h-2 rounded-full shrink-0 transition-transform duration-150 ${
-                    showGuideLine ? 'scale-110 shadow-[0_0_6px_rgba(16,185,129,0.9)] bg-emerald-400' : 'bg-slate-600'
-                  }`}
-                />
-                <span className="tracking-tight whitespace-nowrap">GUIDE LINE</span>
+                GUIDE LINE
               </button>
             </div>
           </div>
