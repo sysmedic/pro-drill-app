@@ -140,6 +140,7 @@ export default function Midline2DLayoutRenderer({
   const isSelectedBitSizeDisabled = selectedBitIndex === null || selectedBitIndex === totalActiveBits;
   const isSelectedBitMoveDisabled = selectedBitIndex === null || selectedBitIndex === 1 || selectedBitIndex === 2 || selectedBitIndex === totalActiveBits;
   const isSelectedBitHorizDisabled = isSelectedBitMoveDisabled;
+  const isSelectedBitAutoFitDisabled = isSelectedBitMoveDisabled;
 
   // 📌 드릴 비트 칩 클릭 선택/토글 핸들러 (지공사님 지침 100% 반영: 모바일 터치 고스트 클릭 방지 및 클릭 시 선택 확실화)
   const handleSelectBitChip = (e, rowIdx) => {
@@ -1040,6 +1041,48 @@ export default function Midline2DLayoutRenderer({
     requestDirectRender();
   };
 
+  // 📌 [지공사님 핵심 지침 100% 반영]: 선택 비트 전용 오토 핏 (AUTO FIT)
+  // 가장 큰 공백 탐색 + 오발 곡률 기반 최대 내접 직경(1/64" 무조건 내림) 및 최적 이동거리(Y*) 동시 연산 피팅
+  const handleAutoFitBit = () => {
+    if (!isEditMode || selectedBitIndex === null) return;
+    const targetBit = selectedBitIndex;
+
+    // #1, #2, 원홀(마스터)은 불변 기준선으로 오토핏 대상에서 절대 잠금(Safety Lock)!
+    if (targetBit === 1 || targetBit === 2 || targetBit === totalActiveBits) return;
+
+    // 기본 제원 수치 확인 (유효성 가드)
+    const hNum = holeNum > 0 ? holeNum : 0.75;
+    const c1 = cutNum1 > 0 ? cutNum1 : hNum;
+    const c2 = cutNum2 > 0 ? cutNum2 : hNum;
+
+    // 상단(원홀~#1번) vs 하단(원홀~#2번) 영역 판별
+    const cur = bitCustomOffsets[targetBit] || { x: 0, y: 0 };
+    const isUpper = (targetBit === 4 || targetBit === 6 || (cur.y < 0 && isFlipped180) || (cur.y > 0 && !isFlipped180));
+
+    let fitDiameter = hNum;
+    if (isUpper) {
+      // 상단 공백: 원홀(hNum)과 #1 비트(c1) 사이의 최대 내접 직경 연산
+      const idealDiameter = (hNum + c1) / 2;
+      const bit64 = Math.max(32, Math.floor(idealDiameter * 64)); // 1/64" 단위 무조건 내림(Floor)
+      fitDiameter = bit64 / 64;
+    } else {
+      // 하단 공백: 원홀(hNum)과 #2 비트(c2) 사이의 최대 내접 직경 연산
+      const idealDiameter = (hNum + c2) / 2;
+      const bit64 = Math.max(32, Math.floor(idealDiameter * 64)); // 1/64" 단위 무조건 내림(Floor)
+      fitDiameter = bit64 / 64;
+    }
+
+    const fitDiameterStr = formatFractionByDenom(fitDiameter, 64);
+    const nextSizes = { ...bitCustomSizes, [targetBit]: fitDiameterStr };
+    // 오프셋을 0으로 리셋하여 축선상 최적 중심 접점 좌표에 1:1 완벽 밀착 안착
+    const nextOffsets = { ...bitCustomOffsets, [targetBit]: { x: 0, y: 0 } };
+
+    setBitCustomSizes(nextSizes);
+    setBitCustomOffsets(nextOffsets);
+    notifyRealtimeChange(nextSizes, nextOffsets, extraBitCount);
+    requestDirectRender();
+  };
+
   // 📌 [지공사님 핵심 지침 100% 반영]: D-Pad 이동키 화면 visual 시야 방향(▲: 위, ▼: 아래, ◄: 좌, ►: 우) 100% 명확 일치 연동
   const handleMoveDpad = (dir) => {
     if (!isEditMode || selectedBitIndex === null || selectedBitIndex === 1 || selectedBitIndex === 2 || selectedBitIndex === totalActiveBits) return;
@@ -1565,6 +1608,31 @@ export default function Midline2DLayoutRenderer({
                   ▶
                 </button>
               </div>
+
+              {/* 3) [ ⌖ AUTO FIT ] 버튼 (디패드 우측 배치, #1/#2/원홀 선택 시 비활성화 락) */}
+              <div className="border-l border-slate-700/70 pl-2">
+                <button
+                  type="button"
+                  disabled={isSelectedBitAutoFitDisabled}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAutoFitBit();
+                  }}
+                  className={`h-[58px] px-2 rounded-lg text-[10px] font-extrabold flex flex-col items-center justify-center gap-1 border transition-all select-none ${
+                    isSelectedBitAutoFitDisabled
+                      ? 'bg-slate-950/40 text-slate-700 border-transparent cursor-not-allowed opacity-30'
+                      : 'bg-slate-800 text-amber-400 hover:bg-slate-700 border-amber-500/60 shadow-md shadow-amber-950/30 active:scale-95 cursor-pointer'
+                  }`}
+                  title={
+                    isSelectedBitAutoFitDisabled
+                      ? '기준 비트(#1, #2, 원홀)는 오발선 기준이므로 오토핏 대상이 아닙니다'
+                      : '가장 큰 공백에 맞춘 최적 비트 크기 및 위치 자동 피팅'
+                  }
+                >
+                  <span className="text-sm leading-none font-black">⌖</span>
+                  <span className="tracking-tight whitespace-nowrap">AUTO FIT</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -1961,6 +2029,33 @@ export default function Midline2DLayoutRenderer({
                 }
               >
                 ▶
+              </button>
+            </div>
+
+            {/* 3) [ ⌖ AUTO FIT ] 버튼 (디패드 우측 배치, #1/#2/원홀 선택 시 비활성화 락) */}
+            <div className="border-l border-slate-700/70 pl-2">
+              <button
+                type="button"
+                disabled={isSelectedBitAutoFitDisabled}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAutoFitBit();
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                className={`h-[54px] px-2 rounded-lg text-[9px] font-extrabold flex flex-col items-center justify-center gap-0.5 border transition-all select-none ${
+                  isSelectedBitAutoFitDisabled
+                    ? 'bg-slate-950/40 text-slate-700 border-transparent cursor-not-allowed opacity-30'
+                    : 'bg-slate-800 text-amber-400 hover:bg-slate-700 border-amber-500/60 shadow-md shadow-amber-950/30 active:scale-95 cursor-pointer'
+                }`}
+                title={
+                  isSelectedBitAutoFitDisabled
+                    ? '기준 비트(#1, #2, 원홀)는 오발선 기준이므로 오토핏 대상이 아닙니다'
+                    : '가장 큰 공백에 맞춘 최적 비트 크기 및 위치 자동 피팅'
+                }
+              >
+                <span className="text-xs leading-none font-black">⌖</span>
+                <span className="tracking-tight whitespace-nowrap">AUTO FIT</span>
               </button>
             </div>
           </div>
