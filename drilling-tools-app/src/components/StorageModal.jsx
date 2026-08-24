@@ -10,6 +10,8 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
   const [slotTitle, setSlotTitle] = useState('');
   const [feedbackMsg, setFeedbackMsg] = useState(null);
 
+  const [slotToDelete, setSlotToDelete] = useState(null);
+
   // 저장된 슬롯 목록 로드
   useEffect(() => {
     if (!isOpen) return;
@@ -27,6 +29,7 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
 
     setSlotTitle('');
     setFeedbackMsg(null);
+    setSlotToDelete(null);
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -81,16 +84,23 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
     }
   };
 
-  // 슬롯 삭제 핸들러
-  const handleDeleteSlot = (e, slotId) => {
+  // 슬롯 삭제 확인 팝업 트리거
+  const handleRequestDeleteSlot = (e, slot) => {
     e.stopPropagation();
-    const nextSlots = slots.filter((s) => s.id !== slotId);
+    setSlotToDelete(slot);
+  };
+
+  // 슬롯 삭제 최종 확정 실행
+  const handleConfirmDeleteSlot = () => {
+    if (!slotToDelete) return;
+    const nextSlots = slots.filter((s) => s.id !== slotToDelete.id);
     setSlots(nextSlots);
     try {
       localStorage.setItem(STORAGE_SLOTS_KEY, JSON.stringify(nextSlots));
     } catch (err) {
       console.error('Delete failed', err);
     }
+    setSlotToDelete(null);
   };
 
   // 📤 슬롯 공유 핸들러 (모바일: 카톡/문자 텍스트 공유, 데스크탑: .txt 파일 다운로드 + 클립보드 복사)
@@ -300,9 +310,9 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
                       </button>
                       <button
                         type="button"
-                        onClick={(e) => handleDeleteSlot(e, slot.id)}
-                        className="px-2 py-1.5 text-xs font-bold text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all"
-                        title="삭제"
+                        onClick={(e) => handleRequestDeleteSlot(e, slot)}
+                        className="px-2 py-1.5 text-xs font-bold text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all cursor-pointer"
+                        title="제원 삭제"
                       >
                         삭제
                       </button>
@@ -313,6 +323,39 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
             </div>
           )}
         </div>
+
+        {/* ⚠️ 슬롯 삭제 확인 인앱 팝업 모달 (리셋 경고 모달과 100% 동일한 프리미엄 다크 디자인) */}
+        {slotToDelete && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in select-none">
+            <div className="bg-slate-900 border border-slate-700/90 rounded-2xl p-5 sm:p-6 max-w-sm w-full shadow-2xl space-y-4 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400 text-xl font-black">
+                ⚠️
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-base font-black text-white">아카이브 제원 삭제</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  선택하신 <span className="text-slate-200 font-bold">[{slotToDelete.title}]</span> 제원 기록이 영구적으로 삭제됩니다. 정말 삭제하시겠습니까?
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setSlotToDelete(null)}
+                  className="h-10 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDeleteSlot}
+                  className="h-10 rounded-md bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-lg shadow-rose-950/50 transition-all cursor-pointer active:scale-95"
+                >
+                  삭제
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body
