@@ -229,10 +229,12 @@ export default function OvalResultModal({
             <SelectField
               density="compact"
               label="보정"
+              labelClassName="text-left font-bold text-slate-600 text-xs mb-1 block"
               onChange={(v) => setOvalCorrection(v)}
               options={OVAL_CORRECTION_OPTIONS}
               value={ovalCorrection}
-              className="text-center font-bold"
+              controlClassName="text-center font-black [text-align-last:center]"
+              style={{ textAlign: 'center', textAlignLast: 'center' }}
             />
           </div>
         </div>
