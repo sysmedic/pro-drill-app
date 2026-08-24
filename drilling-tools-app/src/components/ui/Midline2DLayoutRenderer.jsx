@@ -1268,8 +1268,8 @@ export default function Midline2DLayoutRenderer({
                 PREVIEW
               </button>
 
-              {/* 프리뷰 버튼 밑 2개의 수직 배치 무명 컬러 버튼 (라디오 전환) */}
-              <div className="flex flex-col gap-1 w-full pt-0.5">
+              {/* 프리뷰 버튼 밑 2개의 수직 배치 무명 컬러 버튼 (드릴 칩 스타일 1:1 적용) */}
+              <div className="flex flex-col gap-1 w-full pt-1">
                 {/* 🟢 이론상 오발선 버튼 (Green) */}
                 <button
                   type="button"
@@ -1278,14 +1278,19 @@ export default function Midline2DLayoutRenderer({
                     setOvalGuideType('theoretical');
                     requestDirectRender();
                   }}
-                  className={`h-4.5 w-full rounded-md border flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                  className={`h-7 w-full flex items-center justify-center px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 ${
                     ovalGuideType === 'theoretical'
-                      ? 'bg-emerald-500/30 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400/90 shadow-emerald-500/40'
-                      : 'bg-slate-900/80 border-slate-700/60 hover:border-emerald-600/40 opacity-40 hover:opacity-75'
+                      ? 'bg-slate-900/95 border-emerald-400 ring-1 ring-emerald-400/60 shadow-emerald-950/40 opacity-100'
+                      : 'bg-slate-950/80 border-slate-800/80 opacity-40 hover:opacity-80'
                   }`}
                   title="이론상 오발선 (초록 타원선)"
                 >
-                  <span className={`w-4 h-1.5 rounded-full ${ovalGuideType === 'theoretical' ? 'bg-emerald-400 shadow-emerald-400/80' : 'bg-emerald-600'}`} />
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
+                      ovalGuideType === 'theoretical' ? 'scale-110 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : ''
+                    }`}
+                    style={{ backgroundColor: '#10b981' }}
+                  />
                 </button>
 
                 {/* 🟡 실제 오발선 버튼 (Gold/Amber) */}
@@ -1296,14 +1301,19 @@ export default function Midline2DLayoutRenderer({
                     setOvalGuideType('actual');
                     requestDirectRender();
                   }}
-                  className={`h-4.5 w-full rounded-md border flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                  className={`h-7 w-full flex items-center justify-center px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 ${
                     ovalGuideType === 'actual'
-                      ? 'bg-amber-500/30 border-amber-400 text-amber-300 ring-1 ring-amber-400/90 shadow-amber-500/40'
-                      : 'bg-slate-900/80 border-slate-700/60 hover:border-amber-600/40 opacity-40 hover:opacity-75'
+                      ? 'bg-slate-900/95 border-amber-400 ring-1 ring-amber-400/60 shadow-amber-950/40 opacity-100'
+                      : 'bg-slate-950/80 border-slate-800/80 opacity-40 hover:opacity-80'
                   }`}
                   title="실제 오발선 (골드 매끄러운 곡선)"
                 >
-                  <span className={`w-4 h-1.5 rounded-full ${ovalGuideType === 'actual' ? 'bg-amber-400 shadow-amber-400/80' : 'bg-amber-600'}`} />
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
+                      ovalGuideType === 'actual' ? 'scale-110 shadow-[0_0_8px_rgba(251,191,36,0.8)]' : ''
+                    }`}
+                    style={{ backgroundColor: '#fbbf24' }}
+                  />
                 </button>
               </div>
             </div>
@@ -1631,8 +1641,8 @@ export default function Midline2DLayoutRenderer({
               PREVIEW
             </button>
 
-            {/* 프리뷰 버튼 밑 2개의 수직 배치 무명 컬러 버튼 (라디오 전환) */}
-            <div className="flex flex-col gap-1 w-full pt-0.5">
+            {/* 프리뷰 버튼 밑 2개의 수직 배치 무명 컬러 버튼 (드릴 칩 스타일 1:1 적용) */}
+            <div className="flex flex-col gap-1 w-full pt-1">
               {/* 🟢 이론상 오발선 버튼 (Green) */}
               <button
                 type="button"
@@ -1641,14 +1651,21 @@ export default function Midline2DLayoutRenderer({
                   setOvalGuideType('theoretical');
                   requestDirectRender();
                 }}
-                className={`h-4.5 w-full rounded-md border flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                className={`h-7 w-full flex items-center justify-center px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 ${
                   ovalGuideType === 'theoretical'
-                    ? 'bg-emerald-500/30 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400/90 shadow-emerald-500/40'
-                    : 'bg-slate-900/80 border-slate-700/60 hover:border-emerald-600/40 opacity-40 hover:opacity-75'
+                    ? 'bg-slate-900/95 border-emerald-400 ring-1 ring-emerald-400/60 shadow-emerald-950/40 opacity-100'
+                    : 'bg-slate-950/80 border-slate-800/80 opacity-40 hover:opacity-80'
                 }`}
                 title="이론상 오발선 (초록 타원선)"
               >
-                <span className={`w-4 h-1.5 rounded-full ${ovalGuideType === 'theoretical' ? 'bg-emerald-400 shadow-emerald-400/80' : 'bg-emerald-600'}`} />
+                <span
+                  className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
+                    ovalGuideType === 'theoretical' ? 'scale-110 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : ''
+                  }`}
+                  style={{ backgroundColor: '#10b981' }}
+                />
               </button>
 
               {/* 🟡 실제 오발선 버튼 (Gold/Amber) */}
@@ -1659,14 +1676,21 @@ export default function Midline2DLayoutRenderer({
                   setOvalGuideType('actual');
                   requestDirectRender();
                 }}
-                className={`h-4.5 w-full rounded-md border flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                className={`h-7 w-full flex items-center justify-center px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 ${
                   ovalGuideType === 'actual'
-                    ? 'bg-amber-500/30 border-amber-400 text-amber-300 ring-1 ring-amber-400/90 shadow-amber-500/40'
-                    : 'bg-slate-900/80 border-slate-700/60 hover:border-amber-600/40 opacity-40 hover:opacity-75'
+                    ? 'bg-slate-900/95 border-amber-400 ring-1 ring-amber-400/60 shadow-amber-950/40 opacity-100'
+                    : 'bg-slate-950/80 border-slate-800/80 opacity-40 hover:opacity-80'
                 }`}
                 title="실제 오발선 (골드 매끄러운 곡선)"
               >
-                <span className={`w-4 h-1.5 rounded-full ${ovalGuideType === 'actual' ? 'bg-amber-400 shadow-amber-400/80' : 'bg-amber-600'}`} />
+                <span
+                  className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
+                    ovalGuideType === 'actual' ? 'scale-110 shadow-[0_0_8px_rgba(251,191,36,0.8)]' : ''
+                  }`}
+                  style={{ backgroundColor: '#fbbf24' }}
+                />
               </button>
             </div>
           </div>
