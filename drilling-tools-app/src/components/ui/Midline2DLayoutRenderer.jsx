@@ -1201,42 +1201,65 @@ export default function Midline2DLayoutRenderer({
       return maxW;
     };
 
-    // 4) 타겟 구역에서 100개 샘플링 지점 스캔하여 잔여 살(Gap = W_oval - W_cut) 최대 지점 탐색
+    // 4) 타겟 구역에서 0.001인치 단위로 정밀 스캔하여 미절삭 잔여 살(Gap = W_oval - W_cut) 최대 정점 탐색
     let bestY = isUpper ? (L1 / 2) : (-L2 / 2);
     let maxGap = -1;
 
-    const sampleSteps = 100;
     const yStart = isUpper ? (L1 * 0.05) : (-L2 * 0.95);
     const yEnd = isUpper ? (L1 * 0.95) : (-L2 * 0.05);
+    const minScanY = Math.min(yStart, yEnd);
+    const maxScanY = Math.max(yStart, yEnd);
+    const stepScan = 0.001; // 0.001인치(0.0254mm) 고정밀 스캔
 
-    for (let i = 0; i <= sampleSteps; i++) {
-      const sampleY = yStart + (yEnd - yStart) * (i / sampleSteps);
-      const wOval = getOvalHalfWidth(sampleY);
-      const wCut = getCutHalfWidth(sampleY);
+    for (let scanY = minScanY; scanY <= maxScanY; scanY += stepScan) {
+      const wOval = getOvalHalfWidth(scanY);
+      const wCut = getCutHalfWidth(scanY);
       const gap = Math.max(0, wOval - wCut);
 
       if (gap > maxGap) {
         maxGap = gap;
-        bestY = sampleY;
+        bestY = scanY;
       }
     }
 
-    // 5) 최대 공백 지점 bestY에서의 오발 외곽선 내접 직경 연산
+    // 5) 최대 공백 지점 bestY에서의 오발 외곽선 최대 내접 비트 직경 결정
     const wAtBestY = getOvalHalfWidth(bestY);
     const idealDiameter = wAtBestY * 2;
     // 1/64" 단위 무조건 내림(Floor) 적용 (절대 오발선 돌출 금지)
     const bit64 = Math.max(32, Math.floor(idealDiameter * 64));
     const fitDiameter = bit64 / 64;
+    const fitRadius = fitDiameter / 2;
     const fitDiameterStr = formatFractionByDenom(fitDiameter, 64);
 
-    // 6) bestY 축선 위치에 정확히 안착시키기 위한 D-Pad 오프셋 델타 연산
+    // 6) [지공사님 핵심 지침 100% 반영: 0.001" 단위 오발선 1:1 칼밀착(Tangency) 위치 역산]
+    // 내림된 비트(fitRadius)의 외곽선이 초록색 실제 오발선 내벽과 1:1로 정확히 맞닿는 최적 축선 위치(bestContactY) 정밀 탐색
+    let bestContactY = bestY;
+    let minWallGap = 999;
+
+    for (let scanY = minScanY; scanY <= maxScanY; scanY += stepScan) {
+      const w = getOvalHalfWidth(scanY);
+      // 비트가 오발선 밖으로 돌출되지 않는 안전 조건 (w >= fitRadius)
+      if (w >= fitRadius - 0.0001) {
+        const wallGap = Math.abs(w - fitRadius);
+        // 오발선과의 틈새가 최소(1:1 칼밀착)가 되는 위치를 0.001인치 단위로 포착
+        if (wallGap < minWallGap) {
+          minWallGap = wallGap;
+          bestContactY = scanY;
+        }
+      }
+    }
+
+    // 0.001" 단위 정밀 반올림 안착
+    bestContactY = Math.round(bestContactY * 1000) / 1000;
+
+    // 7) bestContactY 축선 위치에 정확히 안착시키기 위한 D-Pad 오프셋 델타 연산
     let baseDefaultAxialY = 0;
     if (targetBit === 4) baseDefaultAxialY = L1 / 2;
     else if (targetBit === 3) baseDefaultAxialY = -L2 / 2;
 
-    const axialDelta = bestY - baseDefaultAxialY;
-    const targetOffY = axialDelta * Math.sin(rad);
-    const targetOffX = -axialDelta * Math.cos(rad) * handMult;
+    const axialDelta = bestContactY - baseDefaultAxialY;
+    const targetOffY = Math.round(axialDelta * Math.sin(rad) * 1000) / 1000;
+    const targetOffX = Math.round(-axialDelta * Math.cos(rad) * handMult * 1000) / 1000;
 
     const nextSizes = { ...bitCustomSizes, [targetBit]: fitDiameterStr };
     const nextOffsets = { ...bitCustomOffsets, [targetBit]: { x: targetOffX, y: targetOffY } };
