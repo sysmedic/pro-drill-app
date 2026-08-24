@@ -1304,13 +1304,18 @@ export default function Midline2DLayoutRenderer({
               <button
                 type="button"
                 onClick={handleSwitchToPreviewMode}
-                className={`h-8 w-full px-2 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
+                className={`h-8 w-full px-2 text-[11px] font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
                   !isEditMode
                     ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
                     : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
                 }`}
               >
-                PREVIEW
+                <span
+                  className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
+                    !isEditMode ? 'scale-110 shadow-[0_0_6px_rgba(34,211,238,0.9)] bg-cyan-400' : 'bg-slate-700'
+                  }`}
+                />
+                <span className="tracking-tight">PREVIEW</span>
               </button>
 
               {/* 프리뷰 버튼 밑 단일 골드 이론적 오발선 토글 스위치 (활성 램프 탑재) */}
@@ -1339,17 +1344,22 @@ export default function Midline2DLayoutRenderer({
               </div>
             </div>
 
-            {/* 2) [ EDIT ] 전용 독립 버튼 */}
+            {/* 2) [ EDIT ] 전용 독립 버튼 (활성 램프 탑재) */}
             <button
               type="button"
               onClick={handleSwitchToEditMode}
-              className={`h-8 w-[58px] px-2 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
+              className={`h-8 w-[70px] px-2 text-[11px] font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
                 isEditMode
                   ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
                   : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
               }`}
             >
-              EDIT
+              <span
+                className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
+                  isEditMode ? 'scale-110 shadow-[0_0_6px_rgba(34,211,238,0.9)] bg-cyan-400' : 'bg-slate-700'
+                }`}
+              />
+              <span className="tracking-tight">EDIT</span>
             </button>
 
             {/* 3) [ ▼ ] 하향 화살표 전용 독립 버튼 */}
@@ -1652,14 +1662,19 @@ export default function Midline2DLayoutRenderer({
               onClick={handleSwitchToPreviewMode}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              className={`h-8 w-full px-2 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
+              className={`h-8 w-full px-2 text-[11px] font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
                 !isEditMode
                   ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
                   : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
               }`}
               title="PREVIEW 고정 모드. 클릭 시 PREVIEW 모드로 전환"
             >
-              PREVIEW
+              <span
+                className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
+                  !isEditMode ? 'scale-110 shadow-[0_0_6px_rgba(34,211,238,0.9)] bg-cyan-400' : 'bg-slate-700'
+                }`}
+              />
+              <span className="tracking-tight">PREVIEW</span>
             </button>
 
             {/* 프리뷰 버튼 밑 단일 골드 이론적 오발선 토글 스위치 (활성 램프 탑재) */}
@@ -1690,20 +1705,25 @@ export default function Midline2DLayoutRenderer({
             </div>
           </div>
 
-          {/* 2) [ EDIT ] 전용 독립 버튼 (3번 버튼과 100% 디자인 통일) */}
+          {/* 2) [ EDIT ] 전용 독립 버튼 (활성 램프 탑재) */}
           <button
             type="button"
             onClick={handleSwitchToEditMode}
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
-            className={`h-8 w-[58px] px-2 text-[11px] font-bold rounded-xl flex items-center justify-center cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
+            className={`h-8 w-[70px] px-2 text-[11px] font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-md backdrop-blur-md border select-none ${
               isEditMode
                 ? 'bg-slate-800 text-cyan-400 border-cyan-500/60'
                 : 'text-slate-300 bg-slate-900/80 hover:bg-slate-800/90 border-slate-700/70'
             }`}
             title="EDIT 모드 가동 (단일 비트 선택 및 D-Pad 조작 가능). 클릭 시 EDIT 모드로 전환"
           >
-            EDIT
+            <span
+              className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
+                isEditMode ? 'scale-110 shadow-[0_0_6px_rgba(34,211,238,0.9)] bg-cyan-400' : 'bg-slate-700'
+              }`}
+            />
+            <span className="tracking-tight">EDIT</span>
           </button>
 
           {/* 📌 [ ▼ ] 하향 화살표 전용 독립 버튼 (기본 지정: 3번 버튼과 100% 색상 및 반응 동일) */}
