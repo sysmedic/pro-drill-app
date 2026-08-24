@@ -4,11 +4,13 @@
 
 ## 현재 우선순위
 
-- 만능 스판 변환기 & 도면 스판 가이드 모달 피팅 완수 및 Vercel 프로덕션 라이브 배포 완료 (`ChartBlueprintView.jsx`, `SpanConverterModal.jsx`, `spanConverter.js`):
-  - **만능 스판 변환기 & 구면 호(Arc) 물리 수식 검증 완수**: 27인치 볼링공 구면 삼각법 및 C-C Hub 법칙 기반 스판 3종(Actual / CTC / C-C) 상호 변환 100% 가역성 및 수학적 정확성 입증 완료.
-  - **도면 가이드 모달 & 버튼 피팅 완수**: 원안 위치(`spanLeftPos.y - 50`) 스판타입 버튼 검정 글자색 100% 고정 + 5% 호버 스케일 적용 및 상단 붕 떠있는 `?` 맥동 가이드 뱃지 1:1 역 스케일 물리 크기/타이밍 완벽 동기화 완료.
-  - **맞춤법 정제 문구 반영**: 모달 상단 타이틀(`"📐 스팬타입을 클릭하면 계산을 시작합니다."`) 및 개요 설명 단락과 4가지 정제 항목 완벽 이식 완료.
-  - **Vercel 라이브 배포 트리거 완수**: 커밋 `0b5f830` 푸시 완료로 Vercel 프로덕션 자동 빌드/배포 완료.
+- **독립 PWA 웹 애플리케이션 'ProDrill Tools' [PREVIEW 및 EDIT 버튼 활성 LED 램프 탑재 & 툴바 안정성] 완료 (지공사님 지침에 따라 Vercel 배포는 보류 상태) (`Midline2DLayoutRenderer.jsx`)**:
+  - **지공사님 핵심 지침 100% 완수**:
+    1) **PREVIEW 버튼 활성 LED 램프 탑재**: 기본 프리뷰 모드 활성 시 🔵 **빛나는 시안 LED 램프(`bg-cyan-400`, `shadow-[0_0_6px_rgba(34,211,238,0.9)]`)** 점등, EDIT 모드 시 꺼진 램프(`bg-slate-700`)로 전환.
+    2) **EDIT 버튼 활성 LED 램프 탑재**: EDIT 모드 활성 시 🔵 **빛나는 시안 LED 램프(`bg-cyan-400`)** 점등, 프리뷰 모드 시 꺼진 램프(`bg-slate-700`)로 전환.
+    3) **GUIDE LINE 버튼 활성 LED 램프 유지**: 스위치 ON 시 🟡 **빛나는 골드 LED 램프(`bg-amber-400`)** 점등.
+    4) **고정 폭을 통한 화면 꿀렁거림(Layout Shift) 0% 완벽 보장**: `PREVIEW`/`GUIDE LINE`(`w-[98px]`), `EDIT`(`w-[70px]`), 회전(`w-8 h-8`) 고정 규격으로 바위처럼 견고한 툴바 동작.
+  - **검증 완료**: 70/70 전체 단위 테스트 PASS, Vite production build 성공 및 로컬 호스트(`http://192.168.0.11:5174`) 즉시 반영. (지공사님 배포 보류 지침 준수 🟢).
 
 1. 차트 입력폼을 `FingerPitchSection`, `ThumbSection`, `SpanSection`, `HandConditionSection` 단위로 분리한다.
 2. 고객 목록 화면의 검색/정렬/row UI를 공용 primitive 기준으로 정리한다.
