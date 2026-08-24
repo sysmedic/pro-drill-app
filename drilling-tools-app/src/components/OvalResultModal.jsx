@@ -304,10 +304,9 @@ export default function OvalResultModal({
                   currentPrecision === 'detailed' ? 'left-11' : 'left-8'
                 }`}
               />
-              <div className="relative bg-amber-50 text-black border border-amber-300/90 rounded-xl px-3.5 py-2 text-xs sm:text-[13px] font-black flex items-center gap-2 shadow-sm select-none">
-                <span className="text-sm shrink-0 text-amber-600">⚠️</span>
+              <div className="relative bg-amber-50 text-slate-900 border border-amber-300/90 rounded-xl px-3.5 py-2 text-xs sm:text-[13px] font-semibold flex items-center shadow-sm select-none">
                 <span className="whitespace-nowrap leading-none">
-                  턱이 발생할 수 있으니 <b className="text-black font-black">[{recommendedMode === 'ultra' ? '초정밀' : '정밀'}]</b> 추천
+                  턱이 발생할 수 있으니 <b className="text-black font-bold">[{recommendedMode === 'ultra' ? '초정밀' : '정밀'}]</b> 추천
                 </span>
               </div>
             </div>
