@@ -4,12 +4,9 @@
 
 ## 현재 우선순위
 
-- **독립 PWA 웹 애플리케이션 'ProDrill Tools' [PREVIEW 및 EDIT 버튼 활성 LED 램프 탑재 & 툴바 안정성] 완료 (지공사님 지침에 따라 Vercel 배포는 보류 상태) (`Midline2DLayoutRenderer.jsx`)**:
-  - **지공사님 핵심 지침 100% 완수**:
-    1) **PREVIEW 버튼 활성 LED 램프 탑재**: 기본 프리뷰 모드 활성 시 🔵 **빛나는 시안 LED 램프(`bg-cyan-400`, `shadow-[0_0_6px_rgba(34,211,238,0.9)]`)** 점등, EDIT 모드 시 꺼진 램프(`bg-slate-700`)로 전환.
-    2) **EDIT 버튼 활성 LED 램프 탑재**: EDIT 모드 활성 시 🔵 **빛나는 시안 LED 램프(`bg-cyan-400`)** 점등, 프리뷰 모드 시 꺼진 램프(`bg-slate-700`)로 전환.
-    3) **GUIDE LINE 버튼 활성 LED 램프 유지**: 스위치 ON 시 🟡 **빛나는 골드 LED 램프(`bg-amber-400`)** 점등.
-    4) **고정 폭을 통한 화면 꿀렁거림(Layout Shift) 0% 완벽 보장**: `PREVIEW`/`GUIDE LINE`(`w-[98px]`), `EDIT`(`w-[70px]`), 회전(`w-8 h-8`) 고정 규격으로 바위처럼 견고한 툴바 동작.
+- **신규 분기 브랜치 `드릴링-자동계산` 생성 및 작업 준비 완료**:
+  - `main` 브랜치에 이전 `feature/dual-oval-cut` 작업이 성공적으로 병합되었으며, 사용 완료된 브랜치는 로컬/원격 모두 깔끔하게 정리 삭제되었습니다.
+  - 최신 `main` 브랜치를 기준으로 신규 분기 브랜치 **`드릴링-자동계산`**을 생성하고 원격 저장소(`origin/드릴링-자동계산`) 추적 설정을 완료했습니다.
   - **검증 완료**: 70/70 전체 단위 테스트 PASS, Vite production build 성공 및 로컬 호스트(`http://192.168.0.11:5174`) 즉시 반영. (지공사님 배포 보류 지침 준수 🟢).
 
 1. 차트 입력폼을 `FingerPitchSection`, `ThumbSection`, `SpanSection`, `HandConditionSection` 단위로 분리한다.
