@@ -82,28 +82,47 @@ export default function OvalResultModal({
           <div className="flex flex-col w-full">
             <label className="text-xs font-bold text-slate-600 mb-1">정밀도</label>
             <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-10 w-full shadow-2xs">
-              <button
-                type="button"
-                onClick={() => setIsDetailedMode(false)}
-                className={`flex-1 h-full text-xs font-extrabold rounded transition-all cursor-pointer flex items-center justify-center ${
-                  !isDetailedMode
-                    ? 'bg-slate-800 text-white shadow-2xs font-black'
-                    : 'text-slate-500 hover:text-slate-800 font-bold'
-                }`}
-              >
-                기본
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsDetailedMode(true)}
-                className={`flex-1 h-full text-xs font-extrabold rounded transition-all cursor-pointer flex items-center justify-center ${
-                  isDetailedMode
-                    ? 'bg-slate-800 text-white shadow-2xs font-black'
-                    : 'text-slate-500 hover:text-slate-800 font-bold'
-                }`}
-              >
-                정밀
-              </button>
+              {(() => {
+                const hasExtraBits = (sharedState?.extraBitCount || 0) > 0;
+                return (
+                  <>
+                    <button
+                      type="button"
+                      disabled={hasExtraBits}
+                      onClick={() => setIsDetailedMode(false)}
+                      className={`flex-1 h-full text-xs font-extrabold rounded transition-all flex items-center justify-center ${
+                        hasExtraBits
+                          ? 'opacity-40 cursor-not-allowed text-slate-400'
+                          : 'cursor-pointer'
+                      } ${
+                        !isDetailedMode
+                          ? 'bg-slate-800 text-white shadow-2xs font-black'
+                          : 'text-slate-500 hover:text-slate-800 font-bold'
+                      }`}
+                      title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '기본 (3드릴) 모드'}
+                    >
+                      기본
+                    </button>
+                    <button
+                      type="button"
+                      disabled={hasExtraBits}
+                      onClick={() => setIsDetailedMode(true)}
+                      className={`flex-1 h-full text-xs font-extrabold rounded transition-all flex items-center justify-center ${
+                        hasExtraBits
+                          ? 'opacity-40 cursor-not-allowed text-slate-400'
+                          : 'cursor-pointer'
+                      } ${
+                        isDetailedMode
+                          ? 'bg-slate-800 text-white shadow-2xs font-black'
+                          : 'text-slate-500 hover:text-slate-800 font-bold'
+                      }`}
+                      title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '정밀 (5드릴) 모드'}
+                    >
+                      정밀
+                    </button>
+                  </>
+                );
+              })()}
             </div>
           </div>
 
