@@ -787,7 +787,7 @@ export default function Midline2DLayoutRenderer({
           // Safe fallback guard to prevent graphics context crash
         }
       } else {
-        // D-2) 1.0px 골드 실제 오발선 (중간 직선 변형 없는 완벽한 매끄러운 4분할 곡률 스플라인 #fbbf24)
+        // D-2) 1.0px 골드 실제 오발선 (#1번 R1 및 #2번 R2 고유 절삭면 100% 밀착 스플라인 #fbbf24)
         try {
           const uX = Math.cos(actualCutAngle);
           const uY = Math.sin(actualCutAngle);
@@ -818,49 +818,53 @@ export default function Midline2DLayoutRenderer({
           const Lx = cx - W * vX;
           const Ly = cy - W * vY;
 
-          // 꺾임 없는 무변형 3차 베지에 곡률 계수
+          // 3차 베지에 매끄러운 곡률 계수
           const KAPPA = 0.55228475;
+
+          // 각 정점별 비트 고유 반경 기반 제어점 가중치
+          const R1_eff = Math.max(r1RadiusPx, W * 0.7);
+          const R2_eff = Math.max(r2RadiusPx, W * 0.7);
 
           ctx.save();
           ctx.beginPath();
           ctx.moveTo(Ax, Ay);
 
-          // 1사분면 (상단 A ➔ 우측 허리 R 부드러운 곡선)
+          // 1사분면 (상단 A ➔ 우측 허리 R 부드러운 곡선: 상단은 R1 비트 곡률 반영)
           ctx.bezierCurveTo(
-            Ax + KAPPA * W * vX,
-            Ay + KAPPA * W * vY,
+            Ax + KAPPA * R1_eff * vX,
+            Ay + KAPPA * R1_eff * vY,
             Rx + KAPPA * L1 * uX,
             Ry + KAPPA * L1 * uY,
             Rx,
             Ry
           );
 
-          // 2사분면 (우측 허리 R ➔ 하단 B 부드러운 곡선)
+          // 2사분면 (우측 허리 R ➔ 하단 B 부드러운 곡선: 하단은 R2 비트 곡률 반영)
           ctx.bezierCurveTo(
             Rx - KAPPA * L2 * uX,
             Ry - KAPPA * L2 * uY,
-            Bx + KAPPA * W * vX,
-            By + KAPPA * W * vY,
+            Bx + KAPPA * R2_eff * vX,
+            By + KAPPA * R2_eff * vY,
             Bx,
             By
           );
 
-          // 3사분면 (하단 B ➔ 좌측 허리 L 부드러운 곡선)
+          // 3사분면 (하단 B ➔ 좌측 허리 L 부드러운 곡선: 하단은 R2 비트 곡률 반영)
           ctx.bezierCurveTo(
-            Bx - KAPPA * W * vX,
-            By - KAPPA * W * vY,
+            Bx - KAPPA * R2_eff * vX,
+            By - KAPPA * R2_eff * vY,
             Lx - KAPPA * L2 * uX,
             Ly - KAPPA * L2 * uY,
             Lx,
             Ly
           );
 
-          // 4사분면 (좌측 허리 L ➔ 상단 A 부드러운 곡선 복귀)
+          // 4사분면 (좌측 허리 L ➔ 상단 A 부드러운 곡선 복귀: 상단은 R1 비트 곡률 반영)
           ctx.bezierCurveTo(
             Lx + KAPPA * L1 * uX,
             Ly + KAPPA * L1 * uY,
-            Ax - KAPPA * W * vX,
-            Ay - KAPPA * W * vY,
+            Ax - KAPPA * R1_eff * vX,
+            Ay - KAPPA * R1_eff * vY,
             Ax,
             Ay
           );
