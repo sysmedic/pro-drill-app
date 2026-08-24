@@ -13,13 +13,13 @@ const OVAL_CORRECTION_OPTIONS = [
   { value: '1/32', label: '1/32' },
 ];
 
-// 📌 [지공사님 핵심 지침 100% 반영]: 16각 다각 별모양(Starburst) 추천 라벨 배지 (박스 외곽 오버랩)
+// 📌 [지공사님 핵심 지침 100% 반영]: 은은한 파스텔 골드 16각 별모양(Starburst) 추천 라벨 배지
 const StarburstRecommendBadge = () => (
-  <div className="absolute -top-3.5 -right-2.5 z-20 pointer-events-none flex items-center justify-center filter drop-shadow-[0_2px_3px_rgba(217,119,6,0.5)]">
-    <svg viewBox="0 0 48 48" className="w-8 h-8 fill-amber-400 stroke-amber-600" strokeWidth="1.2">
+  <div className="absolute -top-3.5 -right-2.5 z-20 pointer-events-none flex items-center justify-center filter drop-shadow-[0_1px_2px_rgba(217,119,6,0.25)]">
+    <svg viewBox="0 0 48 48" className="w-8 h-8 fill-amber-200/90 stroke-amber-400/80" strokeWidth="1.2">
       <polygon points="24,2 29.7,10.1 39.6,8.4 37.9,18.3 46,24 37.9,29.7 39.6,39.6 29.7,37.9 24,46 18.3,37.9 8.4,39.6 10.1,29.7 2,24 10.1,18.3 8.4,8.4 18.3,10.1" />
     </svg>
-    <span className="absolute text-[8px] font-black text-slate-950 tracking-tighter leading-none select-none">
+    <span className="absolute text-[8px] font-black text-amber-950/90 tracking-tighter leading-none select-none">
       추천
     </span>
   </div>
@@ -291,15 +291,23 @@ export default function OvalResultModal({
             </div>
           </div>
 
-          {/* 🎈 [지공사님 핵심 지침 100% 반영]: 덜컹거림 100% 차단용 절대위치 플로팅 말풍선(Balloon Tooltip) */}
+          {/* 🎈 [지공사님 핵심 지침 100% 반영]: 선택 버튼과 시작점이 일치하는 부드러운 파스텔톤 플로팅 말풍선 */}
           {isUnderDrilling && (
-            <div className="absolute left-3 -bottom-2 translate-y-full z-30 pointer-events-none animate-fade-in filter drop-shadow-md">
-              {/* 말풍선 상단 꼬리 화살표 */}
-              <div className="absolute -top-1 left-7 w-2.5 h-2.5 bg-amber-400 rotate-45 border-t border-l border-amber-500/50" />
-              <div className="relative bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border border-amber-500/60 rounded-xl px-3 py-1.5 text-[11px] sm:text-xs font-black flex items-center gap-1.5 shadow-lg select-none">
-                <span className="text-xs shrink-0">⚠️</span>
+            <div
+              className={`absolute -bottom-2.5 translate-y-full z-30 pointer-events-none animate-fade-in filter drop-shadow-sm transition-all duration-200 ${
+                currentPrecision === 'detailed' ? 'left-16 sm:left-24' : 'left-2 sm:left-3'
+              }`}
+            >
+              {/* 말풍선 상단 꼬리 화살표 (선택된 버튼 위치와 1:1 일치) */}
+              <div
+                className={`absolute -top-1.5 w-3 h-3 bg-amber-50 rotate-45 border-t border-l border-amber-300 ${
+                  currentPrecision === 'detailed' ? 'left-10' : 'left-8'
+                }`}
+              />
+              <div className="relative bg-amber-50 text-amber-900 border border-amber-300 rounded-xl px-3 py-1.5 text-[11px] sm:text-xs font-extrabold flex items-center gap-1.5 shadow-sm select-none">
+                <span className="text-xs shrink-0 text-amber-600">⚠️</span>
                 <span className="whitespace-nowrap">
-                  턱이 발생할 수 있으니 <b>[{recommendedMode === 'ultra' ? '초정밀' : '정밀'}]</b> 추천
+                  턱이 발생할 수 있으니 <b className="text-amber-950">[{recommendedMode === 'ultra' ? '초정밀' : '정밀'}]</b> 추천
                 </span>
               </div>
             </div>
