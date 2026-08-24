@@ -212,7 +212,6 @@ export default function Midline2DLayoutRenderer({
   const isSelectedBitSizeDisabled = selectedBitIndex === null || selectedBitIndex === totalActiveBits;
   const isSelectedBitMoveDisabled = selectedBitIndex === null || selectedBitIndex === 1 || selectedBitIndex === 2 || selectedBitIndex === totalActiveBits;
   const isSelectedBitHorizDisabled = isSelectedBitMoveDisabled;
-  const isSelectedBitAutoFitDisabled = isSelectedBitMoveDisabled;
 
   // 📌 드릴 비트 칩 클릭 선택/토글 핸들러 (지공사님 지침 100% 반영: 모바일 터치 고스트 클릭 방지 및 클릭 시 선택 확실화)
   const handleSelectBitChip = (e, rowIdx) => {
@@ -1127,201 +1126,6 @@ export default function Midline2DLayoutRenderer({
     requestDirectRender();
   };
 
-  // 📌 [지공사님 핵심 지침 100% 반영]: 선택 비트 전용 오토 핏 (AUTO FIT)
-  // [지공사님 공백 정의]: 실제 오발선과 선택된 비트를 제외한 모든 비트의 외곽선 차이(미절삭 잔여 살)가 가장 큰 지점을 정밀 스캔하여 오발 곡률 내접 최적 직경 & 이동거리(Y*) 동시 연산
-  const handleAutoFitBit = () => {
-    if (!isEditMode || selectedBitIndex === null) return;
-    const targetBit = selectedBitIndex;
-
-    // #1, #2, 원홀(마스터)은 불변 기준선으로 오토핏 대상에서 절대 잠금(Safety Lock)!
-    if (targetBit === 1 || targetBit === 2 || targetBit === totalActiveBits) return;
-
-    // 기본 제원 수치 확인 (유효성 가드)
-    const hNum = holeNum > 0 ? holeNum : 0.75;
-    const oNum = ovalNum > 0 ? ovalNum : (hNum + 0.125);
-    const c1 = cutNum1 > 0 ? cutNum1 : hNum;
-    const c2 = cutNum2 > 0 ? cutNum2 : hNum;
-
-    const R0 = hNum / 2;
-    const R1 = c1 / 2;
-    const R2 = c2 / 2;
-    const L1 = (oNum - c1) / 2;
-    const L2 = (oNum - c2) / 2;
-
-    const rad = (angleNum * Math.PI) / 180;
-    const handMult = hand === 'left' ? -1 : 1;
-
-    // 상단 vs 하단 영역 및 기본 축선 기준점 판별
-    let isUpper = false;
-    let baseDefaultAxialY = 0;
-
-    if (precisionMode === 'ultra') {
-      // 7드릴 모드: #3(하단 2/3), #4(하단 1/3), #5(상단 1/3), #6(상단 2/3)
-      if (targetBit === 5) {
-        isUpper = true;
-        baseDefaultAxialY = L1 * (1 / 3);
-      } else if (targetBit === 6) {
-        isUpper = true;
-        baseDefaultAxialY = L1 * (2 / 3);
-      } else if (targetBit === 3) {
-        isUpper = false;
-        baseDefaultAxialY = -L2 * (2 / 3);
-      } else if (targetBit === 4) {
-        isUpper = false;
-        baseDefaultAxialY = -L2 * (1 / 3);
-      } else {
-        isUpper = (targetBit % 2 === 0);
-        baseDefaultAxialY = isUpper ? (L1 / 2) : (-L2 / 2);
-      }
-    } else if (precisionMode === 'detailed') {
-      // 5드릴 모드: #3(하단 1/2), #4(상단 1/2)
-      if (targetBit === 4) {
-        isUpper = true;
-        baseDefaultAxialY = L1 / 2;
-      } else if (targetBit === 3) {
-        isUpper = false;
-        baseDefaultAxialY = -L2 / 2;
-      } else {
-        isUpper = (targetBit % 2 === 0);
-        baseDefaultAxialY = isUpper ? (L1 / 2) : (-L2 / 2);
-      }
-    } else {
-      isUpper = (targetBit % 2 === 0);
-      baseDefaultAxialY = isUpper ? (L1 / 2) : (-L2 / 2);
-    }
-
-    // 0) 현재 선택된 비트의 축선상 현재 위치(currentAxialY) 산출
-    const curOff = bitCustomOffsets[targetBit] || { x: 0, y: 0 };
-    const curAxialProj = (curOff.y * Math.sin(rad)) - (curOff.x * Math.cos(rad) * handMult);
-    const currentAxialY = baseDefaultAxialY + curAxialProj;
-
-    // 1) 선택된 비트를 제외한 다른 모든 비트들의 (중심거리 y, 반경 R) 목록 수집
-    const existingCuts = [];
-    // - 원홀: y = 0, R = R0
-    existingCuts.push({ y: 0, r: R0 });
-    // - #1번 비트: y = +L1, R = R1
-    existingCuts.push({ y: L1, r: R1 });
-    // - #2번 비트: y = -L2, R = R2
-    existingCuts.push({ y: -L2, r: R2 });
-
-    // - 다른 활성화된 중간 비트들 (k !== targetBit)
-    for (let k = 3; k < totalActiveBits; k++) {
-      if (k !== targetBit && isBitVisible(k)) {
-        const kDiameter = getBitDiameter(k);
-        const kR = kDiameter / 2;
-        const kOff = bitCustomOffsets[k] || { x: 0, y: 0 };
-        let kBaseY = 0;
-        if (precisionMode === 'ultra') {
-          if (k === 3) kBaseY = -L2 * (2 / 3);
-          else if (k === 4) kBaseY = -L2 * (1 / 3);
-          else if (k === 5) kBaseY = L1 * (1 / 3);
-          else if (k === 6) kBaseY = L1 * (2 / 3);
-          else kBaseY = (k % 2 === 0) ? (L1 / 2) : (-L2 / 2);
-        } else if (precisionMode === 'detailed') {
-          if (k === 3) kBaseY = -L2 / 2;
-          else if (k === 4) kBaseY = L1 / 2;
-          else kBaseY = (k % 2 === 0) ? (L1 / 2) : (-L2 / 2);
-        } else {
-          kBaseY = (k % 2 === 0) ? (L1 / 2) : (-L2 / 2);
-        }
-        const axialProj = (kOff.y * Math.sin(rad)) - (kOff.x * Math.cos(rad) * handMult);
-        const ky = kBaseY + axialProj;
-        existingCuts.push({ y: ky, r: kR });
-      }
-    }
-
-    // 2) 실제 오발 외곽선 반폭 함수 W_oval(y)
-    const getOvalHalfWidth = (y) => {
-      if (y >= 0) {
-        if (y >= L1) {
-          const dy = y - L1;
-          return dy < R1 ? Math.sqrt(Math.max(0, R1 * R1 - dy * dy)) : 0;
-        }
-        // 0 <= y < L1 (상단 허리 테이퍼 보간)
-        const t = y / (L1 > 0.001 ? L1 : 0.001);
-        return R0 + (R1 - R0) * t;
-      } else {
-        const ay = Math.abs(y);
-        if (ay >= L2) {
-          const dy = ay - L2;
-          return dy < R2 ? Math.sqrt(Math.max(0, R2 * R2 - dy * dy)) : 0;
-        }
-        // -L2 < y < 0 (하단 허리 테이퍼 보간)
-        const t = ay / (L2 > 0.001 ? L2 : 0.001);
-        return R0 + (R2 - R0) * t;
-      }
-    };
-
-    // 3) 기존 비트들에 의한 절삭 반폭 함수 W_cut(y)
-    const getCutHalfWidth = (y) => {
-      let maxW = 0;
-      for (const cut of existingCuts) {
-        const dy = Math.abs(y - cut.y);
-        if (dy < cut.r) {
-          const w = Math.sqrt(Math.max(0, cut.r * cut.r - dy * dy));
-          if (w > maxW) maxW = w;
-        }
-      }
-      return maxW;
-    };
-
-    // 4) [지공사님 핵심 지침 100% 반영]: 현 위치(currentAxialY)에서 가장 가까운 미절삭 빈 공간 정점 탐색
-    const yStart = isUpper ? (L1 * 0.05) : (-L2 * 0.95);
-    const yEnd = isUpper ? (L1 * 0.95) : (-L2 * 0.05);
-    const minScanY = Math.min(yStart, yEnd);
-    const maxScanY = Math.max(yStart, yEnd);
-    const stepScan = 0.001; // 0.001인치(0.0254mm) 고정밀 스캔
-
-    let bestVoidY = currentAxialY;
-    let bestScore = -999999;
-    let maxRawGap = -1;
-
-    for (let scanY = minScanY; scanY <= maxScanY; scanY += stepScan) {
-      const wOval = getOvalHalfWidth(scanY);
-      const wCut = getCutHalfWidth(scanY);
-      const gap = Math.max(0, wOval - wCut);
-      const dist = Math.abs(scanY - currentAxialY);
-
-      if (gap > maxRawGap) {
-        maxRawGap = gap;
-      }
-
-      // 💡 현 위치 가중치: 빈 공간(gap)이 크면서 현재 비트 위치(dist)와 가장 가까운 지점에 최고점 부여
-      const score = (gap * 10) - (dist * 2.5);
-      if (score > bestScore) {
-        bestScore = score;
-        bestVoidY = scanY;
-      }
-    }
-
-    const selectedVoidY = (maxRawGap > 0.002) ? bestVoidY : currentAxialY;
-
-    // 5) 선택된 빈 공간(selectedVoidY)에서의 오발 외곽선 최대 내접 비트 직경 결정
-    const wAtVoid = getOvalHalfWidth(selectedVoidY);
-    const idealDiameter = wAtVoid * 2;
-    // 1/64" 단위 무조건 내림(Floor) 적용 (절대 오발선 돌출 금지)
-    const bit64 = Math.max(32, Math.floor(idealDiameter * 64));
-    const fitDiameter = bit64 / 64;
-    const fitRadius = fitDiameter / 2;
-    const fitDiameterStr = formatFractionByDenom(fitDiameter, 64);
-
-    // 6) [0.001" 단위 오발선 1:1 칼밀착 스냅]: selectedVoidY 위치를 0.001인치 단위로 정밀 안착
-    const finalContactY = Math.round(selectedVoidY * 1000) / 1000;
-
-    // 7) finalContactY 축선 위치에 정확히 안착시키기 위한 D-Pad 오프셋 델타 연산
-    const axialDelta = finalContactY - baseDefaultAxialY;
-    const targetOffY = Math.round(axialDelta * Math.sin(rad) * 1000) / 1000;
-    const targetOffX = Math.round(-axialDelta * Math.cos(rad) * handMult * 1000) / 1000;
-
-    const nextSizes = { ...bitCustomSizes, [targetBit]: fitDiameterStr };
-    const nextOffsets = { ...bitCustomOffsets, [targetBit]: { x: targetOffX, y: targetOffY } };
-
-    setBitCustomSizes(nextSizes);
-    setBitCustomOffsets(nextOffsets);
-    notifyRealtimeChange(nextSizes, nextOffsets, extraBitCount);
-    requestDirectRender();
-  };
-
   // 📌 [지공사님 핵심 지침 100% 반영]: D-Pad 이동키 화면 visual 시야 방향(▲: 위, ▼: 아래, ◄: 좌, ►: 우) 100% 명확 일치 연동
   const handleMoveDpad = (dir) => {
     if (!isEditMode || selectedBitIndex === null || selectedBitIndex === 1 || selectedBitIndex === 2 || selectedBitIndex === totalActiveBits) return;
@@ -1847,35 +1651,10 @@ export default function Midline2DLayoutRenderer({
                   ▶
                 </button>
               </div>
-
-              {/* 3) [ ⌖ AUTO FIT ] 버튼 (디패드 우측 배치, #1/#2/원홀 선택 시 비활성화 락) */}
-              <div className="border-l border-slate-700/70 pl-2">
-                <button
-                  type="button"
-                  disabled={isSelectedBitAutoFitDisabled}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAutoFitBit();
-                  }}
-                  className={`h-[58px] px-2 rounded-lg text-[10px] font-extrabold flex flex-col items-center justify-center gap-1 border transition-all select-none ${
-                    isSelectedBitAutoFitDisabled
-                      ? 'bg-slate-950/40 text-slate-700 border-transparent cursor-not-allowed opacity-30'
-                      : 'bg-slate-800 text-amber-400 hover:bg-slate-700 border-amber-500/60 shadow-md shadow-amber-950/30 active:scale-95 cursor-pointer'
-                  }`}
-                  title={
-                    isSelectedBitAutoFitDisabled
-                      ? '기준 비트(#1, #2, 원홀)는 오발선 기준이므로 오토핏 대상이 아닙니다'
-                      : '가장 큰 공백에 맞춘 최적 비트 크기 및 위치 자동 피팅'
-                  }
-                >
-                  <span className="text-sm leading-none font-black">⌖</span>
-                  <span className="tracking-tight whitespace-nowrap">AUTO FIT</span>
-                </button>
-              </div>
             </div>
           )}
 
-          {/* 📌 우측 상단 마스터 컨트롤 세트: [ ◎ ] [ ✕ ] ([ 💾 ] 저장 버튼 전면 소거 & [ ✕ ] 직통 닫기!) */}
+              {/* 📌 우측 상단 마스터 컨트롤 세트: [ ◎ ] [ ✕ ] ([ 💾 ] 저장 버튼 전면 소거 & [ ✕ ] 직통 닫기!) */}
           <div className="absolute top-3 right-3 flex items-center space-x-2 z-20 select-none">
             {/* 1) [ ◎ ] 첫 화면 오발 뷰 버튼 */}
             <button
@@ -2272,37 +2051,10 @@ export default function Midline2DLayoutRenderer({
                 ▶
               </button>
             </div>
-
-            {/* 3) [ ⌖ AUTO FIT ] 버튼 (디패드 우측 배치, #1/#2/원홀 선택 시 비활성화 락) */}
-            <div className="border-l border-slate-700/70 pl-2">
-              <button
-                type="button"
-                disabled={isSelectedBitAutoFitDisabled}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAutoFitBit();
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-                className={`h-[54px] px-2 rounded-lg text-[9px] font-extrabold flex flex-col items-center justify-center gap-0.5 border transition-all select-none ${
-                  isSelectedBitAutoFitDisabled
-                    ? 'bg-slate-950/40 text-slate-700 border-transparent cursor-not-allowed opacity-30'
-                    : 'bg-slate-800 text-amber-400 hover:bg-slate-700 border-amber-500/60 shadow-md shadow-amber-950/30 active:scale-95 cursor-pointer'
-                }`}
-                title={
-                  isSelectedBitAutoFitDisabled
-                    ? '기준 비트(#1, #2, 원홀)는 오발선 기준이므로 오토핏 대상이 아닙니다'
-                    : '가장 큰 공백에 맞춘 최적 비트 크기 및 위치 자동 피팅'
-                }
-              >
-                <span className="text-xs leading-none font-black">⌖</span>
-                <span className="tracking-tight whitespace-nowrap">AUTO FIT</span>
-              </button>
-            </div>
           </div>
         )}
 
-        {/* 도면 캔버스 내 우측 상단 ⛶ 글래스모피즘 플로팅 버튼 */}
+            {/* 도면 캔버스 내 우측 상단 ⛶ 글래스모피즘 플로팅 버튼 */}
         <button
           type="button"
           onClick={openFullScreenModal}
