@@ -33,41 +33,41 @@ export default function SpanResultModal({
             {fromType} ➔ {toType}
           </h2>
 
-          {/* 16분 | 32분 | .5/16 슬레이트 3-Way 토글 */}
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-2xs shrink-0">
-            <button
-              type="button"
-              onClick={() => setDenomMode(16)}
-              className={`px-2.5 py-1 text-xs font-black rounded-md transition-all cursor-pointer ${
-                denomMode === 16
-                  ? 'bg-slate-800 text-white shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-800 font-bold'
-              }`}
-            >
-              16분
-            </button>
-            <button
-              type="button"
-              onClick={() => setDenomMode(32)}
-              className={`px-2.5 py-1 text-xs font-black rounded-md transition-all cursor-pointer ${
-                denomMode === 32
-                  ? 'bg-slate-800 text-white shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-800 font-bold'
-              }`}
-            >
-              32분
-            </button>
-            <button
-              type="button"
-              onClick={() => setDenomMode('half16')}
-              className={`px-2.5 py-1 text-xs font-black rounded-md transition-all cursor-pointer ${
-                denomMode === 'half16'
-                  ? 'bg-slate-800 text-white shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-800 font-bold'
-              }`}
-            >
-              .5/16분
-            </button>
+          {/* 16분 | 32분 | .5/16분 라디오 버튼 그룹 */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
+            <label className="flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer select-none">
+              <input
+                type="radio"
+                name="spanDenomMode"
+                value="16"
+                checked={denomMode === 16 || denomMode === '16'}
+                onChange={() => setDenomMode(16)}
+                className="text-indigo-600 accent-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+              />
+              <span>16분</span>
+            </label>
+            <label className="flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer select-none">
+              <input
+                type="radio"
+                name="spanDenomMode"
+                value="32"
+                checked={denomMode === 32 || denomMode === '32'}
+                onChange={() => setDenomMode(32)}
+                className="text-indigo-600 accent-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+              />
+              <span>32분</span>
+            </label>
+            <label className="flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer select-none">
+              <input
+                type="radio"
+                name="spanDenomMode"
+                value="half16"
+                checked={denomMode === 'half16'}
+                onChange={() => setDenomMode('half16')}
+                className="text-indigo-600 accent-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+              />
+              <span>.5/16분</span>
+            </label>
           </div>
         </div>
 
