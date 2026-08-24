@@ -2,8 +2,8 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { parseSpanFraction, formatFractionByDenom } from '../../lib/spanConverter.js';
 
-// 📌 7-Bit 마스터 전용 컬러 팔레트 (1:Red, 2:Amber, 3:Cyan, 4:Purple, 5:Emerald, 6:Pink, 7:Blue)
-const FULL_PALETTE = ['#ef4444', '#f59e0b', '#06b6d4', '#a855f7', '#10b981', '#f43f5e', '#3b82f6'];
+// 📌 7-Bit 마스터 전용 컬러 팔레트 (1:Red, 2:Amber, 3:Emerald, 4:Purple, 5:Pink, 6:Lime, 7:Blue)
+const FULL_PALETTE = ['#ef4444', '#f59e0b', '#10b981', '#a855f7', '#ec4899', '#84cc16', '#3b82f6'];
 
 export default function Midline2DLayoutRenderer({
   holeSize = '',

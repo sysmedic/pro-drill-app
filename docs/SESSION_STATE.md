@@ -4,10 +4,11 @@
 
 ## 현재 우선순위
 
-- **독립 PWA 웹 애플리케이션 'ProDrill Tools' 미드라인 마킹 30:35:35 비율 배치 및 에딧 모드 전체 드릴 외곽 아웃라인 즉시 표출 시스템 구축 & Vercel 프로덕션 배포 완료 (`MidlineCalculatorView.jsx`, `Midline2DLayoutRenderer.jsx`)**:
+- **독립 PWA 웹 애플리케이션 'ProDrill Tools' Vercel 배포 시 한국 시간(KST) 초단위 빌드 일시 정밀 연산 및 업데이트 모달 클린 UI(실제 앱 아이콘 적용, v1.2.0 삭제, 이모지 완전 삭제) 구축 & Vercel 프로덕션 배포 완료 (`vite.config.js`, `UpdateModal.jsx`)**:
   - **지공사님 핵심 지침 100% 완수**:
-    1) **미드라인 스판 30:35:35 황금비율 배치**: [브릿지 (30%)], [중지 스판 (35%)], [약지 스판 (35%)] 3개 항목을 한 줄 3단에 배치하여 브릿지 가독성 및 균형감 극대화.
-    2) **에딧창 진입 시 전체 드릴 외곽 아웃라인 즉시 표출 (프리뷰 상태 무관)**: 프리뷰 모드의 개별 비트 가림/노출 상태와 상관없이, 에딧 모드 진입 시 `1 ~ totalActiveBits` 전체 드릴(기본 3/5드릴 및 [+] 추가 드릴 포함)의 백색 합산 외곽 아웃라인이 0.1초 만에 즉시 연결되어 선명하게 표출되도록 완벽 수술.
+    1) **한국 표준시(KST) 정밀 연산**: Vercel 클라우드 빌드 서버의 타임존과 무관하게 UTC + 9시간을 강제 연산하여 `YYYY.MM.DD HH:mm:ss` 초 단위 한국 시간으로 정확히 표출.
+    2) **실제 앱 아이콘 적용**: 상단 헤더에 실제 ProDrill 공식 앱 아이콘(`/icon-192.png`) 장착.
+    3) **`v1.2.0` 문구 및 모든 이모지 완전 삭제**: `v1.2.0` 뱃지 및 문구, 버튼 내 모든 이모지(✨, 🔄, ⏳, 🧹)를 제거하여 깔끔하고 모던한 UI 완성.
   - **검증 및 배포 완료**: 71/71 전체 단위 테스트 PASS, Vite production build 성공 및 Vercel 프로덕션 배포 완료 (`https://drilling-tools-app.vercel.app`). 로컬 호스트(`http://192.168.0.11:5174`) 즉시 반영.
 
 1. 차트 입력폼을 `FingerPitchSection`, `ThumbSection`, `SpanSection`, `HandConditionSection` 단위로 분리한다.
