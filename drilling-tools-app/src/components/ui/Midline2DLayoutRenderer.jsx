@@ -1660,40 +1660,26 @@ export default function Midline2DLayoutRenderer({
               );
             })}
 
-            {/* 🔴 리셋 칩 & ⚪ 시뮬레이터 칩 (지공사님 지침: 리셋이 좌측, 시뮬레이터가 우측) */}
-            <div className="flex items-center space-x-2 pt-1">
+            {/* ⚪ 시뮬레이터 칩 (지공사님 지침 100% 반영: EDIT 모드 시 시뮬레이터 버튼 전면 소거) */}
+            {!isEditMode && (
               <button
                 type="button"
-                onClick={() => setIsResetConfirmModalOpen(true)}
-                className="w-[130px] h-8 flex items-center justify-between px-2.5 rounded-xl backdrop-blur-md border border-slate-700/80 hover:border-rose-500/60 bg-slate-950/80 hover:bg-slate-900/95 text-slate-300 hover:text-rose-300 shadow-md cursor-pointer transition-all duration-150 text-[11px] sm:text-xs font-bold active:scale-95 select-none"
-                title="차트 최초 입력 당시의 원홀, #1·#2 비트 수치 및 기본(3드릴) 모드로 복원"
+                onClick={() => {
+                  setIsCheckFillMode((prev) => !prev);
+                  requestDirectRender();
+                }}
+                className={`w-[130px] h-8 flex items-center justify-between px-2.5 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[11px] sm:text-xs font-bold ${
+                  isCheckFillMode
+                    ? 'bg-slate-900/95 text-white border-white/90 ring-1 ring-white/60 shadow-white/20 font-black opacity-100'
+                    : 'bg-slate-950/80 text-slate-400 border-slate-700/80 hover:border-slate-600 opacity-60'
+                }`}
               >
                 <div className="flex items-center space-x-2 truncate">
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.7)]" />
-                  <span className="truncate">리셋</span>
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isCheckFillMode ? 'bg-white ring-1 ring-white/60' : 'bg-slate-600'}`} />
+                  <span className="truncate">시뮬레이터</span>
                 </div>
               </button>
-
-              {!isEditMode && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCheckFillMode((prev) => !prev);
-                    requestDirectRender();
-                  }}
-                  className={`w-[130px] h-8 flex items-center justify-between px-2.5 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[11px] sm:text-xs font-bold ${
-                    isCheckFillMode
-                      ? 'bg-slate-900/95 text-white border-white/90 ring-1 ring-white/60 shadow-white/20 font-black opacity-100'
-                      : 'bg-slate-950/80 text-slate-400 border-slate-700/80 hover:border-slate-600 opacity-60'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2 truncate">
-                    <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isCheckFillMode ? 'bg-white ring-1 ring-white/60' : 'bg-slate-600'}`} />
-                    <span className="truncate">시뮬레이터</span>
-                  </div>
-                </button>
-              )}
-            </div>
+            )}
           </div>
 
           {/* 📌 풀스크린 우측 하단 D-Pad 패널 (길게 클릭하여 자유 드래그 이동 가능 수술) */}
@@ -2072,45 +2058,29 @@ export default function Midline2DLayoutRenderer({
             );
           })}
 
-          {/* 🔴 리셋 칩 & ⚪ 시뮬레이터 칩 (지공사님 지침: 리셋이 좌측, 시뮬레이터가 우측) */}
-          <div className="flex items-center space-x-1.5 pt-1">
+          {/* ⚪ 시뮬레이터 칩 (지공사님 지침 100% 반영: EDIT 모드 시 시뮬레이터 버튼 전면 소거) */}
+          {!isEditMode && (
             <button
               type="button"
-              onClick={() => setIsResetConfirmModalOpen(true)}
+              onClick={() => {
+                setIsCheckFillMode((prev) => !prev);
+                requestDirectRender();
+              }}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              className="w-[115px] sm:w-[130px] h-7 flex items-center justify-between px-2 rounded-xl backdrop-blur-md border border-slate-700/80 hover:border-rose-500/60 bg-slate-950/80 hover:bg-slate-900/95 text-slate-300 hover:text-rose-300 shadow-md cursor-pointer transition-all duration-150 text-[10px] sm:text-xs font-bold active:scale-95 select-none"
-              title="차트 최초 입력 당시의 원홀, #1·#2 비트 수치 및 기본(3드릴) 모드로 복원"
+              className={`w-[115px] sm:w-[130px] h-7 flex items-center justify-between px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[10px] sm:text-xs font-bold ${
+                isCheckFillMode
+                  ? 'bg-slate-900/95 text-white border-white/90 ring-1 ring-white/60 shadow-white/20 font-black opacity-100'
+                  : 'bg-slate-950/80 text-slate-400 border-slate-700/80 hover:border-slate-600 opacity-60'
+              }`}
+              title="시뮬레이터 (단일 통합 외곽 윤곽선 표출)"
             >
               <div className="flex items-center space-x-1.5 truncate">
-                <span className="w-2 h-2 rounded-full shrink-0 bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.7)]" />
-                <span className="truncate">리셋</span>
+                <span className={`w-2 h-2 rounded-full shrink-0 ${isCheckFillMode ? 'bg-white ring-1 ring-white/60' : 'bg-slate-600'}`} />
+                <span className="truncate">시뮬레이터</span>
               </div>
             </button>
-
-            {!isEditMode && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsCheckFillMode((prev) => !prev);
-                  requestDirectRender();
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-                className={`w-[115px] sm:w-[130px] h-7 flex items-center justify-between px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[10px] sm:text-xs font-bold ${
-                  isCheckFillMode
-                    ? 'bg-slate-900/95 text-white border-white/90 ring-1 ring-white/60 shadow-white/20 font-black opacity-100'
-                    : 'bg-slate-950/80 text-slate-400 border-slate-700/80 hover:border-slate-600 opacity-60'
-                }`}
-                title="시뮬레이터 (단일 통합 외곽 윤곽선 표출)"
-              >
-                <div className="flex items-center space-x-1.5 truncate">
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${isCheckFillMode ? 'bg-white ring-1 ring-white/60' : 'bg-slate-600'}`} />
-                  <span className="truncate">시뮬레이터</span>
-                </div>
-              </button>
-            )}
-          </div>
+          )}
         </div>
 
         {/* 📌 컨트롤 보드 우측 하단 배치 (길게 클릭하여 자유 드래그 이동 가능 수술) */}
@@ -2298,39 +2268,6 @@ export default function Midline2DLayoutRenderer({
             ⤢
           </button>
         </div>
-
-        {/* ⚠️ 리셋 확인 인앱 팝업 모달 */}
-        {isResetConfirmModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in select-none">
-            <div className="bg-slate-900 border border-slate-700/90 rounded-2xl p-5 sm:p-6 max-w-sm w-full shadow-2xl space-y-4 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400 text-xl font-black">
-                ⚠️
-              </div>
-              <div className="space-y-1.5">
-                <h3 className="text-base font-black text-white">오발 매트릭스 리셋</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  원홀, #1·#2 비트 수치 및 모든 이동/추가 내역이 취소되고, 차트 최초 입력 당시의 기본(3드릴) 상태로 복원됩니다. 정말 초기화하시겠습니까?
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-2.5 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setIsResetConfirmModalOpen(false)}
-                  className="h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all cursor-pointer"
-                >
-                  취소
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmReset}
-                  className="h-10 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-lg shadow-rose-950/50 transition-all cursor-pointer active:scale-95"
-                >
-                  리셋
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
