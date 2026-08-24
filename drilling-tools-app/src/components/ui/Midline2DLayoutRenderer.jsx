@@ -97,8 +97,8 @@ export default function Midline2DLayoutRenderer({
 
   // 📌 [지공사님 지침]: 프리뷰 모드에서 시뮬레이터는 기본 꺼짐(false)으로 시작 (버튼 클릭으로 켜기/끄기 가능)
   const [isCheckFillMode, setIsCheckFillMode] = useState(false);
-  // 📌 [지공사님 핵심 지침]: 베이스 오발선 가이드 모드 ('theoretical': 🟢 이론상선 vs 'actual': 🟡 실제선)
-  const [ovalGuideType, setOvalGuideType] = useState('theoretical');
+  // 📌 [지공사님 핵심 지침]: 실제 오발선은 상시 기본 표출되며, 이론적 오발선(초록 타원선)은 GUIDE LINE 스위치 ON 시에만 표출
+  const [showGuideLine, setShowGuideLine] = useState(false);
 
   // 부모의 isDetailedMode 변경 시 3~4 중간비트 동기화
   useEffect(() => {
@@ -759,9 +759,130 @@ export default function Midline2DLayoutRenderer({
       }
       ctx.restore();
 
-      // D) 📌 [오발선 베이스 가이드라인]: 모든 상황에서 베이스로 상시 표출 (이론상선 vs 실제선 라디오 전환)
-      if (ovalGuideType === 'theoretical') {
-        // D-1) 0.6px 초록 이론상 오발 타원 라인 (#10b981)
+      // D-1) 📌 [골드 실제 오발선]: 모든 상황에서 도면 기본 베이스 가이드라인으로 상시 100% 표출 (#fbbf24)
+      try {
+        const r1Diameter = getBitDiameter(1);
+        const R1 = (r1Diameter / 2) * scale;
+        const r2Diameter = getBitDiameter(2);
+        const R2 = (r2Diameter / 2) * scale;
+        const holeRadiusPx = (holeNum / 2) * scale;
+
+        const p1 = r1Pos;
+        const p2 = r2Pos;
+
+        if (p1 && p2 && Number.isFinite(p1.x) && Number.isFinite(p2.x) && Number.isFinite(p1.y) && Number.isFinite(p2.y)) {
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const dist = Math.hypot(dx, dy);
+
+          const theta = dist > 0.001 ? Math.atan2(dy, dx) : actualCutAngle;
+          const uX = Math.cos(theta);
+          const uY = Math.sin(theta);
+          const vX = -Math.sin(theta);
+          const vY = Math.cos(theta);
+
+          // 허리 폭 반경 W (중심 원홀 반경)
+          const W = holeRadiusPx > 0 ? holeRadiusPx : ((R1 + R2) / 2);
+          const RwX = cx + W * vX;
+          const RwY = cy + W * vY;
+          const LwX = cx - W * vX;
+          const LwY = cy - W * vY;
+
+          // #1번 원호 각도 (상단 apex 기준 +-60도)
+          const a1_end = theta + Math.PI / 3;
+          const a1_start = theta - Math.PI / 3;
+          const ArX = p1.x + R1 * Math.cos(a1_end);
+          const ArY = p1.y + R1 * Math.sin(a1_end);
+          const AlX = p1.x + R1 * Math.cos(a1_start);
+          const AlY = p1.y + R1 * Math.sin(a1_start);
+
+          // #2번 원호 각도 (하단 apex 기준 +-60도)
+          const a2_start = theta + (2 * Math.PI) / 3;
+          const a2_end = theta + (4 * Math.PI) / 3;
+          const BrX = p2.x + R2 * Math.cos(a2_start);
+          const BrY = p2.y + R2 * Math.sin(a2_start);
+          const BlX = p2.x + R2 * Math.cos(a2_end);
+          const BlY = p2.y + R2 * Math.sin(a2_end);
+
+          // 접선 단위 벡터
+          const t1rX = -Math.sin(a1_end);
+          const t1rY = Math.cos(a1_end);
+          const t2rX = -Math.sin(a2_start);
+          const t2rY = Math.cos(a2_start);
+          const t2lX = -Math.sin(a2_end);
+          const t2lY = Math.cos(a2_end);
+          const t1lX = -Math.sin(a1_start);
+          const t1lY = Math.cos(a1_start);
+
+          const d1 = Math.hypot(RwX - ArX, RwY - ArY) * 0.35;
+          const d2 = Math.hypot(BrX - RwX, BrY - RwY) * 0.35;
+          const d3 = Math.hypot(LwX - BlX, LwY - BlY) * 0.35;
+          const d4 = Math.hypot(AlX - LwX, AlY - LwY) * 0.35;
+
+          ctx.save();
+          ctx.beginPath();
+
+          // 1. #1번 상단 원형 호 (좌측 접점 -> 상단 정점 -> 우측 접점)
+          ctx.arc(p1.x, p1.y, R1, a1_start, a1_end, false);
+
+          // 2. 우측 상단 곡선 (#1번 우측 접점 -> 우측 허리 Rw)
+          ctx.bezierCurveTo(
+            ArX + d1 * t1rX,
+            ArY + d1 * t1rY,
+            RwX + d1 * uX,
+            RwY + d1 * uY,
+            RwX,
+            RwY
+          );
+
+          // 3. 우측 하단 곡선 (우측 허리 Rw -> #2번 우측 접점)
+          ctx.bezierCurveTo(
+            RwX - d2 * uX,
+            RwY - d2 * uY,
+            BrX - d2 * t2rX,
+            BrY - d2 * t2rY,
+            BrX,
+            BrY
+          );
+
+          // 4. #2번 하단 원형 호 (우측 접점 -> 하단 정점 -> 좌측 접점)
+          ctx.arc(p2.x, p2.y, R2, a2_start, a2_end, false);
+
+          // 5. 좌측 하단 곡선 (#2번 좌측 접점 -> 좌측 허리 Lw)
+          ctx.bezierCurveTo(
+            BlX + d3 * t2lX,
+            BlY + d3 * t2lY,
+            LwX - d3 * uX,
+            LwY - d3 * uY,
+            LwX,
+            LwY
+          );
+
+          // 6. 좌측 상단 곡선 (좌측 허리 Lw -> #1번 좌측 접점)
+          ctx.bezierCurveTo(
+            LwX + d4 * uX,
+            LwY + d4 * uY,
+            AlX - d4 * t1lX,
+            AlY - d4 * t1lY,
+            AlX,
+            AlY
+          );
+
+          ctx.closePath();
+
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 1.0;
+          ctx.shadowColor = 'rgba(251, 191, 36, 0.6)';
+          ctx.shadowBlur = 4;
+          ctx.stroke();
+          ctx.restore();
+        }
+      } catch (err) {
+        // Safe fallback guard
+      }
+
+      // D-2) 📌 [이론적 오발선]: GUIDE LINE 스위치가 켜졌을 때만 도면 위에 오버레이 표출 (#10b981)
+      if (showGuideLine) {
         try {
           const rawDist = (r1Pos && r2Pos && Number.isFinite(r1Pos.x) && Number.isFinite(r2Pos.x) && Number.isFinite(r1Pos.y) && Number.isFinite(r2Pos.y))
             ? Math.hypot(r1Pos.x - r2Pos.x, r1Pos.y - r2Pos.y)
@@ -786,134 +907,12 @@ export default function Midline2DLayoutRenderer({
         } catch (err) {
           // Safe fallback guard to prevent graphics context crash
         }
-      } else {
-        // D-2) 1.0px 골드 실제 오발선 (#1번 및 #2번 원호 100% 직접 보존 + 원홀 허리 스무딩 스플라인 #fbbf24)
-        try {
-          const r1Diameter = getBitDiameter(1);
-          const R1 = (r1Diameter / 2) * scale;
-          const r2Diameter = getBitDiameter(2);
-          const R2 = (r2Diameter / 2) * scale;
-          const holeRadiusPx = (holeNum / 2) * scale;
-
-          const p1 = r1Pos;
-          const p2 = r2Pos;
-
-          if (p1 && p2 && Number.isFinite(p1.x) && Number.isFinite(p2.x) && Number.isFinite(p1.y) && Number.isFinite(p2.y)) {
-            const dx = p1.x - p2.x;
-            const dy = p1.y - p2.y;
-            const dist = Math.hypot(dx, dy);
-
-            const theta = dist > 0.001 ? Math.atan2(dy, dx) : actualCutAngle;
-            const uX = Math.cos(theta);
-            const uY = Math.sin(theta);
-            const vX = -Math.sin(theta);
-            const vY = Math.cos(theta);
-
-            // 허리 폭 반경 W (중심 원홀 반경)
-            const W = holeRadiusPx > 0 ? holeRadiusPx : ((R1 + R2) / 2);
-            const RwX = cx + W * vX;
-            const RwY = cy + W * vY;
-            const LwX = cx - W * vX;
-            const LwY = cy - W * vY;
-
-            // #1번 원호 각도 (상단 apex 기준 +-60도)
-            const a1_end = theta + Math.PI / 3;
-            const a1_start = theta - Math.PI / 3;
-            const ArX = p1.x + R1 * Math.cos(a1_end);
-            const ArY = p1.y + R1 * Math.sin(a1_end);
-            const AlX = p1.x + R1 * Math.cos(a1_start);
-            const AlY = p1.y + R1 * Math.sin(a1_start);
-
-            // #2번 원호 각도 (하단 apex 기준 +-60도)
-            const a2_start = theta + (2 * Math.PI) / 3;
-            const a2_end = theta + (4 * Math.PI) / 3;
-            const BrX = p2.x + R2 * Math.cos(a2_start);
-            const BrY = p2.y + R2 * Math.sin(a2_start);
-            const BlX = p2.x + R2 * Math.cos(a2_end);
-            const BlY = p2.y + R2 * Math.sin(a2_end);
-
-            // 접선 단위 벡터
-            const t1rX = -Math.sin(a1_end);
-            const t1rY = Math.cos(a1_end);
-            const t2rX = -Math.sin(a2_start);
-            const t2rY = Math.cos(a2_start);
-            const t2lX = -Math.sin(a2_end);
-            const t2lY = Math.cos(a2_end);
-            const t1lX = -Math.sin(a1_start);
-            const t1lY = Math.cos(a1_start);
-
-            const d1 = Math.hypot(RwX - ArX, RwY - ArY) * 0.35;
-            const d2 = Math.hypot(BrX - RwX, BrY - RwY) * 0.35;
-            const d3 = Math.hypot(LwX - BlX, LwY - BlY) * 0.35;
-            const d4 = Math.hypot(AlX - LwX, AlY - LwY) * 0.35;
-
-            ctx.save();
-            ctx.beginPath();
-
-            // 1. #1번 상단 원형 호 (좌측 접점 -> 상단 정점 -> 우측 접점)
-            ctx.arc(p1.x, p1.y, R1, a1_start, a1_end, false);
-
-            // 2. 우측 상단 곡선 (#1번 우측 접점 -> 우측 허리 Rw)
-            ctx.bezierCurveTo(
-              ArX + d1 * t1rX,
-              ArY + d1 * t1rY,
-              RwX + d1 * uX,
-              RwY + d1 * uY,
-              RwX,
-              RwY
-            );
-
-            // 3. 우측 하단 곡선 (우측 허리 Rw -> #2번 우측 접점)
-            ctx.bezierCurveTo(
-              RwX - d2 * uX,
-              RwY - d2 * uY,
-              BrX - d2 * t2rX,
-              BrY - d2 * t2rY,
-              BrX,
-              BrY
-            );
-
-            // 4. #2번 하단 원형 호 (우측 접점 -> 하단 정점 -> 좌측 접점)
-            ctx.arc(p2.x, p2.y, R2, a2_start, a2_end, false);
-
-            // 5. 좌측 하단 곡선 (#2번 좌측 접점 -> 좌측 허리 Lw)
-            ctx.bezierCurveTo(
-              BlX + d3 * t2lX,
-              BlY + d3 * t2lY,
-              LwX - d3 * uX,
-              LwY - d3 * uY,
-              LwX,
-              LwY
-            );
-
-            // 6. 좌측 상단 곡선 (좌측 허리 Lw -> #1번 좌측 접점)
-            ctx.bezierCurveTo(
-              LwX + d4 * uX,
-              LwY + d4 * uY,
-              AlX - d4 * t1lX,
-              AlY - d4 * t1lY,
-              AlX,
-              AlY
-            );
-
-            ctx.closePath();
-
-            ctx.strokeStyle = '#fbbf24';
-            ctx.lineWidth = 1.0;
-            ctx.shadowColor = 'rgba(251, 191, 36, 0.6)';
-            ctx.shadowBlur = 4;
-            ctx.stroke();
-            ctx.restore();
-          }
-        } catch (err) {
-          // Safe fallback guard
-        }
       }
 
       // 📌 [ctx.save() 스택 누출 100% 차단]: 함수 최상단 ctx.save()/ctx.scale(dpr,dpr) 짝 복구
       ctx.restore();
     },
-    [holeNum, ovalNum, cutNum1, cutNum2, angleNum, hand, results, getDrillBitValue, holeSize, slugNum, isBitVisible, isBitActiveInChart, isCheckFillMode, ovalGuideType, thumbHoleCut, isEditMode, selectedBitIndex, bitCustomOffsets, bitCustomSizes, isFlipped180]
+    [holeNum, ovalNum, cutNum1, cutNum2, angleNum, hand, results, getDrillBitValue, holeSize, slugNum, isBitVisible, isBitActiveInChart, isCheckFillMode, showGuideLine, thumbHoleCut, isEditMode, selectedBitIndex, bitCustomOffsets, bitCustomSizes, isFlipped180]
   );
 
   // 📌 [Direct Canvas GPU Render Trigger]: 클로저 래핑 무관 100% Direct Canvas Drawing 보장
@@ -1300,7 +1299,7 @@ export default function Midline2DLayoutRenderer({
 
           {/* 📌 풀스크린 좌상단 툴바: [ PREVIEW / EDIT ] 토글 스위치 + 우측 [ 180° ROTATE ] 회전 버튼 */}
           <div className="absolute top-3 left-3 z-20 flex items-start gap-2 select-none">
-            {/* 1) [ PREVIEW ] 컬럼: PREVIEW 버튼 + 그 밑에 수직 2단 무명 컬러 버튼 (이론상 Green vs 실제 Gold) */}
+            {/* 1) [ PREVIEW ] 컬럼: PREVIEW 버튼 + 그 밑에 [ GUIDE LINE ] 스위치 */}
             <div className="flex flex-col gap-1 items-stretch">
               <button
                 type="button"
@@ -1314,52 +1313,28 @@ export default function Midline2DLayoutRenderer({
                 PREVIEW
               </button>
 
-              {/* 프리뷰 버튼 밑 2개의 수직 배치 무명 컬러 버튼 (드릴 칩 스타일 1:1 적용) */}
+              {/* 프리뷰 버튼 밑 단일 초록 이론적 오발선 토글 스위치 (GUIDE LINE) */}
               <div className="flex flex-col gap-1 w-full pt-1">
-                {/* 🟢 이론상 오발선 버튼 (Green) */}
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setOvalGuideType('theoretical');
+                    setShowGuideLine((prev) => !prev);
                     requestDirectRender();
                   }}
-                  className={`h-7 w-full flex items-center justify-center px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 ${
-                    ovalGuideType === 'theoretical'
-                      ? 'bg-slate-900/95 border-emerald-400 ring-1 ring-emerald-400/60 shadow-emerald-950/40 opacity-100'
-                      : 'bg-slate-950/80 border-slate-800/80 opacity-40 hover:opacity-80'
+                  className={`h-7 w-full flex items-center justify-center gap-1.5 px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[10px] font-bold ${
+                    showGuideLine
+                      ? 'bg-slate-900/95 text-emerald-300 border-emerald-400 ring-1 ring-emerald-400/60 shadow-emerald-950/40 opacity-100'
+                      : 'bg-slate-950/80 text-slate-400 border-slate-800/80 opacity-60 hover:opacity-100'
                   }`}
-                  title="이론상 오발선 (초록 타원선)"
+                  title="이론적 오발 가이드 라인 (초록 타원선) 표시 전환"
                 >
                   <span
-                    className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
-                      ovalGuideType === 'theoretical' ? 'scale-110 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : ''
+                    className={`w-2 h-2 rounded-full shrink-0 transition-transform duration-150 ${
+                      showGuideLine ? 'scale-110 shadow-[0_0_6px_rgba(16,185,129,0.9)] bg-emerald-400' : 'bg-slate-600'
                     }`}
-                    style={{ backgroundColor: '#10b981' }}
                   />
-                </button>
-
-                {/* 🟡 실제 오발선 버튼 (Gold/Amber) */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setOvalGuideType('actual');
-                    requestDirectRender();
-                  }}
-                  className={`h-7 w-full flex items-center justify-center px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 ${
-                    ovalGuideType === 'actual'
-                      ? 'bg-slate-900/95 border-amber-400 ring-1 ring-amber-400/60 shadow-amber-950/40 opacity-100'
-                      : 'bg-slate-950/80 border-slate-800/80 opacity-40 hover:opacity-80'
-                  }`}
-                  title="실제 오발선 (골드 매끄러운 곡선)"
-                >
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
-                      ovalGuideType === 'actual' ? 'scale-110 shadow-[0_0_8px_rgba(251,191,36,0.8)]' : ''
-                    }`}
-                    style={{ backgroundColor: '#fbbf24' }}
-                  />
+                  <span className="tracking-tight whitespace-nowrap">GUIDE LINE</span>
                 </button>
               </div>
             </div>
@@ -1670,7 +1645,7 @@ export default function Midline2DLayoutRenderer({
 
         {/* 📌 인라인 좌상단 툴바: [ PREVIEW / EDIT ] 토글 스위치 + 우측 [ 180° ROTATE ] 회전 버튼 */}
         <div className="absolute top-3 left-3 z-20 flex items-start gap-2 select-none">
-          {/* 1) [ PREVIEW ] 컬럼: PREVIEW 버튼 + 그 밑에 수직 2단 무명 컬러 버튼 (이론상 Green vs 실제 Gold) */}
+          {/* 1) [ PREVIEW ] 컬럼: PREVIEW 버튼 + 그 밑에 [ GUIDE LINE ] 스위치 */}
           <div className="flex flex-col gap-1 items-stretch">
             <button
               type="button"
@@ -1687,56 +1662,30 @@ export default function Midline2DLayoutRenderer({
               PREVIEW
             </button>
 
-            {/* 프리뷰 버튼 밑 2개의 수직 배치 무명 컬러 버튼 (드릴 칩 스타일 1:1 적용) */}
+            {/* 프리뷰 버튼 밑 단일 초록 이론적 오발선 토글 스위치 (GUIDE LINE) */}
             <div className="flex flex-col gap-1 w-full pt-1">
-              {/* 🟢 이론상 오발선 버튼 (Green) */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setOvalGuideType('theoretical');
+                  setShowGuideLine((prev) => !prev);
                   requestDirectRender();
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
-                className={`h-7 w-full flex items-center justify-center px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 ${
-                  ovalGuideType === 'theoretical'
-                    ? 'bg-slate-900/95 border-emerald-400 ring-1 ring-emerald-400/60 shadow-emerald-950/40 opacity-100'
-                    : 'bg-slate-950/80 border-slate-800/80 opacity-40 hover:opacity-80'
+                className={`h-7 w-full flex items-center justify-center gap-1.5 px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[10px] font-bold ${
+                  showGuideLine
+                    ? 'bg-slate-900/95 text-emerald-300 border-emerald-400 ring-1 ring-emerald-400/60 shadow-emerald-950/40 opacity-100'
+                    : 'bg-slate-950/80 text-slate-400 border-slate-800/80 opacity-60 hover:opacity-100'
                 }`}
-                title="이론상 오발선 (초록 타원선)"
+                title="이론적 오발 가이드 라인 (초록 타원선) 표시 전환"
               >
                 <span
-                  className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
-                    ovalGuideType === 'theoretical' ? 'scale-110 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : ''
+                  className={`w-2 h-2 rounded-full shrink-0 transition-transform duration-150 ${
+                    showGuideLine ? 'scale-110 shadow-[0_0_6px_rgba(16,185,129,0.9)] bg-emerald-400' : 'bg-slate-600'
                   }`}
-                  style={{ backgroundColor: '#10b981' }}
                 />
-              </button>
-
-              {/* 🟡 실제 오발선 버튼 (Gold/Amber) */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOvalGuideType('actual');
-                  requestDirectRender();
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-                className={`h-7 w-full flex items-center justify-center px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 ${
-                  ovalGuideType === 'actual'
-                    ? 'bg-slate-900/95 border-amber-400 ring-1 ring-amber-400/60 shadow-amber-950/40 opacity-100'
-                    : 'bg-slate-950/80 border-slate-800/80 opacity-40 hover:opacity-80'
-                }`}
-                title="실제 오발선 (골드 매끄러운 곡선)"
-              >
-                <span
-                  className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
-                    ovalGuideType === 'actual' ? 'scale-110 shadow-[0_0_8px_rgba(251,191,36,0.8)]' : ''
-                  }`}
-                  style={{ backgroundColor: '#fbbf24' }}
-                />
+                <span className="tracking-tight whitespace-nowrap">GUIDE LINE</span>
               </button>
             </div>
           </div>
