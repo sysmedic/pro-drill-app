@@ -46,6 +46,26 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
   // 📌 오발 가공 결과 전면 모달 오픈 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // 📌 [지공사님 핵심 지침 100% 반영]: 오발컷 계산기 입력값 전체 공란 초기화
+  const handleClearAllInputs = () => {
+    updateSharedState({
+      holeSize: '',
+      ovalSize: '',
+      ovalCut: '',
+      ovalCut1: '',
+      ovalCut2: '',
+      ovalAngle: '',
+      ovalCorrection: '0',
+      latDir: '',
+      latVal: '',
+      vertDir: '',
+      vertVal: '',
+      extraBitCount: 0,
+      bitCustomSizes: {},
+      bitCustomOffsets: {},
+    });
+  };
+
   const handleStateChange = (keyOrObj, val) => {
     updateSharedState(keyOrObj, val);
   };
@@ -265,7 +285,17 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
         <div className="space-y-4 bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-200">
           {/* 섹션 1: 엄지 피치 4개 필드 */}
           <div className="space-y-2.5">
-            <span className="text-xs font-bold text-slate-600 block">엄지 피치</span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-600 block">엄지 피치</span>
+              <button
+                type="button"
+                onClick={handleClearAllInputs}
+                className="text-[11px] sm:text-xs font-bold text-slate-500 hover:text-rose-600 px-2 py-0.5 rounded-md hover:bg-rose-50 border border-slate-200 transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                title="원홀, 오발, 컷, 각도, 피치 등 모든 오발 수치 공란 초기화"
+              >
+                <span>수치 초기화</span>
+              </button>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <SelectField
                 density="compact"

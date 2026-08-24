@@ -75,12 +75,13 @@ export default function OvalResultModal({
   const L2 = Math.max(0, (oNum - c2Num) / 2);
   const maxL = Math.max(L1, L2);
 
-  // 1) L_max <= 0.047" (3/64" 이하, 약 1.2mm) -> basic (3드릴)
-  // 2) 0.047" < L_max <= 0.080" (5/64" 이하, 약 2.0mm) -> detailed (5드릴)
-  // 3) L_max > 0.080" (약 2.0mm 초과) -> ultra (7드릴)
+  // 📌 [지공사님 핵심 지침 100% 반영]: 상위 드릴 모드와 결과 차이가 미미할 경우 불필요한 상위 모드 추천 방지
+  // 1) L_max <= 0.0625" (1/16" 이하, 편차 1/8" 이하) -> basic (3드릴 기본 추천)
+  // 2) 0.0625" < L_max <= 0.125" (1/8" 이하, 편차 1/4" 이하) -> detailed (5드릴 정밀 추천)
+  // 3) L_max > 0.125" (1/8" 초과, 편차 1/4" 초과 롱 오발) -> ultra (7드릴 초정밀 추천)
   const recommendedMode = useMemo(() => {
-    if (maxL <= 0.047) return 'basic';
-    if (maxL <= 0.080) return 'detailed';
+    if (maxL <= 0.0625) return 'basic';
+    if (maxL <= 0.125) return 'detailed';
     return 'ultra';
   }, [maxL]);
 
