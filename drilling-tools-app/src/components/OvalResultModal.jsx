@@ -62,18 +62,6 @@ export default function OvalResultModal({
     ovalCut2,
   });
 
-  useEffect(() => {
-    if (!initialSnapshotRef.current.holeSize && holeSize) {
-      initialSnapshotRef.current = {
-        holeSize,
-        ovalSize,
-        ovalCut,
-        ovalCut1,
-        ovalCut2,
-      };
-    }
-  }, [holeSize, ovalSize, ovalCut, ovalCut1, ovalCut2]);
-
   // 📌 매트릭스 리셋 안전 확인 모달 오픈 상태
   const [isResetConfirmModalOpen, setIsResetConfirmModalOpen] = useState(false);
 
@@ -96,16 +84,21 @@ export default function OvalResultModal({
     return 'ultra';
   }, [maxL]);
 
-  // 📌 모달 진입 시 권장 모드로 초기 세팅 (기존 설정값이 없거나 기본 진입 시)
-  const initialModeSetRef = useRef(false);
+  // 📌 [지공사님 핵심 지침 100% 반영]: 모달 재진입 시 최신 수치 스냅샷 갱신 및 최적 추천 모드로 자동 재연산 세팅
+  const prevIsOpenRef = useRef(false);
   useEffect(() => {
-    if (isOpen && !initialModeSetRef.current) {
-      initialModeSetRef.current = true;
-      if (!sharedState?.precisionMode && !precisionMode) {
-        handlePrecisionChange(recommendedMode);
-      }
+    if (isOpen && !prevIsOpenRef.current) {
+      initialSnapshotRef.current = {
+        holeSize,
+        ovalSize,
+        ovalCut,
+        ovalCut1,
+        ovalCut2,
+      };
+      handlePrecisionChange(recommendedMode);
     }
-  }, [isOpen, recommendedMode]);
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, recommendedMode, holeSize, ovalSize, ovalCut, ovalCut1, ovalCut2]);
 
   const currentPrecision = precisionMode || (sharedState?.precisionMode) || (isDetailedMode ? 'detailed' : 'basic');
 
