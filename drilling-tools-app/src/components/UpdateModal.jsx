@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 
-const APP_VERSION = 'v1.2.0';
-const BUILD_TIME = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : '2026.08.23 02:15';
+const BUILD_TIME = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : '2026.08.23 14:40:00';
 
 export default function UpdateModal({ isOpen, onClose }) {
   const [isChecking, setIsChecking] = useState(false);
@@ -24,7 +23,7 @@ export default function UpdateModal({ isOpen, onClose }) {
 
       setTimeout(() => {
         setIsChecking(false);
-        setStatusMessage('현재 최신 버전(v1.2.0)을 사용 중입니다.');
+        setStatusMessage('현재 최신 버전을 사용 중입니다.');
       }, 700);
     } catch (err) {
       console.error('Update check failed', err);
@@ -59,10 +58,12 @@ export default function UpdateModal({ isOpen, onClose }) {
       >
         {/* 상단 헤더 & 닫기 */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm">
-              ✨
-            </div>
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/icon-192.png"
+              alt="ProDrill Tools"
+              className="w-8 h-8 rounded-xl object-cover border border-slate-200 shadow-2xs"
+            />
             <div>
               <h2 className="text-lg font-black text-slate-900 tracking-tight">
                 앱 정보 및 업데이트
@@ -81,12 +82,9 @@ export default function UpdateModal({ isOpen, onClose }) {
         {/* 버전 정보 카드 */}
         <div className="p-4 bg-slate-50 border border-slate-200/90 rounded-2xl flex items-center justify-between">
           <div className="space-y-0.5">
-            <div className="text-xs font-bold text-slate-500">현재 설치된 버전</div>
-            <div className="text-base font-black text-slate-900 flex items-center gap-2">
-              <span>ProDrill Tools</span>
-              <span className="px-2 py-0.5 bg-[#1e293b] text-white text-xs rounded-lg font-mono">
-                {APP_VERSION}
-              </span>
+            <div className="text-xs font-bold text-slate-500">현재 설치된 앱</div>
+            <div className="text-base font-black text-slate-900">
+              ProDrill Tools
             </div>
           </div>
           <div className="text-right">
@@ -121,25 +119,23 @@ export default function UpdateModal({ isOpen, onClose }) {
           </div>
         )}
 
-        {/* 버튼 액션 */}
+        {/* 버튼 액션 (이모지 삭제 및 클린 텍스트) */}
         <div className="space-y-2 pt-1">
           <button
             type="button"
             onClick={handleCheckUpdate}
             disabled={isChecking}
-            className="w-full py-3 px-4 bg-[#1e293b] hover:bg-[#0f172a] disabled:bg-slate-400 text-white font-black text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+            className="w-full py-3 px-4 bg-[#1e293b] hover:bg-[#0f172a] disabled:bg-slate-400 text-white font-black text-sm rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer active:scale-98"
           >
-            <span>{isChecking ? '⏳' : '🔄'}</span>
-            <span>{isChecking ? '업데이트 확인 중...' : '최신 업데이트 확인'}</span>
+            {isChecking ? '업데이트 확인 중...' : '최신 업데이트 확인'}
           </button>
 
           <button
             type="button"
             onClick={handleForceReload}
-            className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all flex items-center justify-center cursor-pointer"
           >
-            <span>🧹</span>
-            <span>캐시 초기화 및 강제 새로고침</span>
+            캐시 초기화 및 강제 새로고침
           </button>
         </div>
       </div>

@@ -4,12 +4,11 @@
 
 ## 현재 우선순위
 
-- **독립 PWA 웹 애플리케이션 'ProDrill Tools' 오발 계산기 1단 35:35:30 황금비율 배치 및 에딧 모드 드릴비트 캔버스 가시성 락 장착 완수 (배포 대기 모드) (`OvalCalculatorView.jsx`, `Midline2DLayoutRenderer.jsx`)**:
+- **독립 PWA 웹 애플리케이션 'ProDrill Tools' 미드라인 마킹 30:35:35 비율 배치 및 에딧 모드 전체 드릴 외곽 아웃라인 즉시 표출 시스템 구축 & Vercel 프로덕션 배포 완료 (`MidlineCalculatorView.jsx`, `Midline2DLayoutRenderer.jsx`)**:
   - **지공사님 핵심 지침 100% 완수**:
-    1) **오발 라벨 명칭 변경**: `"오발컷 1 (레프트)"` ➔ **`"오발컷 #1"`**, `"오발컷 2 (라이트)"` ➔ **`"오발컷 #2"`**.
-    2) **1단 35:35:30 황금비율 배치**: [오발컷 #1 (35%)], [오발컷 #2 (35%)], [오발 각도 (30%)]를 한 줄(1단)에 깔끔하게 압축 배치하여 세로 스크롤 공간 최적화.
-    3) **아이폰 에딧 모드 #4드릴 원 미표출 버그 100% 해결**: `isBitVisibleInCanvas`에 선택된 비트 강제 가시성 락(`selectedBitIndex === rowIdx || isBitActiveInChart(rowIdx)`)을 장착하고 칩 선택 시 `bitVisibilities` 즉시 동기화 적용.
-  - **검증 완료**: 71/71 전체 단위 테스트 PASS, Vite production build 성공 및 로컬 호스트(`http://192.168.0.11:5174`) 즉시 반영. (지공사님 배포 중지 지침 준수 🟢).
+    1) **미드라인 스판 30:35:35 황금비율 배치**: [브릿지 (30%)], [중지 스판 (35%)], [약지 스판 (35%)] 3개 항목을 한 줄 3단에 배치하여 브릿지 가독성 및 균형감 극대화.
+    2) **에딧창 진입 시 전체 드릴 외곽 아웃라인 즉시 표출 (프리뷰 상태 무관)**: 프리뷰 모드의 개별 비트 가림/노출 상태와 상관없이, 에딧 모드 진입 시 `1 ~ totalActiveBits` 전체 드릴(기본 3/5드릴 및 [+] 추가 드릴 포함)의 백색 합산 외곽 아웃라인이 0.1초 만에 즉시 연결되어 선명하게 표출되도록 완벽 수술.
+  - **검증 및 배포 완료**: 71/71 전체 단위 테스트 PASS, Vite production build 성공 및 Vercel 프로덕션 배포 완료 (`https://drilling-tools-app.vercel.app`). 로컬 호스트(`http://192.168.0.11:5174`) 즉시 반영.
 
 1. 차트 입력폼을 `FingerPitchSection`, `ThumbSection`, `SpanSection`, `HandConditionSection` 단위로 분리한다.
 2. 고객 목록 화면의 검색/정렬/row UI를 공용 primitive 기준으로 정리한다.
