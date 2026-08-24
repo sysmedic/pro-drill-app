@@ -196,7 +196,7 @@ export default function OvalResultModal({
             <button
               type="button"
               onClick={() => setIsResetConfirmModalOpen(true)}
-              className="h-10 px-3.5 text-xs sm:text-sm font-black rounded-xl bg-gradient-to-r from-slate-900 via-slate-800 to-rose-950/90 text-rose-300 hover:text-white hover:from-slate-800 hover:to-rose-900 border border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.25)] hover:shadow-[0_0_20px_rgba(244,63,94,0.4)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+              className="h-10 px-3.5 text-xs sm:text-sm font-black rounded-md bg-gradient-to-r from-slate-900 via-slate-800 to-rose-950/90 text-rose-300 hover:text-white hover:from-slate-800 hover:to-rose-900 border border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.25)] hover:shadow-[0_0_20px_rgba(244,63,94,0.4)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center space-x-1.5"
               title="원홀, #1·#2 비트 수치 및 초기 추천 모드로 복원"
             >
               <span>리셋</span>
@@ -206,7 +206,7 @@ export default function OvalResultModal({
             <button
               type="button"
               onClick={() => setIsFullScreen2DOpen(true)}
-              className="h-10 px-4 text-xs sm:text-sm font-black rounded-xl bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950/90 text-cyan-300 hover:text-white hover:from-slate-800 hover:to-cyan-900 border border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+              className="h-10 px-4 text-xs sm:text-sm font-black rounded-md bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950/90 text-cyan-300 hover:text-white hover:from-slate-800 hover:to-cyan-900 border border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center space-x-1.5"
               title="중간 단계 없이 풀스크린 시뮬레이터로 즉시 전환"
             >
               <span>시뮬레이터</span>
@@ -236,7 +236,7 @@ export default function OvalResultModal({
                         type="button"
                         disabled={hasExtraBits}
                         onClick={() => handlePrecisionChange('basic')}
-                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center relative ${
+                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded-md transition-all flex items-center justify-center relative ${
                           hasExtraBits
                             ? 'opacity-40 cursor-not-allowed text-slate-400'
                             : 'cursor-pointer'
@@ -254,7 +254,7 @@ export default function OvalResultModal({
                         type="button"
                         disabled={hasExtraBits}
                         onClick={() => handlePrecisionChange('detailed')}
-                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center relative ${
+                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded-md transition-all flex items-center justify-center relative ${
                           hasExtraBits
                             ? 'opacity-40 cursor-not-allowed text-slate-400'
                             : 'cursor-pointer'
@@ -272,7 +272,7 @@ export default function OvalResultModal({
                         type="button"
                         disabled={hasExtraBits}
                         onClick={() => handlePrecisionChange('ultra')}
-                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all flex items-center justify-center relative ${
+                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded-md transition-all flex items-center justify-center relative ${
                           hasExtraBits
                             ? 'opacity-40 cursor-not-allowed text-slate-400'
                             : 'cursor-pointer'
@@ -305,21 +305,21 @@ export default function OvalResultModal({
             </div>
           </div>
 
-          {/* 🎈 [지공사님 핵심 지침 100% 반영]: 선택 버튼과 시작점이 일치하는 파스텔톤 플로팅 말풍선 (블랙 텍스트 & 확대) */}
+          {/* 🎈 [지공사님 핵심 지침 100% 반영]: 선택 버튼과 시작점이 일치하는 파스텔톤 플로팅 말풍선 (경계선 완벽 제거 & rounded-md) */}
           {isUnderDrilling && (
             <div
               className={`absolute -bottom-3 translate-y-full z-30 pointer-events-none animate-fade-in filter drop-shadow-md transition-all duration-200 ${
                 currentPrecision === 'detailed' ? 'left-14 sm:left-22' : 'left-1 sm:left-2'
               }`}
             >
-              {/* 말풍선 상단 꼬리 화살표 (선택된 버튼 위치와 1:1 일치) */}
-              <div
-                className={`absolute -top-1.5 w-3.5 h-3.5 bg-amber-50 rotate-45 border-t border-l border-amber-300 ${
-                  currentPrecision === 'detailed' ? 'left-11' : 'left-8'
-                }`}
-              />
-              <div className="relative bg-amber-50 text-slate-900 border border-amber-300/90 rounded-xl px-3.5 py-2 text-xs sm:text-[13px] font-semibold flex items-center shadow-sm select-none">
-                <span className="whitespace-nowrap leading-none">
+              <div className="relative bg-amber-50 text-slate-900 border border-amber-300/90 rounded-md px-3.5 py-2 text-xs sm:text-[13px] font-semibold flex items-center shadow-sm select-none">
+                {/* 말풍선 상단 꼬리 화살표 (몸통 상단 테두리 선을 완벽하게 덮어 일체형으로 마스킹) */}
+                <div
+                  className={`absolute -top-1.5 w-3.5 h-3.5 bg-amber-50 rotate-45 border-t border-l border-amber-300 z-10 ${
+                    currentPrecision === 'detailed' ? 'left-11' : 'left-8'
+                  }`}
+                />
+                <span className="whitespace-nowrap leading-none relative z-20">
                   턱이 발생할 수 있으니 <b className="text-black font-bold">[{recommendedMode === 'ultra' ? '초정밀' : '정밀'}]</b> 추천
                 </span>
               </div>
@@ -440,7 +440,7 @@ export default function OvalResultModal({
           <button
             type="button"
             onClick={onConfirm}
-            className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center"
+            className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm sm:text-base rounded-md shadow-lg active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center"
           >
             확인
           </button>
@@ -463,14 +463,14 @@ export default function OvalResultModal({
                 <button
                   type="button"
                   onClick={() => setIsResetConfirmModalOpen(false)}
-                  className="h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all cursor-pointer"
+                  className="h-10 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all cursor-pointer"
                 >
                   취소
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmReset}
-                  className="h-10 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-lg shadow-rose-950/50 transition-all cursor-pointer active:scale-95"
+                  className="h-10 rounded-md bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-lg shadow-rose-950/50 transition-all cursor-pointer active:scale-95"
                 >
                   리셋
                 </button>

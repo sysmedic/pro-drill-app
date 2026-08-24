@@ -266,7 +266,7 @@ export default function FractionKeypad({
                 key={key}
                 type="button"
                 onClick={() => handleExtraKeyPress(key)}
-                className="h-12 rounded-xl font-extrabold text-base bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 active:scale-95 transition-all flex items-center justify-center gap-1 shadow-xs cursor-pointer"
+                className="h-12 rounded-md font-extrabold text-base bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 active:scale-95 transition-all flex items-center justify-center gap-1 shadow-xs cursor-pointer"
               >
                 {key === 'Up' ? '▲ Up' : key === 'Down' ? '▼ Down' : key}
               </button>
@@ -275,60 +275,60 @@ export default function FractionKeypad({
         )}
 
         {mode === 'span' && (
-          <div className="grid grid-cols-4 gap-2 mb-3 bg-slate-50 p-2 rounded-xl border border-slate-200 animate-fade-in">
+          <div className="grid grid-cols-4 gap-2 mb-3 bg-slate-50 p-2 rounded-md border border-slate-200 animate-fade-in">
             <button
               type="button"
               onClick={() => handleDirectCalc(1 / 32)}
-              className="h-10 rounded-lg font-bold text-xs bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
+              className="h-10 rounded-md font-bold text-xs bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
             >
               + 1/32
             </button>
             <button
               type="button"
               onClick={() => handleDirectCalc(1 / 16)}
-              className="h-10 rounded-lg font-bold text-xs bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
+              className="h-10 rounded-md font-bold text-xs bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
             >
               + 1/16
             </button>
             <button
               type="button"
               onClick={() => handleDirectCalc(1 / 8)}
-              className="h-10 rounded-lg font-bold text-xs bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
+              className="h-10 rounded-md font-bold text-xs bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
             >
               + 1/8
             </button>
             <button
               type="button"
               onClick={() => handleDirectCalc(1 / 4)}
-              className="h-10 rounded-lg font-bold text-xs bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
+              className="h-10 rounded-md font-bold text-xs bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
             >
               + 1/4
             </button>
             <button
               type="button"
               onClick={() => handleDirectCalc(-1 / 32)}
-              className="h-10 rounded-lg font-bold text-xs bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
+              className="h-10 rounded-md font-bold text-xs bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
             >
               - 1/32
             </button>
             <button
               type="button"
               onClick={() => handleDirectCalc(-1 / 16)}
-              className="h-10 rounded-lg font-bold text-xs bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
+              className="h-10 rounded-md font-bold text-xs bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
             >
               - 1/16
             </button>
             <button
               type="button"
               onClick={() => handleDirectCalc(-1 / 8)}
-              className="h-10 rounded-lg font-bold text-xs bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
+              className="h-10 rounded-md font-bold text-xs bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
             >
               - 1/8
             </button>
             <button
               type="button"
               onClick={() => handleDirectCalc(-1 / 4)}
-              className="h-10 rounded-lg font-bold text-xs bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
+              className="h-10 rounded-md font-bold text-xs bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
             >
               - 1/4
             </button>
@@ -341,7 +341,7 @@ export default function FractionKeypad({
               key={num}
               type="button"
               onClick={() => handleCharacterInput(num)}
-              className="h-12 sm:h-14 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
+              className="h-12 sm:h-14 rounded-md text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
             >
               {num}
             </button>
@@ -353,7 +353,7 @@ export default function FractionKeypad({
                 <button
                   type="button"
                   onClick={() => handleCharacterInput('-')}
-                  className="h-12 sm:h-14 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
+                  className="h-12 sm:h-14 rounded-md text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
                 >
                   -
                 </button>
@@ -363,14 +363,14 @@ export default function FractionKeypad({
               <button
                 type="button"
                 onClick={() => handleCharacterInput('0')}
-                className="h-12 sm:h-14 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
+                className="h-12 sm:h-14 rounded-md text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
               >
                 0
               </button>
               <button
                 type="button"
                 onClick={handleDelete}
-                className="h-12 sm:h-14 rounded-xl text-base sm:text-lg font-bold bg-rose-100 text-rose-600 hover:bg-rose-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
+                className="h-12 sm:h-14 rounded-md text-base sm:text-lg font-bold bg-rose-100 text-rose-600 hover:bg-rose-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
               >
                 삭제
               </button>
@@ -381,7 +381,7 @@ export default function FractionKeypad({
                 <button
                   type="button"
                   onClick={() => handleCharacterInput('-')}
-                  className="h-12 sm:h-14 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
+                  className="h-12 sm:h-14 rounded-md text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
                 >
                   -
                 </button>
@@ -392,7 +392,7 @@ export default function FractionKeypad({
               <button
                 type="button"
                 onClick={() => handleCharacterInput('0')}
-                className="h-12 sm:h-14 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
+                className="h-12 sm:h-14 rounded-md text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
               >
                 0
               </button>
@@ -400,7 +400,7 @@ export default function FractionKeypad({
               <button
                 type="button"
                 onClick={() => handleCharacterInput('/')}
-                className="h-12 sm:h-14 rounded-xl text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
+                className="h-12 sm:h-14 rounded-md text-xl sm:text-2xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
               >
                 /
               </button>
@@ -408,7 +408,7 @@ export default function FractionKeypad({
               <button
                 type="button"
                 onClick={() => handleCharacterInput(' ')}
-                className="col-span-2 h-12 sm:h-14 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 font-bold text-base sm:text-lg flex items-center justify-center cursor-pointer"
+                className="col-span-2 h-12 sm:h-14 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors active:scale-95 font-bold text-base sm:text-lg flex items-center justify-center cursor-pointer"
               >
                 띄어쓰기
               </button>
@@ -416,7 +416,7 @@ export default function FractionKeypad({
               <button
                 type="button"
                 onClick={handleDelete}
-                className="h-12 sm:h-14 rounded-xl text-base sm:text-lg font-bold bg-rose-100 text-rose-600 hover:bg-rose-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
+                className="h-12 sm:h-14 rounded-md text-base sm:text-lg font-bold bg-rose-100 text-rose-600 hover:bg-rose-200 transition-colors active:scale-95 flex items-center justify-center cursor-pointer"
               >
                 삭제
               </button>
@@ -428,14 +428,14 @@ export default function FractionKeypad({
           <button
             type="button"
             onClick={handleClear}
-            className="h-11 rounded-xl text-base font-bold bg-slate-200 text-slate-600 hover:bg-slate-300 transition-colors active:scale-95 cursor-pointer"
+            className="h-11 rounded-md text-base font-bold bg-slate-200 text-slate-600 hover:bg-slate-300 transition-colors active:scale-95 cursor-pointer"
           >
             초기화
           </button>
           <button
             type="button"
             onClick={handleSubmit}
-            className="h-11 rounded-xl text-base font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-md active:scale-95 cursor-pointer"
+            className="h-11 rounded-md text-base font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-md active:scale-95 cursor-pointer"
           >
             {mode === 'span' ? '입력' : '확인'}
           </button>

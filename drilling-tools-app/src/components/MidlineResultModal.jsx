@@ -199,7 +199,7 @@ export default function MidlineResultModal({
           <button
             type="button"
             onClick={onConfirm}
-            className="h-12 w-full bg-slate-800 text-white rounded-xl text-sm sm:text-base font-black hover:bg-slate-900 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center shadow-2xs"
+            className="h-12 w-full bg-slate-800 text-white rounded-md text-sm sm:text-base font-black hover:bg-slate-900 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center shadow-2xs"
           >
             확인
           </button>

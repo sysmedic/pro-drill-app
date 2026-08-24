@@ -160,18 +160,18 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold transition-all cursor-pointer"
+            className="w-8 h-8 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold transition-all cursor-pointer"
           >
             ✕
           </button>
         </div>
 
         {/* 탭 스위처: [ 저장 ] vs [ 불러오기 ] */}
-        <div className="grid grid-cols-2 gap-1 bg-[#f8fafc] border border-slate-200/80 p-1 rounded-2xl shrink-0">
+        <div className="grid grid-cols-2 gap-1 bg-[#f8fafc] border border-slate-200/80 p-1 rounded-lg shrink-0">
           <button
             type="button"
             onClick={() => setModalTab('save')}
-            className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+            className={`py-2 px-3 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
               modalTab === 'save'
                 ? 'bg-[#1e293b] text-white shadow-md font-black'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
@@ -183,7 +183,7 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
           <button
             type="button"
             onClick={() => setModalTab('load')}
-            className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+            className={`py-2 px-3 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
               modalTab === 'load'
                 ? 'bg-[#1e293b] text-white shadow-md font-black'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
@@ -207,7 +207,7 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
                     value={slotTitle}
                     onChange={(e) => setSlotTitle(e.target.value)}
                     placeholder="이름 입력 (미입력 시 현재 날짜로 저장)"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-[16px] font-semibold text-slate-900 outline-none focus:border-slate-800 focus:ring-2 focus:ring-slate-900/20 focus:bg-white transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-md text-[16px] font-semibold text-slate-900 outline-none focus:border-slate-800 focus:ring-2 focus:ring-slate-900/20 focus:bg-white transition-all"
                   />
                 </div>
 
@@ -222,7 +222,7 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
                 </div>
 
                 {feedbackMsg && (
-                  <div className="p-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold text-center animate-fade-in">
+                  <div className="p-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md text-xs font-bold text-center animate-fade-in">
                     {feedbackMsg}
                   </div>
                 )}
@@ -231,14 +231,14 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
               <div className="space-y-2 shrink-0">
                 <button
                   type="submit"
-                  className="w-full py-3 px-4 bg-[#1e293b] hover:bg-[#0f172a] text-white font-black text-sm rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer active:scale-98"
+                  className="w-full py-3 px-4 bg-[#1e293b] hover:bg-[#0f172a] text-white font-black text-sm rounded-md transition-all shadow-md flex items-center justify-center cursor-pointer active:scale-98"
                 >
                   저장
                 </button>
                 <button
                   type="button"
                   onClick={(e) => handleShareSlot(e, { title: slotTitle || '현재 제원', data: currentSharedState })}
-                  className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all flex items-center justify-center cursor-pointer active:scale-98 border border-slate-200"
+                  className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-md transition-all flex items-center justify-center cursor-pointer active:scale-98 border border-slate-200"
                 >
                   현재 제원 즉시 공유
                 </button>
@@ -249,7 +249,7 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
           {modalTab === 'load' && (
             <div className="space-y-2 py-1">
               {feedbackMsg && (
-                <div className="p-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold text-center animate-fade-in">
+                <div className="p-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md text-xs font-bold text-center animate-fade-in">
                   {feedbackMsg}
                 </div>
               )}
@@ -286,7 +286,7 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
                       <button
                         type="button"
                         onClick={(e) => handleShareSlot(e, slot)}
-                        className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-lg transition-all"
+                        className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-md transition-all"
                         title="카카오톡/문자 제원표 및 원클릭 복원 링크 공유"
                       >
                         공유
@@ -297,14 +297,14 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
                           e.stopPropagation();
                           handleLoadSlot(slot);
                         }}
-                        className="px-2.5 py-1.5 bg-[#1e293b] text-white text-xs font-bold rounded-lg hover:bg-black transition-all"
+                        className="px-2.5 py-1.5 bg-[#1e293b] text-white text-xs font-bold rounded-md hover:bg-black transition-all"
                       >
                         불러오기
                       </button>
                       <button
                         type="button"
                         onClick={(e) => handleDeleteSlot(e, slot.id)}
-                        className="px-2 py-1.5 text-xs font-bold text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        className="px-2 py-1.5 text-xs font-bold text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all"
                         title="삭제"
                       >
                         삭제

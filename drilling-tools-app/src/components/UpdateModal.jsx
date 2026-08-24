@@ -62,7 +62,7 @@ export default function UpdateModal({ isOpen, onClose }) {
             <img
               src="/icon-192.png"
               alt="ProDrill Tools"
-              className="w-8 h-8 rounded-xl object-cover border border-slate-200 shadow-2xs"
+              className="w-8 h-8 rounded-md object-cover border border-slate-200 shadow-2xs"
             />
             <div>
               <h2 className="text-lg font-black text-slate-900 tracking-tight">
@@ -73,7 +73,7 @@ export default function UpdateModal({ isOpen, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold transition-all cursor-pointer"
+            className="w-8 h-8 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold transition-all cursor-pointer"
           >
             ✕
           </button>
@@ -114,7 +114,7 @@ export default function UpdateModal({ isOpen, onClose }) {
 
         {/* 상태 메시지 */}
         {statusMessage && (
-          <div className="p-2.5 bg-indigo-50 border border-indigo-200 text-indigo-800 rounded-xl text-xs font-bold text-center animate-fade-in">
+          <div className="p-2.5 bg-indigo-50 border border-indigo-200 text-indigo-800 rounded-md text-xs font-bold text-center animate-fade-in">
             {statusMessage}
           </div>
         )}
@@ -125,7 +125,7 @@ export default function UpdateModal({ isOpen, onClose }) {
             type="button"
             onClick={handleCheckUpdate}
             disabled={isChecking}
-            className="w-full py-3 px-4 bg-[#1e293b] hover:bg-[#0f172a] disabled:bg-slate-400 text-white font-black text-sm rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer active:scale-98"
+            className="w-full py-3 px-4 bg-[#1e293b] hover:bg-[#0f172a] disabled:bg-slate-400 text-white font-black text-sm rounded-md transition-all shadow-md flex items-center justify-center cursor-pointer active:scale-98"
           >
             {isChecking ? '업데이트 확인 중...' : '최신 업데이트 확인'}
           </button>
@@ -133,7 +133,7 @@ export default function UpdateModal({ isOpen, onClose }) {
           <button
             type="button"
             onClick={handleForceReload}
-            className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all flex items-center justify-center cursor-pointer"
+            className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-md transition-all flex items-center justify-center cursor-pointer"
           >
             캐시 초기화 및 강제 새로고침
           </button>

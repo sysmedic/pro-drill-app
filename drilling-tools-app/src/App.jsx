@@ -211,7 +211,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsStorageModalOpen(true)}
-                className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#1e293b] hover:bg-[#0f172a] rounded-xl transition-all cursor-pointer shadow-2xs"
+                className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#1e293b] hover:bg-[#0f172a] rounded-md transition-all cursor-pointer shadow-2xs"
                 title="아카이브 관리 (저장 및 불러오기)"
               >
                 ARCHIVE
@@ -220,11 +220,11 @@ export default function App() {
           </div>
 
           {/* 📌 3탭 상단 캡슐 Segmented Control */}
-          <div className="grid grid-cols-3 gap-1 bg-[#f8fafc] border border-slate-200/80 p-1.5 rounded-2xl">
+          <div className="grid grid-cols-3 gap-1 bg-[#f8fafc] border border-slate-200/80 p-1.5 rounded-lg">
             <button
               type="button"
               onClick={() => switchTab('span')}
-              className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+              className={`py-2 px-2 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
                 activeTab === 'span'
                   ? 'bg-[#1e293b] text-white shadow-md font-black'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
@@ -236,7 +236,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => switchTab('midline')}
-              className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+              className={`py-2 px-2 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
                 activeTab === 'midline'
                   ? 'bg-[#1e293b] text-white shadow-md font-black'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
@@ -248,7 +248,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => switchTab('oval')}
-              className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+              className={`py-2 px-2 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
                 activeTab === 'oval'
                   ? 'bg-[#1e293b] text-white shadow-md font-black'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
@@ -348,7 +348,7 @@ export default function App() {
                     setIncomingShareData(null);
                     window.history.replaceState({}, document.title, window.location.pathname);
                   }}
-                  className="flex-1 py-3 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                  className="flex-1 py-3 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-md transition-all cursor-pointer"
                 >
                   취소
                 </button>
@@ -359,7 +359,7 @@ export default function App() {
                     setIncomingShareData(null);
                     window.history.replaceState({}, document.title, window.location.pathname);
                   }}
-                  className="flex-1 py-3 px-3 bg-[#1e293b] hover:bg-black text-white font-black text-xs rounded-xl transition-all shadow-md cursor-pointer active:scale-98"
+                  className="flex-1 py-3 px-3 bg-[#1e293b] hover:bg-black text-white font-black text-xs rounded-md transition-all shadow-md cursor-pointer active:scale-98"
                 >
                   제원 불러오기
                 </button>
