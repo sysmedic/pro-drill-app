@@ -178,13 +178,14 @@ export default function OvalResultModal({
                           : 'cursor-pointer'
                       } ${
                         currentPrecision === 'basic'
-                          ? 'bg-slate-800 text-white shadow-2xs font-black'
+                          ? 'bg-slate-800 text-white shadow-2xs font-black z-10'
                           : 'text-slate-500 hover:text-slate-800 font-bold'
                       }`}
                       title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '기본 (3드릴) 모드'}
                     >
                       기본
                     </button>
+                    <div className={`w-[1px] h-3.5 bg-slate-300/80 shrink-0 mx-0.5 transition-opacity ${currentPrecision === 'basic' || currentPrecision === 'detailed' ? 'opacity-0' : 'opacity-100'}`} />
                     <button
                       type="button"
                       disabled={hasExtraBits}
@@ -195,13 +196,14 @@ export default function OvalResultModal({
                           : 'cursor-pointer'
                       } ${
                         currentPrecision === 'detailed'
-                          ? 'bg-slate-800 text-white shadow-2xs font-black'
+                          ? 'bg-slate-800 text-white shadow-2xs font-black z-10'
                           : 'text-slate-500 hover:text-slate-800 font-bold'
                       }`}
                       title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '정밀 (5드릴) 모드'}
                     >
                       정밀
                     </button>
+                    <div className={`w-[1px] h-3.5 bg-slate-300/80 shrink-0 mx-0.5 transition-opacity ${currentPrecision === 'detailed' || currentPrecision === 'ultra' ? 'opacity-0' : 'opacity-100'}`} />
                     <button
                       type="button"
                       disabled={hasExtraBits}
@@ -212,7 +214,7 @@ export default function OvalResultModal({
                           : 'cursor-pointer'
                       } ${
                         currentPrecision === 'ultra'
-                          ? 'bg-slate-800 text-white shadow-2xs font-black'
+                          ? 'bg-slate-800 text-white shadow-2xs font-black z-10'
                           : 'text-slate-500 hover:text-slate-800 font-bold'
                       }`}
                       title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '초정밀 (7드릴) 모드'}
@@ -232,7 +234,7 @@ export default function OvalResultModal({
               options={OVAL_CORRECTION_OPTIONS}
               value={ovalCorrection || '0'}
               displayValue={!ovalCorrection || ovalCorrection === '0' ? '보정' : `${ovalCorrection} 보정`}
-              controlClassName="text-center font-bold [text-align-last:center]"
+              controlClassName="text-center font-bold [text-align-last:center] focus:ring-0 focus:outline-none focus:border-slate-300 ring-0 outline-none"
               style={{ textAlign: 'center', textAlignLast: 'center' }}
             />
           </div>

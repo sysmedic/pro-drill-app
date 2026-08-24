@@ -2,8 +2,8 @@ import React, { useId } from 'react';
 import { cn } from './classNames.js';
 
 const controlClasses = {
-  default: 'h-[46px] w-full rounded-lg p-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs transition-all disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 disabled:border-slate-200',
-  compact: 'h-10 w-full rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs transition-all disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 disabled:border-slate-200',
+  default: 'h-[46px] w-full rounded-lg p-2.5 text-base focus:outline-none focus:border-slate-400 cursor-pointer shadow-2xs transition-all disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 disabled:border-slate-200',
+  compact: 'h-10 w-full rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-slate-400 cursor-pointer shadow-2xs transition-all disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 disabled:border-slate-200',
 };
 
 const labelClasses = {
