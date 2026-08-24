@@ -94,9 +94,10 @@ export default function SelectField({
           value={currentValue}
           {...props}
         >
-          {placeholder && (
+          {/* 📌 [지공사님 핵심 지침 100% 반영]: 팝업 스크롤 오픈 시 빈칸 상태 유지를 위한 상단 빈칸/공란 옵션 상시 제공 */}
+          {placeholder !== false && (
             <option value="" className="text-slate-400 font-normal bg-white">
-              {placeholder}
+              {placeholder || ''}
             </option>
           )}
           {options.map((option) => {

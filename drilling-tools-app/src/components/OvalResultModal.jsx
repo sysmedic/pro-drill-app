@@ -296,6 +296,7 @@ export default function OvalResultModal({
                 density="compact"
                 onChange={(v) => setOvalCorrection(v)}
                 options={OVAL_CORRECTION_OPTIONS}
+                placeholder={false}
                 value={ovalCorrection || '0'}
                 displayValue={!ovalCorrection || ovalCorrection === '0' ? '보정' : `${ovalCorrection} 보정`}
                 controlClassName="text-center font-bold [text-align-last:center] focus:ring-0 focus:outline-none focus:border-slate-300 ring-0 outline-none"
