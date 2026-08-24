@@ -43,6 +43,19 @@ const DEFAULT_SHARED_STATE = {
 };
 
 const TABS = ['span', 'midline', 'oval'];
+const LAST_TAB_STORAGE_KEY = 'prodrill_tools_last_active_tab';
+
+const loadInitialTab = () => {
+  try {
+    const saved = localStorage.getItem(LAST_TAB_STORAGE_KEY);
+    if (saved && TABS.includes(saved)) {
+      return saved;
+    }
+  } catch (e) {
+    console.error('Failed to load last tab from localStorage', e);
+  }
+  return 'span';
+};
 
 const loadInitialState = () => {
   try {
@@ -61,7 +74,8 @@ import { decodeSharePayload } from './lib/shareHelper.js';
 import { createPortal } from 'react-dom';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('span'); // 'span' | 'midline' | 'oval'
+  // 📌 [지공사님 핵심 지침 100% 반영]: 앱 재실행 시 마지막 모드(스판, 미드라인, 오발)로 자동 복귀
+  const [activeTab, setActiveTab] = useState(loadInitialTab); // 'span' | 'midline' | 'oval'
   const [slideDirection, setSlideDirection] = useState('left'); // 'left' (from right) | 'right' (from left)
   const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -86,13 +100,18 @@ export default function App() {
     }
   }, []);
 
-  // 🚀 방향 감지 탭 전환 함수
+  // 🚀 방향 감지 탭 전환 함수 (localStorage 실시간 동기화)
   const switchTab = (nextTab) => {
     if (nextTab === activeTab) return;
     const prevIdx = TABS.indexOf(activeTab);
     const nextIdx = TABS.indexOf(nextTab);
     setSlideDirection(nextIdx > prevIdx ? 'left' : 'right');
     setActiveTab(nextTab);
+    try {
+      localStorage.setItem(LAST_TAB_STORAGE_KEY, nextTab);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // 📱 [3탭 스와이프 제스처 터치 레퍼런스]: 스판 ⇄ 미드라인 ⇄ 오발 부드러운 스와이프 전환

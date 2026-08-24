@@ -207,7 +207,7 @@ export default function OvalResultModal({
         </div>
 
         {/* 📌 [지공사님 핵심 지침 100% 반영: 정밀도 3단계 7 : 보정 3 비율 배치] */}
-        <div className="flex flex-col gap-2">
+        <div className="relative">
           <div className="grid grid-cols-10 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 items-end">
             <div className="col-span-7 flex flex-col w-full">
               <label className="text-xs font-bold text-slate-600 mb-1">정밀도</label>
@@ -291,13 +291,17 @@ export default function OvalResultModal({
             </div>
           </div>
 
-          {/* ⚠️ 가공 이동 거리 대비 드릴 수가 적을 때 간결한 경고 안내 */}
+          {/* 🎈 [지공사님 핵심 지침 100% 반영]: 덜컹거림 100% 차단용 절대위치 플로팅 말풍선(Balloon Tooltip) */}
           {isUnderDrilling && (
-            <div className="text-[11px] sm:text-xs font-bold text-amber-900 bg-amber-50/95 border border-amber-300 rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-2xs animate-fade-in select-none">
-              <span className="text-sm shrink-0">⚠️</span>
-              <span className="leading-snug">
-                턱이 발생할 수 있으니 <b>{recommendedMode === 'ultra' ? '초정밀' : '정밀'} 추천</b>
-              </span>
+            <div className="absolute left-3 -bottom-2 translate-y-full z-30 pointer-events-none animate-fade-in filter drop-shadow-md">
+              {/* 말풍선 상단 꼬리 화살표 */}
+              <div className="absolute -top-1 left-7 w-2.5 h-2.5 bg-amber-400 rotate-45 border-t border-l border-amber-500/50" />
+              <div className="relative bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border border-amber-500/60 rounded-xl px-3 py-1.5 text-[11px] sm:text-xs font-black flex items-center gap-1.5 shadow-lg select-none">
+                <span className="text-xs shrink-0">⚠️</span>
+                <span className="whitespace-nowrap">
+                  턱이 발생할 수 있으니 <b>[{recommendedMode === 'ultra' ? '초정밀' : '정밀'}]</b> 추천
+                </span>
+              </div>
             </div>
           )}
         </div>
