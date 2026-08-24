@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import SelectField from './ui/SelectField.jsx';
 import Midline2DLayoutRenderer from './ui/Midline2DLayoutRenderer.jsx';
@@ -38,6 +38,56 @@ export default function OvalResultModal({
   // 📌 풀스크린 시뮬레이터 직통 열림 상태
   const [isFullScreen2DOpen, setIsFullScreen2DOpen] = useState(false);
 
+  // 📌 [차트 최초 입력 제원 스냅샷 보존]: 오발컷 계산 당시의 원홀, 오발, #1, #2 최초 수치 보존
+  const initialSnapshotRef = useRef({
+    holeSize,
+    ovalSize,
+    ovalCut,
+    ovalCut1,
+    ovalCut2,
+  });
+
+  useEffect(() => {
+    if (!initialSnapshotRef.current.holeSize && holeSize) {
+      initialSnapshotRef.current = {
+        holeSize,
+        ovalSize,
+        ovalCut,
+        ovalCut1,
+        ovalCut2,
+      };
+    }
+  }, [holeSize, ovalSize, ovalCut, ovalCut1, ovalCut2]);
+
+  // 📌 매트릭스 리셋 안전 확인 모달 오픈 상태
+  const [isResetConfirmModalOpen, setIsResetConfirmModalOpen] = useState(false);
+
+  // 📌 [지공사님 핵심 지침 100% 반영]: 차트 입력 최초 제원 및 기본(3드릴) 모드 완벽 리셋
+  const handleConfirmReset = () => {
+    setIsResetConfirmModalOpen(false);
+    setIsDetailedMode(false);
+
+    const initH = initialSnapshotRef.current.holeSize || holeSize;
+    const initO = initialSnapshotRef.current.ovalSize || ovalSize;
+    const initC1 = initialSnapshotRef.current.ovalCut1 || ovalCut1;
+    const initC2 = initialSnapshotRef.current.ovalCut2 || ovalCut2;
+    const initC = initialSnapshotRef.current.ovalCut || ovalCut;
+
+    if (updateSharedState) {
+      updateSharedState({
+        holeSize: initH,
+        ovalSize: initO,
+        ovalCut1: initC1,
+        ovalCut2: initC2,
+        ovalCut: initC,
+        isDetailedMode: false,
+        extraBitCount: 0,
+        bitCustomSizes: {},
+        bitCustomOffsets: {},
+      });
+    }
+  };
+
   if (!isOpen) return null;
 
   // 2D 블루프린트 렌더러용 오프셋 데이터 구조화
@@ -67,14 +117,27 @@ export default function OvalResultModal({
           <h2 className="text-base sm:text-lg font-black text-slate-900 font-sans tracking-tight leading-tight">
             OVAL PITCH MATRIX
           </h2>
-          <button
-            type="button"
-            onClick={() => setIsFullScreen2DOpen(true)}
-            className="h-10 px-4 text-xs sm:text-sm font-black rounded-xl bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950/90 text-cyan-300 hover:text-white hover:from-slate-800 hover:to-cyan-900 border border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center space-x-1.5"
-            title="중간 단계 없이 풀스크린 시뮬레이터로 즉시 전환"
-          >
-            <span>시뮬레이터</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            {/* 🔴 리셋 버튼 (시뮬레이터 버튼과 동일한 컨셉, 좌측 배치) */}
+            <button
+              type="button"
+              onClick={() => setIsResetConfirmModalOpen(true)}
+              className="h-10 px-3.5 text-xs sm:text-sm font-black rounded-xl bg-gradient-to-r from-slate-900 via-slate-800 to-rose-950/90 text-rose-300 hover:text-white hover:from-slate-800 hover:to-rose-900 border border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.25)] hover:shadow-[0_0_20px_rgba(244,63,94,0.4)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+              title="원홀, #1·#2 비트 수치 및 기본(3드릴) 모드로 복원"
+            >
+              <span>리셋</span>
+            </button>
+
+            {/* 🔵 시뮬레이터 버튼 (우측 배치) */}
+            <button
+              type="button"
+              onClick={() => setIsFullScreen2DOpen(true)}
+              className="h-10 px-4 text-xs sm:text-sm font-black rounded-xl bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950/90 text-cyan-300 hover:text-white hover:from-slate-800 hover:to-cyan-900 border border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+              title="중간 단계 없이 풀스크린 시뮬레이터로 즉시 전환"
+            >
+              <span>시뮬레이터</span>
+            </button>
+          </div>
         </div>
 
         {/* 📌 [공통 상단 바]: [정밀도: 기본 | 정밀] 및 [보정] 조율 바 */}
@@ -260,6 +323,39 @@ export default function OvalResultModal({
             확인
           </button>
         </div>
+
+        {/* ⚠️ 매트릭스 리셋 확인 인앱 팝업 모달 */}
+        {isResetConfirmModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in select-none">
+            <div className="bg-slate-900 border border-slate-700/90 rounded-2xl p-5 sm:p-6 max-w-sm w-full shadow-2xl space-y-4 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400 text-xl font-black">
+                ⚠️
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-base font-black text-white">오발 매트릭스 리셋</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  원홀, #1·#2 비트 수치 및 모든 이동/추가 내역이 취소되고, 차트 최초 입력 당시의 기본(3드릴) 상태로 복원됩니다. 정말 초기화하시겠습니까?
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsResetConfirmModalOpen(false)}
+                  className="h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmReset}
+                  className="h-10 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-lg shadow-rose-950/50 transition-all cursor-pointer active:scale-95"
+                >
+                  리셋
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body
