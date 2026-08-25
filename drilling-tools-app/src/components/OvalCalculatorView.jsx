@@ -285,19 +285,19 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
   return (
     <div className="space-y-4 animate-fade-in">
       {/* 카드 1: 스냅샷 1번 오발 계산기 외곽 카운터 */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
+      <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-5 shadow-2xs space-y-3.5 sm:space-y-4">
         {/* 📌 상단 헤더: [엄지 제원] 타이틀 + [손방향 (왼손 | 오른손)] 토글 */}
-        <div className="flex items-center justify-between gap-2 pb-1">
-          <h3 className="text-base font-extrabold text-slate-800 font-sans tracking-tight">
+        <div className="flex items-center justify-between gap-1.5 pb-1">
+          <h3 className="text-sm sm:text-base font-extrabold text-slate-800 font-sans tracking-tight">
             엄지 제원
           </h3>
 
           {/* 오른쪽 우상단 손방향 토글 */}
-          <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-9 w-44 shrink-0 shadow-2xs">
+          <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-8 sm:h-9 w-36 sm:w-44 shrink-0 shadow-2xs">
             <button
               type="button"
               onClick={() => handleStateChange('isLeftHanded', true)}
-              className={`flex-1 h-full text-xs font-extrabold rounded transition-all cursor-pointer flex items-center justify-center ${
+              className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all cursor-pointer flex items-center justify-center ${
                 isLeftHanded
                   ? 'bg-slate-800 text-white shadow-2xs font-black'
                   : 'text-slate-500 hover:text-slate-800 font-bold'
@@ -308,7 +308,7 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
             <button
               type="button"
               onClick={() => handleStateChange('isLeftHanded', false)}
-              className={`flex-1 h-full text-xs font-extrabold rounded transition-all cursor-pointer flex items-center justify-center ${
+              className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded transition-all cursor-pointer flex items-center justify-center ${
                 !isLeftHanded
                   ? 'bg-slate-800 text-white shadow-2xs font-black'
                   : 'text-slate-500 hover:text-slate-800 font-bold'
@@ -320,13 +320,13 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
         </div>
 
         {/* 📌 단일 회색 통합 외곽 박스 (엄지 피치 + 상세 제원) */}
-        <div className="space-y-4 bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-200">
+        <div className="space-y-3 sm:space-y-4 bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200">
           {/* 섹션 1: 엄지 피치 4개 필드 */}
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-600 block">엄지 피치</span>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <SelectField
                 density="compact"
                 isRequiredMissing={isLatPitchMissing}
@@ -375,15 +375,15 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
           </div>
 
           {/* 섹션 2: 상세 제원 (📌 feature/dual-oval-cut: 오발컷1 / 오발컷2 세분화 필드) */}
-          <div className="pt-3 border-t border-slate-200 space-y-2.5">
+          <div className="pt-2.5 sm:pt-3 border-t border-slate-200 space-y-2">
             <span className="text-xs font-bold text-slate-600 block">상세 제원</span>
             
             {/* 1단: 원홀 크기 & 오발 크기 (50:50 2단 그리드) */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <SelectField
                 density="compact"
                 isRequiredMissing={isHoleSizeMissing}
-                label="원홀 (Hole Size)"
+                label="원홀 (Hole)"
                 onChange={(v) => {
                   handleStateChange({ holeSize: v, ovalSize: '', ovalCut1: '', ovalCut2: '', ovalCut: '' });
                 }}
@@ -405,7 +405,7 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
             </div>
 
             {/* 2단: 오발컷 #1 (35%), 오발컷 #2 (35%), 오발 각도 (30%) 1단 3분할 배치 */}
-            <div className="grid grid-cols-[35fr_35fr_30fr] gap-2 items-end">
+            <div className="grid grid-cols-[35fr_35fr_30fr] gap-1.5 sm:gap-2 items-end">
               <SelectField
                 density="compact"
                 disabled={!holeSize || !ovalSize}

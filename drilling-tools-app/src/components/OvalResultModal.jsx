@@ -171,16 +171,16 @@ export default function OvalResultModal({
       {/* 📌 [지공사님 핵심 지침]: 기본(3)/정밀(5)/초정밀(7) 3단계 모드 & 최대 8드릴 확장 구조 */}
       <div className="w-full max-w-[540px] bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col justify-between gap-4 max-h-[95vh] overflow-y-auto">
         {/* 모달 상단 헤더 & 풀스크린 시뮬레이터 직통 전환 버튼 */}
-        <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-black text-slate-900 font-sans tracking-tight leading-tight">
+        <div className="border-b border-slate-100 pb-2.5 sm:pb-3 flex items-center justify-between gap-1">
+          <h2 className="text-sm sm:text-lg font-black text-slate-900 font-sans tracking-tight leading-tight shrink-0">
             OVAL PITCH MATRIX
           </h2>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
             {/* 🔴 RE SET 버튼 (시뮬레이터 버튼과 동일한 컨셉, 좌측 배치) */}
             <button
               type="button"
               onClick={() => setIsResetConfirmModalOpen(true)}
-              className="h-10 px-3.5 text-xs sm:text-sm font-black rounded-md bg-gradient-to-r from-slate-900 via-slate-800 to-rose-950/90 text-rose-300 hover:text-white hover:from-slate-800 hover:to-rose-900 border border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.25)] hover:shadow-[0_0_20px_rgba(244,63,94,0.4)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+              className="h-8 sm:h-10 px-2.5 sm:px-3.5 text-[11px] sm:text-sm font-black rounded-md bg-gradient-to-r from-slate-900 via-slate-800 to-rose-950/90 text-rose-300 hover:text-white hover:from-slate-800 hover:to-rose-900 border border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.25)] hover:shadow-[0_0_20px_rgba(244,63,94,0.4)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center space-x-1 whitespace-nowrap"
               title="원홀, #1·#2 비트 수치 및 초기 추천 모드로 복원"
             >
               <span>RE SET</span>
@@ -190,7 +190,7 @@ export default function OvalResultModal({
             <button
               type="button"
               onClick={() => setIsFullScreen2DOpen(true)}
-              className="h-10 px-4 text-xs sm:text-sm font-black rounded-md bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950/90 text-cyan-300 hover:text-white hover:from-slate-800 hover:to-cyan-900 border border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+              className="h-8 sm:h-10 px-3 sm:px-4 text-[11px] sm:text-sm font-black rounded-md bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-950/90 text-cyan-300 hover:text-white hover:from-slate-800 hover:to-cyan-900 border border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center space-x-1 whitespace-nowrap"
               title="중간 단계 없이 풀스크린 시뮬레이터로 즉시 전환"
             >
               <span>시뮬레이터</span>
@@ -200,10 +200,10 @@ export default function OvalResultModal({
 
         {/* 📌 [지공사님 핵심 지침 100% 반영: 정밀도 3단계 7 : 보정 3 비율 배치] */}
         <div className="relative">
-          <div className="grid grid-cols-10 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 items-end">
+          <div className="grid grid-cols-10 gap-2 sm:gap-3 bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-200 items-end">
             <div className="col-span-7 flex flex-col w-full">
               <label className="text-xs font-bold text-slate-600 mb-1">정밀도</label>
-              <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-10 w-full shadow-2xs relative">
+              <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-9 sm:h-10 w-full shadow-2xs relative">
                 {(() => {
                   const hasExtraBits = (sharedState?.extraBitCount || 0) > 0;
 
@@ -212,10 +212,10 @@ export default function OvalResultModal({
                     const isSelected = currentPrecision === mode;
                     return (
                       <span
-                        className={`mr-1 text-[11px] font-black leading-none select-none ${
+                        className={`mr-0.5 sm:mr-1 text-[10px] sm:text-[11px] font-black leading-none select-none ${
                           isSelected
                             ? 'text-white'
-                            : 'w-3.5 h-3.5 bg-slate-400 text-white rounded-full inline-flex items-center justify-center text-[9px]'
+                            : 'w-3 h-3 sm:w-3.5 sm:h-3.5 bg-slate-400 text-white rounded-full inline-flex items-center justify-center text-[8px] sm:text-[9px]'
                         }`}
                       >
                         ✓
@@ -229,7 +229,7 @@ export default function OvalResultModal({
                         type="button"
                         disabled={hasExtraBits}
                         onClick={() => handlePrecisionChange('basic')}
-                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded-md transition-all flex items-center justify-center relative ${
+                        className={`flex-1 h-full text-[10px] sm:text-xs font-extrabold rounded-md transition-all flex items-center justify-center relative ${
                           hasExtraBits
                             ? 'opacity-40 cursor-not-allowed text-slate-400'
                             : 'cursor-pointer'
@@ -241,14 +241,17 @@ export default function OvalResultModal({
                         title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : `기본 (3드릴) 모드${recommendedMode === 'basic' ? ' [추천]' : ''}`}
                       >
                         {renderCheckIcon('basic')}
-                        <span>3드릴 (기본)</span>
+                        <span>
+                          <span className="hidden sm:inline">3드릴 (기본)</span>
+                          <span className="sm:hidden">3드릴</span>
+                        </span>
                       </button>
                       <div className={`w-[1px] h-3.5 bg-slate-300/80 shrink-0 mx-0.5 transition-opacity ${currentPrecision === 'basic' || currentPrecision === 'detailed' ? 'opacity-0' : 'opacity-100'}`} />
                       <button
                         type="button"
                         disabled={hasExtraBits}
                         onClick={() => handlePrecisionChange('detailed')}
-                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded-md transition-all flex items-center justify-center relative ${
+                        className={`flex-1 h-full text-[10px] sm:text-xs font-extrabold rounded-md transition-all flex items-center justify-center relative ${
                           hasExtraBits
                             ? 'opacity-40 cursor-not-allowed text-slate-400'
                             : 'cursor-pointer'
@@ -260,14 +263,17 @@ export default function OvalResultModal({
                         title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : `정밀 (5드릴) 모드${recommendedMode === 'detailed' ? ' [추천]' : ''}`}
                       >
                         {renderCheckIcon('detailed')}
-                        <span>5드릴 (정밀)</span>
+                        <span>
+                          <span className="hidden sm:inline">5드릴 (정밀)</span>
+                          <span className="sm:hidden">5드릴</span>
+                        </span>
                       </button>
                       <div className={`w-[1px] h-3.5 bg-slate-300/80 shrink-0 mx-0.5 transition-opacity ${currentPrecision === 'detailed' || currentPrecision === 'ultra' ? 'opacity-0' : 'opacity-100'}`} />
                       <button
                         type="button"
                         disabled={hasExtraBits}
                         onClick={() => handlePrecisionChange('ultra')}
-                        className={`flex-1 h-full text-[11px] sm:text-xs font-extrabold rounded-md transition-all flex items-center justify-center relative ${
+                        className={`flex-1 h-full text-[10px] sm:text-xs font-extrabold rounded-md transition-all flex items-center justify-center relative ${
                           hasExtraBits
                             ? 'opacity-40 cursor-not-allowed text-slate-400'
                             : 'cursor-pointer'
@@ -279,7 +285,10 @@ export default function OvalResultModal({
                         title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : `초정밀 (7드릴) 모드${recommendedMode === 'ultra' ? ' [추천]' : ''}`}
                       >
                         {renderCheckIcon('ultra')}
-                        <span>7드릴 (초정밀)</span>
+                        <span>
+                          <span className="hidden sm:inline">7드릴 (초정밀)</span>
+                          <span className="sm:hidden">7드릴</span>
+                        </span>
                       </button>
                     </>
                   );
@@ -357,19 +366,19 @@ export default function OvalResultModal({
               return (
                 <div
                   key={rowIndex}
-                  className={`grid grid-cols-10 text-xl sm:text-2xl font-black border-b border-slate-200 transition-colors ${
+                  className={`grid grid-cols-10 text-base sm:text-xl md:text-2xl font-black border-b border-slate-200 transition-colors ${
                     isRowDisabled ? 'bg-slate-50/70' : 'hover:bg-slate-50'
-                  }`}
+                  } ${rowIndex === 8 ? 'border-b-0' : ''}`}
                 >
                   {/* 📌 드릴 비트 열 [col-span-4] */}
                   <div
-                    className={`col-span-4 py-3 px-3.5 border-r border-slate-200 font-sans flex items-center justify-between tracking-[0.05em] ${
+                    className={`col-span-4 py-2.5 sm:py-3 px-2 sm:px-3.5 border-r border-slate-200 font-sans flex items-center justify-between tracking-[0.05em] ${
                       isRowDisabled ? 'text-slate-400/30 font-bold' : isHoleBit ? 'text-slate-900 font-black' : 'text-indigo-700 font-black'
                     }`}
                   >
                     {!isRowDisabled && drillBitStr !== '-' ? (
                       <>
-                        <span className="text-sm sm:text-base font-black select-none shrink-0 text-slate-900">
+                        <span className="text-xs sm:text-base font-black select-none shrink-0 text-slate-900">
                           #{targetBitIndex}
                         </span>
                         <span className={`flex-1 text-center font-black ${isHoleBit ? 'text-slate-900' : 'text-indigo-700'}`}>{drillBitStr}</span>
@@ -381,7 +390,7 @@ export default function OvalResultModal({
 
                   {/* 📌 수평 피치 열 [col-span-3] */}
                   <div
-                    className={`col-span-3 py-3 px-2 text-center border-r border-slate-200 font-sans flex items-center justify-center tracking-[0.05em] ${
+                    className={`col-span-3 py-2.5 sm:py-3 px-1 sm:px-2 text-center border-r border-slate-200 font-sans flex items-center justify-center tracking-[0.05em] ${
                       isRowDisabled
                         ? 'text-slate-400/30 font-bold'
                         : isHorizRed
@@ -394,7 +403,7 @@ export default function OvalResultModal({
 
                   {/* 📌 수직 피치 열 [col-span-3] */}
                   <div
-                    className={`col-span-3 py-3 px-2 text-center font-sans flex items-center justify-center tracking-[0.05em] ${
+                    className={`col-span-3 py-2.5 sm:py-3 px-1 sm:px-2 text-center font-sans flex items-center justify-center tracking-[0.05em] ${
                       isRowDisabled
                         ? 'text-slate-400/30 font-bold'
                         : isVertRed

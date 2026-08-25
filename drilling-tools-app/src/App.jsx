@@ -243,51 +243,51 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen bg-[#f1f5f9] text-slate-900 flex flex-col font-sans p-4 sm:p-6 select-none overflow-x-hidden"
+      className="min-h-screen bg-[#f1f5f9] text-slate-900 flex flex-col font-sans p-2.5 sm:p-6 select-none overflow-x-hidden"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="max-w-xl w-full mx-auto space-y-4">
+      <div className="max-w-xl w-full mx-auto space-y-3 sm:space-y-4">
         {/* 📌 상단 메인 헤더 카드 (좌측 타이틀 + 버전 드롭다운 모달 트리거 & 우측 [초기화] [저장]) */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-2xs space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-2xs space-y-3 sm:space-y-4">
+          <div className="flex items-center justify-between gap-1.5">
             <h1
               onClick={() => setIsUpdateModalOpen(true)}
-              className="text-xl font-black text-slate-900 tracking-tight cursor-pointer hover:text-slate-700 active:scale-98 transition-all"
+              className="text-base sm:text-xl font-black text-slate-900 tracking-tight cursor-pointer hover:text-slate-700 active:scale-98 transition-all shrink-0"
               title="앱 정보 및 업데이트 확인"
             >
               ProDrill Tools
             </h1>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <button
                 type="button"
                 onClick={handleResetAll}
-                className="px-3.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md transition-all cursor-pointer shadow-2xs"
+                className="px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md transition-all cursor-pointer shadow-2xs whitespace-nowrap"
                 title="모든 입력 수치 초기화"
               >
-                수치 초기화
+                초기화
               </button>
               <button
                 type="button"
                 onClick={() => setIsStorageModalOpen(true)}
-                className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#1e293b] hover:bg-[#0f172a] rounded-md transition-all cursor-pointer shadow-2xs"
+                className="px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-bold text-white bg-[#1e293b] hover:bg-[#0f172a] rounded-md transition-all cursor-pointer shadow-2xs whitespace-nowrap"
                 title="아카이브 관리 (저장 및 불러오기)"
               >
-                ARCHIVE
+                아카이브
               </button>
             </div>
           </div>
 
-          {/* 📌 2탭 상단 캡슐 Segmented Control */}
-          <div className="grid grid-cols-2 gap-1 bg-[#f8fafc] border border-slate-200/80 p-1.5 rounded-lg">
+          {/* 📌 상단 2단 탭 바 (스판 변환기 | 오발 계산기) */}
+          <div className="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-2xs">
             <button
               type="button"
               onClick={() => switchTab('span')}
-              className={`py-2 px-2 rounded-md text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center ${
+              className={`h-9 sm:h-10 rounded-lg text-xs sm:text-sm font-extrabold transition-all cursor-pointer flex items-center justify-center ${
                 activeTab === 'span'
-                  ? 'bg-[#1e293b] text-white shadow-md font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                  ? 'bg-slate-800 text-white shadow-2xs font-black'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
               }`}
             >
               스판 변환기
