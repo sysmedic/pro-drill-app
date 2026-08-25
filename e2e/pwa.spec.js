@@ -15,8 +15,8 @@ test('pwa manifest is served with standalone metadata and local icons', async ({
   expect(manifest.display).toBe('standalone');
   expect(manifest.lang).toBe('ko');
   expect(iconSources).toEqual(expect.arrayContaining([
-    '/icon-192.png',
-    '/icon-512.png',
-    '/maskable-icon-512.png',
+    '/icon-192-v2.png',
+    '/icon-512-v2.png',
+    '/maskable-icon-512-v2.png',
   ]));
 });

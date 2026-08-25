@@ -35,9 +35,9 @@ test('PWA manifest config uses local icons and Korean metadata', () => {
   const config = readFileSync('vite.config.js', 'utf8');
   assert.match(config, /lang: 'ko'/);
   assert.match(config, /orientation: 'portrait-primary'/);
-  assert.match(config, /src: '\/icon-192\.png'/);
-  assert.match(config, /src: '\/icon-512\.png'/);
-  assert.match(config, /src: '\/maskable-icon-512\.png'/);
+  assert.match(config, /src: '\/icon-192(-v\d+)?\.png'/);
+  assert.match(config, /src: '\/icon-512(-v\d+)?\.png'/);
+  assert.match(config, /src: '\/maskable-icon-512(-v\d+)?\.png'/);
   assert.match(config, /src: '\/favicon\.svg'/);
   assert.match(config, /purpose: 'maskable'/);
   assert.doesNotMatch(config, /placeholder\.com/);
