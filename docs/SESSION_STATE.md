@@ -1,8 +1,63 @@
 # Session State
 
-이 파일은 AI 세션이 바뀌어도 프로젝트의 작업 맥락을 회복하기 위한 손잡이다. 작업 후 반드시 갱신한다.
-
-## 현재 우선순위
+- **ProDrill 공식 로고 기반 PWA 고해상도 앱 아이콘 변환 및 적용 완료 (`drilling-tools-app/public`)**:
+  - 지공사님 제공 공식 ProDrill 로고 이미지를 규격별 PWA 아이콘(`icon-512.png`, `maskable-icon-512.png`, `icon-192.png`, `apple-touch-icon.png`, `favicon.png`)으로 1:1 고화질 변환 및 탑재 완료.
+- **외부 배포(Vercel Production) 전용 소스코드 유출 방어 & F12/우클릭 차단 가드 탑재 (`antiInspectionGuard.js`, `main.jsx`, `vite.config.js`)**:
+  - **지공사님 로컬 개발 환경(localhost/127.0.0.1) 바이패스**: 로컬 개발 시에는 100% 자동 해제되어 F12 및 디버깅 자유롭게 사용 가능.
+  - **외부 배포(Production) 접속 시 4중 차단**:
+    1) 마우스 우클릭 (`contextmenu`) 메뉴 원천 차단.
+    2) 개발자 도구 단축키 (`F12`, `Ctrl/Cmd+Shift+I/J/C`, `Ctrl/Cmd+U` 소스보기, `Ctrl/Cmd+S` 저장) 전면 무효화.
+    3) 소스맵(`sourcemap: false`) 완전 제거 및 코드 압축 난독화.
+    4) 콘솔 로그 출력 무력화.
+- **Vercel 기반 한시적 배포 만료 가드(2026년 11월 30일 12:00 만료 & 시간변조 방어 & 락 화면) 탑재 (`expirationGuard.js`, `ExpiredLockScreen.jsx`, `App.jsx`)**:
+  - **만료 일시**: `2026-11-30 12:00:00 KST` (`1796007600000`).
+  - **3중 방어 메커니즘**:
+    1) Vercel HTTP Response Header (`Date`)를 이용한 표준 서버 시간 비동기 교차 검증 (Firebase 불필요).
+    2) 기기 시계 과거 조작(Anti-Tampering Monotonic Clock Guard) 감지 시 즉시 영구 잠금.
+    3) 만료 시 영구 락 플래그(`prodrill_tools_permanently_expired`) 마킹으로 우회 차단.
+  - **전면 락 화면**: 만료 시 모든 기능 컴포넌트를 언마운트하고 세련된 슬레이트 다크 테마의 `[ 🔒 사용 기간 만료 안내 ]` 화면 단독 노출.
+- **오발 계산기 추천 드릴수 실시간 자동 추천 & 시뮬레이터 연동 & 아카이브 100% 보존 워크플로우 완수 (`OvalCalculatorView.jsx`, `OvalResultModal.jsx`, `StorageModal.jsx`)**:
+  - **오발컷 계산 시 최적 추천 드릴수 자동 세팅**: 원홀/오발/오발컷 제원 기반 가공 이동 거리($L_{\max}$)에 따라 `3드릴(기본)` / `5드릴(정밀)` / `7드릴(초정밀)`이 1순위로 즉시 자동 선택되어 메트릭스 모달에 추천 반영.
+  - **계산기 메인 화면 추천 배지 노출**: `[오발컷 계산]` 버튼에 `추천: 5드릴 (정밀)` 형태로 현재 제원에 최적화된 추천 드릴수를 사전에 실시간 안내.
+  - **정밀도 선택 탭 명칭 명확화**: `3드릴 (기본)`, `5드릴 (정밀)`, `7드릴 (초정밀)` 명칭 및 `[추천 ✓]` 인라인 배지 노출.
+  - **시뮬레이터 양방향 연동**: 도면 모드에서 비트 규격/D-Pad 오프셋 변경 시 메트릭스 매트릭스에 실시간 계산 즉시 반영.
+  - **메트릭스 [RE SET] 최초 추천값 복원**: 도면 수정 내역을 취소하고 계산 시 처음 제시했던 추천 정밀도 모드 및 기본 피치로 완벽 원복.
+  - **아카이브 저장 & 불러오기 100% 원형 보존**: 저장 시 모든 드릴 정보·오프셋·보정치가 저장되며, 아카이브에서 불러올 때는 재계산 없이 저장된 값 그대로 오발 피치 메트릭스에 즉시 표시.
+  - **품질 검증 완수**: `npm run check` 70/70 전체 단위 테스트 통과 및 `drilling-tools-app` Vite 프로덕션 빌드 100% 성공.
+  - **스판 변환기 결과 모달 라디오 & 마킹 가이드 버튼 슬레이트 테마 개편 (`SpanResultModal.jsx`)**:
+    * 상단 분수 라디오 버튼(16분/32분/.5/16분): 인디고에서 정갈한 **슬레이트 계열(`accent-slate-700 text-slate-700`)**로 개편.
+    * 하단 `[ 마킹 가이드 ]` 버튼: 인디고에서 세련된 **중간 슬레이트 계열(`bg-slate-600 hover:bg-slate-700 text-white`)**로 개편하여 우측 `[ 확인 ]` 버튼(`bg-slate-800`)과 시각적 톤앤매너 100% 일체화.
+  - **마킹 가이드 모달 상단 2단 세그먼트 버튼 탭 & Center to Center 기준 서체 크기 100% 통일 & 폰트 컬러 블랙 통일 (`MidlineResultModal.jsx`)**:
+    * 모달 내 모든 항목 라벨 및 연산 결과 수치 폰트 컬러를 선명한 블랙(text-black)으로 100% 일괄 통일하여 최상의 가독성 확보.
+    * 상단 헤더에 **`[ Cut to Cut ]` `[ Center to Center ]` 2단 세그먼트 버튼 탭**을 탑재하여 1클릭 즉시 전환 지원.
+    * `Cut to Cut` 모드의 수치 및 라벨 서체 크기를 `Center to Center` 기준(`text-[29px] sm:text-[35px] font-extrabold`, `text-sm sm:text-base font-black`, `tracking-[0.1em]`)으로 **100% 완벽히 통일**.
+    * 모달 박스의 최소 높이(`min-h-[580px] sm:min-h-[620px]`)와 내부 서체 크기 통일을 결합하여 **탭 전환 시 위아래로 출렁이는 덜컹거림(Layout Shift)을 100% 완벽 제거**.
+    * 상단 분수 버튼(16분/32분/.5/16분)은 삭제하여 스판 변환기 분수 설정을 그대로 계승.
+  - **스판 변환기 From ➔ To 스마트 기본 제시값 연동 (`SpanConverterView.jsx`, `App.jsx`)**:
+    * `현재 스판 타입 (From)`이 **`"Center to Center"`** ➔ `목표 스판 타입 (To)`은 **`"Cut to Cut"`** 기본 제시.
+    * `현재 스판 타입 (From)`이 **`"Cut to Cut"`** ➔ `목표 스판 타입 (To)`은 **`"Center to Center"`** 기본 제시.
+    * `현재 스판 타입 (From)`이 **`"Actual Span"`** ➔ `목표 스판 타입 (To)`은 **`"Center to Center"`** 기본 제시.
+    * 초기화(리셋) 시 기본 제시값: `From: "Cut to Cut"`, `To: "Center to Center"`.��표 스판 타입 (To)`은 **`"Cut to Cut"`** 기본 제시.
+    * `현재 스판 타입 (From)`이 **`"Cut to Cut"`** ➔ `목표 스판 타입 (To)`은 **`"Center to Center"`** 기본 제시.
+    * `현재 스판 타입 (From)`이 **`"Actual Span"`** ➔ `목표 스판 타입 (To)`은 **`"Center to Center"`** 기본 제시.
+    * 초기화(리셋) 시 기본 제시값: `From: "Cut to Cut"`, `To: "Center to Center"`.
+  - **스판 결과 모달 내 `[ 마킹 가이드 ]` 버튼 신설 & 연산 로직 완전 이전 (`SpanResultModal.jsx`, `SpanConverterView.jsx`)**:
+    * `SpanResultModal` 하단에 `[ 마킹 가이드 ]` 버튼을 배치하여 변환 결과 확인 후 즉시 미드라인 마킹 모달로 원클릭 진입 지원.
+    * 구면 미드라인 마킹 연산 로직(`calculateSphericalMidline`)을 `SpanConverterView`로 완전 이식하여 향후 탭 완전 이전 기반 완비.
+  - **도면 2D 캔버스 최대 확대율 5.0배(500%) 확장 (`Midline2DLayoutRenderer.jsx`)**:
+    * 기존 3.5배(`3.5x`) 한계치를 지공사님 지침에 따라 **`5.0x` (500% 초정밀 확대)**로 확장.
+    * 핀치 줌, 휠 스크롤, 줌인(`+`) 버튼 전체에 5.0배 확대율을 균일 적용하여 미세 오발 가공 동선 정밀 검수 지원.
+  - **도면 프리뷰 모드 시뮬레이터 버튼 우측 하단 이동 & A안 화이트 발광 스위치 개편 (`Midline2DLayoutRenderer.jsx`)**:
+    * 기존 좌측 하단 비트 번호 칩 아래에 위치하던 `시뮬레이터` 버튼을 **화면 우측 하단(`bottom-4 right-4`)에 독립 패널로 분리 이동**하여 비트 칩과의 시각적 간섭 전면 해소.
+    * 상단 `PREVIEW`/`GUIDE LINE` 버튼과 동일한 고급 스위치 메커니즘을 적용하고, **순백색(White) 발광 테마** 적용 (ON: `bg-white shadow-[0_0_8px_rgba(255,255,255,0.9)]` 화이트 램프 / OFF: `bg-slate-700` 슬레이트 램프).
+  - **오발 피치 메트릭스 추천 배지 ➔ 1안 인라인 흰색 체크표시(`✓`) 개편**:
+    * 기존 16각 별모양(`StarburstRecommendBadge`) 및 상단 플로팅 컨테이너를 전면 철거하여 상단 여백과 레이아웃을 100% 슬림·군더더기 없이 정돈.
+    * 추천 모드(`recommendedMode`) 버튼 텍스트 앞단에 **선명한 흰색 체크표시(`✓`)**를 인라인으로 직접 배치 (`✓ 기본`, `✓ 정밀`, `✓ 초정밀`).
+  - **모달 지연 로딩(Code Splitting)**: `StorageModal`, `UpdateModal`, `SpanResultModal`, `MidlineResultModal`, `OvalResultModal`을 `React.lazy` 및 `Suspense`로 분리하여 필요할 때만 비동기 로딩.
+  - **메인 번들 80% 대폭 경량화**: 메인 JS 번들 크기를 기존 `264.06 kB`에서 **`51.10 kB` (Gzip: `14.48 kB`)**로 약 80.6% 압축 경량화 달성.
+  - **리액트 벤더 캐싱 분리**: `react`, `react-dom`을 독립 청크(`vendor-*.js`)로 분리하여 브라우저/PWA 장기 캐시 효율 극대화.
+  - **불필요한 리렌더링 차단 (렌더링 최적화)**: `SelectField`, `KeypadField`, `FractionKeypad`, `SpanConverterView`, `MidlineCalculatorView`, `OvalCalculatorView` 컴포넌트에 `React.memo` 적용 및 상위 상태 핸들러에 `useCallback` 적용으로 60fps 부드러운 터치 응답성 확보.
+  - **검증 완료**: 70/70개 전체 단위 테스트 100% PASS 및 Vite production build 성공.
 
 - **신규 분기 브랜치 `드릴링-자동계산` [정밀도 3단계 (기본 3 / 정밀 5 / 초정밀 7) & 최대 8드릴(#8) 확장 & 실가공거리(L) 기반 자동추천 뱃지 및 부적격 경고 안내 연동 완성] (지공사님 지침에 따라 Vercel 배포는 보류 상태) (`OvalCalculatorView.jsx`, `OvalResultModal.jsx`, `Midline2DLayoutRenderer.jsx`, `SelectField.jsx`)**:
   - **지공사님 핵심 지침 100% 완수**:

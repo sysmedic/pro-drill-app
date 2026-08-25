@@ -14,7 +14,7 @@ const labelClasses = {
 const getOptionValue = (option) => (typeof option === 'object' ? option.value : option);
 const getOptionLabel = (option) => (typeof option === 'object' ? option.label : option);
 
-export default function SelectField({
+function SelectField({
   className = '',
   controlClassName = '',
   density = 'default',
@@ -114,3 +114,5 @@ export default function SelectField({
     </div>
   );
 }
+
+export default React.memo(SelectField);

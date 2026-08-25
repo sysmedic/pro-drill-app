@@ -5,6 +5,7 @@ import { useModalLock } from '../hooks/useModalLock.js';
 export default function MidlineResultModal({
   isOpen,
   onConfirm,
+  onChangeMarkingType,
   midlineResult,
   denomMode,
   setDenomMode,
@@ -23,7 +24,7 @@ export default function MidlineResultModal({
     dMRFormatted,
     dCenterlineMidCCFormatted,
     dMRCCFormatted,
-    markingType,
+    markingType = 'Center to Center',
   } = midlineResult || {};
 
   const isCutToCutMode = markingType !== 'Center to Center';
@@ -36,47 +37,31 @@ export default function MidlineResultModal({
       onTouchEnd={(e) => e.stopPropagation()}
       className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex flex-col items-center justify-center p-3 sm:p-6 select-none animate-fade-in"
     >
-      <div className="w-full max-w-[540px] bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col justify-between gap-4 max-h-[95vh] overflow-y-auto">
-        {/* 모달 상단 헤더 (산세리프 font-sans 현대적 서체 적용 & 16분 / 32분 / .5/16분 3-Way 분수 토글) */}
+      <div className="w-full max-w-[540px] bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col justify-between gap-4 min-h-[580px] sm:min-h-[620px] max-h-[95vh] overflow-y-auto">
+        {/* 📌 모달 상단 헤더: [ Cut to Cut ] [ Center to Center ] 2단 세그먼트 버튼 탭 */}
         <div className="border-b border-slate-100 pb-3 flex items-center justify-between gap-2">
-          <h2 className="text-base sm:text-lg font-black text-slate-900 font-sans tracking-tight leading-tight">
-            {markingType || 'Center to Center'}
-          </h2>
-
-          {/* 16분 | 32분 | .5/16분 슬레이트 3-Way 토글 */}
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-2xs shrink-0">
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80 shadow-2xs">
             <button
               type="button"
-              onClick={() => setDenomMode(16)}
-              className={`px-2.5 py-1 text-xs font-black rounded-md transition-all cursor-pointer ${
-                denomMode === 16
-                  ? 'bg-slate-800 text-white shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-800 font-bold'
+              onClick={() => onChangeMarkingType && onChangeMarkingType('Cut to Cut')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer ${
+                markingType === 'Cut to Cut'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 font-bold'
               }`}
             >
-              16분
+              Cut to Cut
             </button>
             <button
               type="button"
-              onClick={() => setDenomMode(32)}
-              className={`px-2.5 py-1 text-xs font-black rounded-md transition-all cursor-pointer ${
-                denomMode === 32
-                  ? 'bg-slate-800 text-white shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-800 font-bold'
+              onClick={() => onChangeMarkingType && onChangeMarkingType('Center to Center')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer ${
+                markingType === 'Center to Center'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 font-bold'
               }`}
             >
-              32분
-            </button>
-            <button
-              type="button"
-              onClick={() => setDenomMode('half16')}
-              className={`px-2.5 py-1 text-xs font-black rounded-md transition-all cursor-pointer ${
-                denomMode === 'half16'
-                  ? 'bg-slate-800 text-white shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-800 font-bold'
-              }`}
-            >
-              .5/16분
+              Center to Center
             </button>
           </div>
         </div>
@@ -92,11 +77,11 @@ export default function MidlineResultModal({
         <div className="bg-indigo-50/80 border border-indigo-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col gap-3.5">
           {/* 1. 미드라인 ↔ 엄지 마킹 */}
           <div className="flex flex-col gap-1">
-            <span className="text-sm sm:text-base font-black text-indigo-950 px-1">
+            <span className="text-sm sm:text-base font-black text-black px-1">
               미드라인 ↔ 엄지 마킹
             </span>
             <div className="h-14 sm:h-16 w-full bg-white rounded-xl border border-indigo-200 shadow-2xs flex items-center justify-center text-center">
-              <span className="text-[29px] sm:text-[35px] font-extrabold text-indigo-950 font-sans tracking-[0.1em]">
+              <span className="text-[29px] sm:text-[35px] font-extrabold text-black font-sans tracking-[0.1em]">
                 {dNTHalfFormatted || '-'}
               </span>
             </div>
@@ -104,11 +89,11 @@ export default function MidlineResultModal({
 
           {/* 2. 엄지 마킹 ↔ 중지 마킹 */}
           <div className="flex flex-col gap-1">
-            <span className="text-sm sm:text-base font-black text-slate-700 px-1">
+            <span className="text-sm sm:text-base font-black text-black px-1">
               엄지 마킹 ↔ 중지 마킹
             </span>
             <div className="h-14 sm:h-16 w-full bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center text-center">
-              <span className="text-[29px] sm:text-[35px] font-extrabold text-slate-900 font-sans tracking-[0.1em]">
+              <span className="text-[29px] sm:text-[35px] font-extrabold text-black font-sans tracking-[0.1em]">
                 {dMTFormatted || '-'}
               </span>
             </div>
@@ -116,11 +101,11 @@ export default function MidlineResultModal({
 
           {/* 3. 엄지 마킹 ↔ 약지 마킹 */}
           <div className="flex flex-col gap-1">
-            <span className="text-sm sm:text-base font-black text-slate-700 px-1">
+            <span className="text-sm sm:text-base font-black text-black px-1">
               엄지 마킹 ↔ 약지 마킹
             </span>
             <div className="h-14 sm:h-16 w-full bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center text-center">
-              <span className="text-[29px] sm:text-[35px] font-extrabold text-slate-900 font-sans tracking-[0.1em]">
+              <span className="text-[29px] sm:text-[35px] font-extrabold text-black font-sans tracking-[0.1em]">
                 {dRTFormatted || '-'}
               </span>
             </div>
@@ -132,21 +117,21 @@ export default function MidlineResultModal({
               {/* 4 & 5: Cut to Cut 기준 2단 배치 (센터라인 ↔ 중지 마킹 | 중지 마킹 ↔ 약지 마킹) */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs sm:text-sm font-black text-indigo-900 px-1 truncate">
+                  <span className="text-sm sm:text-base font-black text-black px-1 truncate">
                     센터라인 ↔ 중지 마킹
                   </span>
                   <div className="h-14 sm:h-16 w-full bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center text-center">
-                    <span className="text-[25px] sm:text-[31px] font-extrabold text-indigo-700 font-sans tracking-[0.08em]">
+                    <span className="text-[29px] sm:text-[35px] font-extrabold text-black font-sans tracking-[0.1em]">
                       {dCenterlineMidFormatted || '-'}
                     </span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs sm:text-sm font-black text-indigo-900 px-1 truncate">
+                  <span className="text-sm sm:text-base font-black text-black px-1 truncate">
                     중지 마킹 ↔ 약지 마킹
                   </span>
                   <div className="h-14 sm:h-16 w-full bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center text-center">
-                    <span className="text-[25px] sm:text-[31px] font-extrabold text-indigo-700 font-sans tracking-[0.08em]">
+                    <span className="text-[29px] sm:text-[35px] font-extrabold text-black font-sans tracking-[0.1em]">
                       {dMRFormatted || '-'}
                     </span>
                   </div>
@@ -156,21 +141,21 @@ export default function MidlineResultModal({
               {/* 6 & 7: Center to Center 기준 2단 배치 추가 (구분선 없이 자연스러운 통합 2단) */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs sm:text-sm font-black text-indigo-900 px-1 truncate">
+                  <span className="text-sm sm:text-base font-black text-black px-1 truncate">
                     미드라인 ↔ 중지 센터
                   </span>
                   <div className="h-14 sm:h-16 w-full bg-white rounded-xl border border-indigo-200/80 shadow-2xs flex items-center justify-center text-center">
-                    <span className="text-[25px] sm:text-[31px] font-extrabold text-indigo-800 font-sans tracking-[0.08em]">
+                    <span className="text-[29px] sm:text-[35px] font-extrabold text-black font-sans tracking-[0.1em]">
                       {dCenterlineMidCCFormatted || '-'}
                     </span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs sm:text-sm font-black text-indigo-900 px-1 truncate">
+                  <span className="text-sm sm:text-base font-black text-black px-1 truncate">
                     중지 센터 ↔ 약지 센터
                   </span>
                   <div className="h-14 sm:h-16 w-full bg-white rounded-xl border border-indigo-200/80 shadow-2xs flex items-center justify-center text-center">
-                    <span className="text-[25px] sm:text-[31px] font-extrabold text-indigo-800 font-sans tracking-[0.08em]">
+                    <span className="text-[29px] sm:text-[35px] font-extrabold text-black font-sans tracking-[0.1em]">
                       {dMRCCFormatted || '-'}
                     </span>
                   </div>
@@ -181,22 +166,22 @@ export default function MidlineResultModal({
             <>
               {/* 📌 Center to Center 마킹 방식 시 1열 세로 기존 방식 100% 동일 유지 */}
               <div className="flex flex-col gap-1">
-                <span className="text-sm sm:text-base font-black text-indigo-900 px-1">
+                <span className="text-sm sm:text-base font-black text-black px-1">
                   센터라인 ↔ 중지 마킹
                 </span>
                 <div className="h-14 sm:h-16 w-full bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center text-center">
-                  <span className="text-[29px] sm:text-[35px] font-extrabold text-indigo-700 font-sans tracking-[0.1em]">
+                  <span className="text-[29px] sm:text-[35px] font-extrabold text-black font-sans tracking-[0.1em]">
                     {dCenterlineMidFormatted || '-'}
                   </span>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-sm sm:text-base font-black text-indigo-900 px-1">
+                <span className="text-sm sm:text-base font-black text-black px-1">
                   중지 마킹 ↔ 약지 마킹
                 </span>
                 <div className="h-14 sm:h-16 w-full bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center text-center">
-                  <span className="text-[29px] sm:text-[35px] font-extrabold text-indigo-700 font-sans tracking-[0.1em]">
+                  <span className="text-[29px] sm:text-[35px] font-extrabold text-black font-sans tracking-[0.1em]">
                     {dMRFormatted || '-'}
                   </span>
                 </div>

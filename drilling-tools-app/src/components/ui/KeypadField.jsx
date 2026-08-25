@@ -11,7 +11,7 @@ const labelClasses = {
   compact: 'text-xs font-bold text-slate-600 mb-1',
 };
 
-export default function KeypadField({
+function KeypadField({
   buttonClassName = '',
   className = '',
   density = 'default',
@@ -51,3 +51,5 @@ export default function KeypadField({
     </div>
   );
 }
+
+export default React.memo(KeypadField);

@@ -13,18 +13,6 @@ const OVAL_CORRECTION_OPTIONS = [
   { value: '1/32', label: '1/32' },
 ];
 
-// 📌 [지공사님 핵심 지침 100% 반영]: 시인성이 강화된 파스텔 골드 16각 별모양(Starburst) 추천 라벨 배지 (텍스트 블랙)
-const StarburstRecommendBadge = () => (
-  <div className="relative flex items-center justify-center filter drop-shadow-[0_1px_3px_rgba(217,119,6,0.3)]">
-    <svg viewBox="0 0 48 48" className="w-9 h-9 fill-amber-200 stroke-amber-400" strokeWidth="1.3">
-      <polygon points="24,2 29.7,10.1 39.6,8.4 37.9,18.3 46,24 37.9,29.7 39.6,39.6 29.7,37.9 24,46 18.3,37.9 8.4,39.6 10.1,29.7 2,24 10.1,18.3 8.4,8.4 18.3,10.1" />
-    </svg>
-    <span className="absolute text-[9px] font-black text-black tracking-tighter leading-none select-none">
-      추천
-    </span>
-  </div>
-);
-
 export default function OvalResultModal({
   isOpen,
   onConfirm,
@@ -85,21 +73,9 @@ export default function OvalResultModal({
     return 'ultra';
   }, [maxL]);
 
-  // 📌 [지공사님 핵심 지침 100% 반영]: 추천 뱃지(별모양) 위치 스펙트럼 동적 연산:
-  // L_max <= 0.035" -> 16.7% (기본 중앙)
-  // 0.035" < L_max <= 0.0625" -> 33.3% (기본과 정밀 중간 경계)
-  // 0.0625" < L_max <= 0.095" -> 50.0% (정밀 중앙)
-  // 0.095" < L_max <= 0.125" -> 66.7% (정밀과 초정밀 중간 경계)
-  // L_max > 0.125" -> 83.3% (초정밀 중앙)
-  const badgePositionPercent = useMemo(() => {
-    if (maxL <= 0.035) return 16.7;
-    if (maxL <= 0.0625) return 33.3;
-    if (maxL <= 0.095) return 50.0;
-    if (maxL <= 0.125) return 66.7;
-    return 83.3;
-  }, [maxL]);
-
-  // 📌 [지공사님 핵심 지침 100% 반영]: 모달 재진입 시 최신 수치 스냅샷 갱신 및 최적 추천 모드로 자동 재연산 세팅
+  // 📌 [지공사님 핵심 지침 100% 반영]:
+  // 1) 아카이브에서 로드한 경우(autoOpenOvalMatrix) -> 저장된 precisionMode, 오프셋, 규격 100% 온전히 보존
+  // 2) 신규 계산(isNewCalculation)이거나 모드가 미지정된 경우 -> 최신 입력 제원 기준 추천 모드(recommendedMode) 1순위 즉시 세팅
   const prevIsOpenRef = useRef(false);
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
@@ -110,10 +86,18 @@ export default function OvalResultModal({
         ovalCut1,
         ovalCut2,
       };
-      handlePrecisionChange(recommendedMode);
+
+      if (sharedState?.isNewCalculation) {
+        handlePrecisionChange(recommendedMode);
+        if (updateSharedState) {
+          updateSharedState('isNewCalculation', false);
+        }
+      } else if (!sharedState?.precisionMode && !precisionMode && !sharedState?.autoOpenOvalMatrix) {
+        handlePrecisionChange(recommendedMode);
+      }
     }
     prevIsOpenRef.current = isOpen;
-  }, [isOpen, recommendedMode, holeSize, ovalSize, ovalCut, ovalCut1, ovalCut2]);
+  }, [isOpen, recommendedMode, holeSize, ovalSize, ovalCut, ovalCut1, ovalCut2, sharedState?.precisionMode, precisionMode, sharedState?.isNewCalculation, sharedState?.autoOpenOvalMatrix]);
 
   const currentPrecision = precisionMode || (sharedState?.precisionMode) || (isDetailedMode ? 'detailed' : 'basic');
 
@@ -219,17 +203,26 @@ export default function OvalResultModal({
           <div className="grid grid-cols-10 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 items-end">
             <div className="col-span-7 flex flex-col w-full">
               <label className="text-xs font-bold text-slate-600 mb-1">정밀도</label>
-              <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-10 w-full shadow-2xs relative overflow-visible">
-                {/* 💥 [지공사님 핵심 지침 100% 반영]: 가공 이동거리 스펙트럼 기반 동적 플로팅 추천 뱃지 */}
-                <div
-                  style={{ left: `${badgePositionPercent}%` }}
-                  className="absolute -top-4 -translate-x-1/2 z-20 pointer-events-none transition-all duration-300 ease-out"
-                >
-                  <StarburstRecommendBadge />
-                </div>
-
+              <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-10 w-full shadow-2xs relative">
                 {(() => {
                   const hasExtraBits = (sharedState?.extraBitCount || 0) > 0;
+
+                  const renderCheckIcon = (mode) => {
+                    if (recommendedMode !== mode) return null;
+                    const isSelected = currentPrecision === mode;
+                    return (
+                      <span
+                        className={`mr-1 text-[11px] font-black leading-none select-none ${
+                          isSelected
+                            ? 'text-white'
+                            : 'w-3.5 h-3.5 bg-slate-400 text-white rounded-full inline-flex items-center justify-center text-[9px]'
+                        }`}
+                      >
+                        ✓
+                      </span>
+                    );
+                  };
+
                   return (
                     <>
                       <button
@@ -245,9 +238,10 @@ export default function OvalResultModal({
                             ? 'bg-slate-800 text-white shadow-2xs font-black z-10'
                             : 'text-slate-500 hover:text-slate-800 font-bold'
                         }`}
-                        title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '기본 (3드릴) 모드'}
+                        title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : `기본 (3드릴) 모드${recommendedMode === 'basic' ? ' [추천]' : ''}`}
                       >
-                        <span>기본</span>
+                        {renderCheckIcon('basic')}
+                        <span>3드릴 (기본)</span>
                       </button>
                       <div className={`w-[1px] h-3.5 bg-slate-300/80 shrink-0 mx-0.5 transition-opacity ${currentPrecision === 'basic' || currentPrecision === 'detailed' ? 'opacity-0' : 'opacity-100'}`} />
                       <button
@@ -263,9 +257,10 @@ export default function OvalResultModal({
                             ? 'bg-slate-800 text-white shadow-2xs font-black z-10'
                             : 'text-slate-500 hover:text-slate-800 font-bold'
                         }`}
-                        title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '정밀 (5드릴) 모드'}
+                        title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : `정밀 (5드릴) 모드${recommendedMode === 'detailed' ? ' [추천]' : ''}`}
                       >
-                        <span>정밀</span>
+                        {renderCheckIcon('detailed')}
+                        <span>5드릴 (정밀)</span>
                       </button>
                       <div className={`w-[1px] h-3.5 bg-slate-300/80 shrink-0 mx-0.5 transition-opacity ${currentPrecision === 'detailed' || currentPrecision === 'ultra' ? 'opacity-0' : 'opacity-100'}`} />
                       <button
@@ -281,9 +276,10 @@ export default function OvalResultModal({
                             ? 'bg-slate-800 text-white shadow-2xs font-black z-10'
                             : 'text-slate-500 hover:text-slate-800 font-bold'
                         }`}
-                        title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : '초정밀 (7드릴) 모드'}
+                        title={hasExtraBits ? '드릴 비트가 추가된 상태에서는 리셋 후 모드 전환이 가능합니다' : `초정밀 (7드릴) 모드${recommendedMode === 'ultra' ? ' [추천]' : ''}`}
                       >
-                        <span>초정밀</span>
+                        {renderCheckIcon('ultra')}
+                        <span>7드릴 (초정밀)</span>
                       </button>
                     </>
                   );
@@ -320,7 +316,7 @@ export default function OvalResultModal({
                   }`}
                 />
                 <span className="whitespace-nowrap leading-none relative z-20">
-                  턱이 발생할 수 있으니 <b className="text-black font-bold">[{recommendedMode === 'ultra' ? '초정밀' : '정밀'}]</b> 추천
+                  턱이 발생할 수 있습니다. <b className="text-black font-bold">[{recommendedMode === 'ultra' ? '초정밀' : '정밀'}]</b> 추천
                 </span>
               </div>
             </div>

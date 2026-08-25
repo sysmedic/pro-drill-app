@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import SpanConverterView from './components/SpanConverterView.jsx';
-import MidlineCalculatorView from './components/MidlineCalculatorView.jsx';
 import OvalCalculatorView from './components/OvalCalculatorView.jsx';
-import StorageModal from './components/StorageModal.jsx';
-import UpdateModal from './components/UpdateModal.jsx';
+
+const StorageModal = React.lazy(() => import('./components/StorageModal.jsx'));
+const UpdateModal = React.lazy(() => import('./components/UpdateModal.jsx'));
 
 const STORAGE_KEY = 'prodrill_tools_shared_state';
 
@@ -12,9 +12,9 @@ const DEFAULT_SHARED_STATE = {
   midSpanStr: '',
   ringSpanStr: '',
   bridgeStr: '3/16',
-  fromType: 'Actual Span',
+  fromType: 'Cut to Cut',
   toType: 'Center to Center',
-  markingType: 'Cut to Cut',
+  markingType: 'Center to Center',
   denomMode: 32,
 
   // 손가락 홀컷/인서트 (인서트 필수 공란)
@@ -42,7 +42,7 @@ const DEFAULT_SHARED_STATE = {
   isDetailedMode: false,
 };
 
-const TABS = ['span', 'midline', 'oval'];
+const TABS = ['span', 'oval'];
 const LAST_TAB_STORAGE_KEY = 'prodrill_tools_last_active_tab';
 
 const loadInitialTab = () => {
@@ -71,9 +71,33 @@ const loadInitialState = () => {
 };
 
 import { decodeSharePayload } from './lib/shareHelper.js';
+import { checkLocalExpiration, verifyWithServerTime } from './lib/expirationGuard.js';
+import ExpiredLockScreen from './components/ExpiredLockScreen.jsx';
 import { createPortal } from 'react-dom';
 
 export default function App() {
+  // 🔒 [한시적 배포 만료 가드]: 2026.11.30 12:00 만료 및 Vercel 서버 시간/시계 조작 방어
+  const [expirationState, setExpirationState] = useState(() => checkLocalExpiration());
+
+  useEffect(() => {
+    // 1. 주기적 로컬 시간 검사 (10초 주기)
+    const interval = setInterval(() => {
+      const state = checkLocalExpiration();
+      if (state.isExpired) {
+        setExpirationState(state);
+      }
+    }, 10000);
+
+    // 2. Vercel 서버 시간 비동기 교차 검증
+    verifyWithServerTime((isExpired, reason) => {
+      if (isExpired) {
+        setExpirationState({ isExpired: true, reason });
+      }
+    });
+
+    return () => clearInterval(interval);
+  }, []);
+
   // 📌 [지공사님 핵심 지침 100% 반영]: 앱 재실행 시 마지막 모드(스판, 미드라인, 오발)로 자동 복귀
   const [activeTab, setActiveTab] = useState(loadInitialTab); // 'span' | 'midline' | 'oval'
   const [slideDirection, setSlideDirection] = useState('left'); // 'left' (from right) | 'right' (from left)
@@ -83,6 +107,11 @@ export default function App() {
 
   // 🌟 [수치 상호 참조 전역 상태]: localStorage 영구 동기화
   const [sharedState, setSharedState] = useState(loadInitialState);
+
+  // 🚨 만료 상태 시 모든 기능 언마운트 및 전면 락 화면 단독 렌더링
+  if (expirationState.isExpired) {
+    return <ExpiredLockScreen reason={expirationState.reason} />;
+  }
 
   // 🔗 [딥링크 공유 수신 감지]: URL 파라미터(?share=... 또는 ?slot=...) 자동 파싱
   useEffect(() => {
@@ -101,18 +130,20 @@ export default function App() {
   }, []);
 
   // 🚀 방향 감지 탭 전환 함수 (localStorage 실시간 동기화)
-  const switchTab = (nextTab) => {
-    if (nextTab === activeTab) return;
-    const prevIdx = TABS.indexOf(activeTab);
-    const nextIdx = TABS.indexOf(nextTab);
-    setSlideDirection(nextIdx > prevIdx ? 'left' : 'right');
-    setActiveTab(nextTab);
-    try {
-      localStorage.setItem(LAST_TAB_STORAGE_KEY, nextTab);
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  const switchTab = useCallback((nextTab) => {
+    setActiveTab((currentTab) => {
+      if (nextTab === currentTab) return currentTab;
+      const prevIdx = TABS.indexOf(currentTab);
+      const nextIdx = TABS.indexOf(nextTab);
+      setSlideDirection(nextIdx > prevIdx ? 'left' : 'right');
+      try {
+        localStorage.setItem(LAST_TAB_STORAGE_KEY, nextTab);
+      } catch (e) {
+        console.error(e);
+      }
+      return nextTab;
+    });
+  }, []);
 
   // 📱 [3탭 스와이프 제스처 터치 레퍼런스]: 스판 ⇄ 미드라인 ⇄ 오발 부드러운 스와이프 전환
   const touchStartXRef = useRef(null);
@@ -174,20 +205,41 @@ export default function App() {
     }
   }, [sharedState]);
 
-  // 전역 상태 업데이트 조력 함수 (객체 형태 병합 지원)
-  const updateSharedState = (keyOrObj, val) => {
+  // 전역 상태 업데이트 조력 함수 (객체 형태 병합 지원 - useCallback 적용)
+  const updateSharedState = useCallback((keyOrObj, val) => {
     setSharedState((prev) => {
       if (typeof keyOrObj === 'object' && keyOrObj !== null) {
         return { ...prev, ...keyOrObj };
       }
       return { ...prev, [keyOrObj]: val };
     });
-  };
+  }, []);
 
   // 🔄 전체 입력 수치 초기화 함수 (기본값 원복 및 로컬스토리지 동기화)
-  const handleResetAll = () => {
+  const handleResetAll = useCallback(() => {
     setSharedState(DEFAULT_SHARED_STATE);
-  };
+  }, []);
+
+  // 💾 [아카이브 슬롯 로드 핸들러]: 오발 데이터 포함 시 오발 탭 전환 및 피치 메트릭스 즉시 오픈
+  const handleLoadState = useCallback((loadedState) => {
+    const hasOval = Boolean(
+      loadedState?.holeSize &&
+      loadedState?.ovalSize &&
+      loadedState?.ovalAngle &&
+      (loadedState?.latVal || loadedState?.vertVal)
+    );
+
+    if (hasOval) {
+      setActiveTab('oval');
+      setSharedState({
+        ...loadedState,
+        autoOpenOvalMatrix: true,
+      });
+    } else {
+      setActiveTab('span');
+      setSharedState(loadedState);
+    }
+  }, []);
 
   return (
     <div
@@ -210,6 +262,14 @@ export default function App() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                onClick={handleResetAll}
+                className="px-3.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md transition-all cursor-pointer shadow-2xs"
+                title="모든 입력 수치 초기화"
+              >
+                수치 초기화
+              </button>
+              <button
+                type="button"
                 onClick={() => setIsStorageModalOpen(true)}
                 className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#1e293b] hover:bg-[#0f172a] rounded-md transition-all cursor-pointer shadow-2xs"
                 title="아카이브 관리 (저장 및 불러오기)"
@@ -219,12 +279,12 @@ export default function App() {
             </div>
           </div>
 
-          {/* 📌 3탭 상단 캡슐 Segmented Control */}
-          <div className="grid grid-cols-3 gap-1 bg-[#f8fafc] border border-slate-200/80 p-1.5 rounded-lg">
+          {/* 📌 2탭 상단 캡슐 Segmented Control */}
+          <div className="grid grid-cols-2 gap-1 bg-[#f8fafc] border border-slate-200/80 p-1.5 rounded-lg">
             <button
               type="button"
               onClick={() => switchTab('span')}
-              className={`py-2 px-2 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+              className={`py-2 px-2 rounded-md text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center ${
                 activeTab === 'span'
                   ? 'bg-[#1e293b] text-white shadow-md font-black'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
@@ -235,20 +295,8 @@ export default function App() {
 
             <button
               type="button"
-              onClick={() => switchTab('midline')}
-              className={`py-2 px-2 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
-                activeTab === 'midline'
-                  ? 'bg-[#1e293b] text-white shadow-md font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-              }`}
-            >
-              미드라인 마킹
-            </button>
-
-            <button
-              type="button"
               onClick={() => switchTab('oval')}
-              className={`py-2 px-2 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+              className={`py-2 px-2 rounded-md text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center ${
                 activeTab === 'oval'
                   ? 'bg-[#1e293b] text-white shadow-md font-black'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
@@ -274,15 +322,7 @@ export default function App() {
             />
           )}
 
-          {/* 탭 2: 미드라인 마킹 */}
-          {activeTab === 'midline' && (
-            <MidlineCalculatorView
-              sharedState={sharedState}
-              updateSharedState={updateSharedState}
-            />
-          )}
-
-          {/* 탭 3: 오발 계산기 */}
+          {/* 탭 2: 오발 계산기 */}
           {activeTab === 'oval' && (
             <OvalCalculatorView
               sharedState={sharedState}
@@ -292,19 +332,27 @@ export default function App() {
         </main>
       </div>
 
-      {/* 💾 [저장 관리 모달]: 저장 & 불러오기 */}
-      <StorageModal
-        isOpen={isStorageModalOpen}
-        onClose={() => setIsStorageModalOpen(false)}
-        currentSharedState={sharedState}
-        onLoadState={(loadedState) => setSharedState(loadedState)}
-      />
+      {/* 💾 [저장 관리 모달 (지연 로딩)]: 저장 & 불러오기 */}
+      {isStorageModalOpen && (
+        <Suspense fallback={null}>
+          <StorageModal
+            isOpen={isStorageModalOpen}
+            onClose={() => setIsStorageModalOpen(false)}
+            currentSharedState={sharedState}
+            onLoadState={handleLoadState}
+          />
+        </Suspense>
+      )}
 
-      {/* ✨ [앱 정보 및 업데이트 확인 모달] */}
-      <UpdateModal
-        isOpen={isUpdateModalOpen}
-        onClose={() => setIsUpdateModalOpen(false)}
-      />
+      {/* ✨ [앱 정보 및 업데이트 확인 모달 (지연 로딩)] */}
+      {isUpdateModalOpen && (
+        <Suspense fallback={null}>
+          <UpdateModal
+            isOpen={isUpdateModalOpen}
+            onClose={() => setIsUpdateModalOpen(false)}
+          />
+        </Suspense>
+      )}
 
       {/* 📥 [공유받은 제원 수신 확인 모달] */}
       {incomingShareData &&
@@ -355,7 +403,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => {
-                    setSharedState(incomingShareData);
+                    handleLoadState(incomingShareData);
                     setIncomingShareData(null);
                     window.history.replaceState({}, document.title, window.location.pathname);
                   }}

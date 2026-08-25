@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import ModalShell from './ui/ModalShell.jsx';
 
-export default function FractionKeypad({
+function FractionKeypad({
   isOpen,
   onClose,
   onConfirm,
@@ -444,3 +444,5 @@ export default function FractionKeypad({
     </ModalShell>
   );
 }
+
+export default React.memo(FractionKeypad);

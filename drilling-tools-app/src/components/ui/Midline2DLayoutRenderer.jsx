@@ -77,6 +77,11 @@ export default function Midline2DLayoutRenderer({
   const isDraggingDpadRef = useRef(false);
   const dpadDragStartRef = useRef({ x: 0, y: 0 });
 
+  // 📌 시뮬레이터 버튼 자유 위치 이동 (Repositioning) 상태
+  const [simOffset, setSimOffset] = useState({ x: 0, y: 0 });
+  const isDraggingSimRef = useRef(false);
+  const simDragStartRef = useRef({ x: 0, y: 0, startX: 0, startY: 0, moved: false });
+
   // 📌 캔버스 직접 터치/드래그 비트 이동 상태
   const isDraggingBitRef = useRef(false);
   const bitDragStartRef = useRef(null);
@@ -1127,22 +1132,86 @@ export default function Midline2DLayoutRenderer({
     requestDirectRender();
   };
 
-  // 📌 [지공사님 핵심 지침 100% 반영]: D-Pad 이동키 화면 visual 시야 방향(▲: 위, ▼: 아래, ◄: 좌, ►: 우) 100% 명확 일치 연동
+  // 📌 [지공사님 핵심 지침 100% 반영]:
+  // 1) ◄/► 좌우 버튼: 오발의 기울어진 축(장축선)을 따라 눈에 보이는 화면 좌/우 방향으로 이동
+  // 2) ▲/▼ 상하 버튼: 오발 축에 직교하는 폭 방향(단축선)을 따라 눈에 보이는 화면 상/하 방향으로 이동
+  // 3) 상하 반전 뷰(180° 회전)에서도 눈에 보이는 방향 100% 일치
   const handleMoveDpad = (dir) => {
     if (!isEditMode || selectedBitIndex === null || selectedBitIndex === 1 || selectedBitIndex === 2 || selectedBitIndex === totalActiveBits) return;
     const targetBit = selectedBitIndex;
 
     const stepInch = 0.005; // 0.005인치 정밀 이동
+    const handSign = hand === 'left' ? -1 : 1;
+    const radians = (angleNum * Math.PI) / 180;
     const flipSign = isFlipped180 ? -1 : 1;
 
-    const cur = bitCustomOffsets[targetBit] || { x: 0, y: 0 };
-    let nx = cur.x;
-    let ny = cur.y;
+    // 📐 1. 오발 장축(길이선) 기본 단위 벡터
+    const uX = Math.cos(radians) * handSign;
+    const uY = Math.sin(radians);
+    // 화면 시각 장축 단위 벡터 (flipSign 반영)
+    const uScreenX = uX * flipSign;
+    const uScreenY = uY * flipSign;
 
-    if (dir === 'left') nx -= stepInch * flipSign;
-    if (dir === 'right') nx += stepInch * flipSign;
-    if (dir === 'up') ny -= stepInch * flipSign;
-    if (dir === 'down') ny += stepInch * flipSign;
+    // 📐 2. 오발 단축(폭 직교선) 기본 단위 벡터
+    const vX = -Math.sin(radians) * handSign;
+    const vY = Math.cos(radians);
+    // 화면 시각 단축 단위 벡터 (flipSign 반영)
+    const vScreenX = vX * flipSign;
+    const vScreenY = vY * flipSign;
+
+    let dScreenX = 0;
+    let dScreenY = 0;
+
+    if (dir === 'left') {
+      // ◄ 좌측 버튼: 오발 장축을 따라 화면 왼쪽(dScreenX < 0)으로 이동
+      if (Math.abs(uScreenX) > 0.0001) {
+        const sign = uScreenX > 0 ? -1 : 1;
+        dScreenX = uScreenX * sign;
+        dScreenY = uScreenY * sign;
+      } else {
+        const sign = uScreenY > 0 ? -1 : 1;
+        dScreenX = uScreenX * sign;
+        dScreenY = uScreenY * sign;
+      }
+    } else if (dir === 'right') {
+      // ► 우측 버튼: 오발 장축을 따라 화면 오른쪽(dScreenX > 0)으로 이동
+      if (Math.abs(uScreenX) > 0.0001) {
+        const sign = uScreenX > 0 ? 1 : -1;
+        dScreenX = uScreenX * sign;
+        dScreenY = uScreenY * sign;
+      } else {
+        const sign = uScreenY > 0 ? 1 : -1;
+        dScreenX = uScreenX * sign;
+        dScreenY = uScreenY * sign;
+      }
+    } else if (dir === 'up') {
+      // ▲ 위쪽 버튼: 오발 폭(직교선)을 따라 화면 위쪽(dScreenY < 0)으로 이동
+      if (Math.abs(vScreenY) > 0.0001) {
+        const sign = vScreenY > 0 ? -1 : 1;
+        dScreenX = vScreenX * sign;
+        dScreenY = vScreenY * sign;
+      } else {
+        const sign = vScreenX > 0 ? -1 : 1;
+        dScreenX = vScreenX * sign;
+        dScreenY = vScreenY * sign;
+      }
+    } else if (dir === 'down') {
+      // ▼ 아래쪽 버튼: 오발 폭(직교선)을 따라 화면 아래쪽(dScreenY > 0)으로 이동
+      if (Math.abs(vScreenY) > 0.0001) {
+        const sign = vScreenY > 0 ? 1 : -1;
+        dScreenX = vScreenX * sign;
+        dScreenY = vScreenY * sign;
+      } else {
+        const sign = vScreenX > 0 ? 1 : -1;
+        dScreenX = vScreenX * sign;
+        dScreenY = vScreenY * sign;
+      }
+    }
+
+    const cur = bitCustomOffsets[targetBit] || { x: 0, y: 0 };
+    // 화면 시각 이동 거리를 모델 오프셋으로 환산 (flipSign 적용)
+    const nx = cur.x + (dScreenX * stepInch) / flipSign;
+    const ny = cur.y + (dScreenY * stepInch) / flipSign;
 
     const nextOffsets = {
       ...bitCustomOffsets,
@@ -1154,7 +1223,38 @@ export default function Midline2DLayoutRenderer({
     requestDirectRender();
   };
 
-  // 📌 D-Pad 자유 드래그 이동 이벤트 핸들러
+  // ⌨️ [데스크탑 키보드 연동]: ArrowKeys(방향키) 및 + / - 키로 D-Pad 조작
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isEditMode) return;
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target?.tagName)) return;
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handleMoveDpad('left');
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleMoveDpad('right');
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        handleMoveDpad('up');
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        handleMoveDpad('down');
+      } else if (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd') {
+        e.preventDefault();
+        handleSizeAdjust(1);
+      } else if (e.key === '-' || e.key === '_' || e.code === 'NumpadSubtract') {
+        e.preventDefault();
+        handleSizeAdjust(-1);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isEditMode, selectedBitIndex, bitCustomOffsets, bitCustomSizes, angleNum, hand, isFlipped180, totalActiveBits, extraBitCount]);
+
+  // 📌 D-Pad & 시뮬레이터 버튼 자유 드래그 이동 이벤트 핸들러
   const handleDpadPointerDown = (e) => {
     e.stopPropagation();
     isDraggingDpadRef.current = true;
@@ -1163,19 +1263,54 @@ export default function Midline2DLayoutRenderer({
     dpadDragStartRef.current = { x: clientX - dpadOffset.x, y: clientY - dpadOffset.y };
   };
 
-  const handleDpadPointerMove = (e) => {
-    if (!isDraggingDpadRef.current) return;
+  const handleSimPointerDown = (e) => {
     e.stopPropagation();
+    isDraggingSimRef.current = true;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    setDpadOffset({
-      x: clientX - dpadDragStartRef.current.x,
-      y: clientY - dpadDragStartRef.current.y,
-    });
+    simDragStartRef.current = {
+      x: clientX - simOffset.x,
+      y: clientY - simOffset.y,
+      startX: clientX,
+      startY: clientY,
+      moved: false,
+    };
+  };
+
+  const handleDpadPointerMove = (e) => {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    if (isDraggingDpadRef.current) {
+      e.stopPropagation();
+      setDpadOffset({
+        x: clientX - dpadDragStartRef.current.x,
+        y: clientY - dpadDragStartRef.current.y,
+      });
+    }
+
+    if (isDraggingSimRef.current) {
+      e.stopPropagation();
+      const dist = Math.hypot(clientX - simDragStartRef.current.startX, clientY - simDragStartRef.current.startY);
+      if (dist > 4) {
+        simDragStartRef.current.moved = true;
+      }
+      setSimOffset({
+        x: clientX - simDragStartRef.current.x,
+        y: clientY - simDragStartRef.current.y,
+      });
+    }
   };
 
   const handleDpadPointerUp = () => {
     isDraggingDpadRef.current = false;
+    if (isDraggingSimRef.current) {
+      isDraggingSimRef.current = false;
+      if (!simDragStartRef.current.moved) {
+        setIsCheckFillMode((prev) => !prev);
+        requestDirectRender();
+      }
+    }
   };
 
   // 📌 캔버스 직접 터치/드래그(비트 대략 이동) & 도면 드래그(Pan) & 휠 줌(Zoom) 안전 핸들러
@@ -1270,7 +1405,7 @@ export default function Midline2DLayoutRenderer({
     touchStartDistRef.current = null;
   };
 
-  // 📌 [Mobile Multi-Touch Pinch Zoom Firewall Engine]: 모바일 2손가락 핀치 줌 & 0.6x~3.5x 안전 스케일 방화벽
+  // 📌 [Mobile Multi-Touch Pinch Zoom Firewall Engine]: 모바일 2손가락 핀치 줌 & 0.6x~5.0x 안전 스케일 방화벽
   const handleTouchStart = (e) => {
     if (e.touches.length === 2) {
       isDraggingBitRef.current = false;
@@ -1300,7 +1435,7 @@ export default function Midline2DLayoutRenderer({
       if (!isNaN(currentDist) && currentDist > 0 && touchStartDistRef.current > 0) {
         const scaleRatio = currentDist / touchStartDistRef.current;
         const baseZoom = initialPinchZoomRef.current || 1.08;
-        const newZoom = Math.max(0.6, Math.min(3.5, baseZoom * scaleRatio));
+        const newZoom = Math.max(0.6, Math.min(5.0, baseZoom * scaleRatio));
         if (!isNaN(newZoom)) {
           zoomRef.current = newZoom;
           requestDirectRender();
@@ -1320,14 +1455,14 @@ export default function Midline2DLayoutRenderer({
 
   const handleWheel = (e) => {
     const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
-    const newZoom = Math.max(0.6, Math.min(3.5, zoomRef.current * zoomFactor));
+    const newZoom = Math.max(0.6, Math.min(5.0, zoomRef.current * zoomFactor));
     zoomRef.current = newZoom;
     requestDirectRender();
   };
 
   // 📌 모바일 전용 줌 조절 헬퍼 함수 [ + ] [ - ] [ 1:1 ]
   const handleZoomIn = () => {
-    const newZoom = Math.min(3.5, zoomRef.current * 1.15);
+    const newZoom = Math.min(5.0, zoomRef.current * 1.15);
     zoomRef.current = newZoom;
     requestDirectRender();
   };
@@ -1426,7 +1561,7 @@ export default function Midline2DLayoutRenderer({
                       showGuideLine ? 'scale-110 shadow-[0_0_6px_rgba(251,191,36,0.9)] bg-amber-400' : 'bg-slate-700'
                     }`}
                   />
-                  <span className="tracking-tight">GUIDE LINE</span>
+                  <span className="tracking-tight">GUIDE OVAL</span>
                 </button>
               </div>
             </div>
@@ -1486,15 +1621,30 @@ export default function Midline2DLayoutRenderer({
 
           {/* 📌 풀스크린 좌측 하단 비트 번호 선택 바 (최대 7개 동적 렌더링) */}
           <div className="absolute bottom-4 left-4 z-20 flex flex-col items-start gap-1 select-none">
-            {/* ➕ [ + ] 단독 버튼 (지공사님 지침: 7개 도달 시 100% 자동 소거) */}
-            {isEditMode && totalActiveBits < 7 && (
-              <button
-                type="button"
-                onClick={handleAddExtraBit}
-                className="w-8 h-8 text-sm font-black rounded-xl flex items-center justify-center backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 border-emerald-500/80 text-emerald-300 bg-slate-900/95 hover:bg-slate-800 hover:text-emerald-200 select-none active:scale-95"
-              >
-                +
-              </button>
+            {/* ➕ [ + ] 추가 버튼 & ➖ [ - ] 삭제 버튼 가로 세트 (삭제 가능 비트 선택 시에만 - 노출) */}
+            {isEditMode && (
+              <div className="flex items-center gap-1.5 mb-0.5">
+                {totalActiveBits < 7 && (
+                  <button
+                    type="button"
+                    onClick={handleAddExtraBit}
+                    className="w-8 h-8 text-sm font-black rounded-xl flex items-center justify-center backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 border-emerald-500/80 text-emerald-300 bg-slate-900/95 hover:bg-slate-800 hover:text-emerald-200 select-none active:scale-95"
+                    title="신규 드릴 비트 추가 (최대 7개까지 가능)"
+                  >
+                    +
+                  </button>
+                )}
+                {selectedBitIndex !== null && selectedBitIndex >= baseBitsCount && selectedBitIndex < totalActiveBits && (
+                  <button
+                    type="button"
+                    onClick={() => setBitToDelete(selectedBitIndex)}
+                    className="w-8 h-8 text-sm font-black rounded-xl flex items-center justify-center backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 border-rose-500/80 text-rose-300 bg-slate-900/95 hover:bg-slate-800 hover:text-rose-200 select-none active:scale-95"
+                    title={`선택된 #${selectedBitIndex} 드릴 비트 삭제`}
+                  >
+                    -
+                  </button>
+                )}
+              </div>
             )}
 
             {/* 1 ~ totalActiveBits 칩 목록 루프 렌더링 */}
@@ -1503,7 +1653,7 @@ export default function Midline2DLayoutRenderer({
               const isHoleBit = rowIdx === totalActiveBits;
               const bitValStr = bitCustomSizes[rowIdx] || (isHoleBit ? (holeSize || getDrillBitValue(rowIdx)) : getDrillBitValue(rowIdx));
               const color = isHoleBit ? '#10b981' : FULL_PALETTE[idx] || '#84cc16';
-              const label = isHoleBit ? `#${rowIdx} (원홀 ${bitValStr || ''})` : `#${rowIdx} (${bitValStr || '규격'})`;
+              const label = isHoleBit ? `#${rowIdx} 원홀 (${bitValStr || ''})` : `#${rowIdx} (${bitValStr || '규격'})`;
               const isSelected = selectedBitIndex === rowIdx;
               const isActive = isBitActiveInChart(rowIdx);
 
@@ -1541,28 +1691,62 @@ export default function Midline2DLayoutRenderer({
                 </button>
               );
             })}
+          </div>
 
-            {/* ⚪ 시뮬레이터 칩 (지공사님 지침 100% 반영: EDIT 모드 시 시뮬레이터 버튼 전면 소거) */}
-            {!isEditMode && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsCheckFillMode((prev) => !prev);
-                  requestDirectRender();
-                }}
-                className={`w-[130px] h-8 flex items-center justify-between px-2.5 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[11px] sm:text-xs font-bold ${
+          {/* 📌 풀스크린 우측 하단: PREVIEW 모드 시 시뮬레이터 & 가이드오발 일체형 컨트롤러 */}
+          {!isEditMode && (
+            <div
+              style={{ transform: `translate(${simOffset.x}px, ${simOffset.y}px)` }}
+              onMouseDown={handleSimPointerDown}
+              onTouchStart={handleSimPointerDown}
+              className="absolute bottom-4 right-4 z-20 flex items-center justify-center select-none cursor-move active:scale-98"
+              title="클릭 시 시뮬레이터 토글, 드래그하여 위치 이동, 우측 램프 클릭 시 가이드오발 토글"
+            >
+              <div
+                className={`w-[165px] h-12 px-3.5 rounded-2xl flex items-center justify-between transition-all duration-150 backdrop-blur-md border shadow-2xl ${
                   isCheckFillMode
-                    ? 'bg-slate-900/95 text-white border-white/90 ring-1 ring-white/60 shadow-white/20 font-black opacity-100'
-                    : 'bg-slate-950/80 text-slate-400 border-slate-700/80 hover:border-slate-600 opacity-60'
+                    ? 'bg-slate-900/95 text-white border-white/80 shadow-[0_0_15px_rgba(255,255,255,0.15)] font-black'
+                    : 'bg-slate-900/90 text-slate-400 border-slate-700/80 hover:text-slate-200'
                 }`}
               >
-                <div className="flex items-center space-x-2 truncate">
-                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isCheckFillMode ? 'bg-white ring-1 ring-white/60' : 'bg-slate-600'}`} />
-                  <span className="truncate">시뮬레이터</span>
+                {/* 좌측: 시뮬레이터 램프 & 텍스트 (메인 바디 클릭 시 시뮬레이터 토글) */}
+                <div className="flex items-center space-x-2 pointer-events-none">
+                  <span
+                    className={`w-3 h-3 rounded-full shrink-0 transition-transform duration-150 ${
+                      isCheckFillMode
+                        ? 'scale-110 shadow-[0_0_8px_rgba(255,255,255,0.9)] bg-white'
+                        : 'bg-slate-700'
+                    }`}
+                  />
+                  <span className="text-xs sm:text-sm font-black tracking-tight">시뮬레이터</span>
                 </div>
-              </button>
-            )}
-          </div>
+
+                {/* 우측: D-Pad 패밀리룩 세로 경계선 & 가이드오발 전용 독립 램프 */}
+                <div className="flex items-center border-l border-slate-700/70 pl-2.5">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowGuideLine((prev) => !prev);
+                      requestDirectRender();
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    className="w-6 h-6 flex items-center justify-center cursor-pointer transition-all active:scale-90 bg-transparent border-0 outline-none p-0"
+                    title={showGuideLine ? '가이드오발 켜짐 (클릭 시 끄기)' : '가이드오발 꺼짐 (클릭 시 켜기)'}
+                  >
+                    <span
+                      className={`w-3 h-3 rounded-full transition-transform duration-150 ${
+                        showGuideLine
+                          ? 'scale-110 shadow-[0_0_8px_rgba(251,191,36,0.9)] bg-amber-400'
+                          : 'bg-slate-700'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 📌 풀스크린 우측 하단 D-Pad 패널 (길게 클릭하여 자유 드래그 이동 가능 수술) */}
           {isEditMode && (
@@ -1720,7 +1904,13 @@ export default function Midline2DLayoutRenderer({
   }
 
   return (
-    <div className="flex flex-col items-center w-full select-none">
+    <div
+      className="flex flex-col items-center w-full select-none"
+      onMouseMove={handleDpadPointerMove}
+      onTouchMove={handleDpadPointerMove}
+      onMouseUp={handleDpadPointerUp}
+      onTouchEnd={handleDpadPointerUp}
+    >
       {/* 📌 1:1 완벽 정사각형 aspect-square 캔버스 뷰포트 & 좌측 비트 선택 바 */}
       <div
         ref={containerRef}
@@ -1789,7 +1979,7 @@ export default function Midline2DLayoutRenderer({
                     showGuideLine ? 'scale-110 shadow-[0_0_6px_rgba(251,191,36,0.9)] bg-amber-400' : 'bg-slate-700'
                   }`}
                 />
-                <span className="tracking-tight">GUIDE LINE</span>
+                <span className="tracking-tight">GUIDE OVAL</span>
               </button>
             </div>
           </div>
@@ -1856,18 +2046,34 @@ export default function Midline2DLayoutRenderer({
 
         {/* 📌 [지공사님 핵심 지침 100% 완수]: 비트 선택 버튼 [ 좌측 하단 ] 배치 (최대 7개 동적 렌더링) */}
         <div className="absolute bottom-3 left-3 z-20 flex flex-col items-start gap-1 select-none">
-          {/* ➕ [ + ] 단독 버튼 (7개 도달 시 100% 자동 소거) */}
-          {isEditMode && totalActiveBits < 7 && (
-            <button
-              type="button"
-              onClick={handleAddExtraBit}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              className="w-8 h-8 text-sm font-black rounded-xl flex items-center justify-center backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 border-emerald-500/80 text-emerald-300 bg-slate-900/95 hover:bg-slate-800 hover:text-emerald-200 select-none active:scale-95"
-              title="신규 드릴 비트 추가 (최대 7개까지 가능)"
-            >
-              +
-            </button>
+          {/* ➕ [ + ] 추가 버튼 & ➖ [ - ] 삭제 버튼 가로 세트 (삭제 가능 비트 선택 시에만 - 노출) */}
+          {isEditMode && (
+            <div className="flex items-center gap-1.5 mb-0.5">
+              {totalActiveBits < 7 && (
+                <button
+                  type="button"
+                  onClick={handleAddExtraBit}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  className="w-8 h-8 text-sm font-black rounded-xl flex items-center justify-center backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 border-emerald-500/80 text-emerald-300 bg-slate-900/95 hover:bg-slate-800 hover:text-emerald-200 select-none active:scale-95"
+                  title="신규 드릴 비트 추가 (최대 7개까지 가능)"
+                >
+                  +
+                </button>
+              )}
+              {selectedBitIndex !== null && selectedBitIndex >= baseBitsCount && selectedBitIndex < totalActiveBits && (
+                <button
+                  type="button"
+                  onClick={() => setBitToDelete(selectedBitIndex)}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  className="w-8 h-8 text-sm font-black rounded-xl flex items-center justify-center backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 border-rose-500/80 text-rose-300 bg-slate-900/95 hover:bg-slate-800 hover:text-rose-200 select-none active:scale-95"
+                  title={`선택된 #${selectedBitIndex} 드릴 비트 삭제`}
+                >
+                  -
+                </button>
+              )}
+            </div>
           )}
 
           {/* 1 ~ totalActiveBits 칩 목록 루프 렌더링 */}
@@ -1876,7 +2082,7 @@ export default function Midline2DLayoutRenderer({
             const isHoleBit = rowIdx === totalActiveBits;
             const bitValStr = bitCustomSizes[rowIdx] || (isHoleBit ? (holeSize || getDrillBitValue(rowIdx)) : getDrillBitValue(rowIdx));
             const color = isHoleBit ? '#10b981' : FULL_PALETTE[idx] || '#84cc16';
-            const label = isHoleBit ? `#${rowIdx} (원홀 ${bitValStr || ''})` : `#${rowIdx} (${bitValStr || '규격'})`;
+            const label = isHoleBit ? `#${rowIdx} 원홀 (${bitValStr || ''})` : `#${rowIdx} (${bitValStr || '규격'})`;
             const isSelected = selectedBitIndex === rowIdx;
             const isActive = isBitActiveInChart(rowIdx);
 
@@ -1914,31 +2120,62 @@ export default function Midline2DLayoutRenderer({
               </button>
             );
           })}
-
-          {/* ⚪ 시뮬레이터 칩 (지공사님 지침 100% 반영: EDIT 모드 시 시뮬레이터 버튼 전면 소거) */}
-          {!isEditMode && (
-            <button
-              type="button"
-              onClick={() => {
-                setIsCheckFillMode((prev) => !prev);
-                requestDirectRender();
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              className={`w-[115px] sm:w-[130px] h-7 flex items-center justify-between px-2 rounded-xl backdrop-blur-md border shadow-md cursor-pointer transition-all duration-150 text-[10px] sm:text-xs font-bold ${
-                isCheckFillMode
-                  ? 'bg-slate-900/95 text-white border-white/90 ring-1 ring-white/60 shadow-white/20 font-black opacity-100'
-                  : 'bg-slate-950/80 text-slate-400 border-slate-700/80 hover:border-slate-600 opacity-60'
-              }`}
-              title="시뮬레이터 (단일 통합 외곽 윤곽선 표출)"
-            >
-              <div className="flex items-center space-x-1.5 truncate">
-                <span className={`w-2 h-2 rounded-full shrink-0 ${isCheckFillMode ? 'bg-white ring-1 ring-white/60' : 'bg-slate-600'}`} />
-                <span className="truncate">시뮬레이터</span>
-              </div>
-            </button>
-          )}
         </div>
+
+        {/* 📌 인라인 뷰 우측 하단: PREVIEW 모드 시 시뮬레이터 & 가이드오발 일체형 컨트롤러 */}
+        {!isEditMode && (
+          <div
+            style={{ transform: `translate(${simOffset.x}px, ${simOffset.y}px)` }}
+            onMouseDown={handleSimPointerDown}
+            onTouchStart={handleSimPointerDown}
+            className="absolute bottom-3 right-3 z-20 flex items-center justify-center select-none cursor-move active:scale-98"
+            title="클릭 시 시뮬레이터 토글, 드래그하여 위치 이동, 우측 램프 클릭 시 가이드오발 토글"
+          >
+            <div
+              className={`w-[145px] h-10 px-3 rounded-2xl flex items-center justify-between transition-all duration-150 backdrop-blur-md border shadow-2xl ${
+                isCheckFillMode
+                  ? 'bg-slate-900/95 text-white border-white/80 shadow-[0_0_15px_rgba(255,255,255,0.15)] font-black'
+                  : 'bg-slate-900/90 text-slate-400 border-slate-700/80 hover:text-slate-200'
+              }`}
+            >
+              {/* 좌측: 시뮬레이터 램프 & 텍스트 (메인 바디 클릭 시 시뮬레이터 토글) */}
+              <div className="flex items-center space-x-2 pointer-events-none">
+                <span
+                  className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 ${
+                    isCheckFillMode
+                      ? 'scale-110 shadow-[0_0_8px_rgba(255,255,255,0.9)] bg-white'
+                      : 'bg-slate-700'
+                  }`}
+                />
+                <span className="text-xs font-black tracking-tight">시뮬레이터</span>
+              </div>
+
+              {/* 우측: D-Pad 패밀리룩 세로 경계선 & 가이드오발 전용 독립 램프 */}
+              <div className="flex items-center border-l border-slate-700/70 pl-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowGuideLine((prev) => !prev);
+                    requestDirectRender();
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  className="w-5 h-5 flex items-center justify-center cursor-pointer transition-all active:scale-90 bg-transparent border-0 outline-none p-0"
+                  title={showGuideLine ? '가이드오발 켜짐 (클릭 시 끄기)' : '가이드오발 꺼짐 (클릭 시 켜기)'}
+                >
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full transition-transform duration-150 ${
+                      showGuideLine
+                        ? 'scale-110 shadow-[0_0_8px_rgba(251,191,36,0.9)] bg-amber-400'
+                        : 'bg-slate-700'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 📌 컨트롤 보드 우측 하단 배치 (길게 클릭하여 자유 드래그 이동 가능 수술) */}
         {isEditMode && (
@@ -2098,6 +2335,40 @@ export default function Midline2DLayoutRenderer({
             ⤢
           </button>
         </div>
+
+        {/* 📌 드릴 비트 삭제 확정 경고 모달 (일반 뷰포트) */}
+        {bitToDelete !== null && (
+          <div className="absolute inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in select-none">
+            <div className="bg-slate-900 border border-rose-500/60 rounded-2xl p-5 max-w-sm w-full shadow-2xl space-y-4 text-center ring-1 ring-rose-500/30">
+              <div className="w-12 h-12 rounded-full bg-rose-950/80 border border-rose-500/50 text-rose-400 flex items-center justify-center mx-auto text-xl font-bold shadow-lg">
+                🗑️
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-extrabold text-white">#{bitToDelete} 드릴 비트 삭제</h3>
+                <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                  선택한 #{bitToDelete} 드릴 비트를 삭제하시겠습니까?<br />
+                  삭제 시 비트 번호가 자동 재정렬되며 메트릭스 수치표에 1:1 즉각 반영됩니다.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setBitToDelete(null)}
+                  className="flex-1 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl border border-slate-700 shadow-md transition-all active:scale-95 cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeleteBit}
+                  className="flex-1 py-2 px-3 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
+                >
+                  삭제
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

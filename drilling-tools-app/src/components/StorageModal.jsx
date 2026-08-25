@@ -41,7 +41,10 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
       parts.push(`스판: M ${state.midSpanStr || '-'} / R ${state.ringSpanStr || '-'}`);
     }
     if (state.holeSize || state.ovalSize) {
-      parts.push(`오발: ${state.holeSize || '-'} x ${state.ovalSize || '-'}${state.ovalAngle ? ` @ ${state.ovalAngle}°` : ''}`);
+      const modeName = state.precisionMode === 'ultra' ? '7드릴' : (state.precisionMode === 'detailed' ? '5드릴' : '3드릴');
+      const extraText = state.extraBitCount > 0 ? `+${state.extraBitCount}비트` : '';
+      const corrText = state.ovalCorrection && state.ovalCorrection !== '0' ? ` (${state.ovalCorrection} 보정)` : '';
+      parts.push(`오발: ${state.holeSize || '-'} x ${state.ovalSize || '-'}${state.ovalAngle ? ` @ ${state.ovalAngle}°` : ''} [${modeName}${extraText}${corrText}]`);
     }
     return parts.length > 0 ? parts.join(' | ') : '기본 설정';
   };

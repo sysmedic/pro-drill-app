@@ -1,8 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
 import SelectField from './ui/SelectField.jsx';
 import KeypadField from './ui/KeypadField.jsx';
 import FractionKeypad from './FractionKeypad.jsx';
-import OvalResultModal from './OvalResultModal.jsx';
 import { parseSpanFraction, formatFractionByDenom } from '../lib/spanConverter.js';
 import {
   HOLE_OPTIONS,
@@ -10,6 +9,8 @@ import {
   getDynamicOvalOptions,
   getOvalCutOptions,
 } from '../lib/chartOptions.js';
+
+const OvalResultModal = React.lazy(() => import('./OvalResultModal.jsx'));
 
 const toFraction64 = (num) => formatFractionByDenom(num, 64);
 
@@ -19,7 +20,7 @@ const formatCalculatedValue = (num) => {
   return num.toFixed(3);
 };
 
-export default function OvalCalculatorView({ sharedState, updateSharedState }) {
+function OvalCalculatorView({ sharedState, updateSharedState }) {
   const {
     holeSize,
     ovalSize,
@@ -34,6 +35,7 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
     vertVal,
     isLeftHanded,
     isDetailedMode,
+    autoOpenOvalMatrix,
   } = sharedState;
 
   // 📌 오발컷 1 및 오발컷 2 하위 호환 파싱
@@ -46,8 +48,16 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
   // 📌 오발 가공 결과 전면 모달 오픈 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // 📌 [지공사님 핵심 지침 100% 반영]: 아카이브에서 로드 시 오발 피치 메트릭스 모달 즉시 다이렉트 오픈
+  useEffect(() => {
+    if (autoOpenOvalMatrix) {
+      setIsModalOpen(true);
+      updateSharedState('autoOpenOvalMatrix', false);
+    }
+  }, [autoOpenOvalMatrix, updateSharedState]);
+
   // 📌 [지공사님 핵심 지침 100% 반영]: 오발컷 계산기 입력값 전체 공란 초기화
-  const handleClearAllInputs = () => {
+  const handleClearAllInputs = useCallback(() => {
     updateSharedState({
       holeSize: '',
       ovalSize: '',
@@ -64,11 +74,11 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
       bitCustomSizes: {},
       bitCustomOffsets: {},
     });
-  };
+  }, [updateSharedState]);
 
-  const handleStateChange = (keyOrObj, val) => {
+  const handleStateChange = useCallback((keyOrObj, val) => {
     updateSharedState(keyOrObj, val);
-  };
+  }, [updateSharedState]);
 
   // 원홀 수치 기준 오발 크기 (원홀 이상 20개 수치) 드롭다운 옵션 동적 생성
   const dynamicOvalOptions = useMemo(() => getDynamicOvalOptions(holeSize), [holeSize]);
@@ -121,6 +131,25 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
   const thumbHorizontal =
     (pitchLeft ? parseSpanFraction(pitchLeft) : 0) -
     (pitchRight ? parseSpanFraction(pitchRight) : 0);
+
+  // 📌 가공 이동 거리(L_max) 및 권장 정밀도 모드 실시간 산출
+  const hNum = baseHoleSizeNum || 0.75;
+  const oNum = oval || (hNum + 0.125);
+  const c1Num = ovalCutNum1 || hNum;
+  const c2Num = ovalCutNum2 || c1Num;
+
+  const L1 = Math.max(0, (oNum - c1Num) / 2);
+  const L2 = Math.max(0, (oNum - c2Num) / 2);
+  const maxL = Math.max(L1, L2);
+
+  // 1) L_max <= 0.0625" (1/16" 이하, 편차 1/8" 이하) -> basic (3드릴 기본 추천)
+  // 2) 0.0625" < L_max <= 0.125" (1/8" 이하, 편차 1/4" 이하) -> detailed (5드릴 정밀 추천)
+  // 3) L_max > 0.125" (1/8" 초과, 편차 1/4" 초과 롱 오발) -> ultra (7드릴 초정밀 추천)
+  const recommendedMode = useMemo(() => {
+    if (maxL <= 0.0625) return 'basic';
+    if (maxL <= 0.125) return 'detailed';
+    return 'ultra';
+  }, [maxL]);
 
   // 📌 정밀도 3단계 모드 ('basic': 3, 'detailed': 5, 'ultra': 7)
   const precisionMode = sharedState?.precisionMode || (isDetailedMode ? 'detailed' : 'basic');
@@ -240,6 +269,15 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
 
   const handleCalculateClick = () => {
     if (!isCalculationBlocked) {
+      // 📌 [지공사님 핵심 지침]: 오발컷 계산 클릭 시 입력내용 바탕으로 최적 드릴 모드를 무조건 1순위로 자동 세팅
+      updateSharedState({
+        precisionMode: recommendedMode,
+        isDetailedMode: recommendedMode !== 'basic',
+        extraBitCount: 0,
+        bitCustomSizes: {},
+        bitCustomOffsets: {},
+        isNewCalculation: true,
+      });
       setIsModalOpen(true);
     }
   };
@@ -287,14 +325,6 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-600 block">엄지 피치</span>
-              <button
-                type="button"
-                onClick={handleClearAllInputs}
-                className="text-[11px] sm:text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 px-2 py-0.5 rounded-md transition-all cursor-pointer flex items-center justify-center shadow-2xs"
-                title="원홀, 오발, 컷, 각도, 피치 등 모든 오발 수치 공란 초기화"
-              >
-                <span>수치 초기화</span>
-              </button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <SelectField
@@ -421,7 +451,8 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
           <button
             type="button"
             onClick={handleCalculateClick}
-            className="h-11 w-full bg-slate-800 text-white rounded-lg text-sm sm:text-base font-black shadow-2xs hover:bg-slate-900 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center"
+            disabled={isCalculationBlocked}
+            className="h-11 w-full bg-slate-800 text-white rounded-lg text-sm sm:text-base font-black shadow-2xs hover:bg-slate-900 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
             오발컷 계산
           </button>
@@ -443,44 +474,50 @@ export default function OvalCalculatorView({ sharedState, updateSharedState }) {
         />
       )}
 
-      {/* 📌 전면 결과 모달 (3D 시각화 파라미터 1:1 바인딩) */}
-      <OvalResultModal
-        getDrillBitValue={getDrillBitValue}
-        getHorizontalValue={getHorizontalValue}
-        getVerticalValue={getVerticalValue}
-        isCalculationBlocked={isCalculationBlocked}
-        isDetailedMode={isDetailedMode}
-        precisionMode={precisionMode}
-        setPrecisionMode={(mode) => {
-          if (updateSharedState) {
-            updateSharedState({
-              precisionMode: mode,
-              isDetailedMode: mode !== 'basic',
-            });
-          }
-        }}
-        isOpen={isModalOpen}
-        onConfirm={() => setIsModalOpen(false)}
-        ovalCorrection={ovalCorrection}
-        setIsDetailedMode={(mode) => {
-          if (updateSharedState) {
-            updateSharedState({
-              isDetailedMode: mode,
-              precisionMode: mode ? 'detailed' : 'basic',
-            });
-          }
-        }}
-        setOvalCorrection={(v) => updateSharedState('ovalCorrection', v)}
-        holeSize={holeSize}
-        ovalSize={ovalSize}
-        ovalCut={ovalCut1}
-        ovalCut1={ovalCut1}
-        ovalCut2={ovalCut2}
-        ovalAngle={ovalAngle}
-        isLeftHanded={isLeftHanded}
-        sharedState={sharedState}
-        updateSharedState={updateSharedState}
-      />
+      {/* 📌 전면 결과 모달 (3D 시각화 파라미터 1:1 바인딩 - 지연 로딩) */}
+      {isModalOpen && (
+        <Suspense fallback={null}>
+          <OvalResultModal
+            getDrillBitValue={getDrillBitValue}
+            getHorizontalValue={getHorizontalValue}
+            getVerticalValue={getVerticalValue}
+            isCalculationBlocked={isCalculationBlocked}
+            isDetailedMode={isDetailedMode}
+            precisionMode={precisionMode}
+            setPrecisionMode={(mode) => {
+              if (updateSharedState) {
+                updateSharedState({
+                  precisionMode: mode,
+                  isDetailedMode: mode !== 'basic',
+                });
+              }
+            }}
+            isOpen={isModalOpen}
+            onConfirm={() => setIsModalOpen(false)}
+            ovalCorrection={ovalCorrection}
+            setIsDetailedMode={(mode) => {
+              if (updateSharedState) {
+                updateSharedState({
+                  isDetailedMode: mode,
+                  precisionMode: mode ? 'detailed' : 'basic',
+                });
+              }
+            }}
+            setOvalCorrection={(v) => updateSharedState('ovalCorrection', v)}
+            holeSize={holeSize}
+            ovalSize={ovalSize}
+            ovalCut={ovalCut1}
+            ovalCut1={ovalCut1}
+            ovalCut2={ovalCut2}
+            ovalAngle={ovalAngle}
+            isLeftHanded={isLeftHanded}
+            sharedState={sharedState}
+            updateSharedState={updateSharedState}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
+
+export default React.memo(OvalCalculatorView);

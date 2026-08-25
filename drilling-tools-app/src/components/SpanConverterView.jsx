@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, Suspense } from 'react';
 import KeypadField from './ui/KeypadField.jsx';
 import SelectField from './ui/SelectField.jsx';
 import FractionKeypad from './FractionKeypad.jsx';
-import SpanResultModal from './SpanResultModal.jsx';
 import { convertSpanValue } from '../lib/spanConverter.js';
+import { calculateSphericalMidline } from '../lib/midlineCalculator.js';
 import {
   SPAN_TYPE_OPTIONS,
   MID_HOLE_CUT_OPTIONS,
@@ -14,7 +14,10 @@ import {
   getDynamicOvalOptions,
 } from '../lib/chartOptions.js';
 
-export default function SpanConverterView({ sharedState, updateSharedState }) {
+const SpanResultModal = React.lazy(() => import('./SpanResultModal.jsx'));
+const MidlineResultModal = React.lazy(() => import('./MidlineResultModal.jsx'));
+
+function SpanConverterView({ sharedState, updateSharedState }) {
   const {
     midSpanStr,
     ringSpanStr,
@@ -31,6 +34,7 @@ export default function SpanConverterView({ sharedState, updateSharedState }) {
     ovalCut,
     ovalAngle,
     isLeftHanded,
+    bridgeStr = '3/16',
   } = sharedState;
 
   // 키패드 및 모달 상태 ('mid' | 'ring' | 'angle' | null)
@@ -39,19 +43,32 @@ export default function SpanConverterView({ sharedState, updateSharedState }) {
   // 📌 결과 전면 모달 오픈 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleStateChange = (keyOrObj, val) => {
+  // 📌 마킹 가이드 모달 오픈 및 마킹 타입 ('Center to Center' | 'Cut to Cut') 상태
+  const [isMarkingModalOpen, setIsMarkingModalOpen] = useState(false);
+  const [markingType, setMarkingType] = useState('Center to Center');
+
+  const handleStateChange = useCallback((keyOrObj, val) => {
     updateSharedState(keyOrObj, val);
-  };
+  }, [updateSharedState]);
 
   // 원홀 수치 기준 20개 오발 크기 옵션 드롭다운 동적 생성
   const dynamicOvalOptions = useMemo(() => getDynamicOvalOptions(holeSize), [holeSize]);
 
-  // 원본 스판 타입 변경 핸들러
-  const handleFromTypeChange = (newFromType) => {
-    const nextAvailable = SPAN_TYPE_OPTIONS.filter((opt) => opt !== newFromType);
-    const nextToType = nextAvailable.includes(toType) ? toType : nextAvailable[0];
+  // 📌 [지공사님 핵심 지침 100% 반영]: 원본 스판 타입 변경 시 목표 스판 타입 스마트 기본 제시
+  // - Center to Center 선택 시 -> Cut to Cut 기본 제시
+  // - Cut to Cut 선택 시 -> Center to Center 기본 제시
+  // - Actual Span 선택 시 -> Center to Center 기본 제시
+  const handleFromTypeChange = useCallback((newFromType) => {
+    let nextToType = 'Cut to Cut';
+    if (newFromType === 'Center to Center') {
+      nextToType = 'Cut to Cut';
+    } else if (newFromType === 'Cut to Cut') {
+      nextToType = 'Center to Center';
+    } else if (newFromType === 'Actual Span') {
+      nextToType = 'Center to Center';
+    }
     updateSharedState({ fromType: newFromType, toType: nextToType });
-  };
+  }, [updateSharedState]);
 
   // 변환할 스판 타입 옵션 (현재 원본 스판 타입 제외)
   const availableToTypeOptions = useMemo(() => {
@@ -165,17 +182,54 @@ export default function SpanConverterView({ sharedState, updateSharedState }) {
     denomMode,
   ]);
 
+  // 📐 실시간 구면 미드라인 삼각법 연산 (마킹 가이드용)
+  const midlineResult = useMemo(() => {
+    return calculateSphericalMidline({
+      midSpanStr,
+      ringSpanStr,
+      bridgeDiamStr: bridgeStr,
+      fromType,
+      markingType,
+      fingerDrillDiamStr: midHoleCut,
+      fingerInsertDiamStr: midInsert,
+      thumbDrillDiamStr: thumbHoleCut,
+      thumbEffectiveDiamStr: ovalSize || holeSize,
+      ovalCutDiamStr: ovalCut || holeSize,
+      ovalAngleDeg: ovalAngle,
+      denomMode,
+    });
+  }, [
+    midSpanStr,
+    ringSpanStr,
+    bridgeStr,
+    fromType,
+    markingType,
+    midHoleCut,
+    midInsert,
+    ringHoleCut,
+    ringInsert,
+    thumbHoleCut,
+    holeSize,
+    ovalSize,
+    ovalCut,
+    ovalAngle,
+    denomMode,
+  ]);
+
   const handleConvertClick = () => {
     if (!isFormBlocked) {
       setIsModalOpen(true);
     }
   };
 
-  // 🔄 스판 변환기 입력 수치 초기화 함수
+  // 🔄 스판 변환기 입력 수치 초기화 함수 (초기 기본값: Cut to Cut -> Center to Center)
   const handleClearInputs = () => {
     updateSharedState({
+      fromType: 'Cut to Cut',
+      toType: 'Center to Center',
       midSpanStr: '',
       ringSpanStr: '',
+      bridgeStr: '3/16',
       midHoleCut: '31/32',
       midInsert: '',
       ringHoleCut: '31/32',
@@ -204,19 +258,8 @@ export default function SpanConverterView({ sharedState, updateSharedState }) {
             value={fromType}
           />
 
-          {/* 손방향 토글 스위치 & 우측 끝단 수치 초기화 버튼 */}
-          <div className="flex flex-col w-full">
-            <div className="flex items-center justify-end mb-1">
-              <button
-                type="button"
-                onClick={handleClearInputs}
-                className="text-[11px] sm:text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 px-2 py-0.5 rounded-md transition-all cursor-pointer flex items-center justify-center shadow-2xs"
-                title="스판 변환 입력 수치 초기화"
-              >
-                <span>수치 초기화</span>
-              </button>
-            </div>
-            <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-10 w-full shadow-2xs">
+          {/* 손방향 토글 스위치 */}
+          <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-10 w-full shadow-2xs">
               <button
                 type="button"
                 onClick={() => handleStateChange('isLeftHanded', true)}
@@ -241,7 +284,6 @@ export default function SpanConverterView({ sharedState, updateSharedState }) {
               </button>
             </div>
           </div>
-        </div>
 
         {/* 📌 2열 (2단): [중지 스판] | [약지 스판] */}
         <div className="grid grid-cols-2 gap-3">
@@ -410,18 +452,41 @@ export default function SpanConverterView({ sharedState, updateSharedState }) {
         />
       )}
 
-      {/* 📌 전면 결과 모달 */}
-      <SpanResultModal
-        denomMode={denomMode}
-        fromType={fromType}
-        isOpen={isModalOpen}
-        isOvalMissingNotice={isOvalMissingNotice}
-        midConverted={midConverted}
-        onConfirm={() => setIsModalOpen(false)}
-        ringConverted={ringConverted}
-        setDenomMode={(mode) => updateSharedState('denomMode', mode)}
-        toType={toType}
-      />
+      {/* 📌 전면 결과 모달 (지연 로딩) */}
+      {isModalOpen && (
+        <Suspense fallback={null}>
+          <SpanResultModal
+            denomMode={denomMode}
+            fromType={fromType}
+            isOpen={isModalOpen}
+            isOvalMissingNotice={isOvalMissingNotice}
+            midConverted={midConverted}
+            onConfirm={() => setIsModalOpen(false)}
+            onOpenMarkingGuide={() => {
+              setIsMarkingModalOpen(true);
+            }}
+            ringConverted={ringConverted}
+            setDenomMode={(mode) => updateSharedState('denomMode', mode)}
+            toType={toType}
+          />
+        </Suspense>
+      )}
+
+      {/* 📌 미드라인 마킹 가이드 결과 모달 (지연 로딩) */}
+      {isMarkingModalOpen && (
+        <Suspense fallback={null}>
+          <MidlineResultModal
+            denomMode={denomMode}
+            isOpen={isMarkingModalOpen}
+            isOvalMissingNotice={isOvalMissingNotice}
+            midlineResult={midlineResult}
+            onChangeMarkingType={(type) => setMarkingType(type)}
+            onConfirm={() => setIsMarkingModalOpen(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
+
+export default React.memo(SpanConverterView);

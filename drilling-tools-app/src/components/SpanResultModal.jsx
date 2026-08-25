@@ -5,6 +5,7 @@ import { useModalLock } from '../hooks/useModalLock.js';
 export default function SpanResultModal({
   isOpen,
   onConfirm,
+  onOpenMarkingGuide,
   fromType,
   toType,
   midConverted,
@@ -33,7 +34,7 @@ export default function SpanResultModal({
             {fromType} ➔ {toType}
           </h2>
 
-          {/* 16분 | 32분 | .5/16분 라디오 버튼 그룹 */}
+          {/* 16분 | 32분 | .5/16분 라디오 버튼 그룹 (슬레이트 계열) */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
             <label className="flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer select-none">
               <input
@@ -42,7 +43,7 @@ export default function SpanResultModal({
                 value="16"
                 checked={denomMode === 16 || denomMode === '16'}
                 onChange={() => setDenomMode(16)}
-                className="text-indigo-600 accent-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+                className="text-slate-700 accent-slate-700 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
               />
               <span>16분</span>
             </label>
@@ -53,7 +54,7 @@ export default function SpanResultModal({
                 value="32"
                 checked={denomMode === 32 || denomMode === '32'}
                 onChange={() => setDenomMode(32)}
-                className="text-indigo-600 accent-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+                className="text-slate-700 accent-slate-700 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
               />
               <span>32분</span>
             </label>
@@ -64,7 +65,7 @@ export default function SpanResultModal({
                 value="half16"
                 checked={denomMode === 'half16'}
                 onChange={() => setDenomMode('half16')}
-                className="text-indigo-600 accent-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+                className="text-slate-700 accent-slate-700 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
               />
               <span>.5/16분</span>
             </label>
@@ -105,8 +106,19 @@ export default function SpanResultModal({
           </div>
         </div>
 
-        {/* 모달 하단 단독 [확인] 버튼 */}
-        <div className="pt-1">
+        {/* 📌 모달 하단 버튼 그룹: [마킹 가이드 (중간 슬레이트)] & [확인 (다크 슬레이트)] */}
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          {onOpenMarkingGuide ? (
+            <button
+              type="button"
+              onClick={onOpenMarkingGuide}
+              className="h-12 w-full bg-slate-600 hover:bg-slate-700 text-white rounded-md text-sm sm:text-base font-black active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center shadow-2xs"
+            >
+              마킹 가이드
+            </button>
+          ) : (
+            <div />
+          )}
           <button
             type="button"
             onClick={onConfirm}

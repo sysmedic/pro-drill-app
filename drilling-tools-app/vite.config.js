@@ -68,4 +68,16 @@ export default defineConfig({
     port: 3001,
     host: true,
   },
+  build: {
+    sourcemap: false,
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600,
+  },
 });

@@ -1,8 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, Suspense } from 'react';
 import KeypadField from './ui/KeypadField.jsx';
 import SelectField from './ui/SelectField.jsx';
 import FractionKeypad from './FractionKeypad.jsx';
-import MidlineResultModal from './MidlineResultModal.jsx';
 import { calculateSphericalMidline } from '../lib/midlineCalculator.js';
 import {
   SPAN_TYPE_OPTIONS,
@@ -16,7 +15,9 @@ import {
   getDynamicOvalOptions,
 } from '../lib/chartOptions.js';
 
-export default function MidlineCalculatorView({ sharedState, updateSharedState }) {
+const MidlineResultModal = React.lazy(() => import('./MidlineResultModal.jsx'));
+
+function MidlineCalculatorView({ sharedState, updateSharedState }) {
   const {
     midSpanStr,
     ringSpanStr,
@@ -42,9 +43,9 @@ export default function MidlineCalculatorView({ sharedState, updateSharedState }
   // 📌 결과 전면 모달 오픈 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleStateChange = (keyOrObj, val) => {
+  const handleStateChange = useCallback((keyOrObj, val) => {
     updateSharedState(keyOrObj, val);
-  };
+  }, [updateSharedState]);
 
   // 원홀 수치 기준 20개 오발 크기 옵션 드롭다운 동적 생성
   const dynamicOvalOptions = useMemo(() => getDynamicOvalOptions(holeSize), [holeSize]);
@@ -402,15 +403,22 @@ export default function MidlineCalculatorView({ sharedState, updateSharedState }
         />
       )}
 
-      {/* 📌 전면 결과 모달 */}
-      <MidlineResultModal
-        denomMode={denomMode}
-        isOpen={isModalOpen}
-        isOvalMissingNotice={isOvalMissingNotice}
-        midlineResult={midlineResult}
-        onConfirm={() => setIsModalOpen(false)}
-        setDenomMode={(mode) => updateSharedState('denomMode', mode)}
-      />
+      {/* 📌 전면 결과 모달 (지연 로딩) */}
+      {isModalOpen && (
+        <Suspense fallback={null}>
+          <MidlineResultModal
+            denomMode={denomMode}
+            isOpen={isModalOpen}
+            isOvalMissingNotice={isOvalMissingNotice}
+            midlineResult={midlineResult}
+            onChangeMarkingType={(type) => updateSharedState('markingType', type)}
+            onConfirm={() => setIsModalOpen(false)}
+            setDenomMode={(mode) => updateSharedState('denomMode', mode)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
+
+export default React.memo(MidlineCalculatorView);
