@@ -11,6 +11,7 @@ export const PITCH_OPTIONS_32 = [
 export const SPAN_TYPE_OPTIONS = ["Actual Span", "Cut to Cut", "Center to Center"];
 export const MARKING_TYPE_OPTIONS = ["Cut to Cut", "Center to Center"];
 export const BRIDGE_OPTIONS = ["1/8", "3/16", "1/4", "5/16", "직접입력"];
+export const TIP_TYPE_OPTIONS = ["", "Semi", "Tip", "Oval"];
 export const LATERAL_DIR_OPTIONS = [{ value: 'left', label: '◀ Left' }, { value: 'right', label: 'Right ▶' }];
 export const THUMB_VERTICAL_DIR_OPTIONS = [{ value: 'reverse', label: '▼ Reverse' }, { value: 'forward', label: '▲ Forward' }];
 
@@ -39,7 +40,10 @@ export const MID_HOLE_CUT_OPTIONS = ["7/8", "31/32", "1 1/32"];
 export const RING_HOLE_CUT_OPTIONS = ["7/8", "31/32", "1 1/32"];
 export const THUMB_HOLE_CUT_OPTIONS = ["1 1/8", "1 1/4", "1 3/8", "1 1/2"];
 
-export const FINGER_INSERT_OPTIONS = [];
+export const FINGER_INSERT_OPTIONS = [
+  "17/32 (0호)",
+  "9/16 (0.5호)",
+];
 for (let i = 38; i <= 58; i++) {
   FINGER_INSERT_OPTIONS.push(`${getReducedFraction(i, 64)} (${1 + (i - 38) * 0.5}호)`);
 }

@@ -9,16 +9,54 @@ const formatNum = (num) => {
 };
 
 /**
- * 🔒 제원 상태 데이터를 URL-safe Base64 문자열로 인코딩 (보정값 0 기본화)
+ * 🔒 제원 상태 데이터를 초경량 URL-Safe Base64 문자열로 인코딩 (보정값 0 기본화)
  */
 export function encodeSharePayload(state) {
   try {
-    const copy = JSON.parse(JSON.stringify(state));
-    // 📌 [지공사님 핵심 지침]: 공유 시 보정값은 "0"을 기본으로 설정
-    copy.ovalCorrection = '0';
-    const jsonStr = JSON.stringify(copy);
-    const utf8Bytes = encodeURIComponent(jsonStr);
-    return btoa(utf8Bytes);
+    if (!state || typeof state !== 'object') return '';
+    // 필수 사용자 입력값만 추출하여 초소형 키로 매핑
+    const compact = {
+      m: state.midSpanStr || undefined,
+      r: state.ringSpanStr || undefined,
+      mh: state.midHoleCut && state.midHoleCut !== '31/32' ? state.midHoleCut : undefined,
+      rh: state.ringHoleCut && state.ringHoleCut !== '31/32' ? state.ringHoleCut : undefined,
+      mi: state.midInsert || undefined,
+      mt: state.midTipType || undefined,
+      ri: state.ringInsert || undefined,
+      rt: state.ringTipType || undefined,
+      b: state.bridgeStr && state.bridgeStr !== '3/16' ? state.bridgeStr : undefined,
+      ft: state.fromType && state.fromType !== 'Actual Span' ? state.fromType : undefined,
+      tt: state.toType && state.toType !== 'Center to Center' ? state.toType : undefined,
+      mtp: state.markingType && state.markingType !== 'Cut to Cut' ? state.markingType : undefined,
+      th: state.thumbHoleCut && state.thumbHoleCut !== '1 1/4' ? state.thumbHoleCut : undefined,
+      hs: state.holeSize || undefined,
+      os: state.ovalSize || undefined,
+      oc: state.ovalCut || undefined,
+      oc1: state.ovalCut1 || undefined,
+      oc2: state.ovalCut2 || undefined,
+      oa: state.ovalAngle && state.ovalAngle !== '0' ? state.ovalAngle : undefined,
+      ld: state.latDir || undefined,
+      lv: state.latVal || undefined,
+      vd: state.vertDir || undefined,
+      vv: state.vertVal || undefined,
+      lh: state.isLeftHanded ? 1 : undefined,
+      dm: state.denomMode ? state.denomMode : undefined,
+      tab: state.activeTab || undefined,
+    };
+
+    // 빈 값 필터링
+    const cleanObj = {};
+    Object.keys(compact).forEach((k) => {
+      if (compact[k] !== undefined && compact[k] !== '') {
+        cleanObj[k] = compact[k];
+      }
+    });
+
+    const jsonStr = JSON.stringify(cleanObj);
+    // UTF-8 안전 Base64 인코딩
+    const base64 = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1)));
+    // URL-Safe Base64 변환 (+ -> -, / -> _, = 패딩 제거)
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   } catch (e) {
     console.error('Failed to encode share payload', e);
     return '';
@@ -26,13 +64,66 @@ export function encodeSharePayload(state) {
 }
 
 /**
- * 🔓 Base64 문자열을 원본 제원 데이터로 디코딩
+ * 🔓 Base64 문자열을 원본 제원 데이터로 디코딩 (신규 초경량 및 기존 레거시 포맷 100% 호환)
  */
 export function decodeSharePayload(base64Str) {
   try {
-    const decodedUtf8 = atob(base64Str);
-    const jsonStr = decodeURIComponent(decodedUtf8);
-    return JSON.parse(jsonStr);
+    if (!base64Str || typeof base64Str !== 'string') return null;
+
+    // URL-Safe Base64 복원 (- -> +, _ -> /, = 패딩 복원)
+    let b64 = base64Str.trim().replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4 !== 0) {
+      b64 += '=';
+    }
+
+    // Base64 디코딩 (UTF-8)
+    const binary = atob(b64);
+    let jsonStr;
+    try {
+      jsonStr = decodeURIComponent(binary.split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    } catch {
+      jsonStr = decodeURIComponent(binary);
+    }
+
+    const parsed = JSON.parse(jsonStr);
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    // 1. 신규 초경량 포맷 매핑
+    if ('m' in parsed || 'r' in parsed || 'hs' in parsed || 'os' in parsed || 'oa' in parsed || 'tab' in parsed) {
+      return {
+        midSpanStr: parsed.m || '',
+        ringSpanStr: parsed.r || '',
+        midHoleCut: parsed.mh || '31/32',
+        ringHoleCut: parsed.rh || '31/32',
+        midInsert: parsed.mi || '',
+        midTipType: parsed.mt || '',
+        ringInsert: parsed.ri || '',
+        ringTipType: parsed.rt || '',
+        bridgeStr: parsed.b || '3/16',
+        fromType: parsed.ft || 'Actual Span',
+        toType: parsed.tt || 'Center to Center',
+        markingType: parsed.mtp || 'Cut to Cut',
+        thumbHoleCut: parsed.th || '1 1/4',
+        holeSize: parsed.hs || '',
+        ovalSize: parsed.os || '',
+        ovalCut: parsed.oc || '',
+        ovalCut1: parsed.oc1 || parsed.oc || '',
+        ovalCut2: parsed.oc2 || parsed.oc || '',
+        ovalAngle: parsed.oa || '0',
+        latDir: parsed.ld || '',
+        latVal: parsed.lv || '',
+        vertDir: parsed.vd || '',
+        vertVal: parsed.vv || '',
+        isLeftHanded: Boolean(parsed.lh),
+        denomMode: parsed.dm || 32,
+        activeTab: parsed.tab || undefined,
+        ovalCorrection: '0',
+      };
+    }
+
+    // 2. 레거시 전체 객체 포맷 호환
+    parsed.ovalCorrection = '0';
+    return parsed;
   } catch (e) {
     console.error('Failed to decode share payload', e);
     return null;
@@ -40,7 +131,7 @@ export function decodeSharePayload(base64Str) {
 }
 
 /**
- * 📐 보정값 "0" 기준 엄지 오발 피치 매트릭스 계산기
+ * 📐 보정값 "0" 기준 엄지 오발 피치 매트릭스 계산기 (3단계 기본 3 / 정밀 5 / 초정밀 7 및 최대 8드릴 완벽 지원)
  */
 export function computeOvalMatrixForShare(state) {
   const {
@@ -55,6 +146,7 @@ export function computeOvalMatrixForShare(state) {
     vertDir = '',
     vertVal = '',
     isLeftHanded = false,
+    precisionMode: rawPrecisionMode,
     isDetailedMode = false,
     extraBitCount = 0,
     bitCustomSizes = {},
@@ -87,8 +179,9 @@ export function computeOvalMatrixForShare(state) {
     (pitchLeft ? parseSpanFraction(pitchLeft) : 0) -
     (pitchRight ? parseSpanFraction(pitchRight) : 0);
 
-  const baseBitsCount = isDetailedMode ? 5 : 3;
-  const totalActiveBits = Math.min(7, baseBitsCount + (extraBitCount || 0));
+  const precisionMode = rawPrecisionMode || (isDetailedMode ? 'detailed' : 'basic');
+  const baseBitsCount = precisionMode === 'ultra' ? 7 : (precisionMode === 'detailed' ? 5 : 3);
+  const totalActiveBits = Math.min(8, baseBitsCount + (extraBitCount || 0));
 
   if (!baseHoleSizeNum || !oval || !ovalCutNum1 || !ovalCutNum2) {
     return [];
@@ -106,11 +199,17 @@ export function computeOvalMatrixForShare(state) {
       bitSize = toFraction64(ovalCutNum1);
     } else if (rowIndex === 2) {
       bitSize = toFraction64(ovalCutNum2);
-    } else if (rowIndex === 3) {
-      bitSize = toFraction64((ovalCutNum2 + baseHoleSizeNum) / 2);
-    } else if (rowIndex === 4) {
-      bitSize = toFraction64((ovalCutNum1 + baseHoleSizeNum) / 2);
-    } else if (rowIndex >= 5) {
+    } else if (precisionMode === 'ultra') {
+      if (rowIndex === 3) bitSize = toFraction64(baseHoleSizeNum + (ovalCutNum2 - baseHoleSizeNum) * (2 / 3));
+      else if (rowIndex === 4) bitSize = toFraction64(baseHoleSizeNum + (ovalCutNum2 - baseHoleSizeNum) * (1 / 3));
+      else if (rowIndex === 5) bitSize = toFraction64(baseHoleSizeNum + (ovalCutNum1 - baseHoleSizeNum) * (1 / 3));
+      else if (rowIndex === 6) bitSize = toFraction64(baseHoleSizeNum + (ovalCutNum1 - baseHoleSizeNum) * (2 / 3));
+      else bitSize = toFraction64(ovalCutNum1);
+    } else if (precisionMode === 'detailed') {
+      if (rowIndex === 3) bitSize = toFraction64((ovalCutNum2 + baseHoleSizeNum) / 2);
+      else if (rowIndex === 4) bitSize = toFraction64((ovalCutNum1 + baseHoleSizeNum) / 2);
+      else bitSize = toFraction64(ovalCutNum1);
+    } else {
       bitSize = toFraction64(ovalCutNum1);
     }
 
@@ -120,12 +219,25 @@ export function computeOvalMatrixForShare(state) {
     const calcValue2 = (((oval - ovalCutNum2) / 2) + correction) * Math.cos(radians) * handMultiplier;
 
     let baseH = 0;
-    if (rowIndex === 1) baseH = thumbHorizontal + calcValue1;
-    else if (rowIndex === 2) baseH = thumbHorizontal - calcValue2;
-    else if (rowIndex === 3) baseH = thumbHorizontal - (calcValue2 / 2);
-    else if (rowIndex === 4) baseH = thumbHorizontal + (calcValue1 / 2);
-    else if (rowIndex >= 5 && rowIndex < totalActiveBits) baseH = thumbHorizontal + calcValue1;
-    else if (rowIndex === totalActiveBits) baseH = thumbHorizontal;
+    if (rowIndex === totalActiveBits) {
+      baseH = thumbHorizontal;
+    } else if (rowIndex === 1) {
+      baseH = thumbHorizontal - calcValue1;
+    } else if (rowIndex === 2) {
+      baseH = thumbHorizontal + calcValue2;
+    } else if (precisionMode === 'ultra') {
+      if (rowIndex === 3) baseH = thumbHorizontal + calcValue2 * (2 / 3);
+      else if (rowIndex === 4) baseH = thumbHorizontal + calcValue2 * (1 / 3);
+      else if (rowIndex === 5) baseH = thumbHorizontal - calcValue1 * (1 / 3);
+      else if (rowIndex === 6) baseH = thumbHorizontal - calcValue1 * (2 / 3);
+      else baseH = thumbHorizontal;
+    } else if (precisionMode === 'detailed') {
+      if (rowIndex === 3) baseH = thumbHorizontal + (calcValue2 / 2);
+      else if (rowIndex === 4) baseH = thumbHorizontal - (calcValue1 / 2);
+      else baseH = thumbHorizontal;
+    } else {
+      baseH = thumbHorizontal;
+    }
 
     const horizPitch = formatNum(baseH + customOffX);
 
@@ -135,12 +247,25 @@ export function computeOvalMatrixForShare(state) {
     const vCalcValue2 = (((oval - ovalCutNum2) / 2) + correction) * Math.sin(radians);
 
     let baseV = 0;
-    if (rowIndex === 1) baseV = thumbVertical + vCalcValue1;
-    else if (rowIndex === 2) baseV = thumbVertical - vCalcValue2;
-    else if (rowIndex === 3) baseV = thumbVertical - (vCalcValue2 / 2);
-    else if (rowIndex === 4) baseV = thumbVertical + (vCalcValue1 / 2);
-    else if (rowIndex >= 5 && rowIndex < totalActiveBits) baseV = thumbVertical + vCalcValue1;
-    else if (rowIndex === totalActiveBits) baseV = thumbVertical;
+    if (rowIndex === totalActiveBits) {
+      baseV = thumbVertical;
+    } else if (rowIndex === 1) {
+      baseV = thumbVertical + vCalcValue1;
+    } else if (rowIndex === 2) {
+      baseV = thumbVertical - vCalcValue2;
+    } else if (precisionMode === 'ultra') {
+      if (rowIndex === 3) baseV = thumbVertical - vCalcValue2 * (2 / 3);
+      else if (rowIndex === 4) baseV = thumbVertical - vCalcValue2 * (1 / 3);
+      else if (rowIndex === 5) baseV = thumbVertical + vCalcValue1 * (1 / 3);
+      else if (rowIndex === 6) baseV = thumbVertical + vCalcValue1 * (2 / 3);
+      else baseV = thumbVertical;
+    } else if (precisionMode === 'detailed') {
+      if (rowIndex === 3) baseV = thumbVertical - (vCalcValue2 / 2);
+      else if (rowIndex === 4) baseV = thumbVertical + (vCalcValue1 / 2);
+      else baseV = thumbVertical;
+    } else {
+      baseV = thumbVertical;
+    }
 
     const vertPitch = formatNum(baseV + customOffY);
 
@@ -175,7 +300,18 @@ export function downloadTextFile(filename, text) {
 }
 
 /**
- * 📝 카카오톡/문자 전송 및 텍스트 파일 저장용 순수 지공 제원표 텍스트 생성 (링크 삭제)
+ * 🔗 제원 상태가 담긴 다이렉트 앱 실행 링크 URL 생성
+ */
+export function getShareUrl(state) {
+  const encodedPayload = encodeSharePayload(state);
+  if (typeof window !== 'undefined' && window.location) {
+    return `${window.location.origin}${window.location.pathname}?share=${encodedPayload}`;
+  }
+  return '';
+}
+
+/**
+ * 📝 카카오톡/문자/메모 전송용 포맷 제원표 텍스트 생성 (다이렉트 진입 링크 포함)
  */
 export function generateShareText(title, state) {
   const {
@@ -183,7 +319,11 @@ export function generateShareText(title, state) {
     ringSpanStr = '',
     midHoleCut = '31/32',
     ringHoleCut = '31/32',
-    bridgeStr = '1/4',
+    midInsert = '',
+    midTipType = '',
+    ringInsert = '',
+    ringTipType = '',
+    bridgeStr = '3/16',
     fromType = 'Actual Span',
     toType = 'Center to Center',
     markingType = 'Cut to Cut',
@@ -203,16 +343,33 @@ export function generateShareText(title, state) {
 
   const matrixRows = computeOvalMatrixForShare(state);
   const handStr = isLeftHanded ? '왼손 (Left)' : '오른손 (Right)';
+  const shareUrl = getShareUrl(state);
 
   let text = `🎳 [ProDrill Tools 지공 제원표]\n`;
   text += `━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `■ 슬롯명: ${title || '제원 저장본'}\n`;
-  text += `■ 손구분: ${handStr}\n\n`;
+  text += `■ 슬롯명: ${title || '현재 제원'}\n`;
+  text += `■ 손구분: ${handStr}\n`;
+  if (shareUrl) {
+    text += `🔗 [앱에서 바로 열기]:\n${shareUrl}\n`;
+  }
+  text += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-  // 1. 스판 제원
+  // 1. 스판 & 미드라인 제원 (인서트 및 팁 종류 포함)
+  const midDetails = [
+    `홀: ${midHoleCut || '-'}`,
+    midInsert ? `인서트: ${midInsert}` : null,
+    midTipType ? `팁: ${midTipType}` : null,
+  ].filter(Boolean).join(', ');
+
+  const ringDetails = [
+    `홀: ${ringHoleCut || '-'}`,
+    ringInsert ? `인서트: ${ringInsert}` : null,
+    ringTipType ? `팁: ${ringTipType}` : null,
+  ].filter(Boolean).join(', ');
+
   text += `[1. 스판 & 미드라인]\n`;
-  text += `• 중지: ${midSpanStr || '-'} (홀: ${midHoleCut})\n`;
-  text += `• 약지: ${ringSpanStr || '-'} (홀: ${ringHoleCut})\n`;
+  text += `• 중지: ${midSpanStr || '-'} (${midDetails})\n`;
+  text += `• 약지: ${ringSpanStr || '-'} (${ringDetails})\n`;
   text += `• 브릿지: ${bridgeStr}\n`;
   text += `• 스판 기준: ${fromType} ➔ ${toType} (${markingType})\n\n`;
 
@@ -245,6 +402,11 @@ export function generateShareText(title, state) {
   }
 
   text += `━━━━━━━━━━━━━━━━━━━━\n`;
+
+  if (shareUrl) {
+    text += `\n🔗 [ProDrill 앱 바로 열기]\n${shareUrl}\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━\n`;
+  }
 
   return text;
 }

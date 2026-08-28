@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import SpanConverterView from './components/SpanConverterView.jsx';
+import MidlineCalculatorView from './components/MidlineCalculatorView.jsx';
 import OvalCalculatorView from './components/OvalCalculatorView.jsx';
+import TriOvalCalculatorView from './components/TriOvalCalculatorView.jsx';
+import UpdateModal, { CURRENT_APP_VERSION, LAST_SEEN_VERSION_KEY } from './components/UpdateModal.jsx';
 
 const StorageModal = React.lazy(() => import('./components/StorageModal.jsx'));
-const UpdateModal = React.lazy(() => import('./components/UpdateModal.jsx'));
 
 const STORAGE_KEY = 'prodrill_tools_shared_state';
 
@@ -20,8 +22,10 @@ const DEFAULT_SHARED_STATE = {
   // 손가락 홀컷/인서트 (인서트 필수 공란)
   midHoleCut: '31/32',
   midInsert: '',
+  midTipType: '',
   ringHoleCut: '31/32',
   ringInsert: '',
+  ringTipType: '',
 
   // 엄지 제원 (ovalCut1, ovalCut2 포함)
   thumbHoleCut: '1 1/4',
@@ -42,7 +46,7 @@ const DEFAULT_SHARED_STATE = {
   isDetailedMode: false,
 };
 
-const TABS = ['span', 'oval'];
+const TABS = ['span', 'marking', 'oval', 'trioval'];
 const LAST_TAB_STORAGE_KEY = 'prodrill_tools_last_active_tab';
 
 const loadInitialTab = () => {
@@ -73,9 +77,11 @@ const loadInitialState = () => {
 import { decodeSharePayload } from './lib/shareHelper.js';
 import { checkLocalExpiration, verifyWithServerTime } from './lib/expirationGuard.js';
 import ExpiredLockScreen from './components/ExpiredLockScreen.jsx';
+import { useI18n } from './lib/i18n.jsx';
 import { createPortal } from 'react-dom';
 
 export default function App() {
+  const { lang, toggleLang, t } = useI18n();
   // 🔒 [한시적 배포 만료 가드]: 2026.11.30 12:00 만료 및 Vercel 서버 시간/시계 조작 방어
   const [expirationState, setExpirationState] = useState(() => checkLocalExpiration());
 
@@ -113,15 +119,40 @@ export default function App() {
     return <ExpiredLockScreen reason={expirationState.reason} />;
   }
 
-  // 🔗 [딥링크 공유 수신 감지]: URL 파라미터(?share=... 또는 ?slot=...) 자동 파싱
+  // 🚀 [신규 버전 업데이트 안내 자동 팝업]: 새 버전 배포 시 시작화면 모달 오픈, 확인 시 다음 실행부터 패스
   useEffect(() => {
     try {
       const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get('share') || searchParams.get('slot')) return;
+
+      const lastSeen = localStorage.getItem(LAST_SEEN_VERSION_KEY);
+      if (lastSeen !== CURRENT_APP_VERSION) {
+        setIsUpdateModalOpen(true);
+      }
+    } catch (e) {
+      console.error('Failed to check app version', e);
+    }
+  }, []);
+
+  // 🔗 [딥링크 공유 수신 감지]: URL 파라미터(?share=... 또는 ?slot=... / #?share=...) 자동 파싱 및 즉시 적용 ➔ 결과 화면 다이렉트 직행
+  useEffect(() => {
+    try {
+      const queryString = window.location.search || (window.location.hash.includes('?') ? '?' + window.location.hash.split('?')[1] : '');
+      const searchParams = new URLSearchParams(queryString);
       const sharePayload = searchParams.get('share') || searchParams.get('slot');
       if (sharePayload) {
         const decoded = decodeSharePayload(sharePayload);
         if (decoded && typeof decoded === 'object') {
-          setIncomingShareData(decoded);
+          // 📌 [지공사님 핵심 지침]: 보정치(ovalCorrection)는 '0'으로 설정 (반영하지 않음)
+          decoded.ovalCorrection = '0';
+          const targetTab = decoded.activeTab || (decoded.triOvalType ? 'trioval' : 'oval');
+          setActiveTab(targetTab);
+          setSharedState((prev) => ({
+            ...prev,
+            ...decoded,
+            autoOpenOvalMatrix: targetTab === 'oval' || targetTab === 'trioval',
+          }));
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
     } catch (e) {
@@ -247,89 +278,126 @@ export default function App() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="max-w-xl w-full mx-auto space-y-3 sm:space-y-4">
-        {/* 📌 상단 메인 헤더 카드 (좌측 타이틀 + 버전 드롭다운 모달 트리거 & 우측 [초기화] [저장]) */}
-        <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-2xs space-y-3 sm:space-y-4">
-          <div className="flex items-center justify-between gap-1.5">
-            <h1
-              onClick={() => setIsUpdateModalOpen(true)}
-              className="text-base sm:text-xl font-black text-slate-900 tracking-tight cursor-pointer hover:text-slate-700 active:scale-98 transition-all shrink-0"
-              title="앱 정보 및 업데이트 확인"
+      <div className="max-w-xl w-full mx-auto space-y-2 sm:space-y-2.5">
+        {/* 📌 1. 상단 슬림 유틸리티 툴바 (타이틀 + [초기화] [아카이브]) */}
+        <header className="flex items-center justify-between px-1.5 sm:px-2 pt-1 pb-0.5">
+          <h1
+            onClick={() => setIsUpdateModalOpen(true)}
+            className="text-base sm:text-lg font-black text-slate-900 tracking-tight cursor-pointer hover:text-slate-700 active:scale-98 transition-all shrink-0 flex items-center gap-1.5"
+            title="앱 정보 및 업데이트 확인"
+          >
+            <span>ProDrill Tools</span>
+          </h1>
+
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleResetAll}
+              className="px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+              title="모든 입력 수치 초기화"
             >
-              ProDrill Tools
-            </h1>
-
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={handleResetAll}
-                className="px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md transition-all cursor-pointer shadow-2xs whitespace-nowrap"
-                title="모든 입력 수치 초기화"
-              >
-                초기화
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsStorageModalOpen(true)}
-                className="px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-bold text-white bg-[#1e293b] hover:bg-[#0f172a] rounded-md transition-all cursor-pointer shadow-2xs whitespace-nowrap"
-                title="아카이브 관리 (저장 및 불러오기)"
-              >
-                아카이브
-              </button>
-            </div>
+              {t('reset')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsStorageModalOpen(true)}
+              className="px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+              title="아카이브 관리 (저장 및 불러오기)"
+            >
+              {t('archive')}
+            </button>
           </div>
+        </header>
 
-          {/* 📌 상단 2단 탭 바 (스판 변환기 | 오발 계산기) */}
-          <div className="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-2xs">
+        {/* 📌 2+3. 폴더 인덱스형 탭 + 본문 통합 컨테이너 */}
+        <div className="w-full">
+          {/* 탭 바: 좌측 각짐 / 우측 라운드 폴더형 탭 바 (좌우 여백 0으로 컨테이너와 1:1 완벽 정렬) */}
+          <div className="flex items-end gap-1 relative bg-[#f1f5f9] px-0 z-10 w-full">
             <button
               type="button"
               onClick={() => switchTab('span')}
-              className={`h-9 sm:h-10 rounded-lg text-xs sm:text-sm font-extrabold transition-all cursor-pointer flex items-center justify-center ${
-                activeTab === 'span'
-                  ? 'bg-slate-800 text-white shadow-2xs font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-              }`}
+              className={`chrome-tab ${activeTab === 'span' ? 'chrome-tab--active' : 'chrome-tab--inactive'}`}
             >
-              스판 변환기
+              {t('spanTab')}
             </button>
-
+            <button
+              type="button"
+              onClick={() => switchTab('marking')}
+              className={`chrome-tab ${activeTab === 'marking' ? 'chrome-tab--active' : 'chrome-tab--inactive'}`}
+            >
+              {t('markingTab')}
+            </button>
             <button
               type="button"
               onClick={() => switchTab('oval')}
-              className={`py-2 px-2 rounded-md text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center ${
-                activeTab === 'oval'
-                  ? 'bg-[#1e293b] text-white shadow-md font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-              }`}
+              className={`chrome-tab ${activeTab === 'oval' ? 'chrome-tab--active' : 'chrome-tab--inactive'}`}
             >
-              오발 계산기
+              {t('ovalTab')}
+            </button>
+            <button
+              type="button"
+              onClick={() => switchTab('trioval')}
+              className={`chrome-tab chrome-tab--mini ml-auto ${activeTab === 'trioval' ? 'chrome-tab--active' : 'chrome-tab--inactive'}`}
+              title="삼각 오발 계산기"
+              aria-label="삼각 오발 계산기"
+            >
+              <svg
+                className="w-4 h-4 sm:w-5 sm:h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ filter: 'drop-shadow(0px 1px 1.5px rgba(0,0,0,0.55))' }}
+              >
+                <polygon points="12,3 22,21 2,21" />
+              </svg>
             </button>
           </div>
+
+          {/* 본문 영역: 탭 외곽선(#64748b / slate-500)과 100% 일체화 및 우측/하단 3D 입체 쉐도우 적용 */}
+          <div className="w-full bg-white border border-slate-500 rounded-b-2xl sm:rounded-b-3xl shadow-[4px_6px_16px_rgba(0,0,0,0.08),_1px_2px_4px_rgba(0,0,0,0.04)] overflow-hidden relative z-0">
+            <main
+              key={activeTab}
+              className={`w-full ${
+                slideDirection === 'left' ? 'animate-slide-in-right' : 'animate-slide-in-left'
+              }`}
+            >
+              {/* 탭 1: 스판 변환기 */}
+              {activeTab === 'span' && (
+                <SpanConverterView
+                  sharedState={sharedState}
+                  updateSharedState={updateSharedState}
+                />
+              )}
+
+              {/* 탭 2: 마킹 계산기 */}
+              {activeTab === 'marking' && (
+                <MidlineCalculatorView
+                  sharedState={sharedState}
+                  updateSharedState={updateSharedState}
+                />
+              )}
+
+              {/* 탭 3: 오발 계산기 */}
+              {activeTab === 'oval' && (
+                <OvalCalculatorView
+                  sharedState={sharedState}
+                  updateSharedState={updateSharedState}
+                />
+              )}
+
+              {/* 탭 4: 삼각 오발 계산기 */}
+              {activeTab === 'trioval' && (
+                <TriOvalCalculatorView
+                  sharedState={sharedState}
+                  updateSharedState={updateSharedState}
+                />
+              )}
+            </main>
+          </div>
         </div>
-
-        {/* 📌 메인 연산자 메인 영역 (방향 감지 네이티브 부드러운 슬라이드 애니메이션 적용) */}
-        <main
-          key={activeTab}
-          className={`w-full ${
-            slideDirection === 'left' ? 'animate-slide-in-right' : 'animate-slide-in-left'
-          }`}
-        >
-          {/* 탭 1: 스판 변환기 */}
-          {activeTab === 'span' && (
-            <SpanConverterView
-              sharedState={sharedState}
-              updateSharedState={updateSharedState}
-            />
-          )}
-
-          {/* 탭 2: 오발 계산기 */}
-          {activeTab === 'oval' && (
-            <OvalCalculatorView
-              sharedState={sharedState}
-              updateSharedState={updateSharedState}
-            />
-          )}
-        </main>
       </div>
 
       {/* 💾 [저장 관리 모달 (지연 로딩)]: 저장 & 불러오기 */}

@@ -508,36 +508,73 @@ export default function Midline2DLayoutRenderer({
       const effectiveRadians = radians + (isFlipped180 ? Math.PI : 0);
       const flipSign = isFlipped180 ? -1 : 1;
 
-      // 📌 지공사님 지침 반영: 최대 8개 비트 동적 위치 배열 구성 (180도 회전 시 flipSign 1:1 대칭 합성)
+      // 📐 [삼각 오발 전용] 각 드릴 행의 직경(인치) 반환
+      const getTriBitDiam = (rowIdx) => {
+        if (rowIdx === totalActiveBits) return holeNum; // 마스터 원홀: 이동 없음 (perpShift = 0)
+        if (bitCustomSizes[rowIdx]) return parseSpanFraction(bitCustomSizes[rowIdx]);
+        if (rowIdx === 1) return cutNum1;
+        if (rowIdx === 2) return cutNum2;
+        if (precisionMode === 'ultra') {
+          if (rowIdx === 3) return (cutNum2 * 2 + holeNum) / 3;
+          if (rowIdx === 4) return (cutNum2 + holeNum * 2) / 3;
+          if (rowIdx === 5) return (cutNum1 + holeNum * 2) / 3;
+          if (rowIdx === 6) return (cutNum1 * 2 + holeNum) / 3;
+          return cutNum1;
+        } else if (precisionMode === 'detailed') {
+          if (rowIdx === 3) return (cutNum2 + holeNum) / 2;
+          if (rowIdx === 4) return (cutNum1 + holeNum) / 2;
+          return cutNum1;
+        }
+        return cutNum1;
+      };
+
+      // 📐 [삼각 오발 전용] 오발각도선 수직(중약지) 방향 이동량 {dx, dy} 픽셀 반환
+      // - 이동량(인치) = (원홀 반지름 - 드릴 반지름) = (holeSize - cutSize) / 2
+      // - 수직 방향 단위벡터: CW 90° 회전 → (sinθ·hand, -cosθ)
+      //   → 세 원의 하양점(중약지 방향 접선)이 오발각도선상 동일 위치에 정렬됨
+      const getTriPerpPx = (rowIdx) => {
+        if (!holeNum) return { dx: 0, dy: 0 };
+        const cutDiam = getTriBitDiam(rowIdx);
+        const perpInch = Math.max(0, (holeNum - cutDiam) / 2);
+        const perpPx = perpInch * scale;
+        return {
+          dx: perpPx * Math.sin(effectiveRadians) * handSign,
+          dy: -perpPx * Math.cos(effectiveRadians),
+        };
+      };
+
+      // 📌 최대 8개 비트 동적 위치 배열 구성 (삼각 오발 수직 이동 보정 포함)
       const bitPositions = [];
-      // 1번 (Cut 1 - 상단 끝)
-      bitPositions.push({ x: cx + calcOffset1 * Math.cos(effectiveRadians) * handSign, y: cy + calcOffset1 * Math.sin(effectiveRadians) });
-      // 2번 (Cut 2 - 하단 끝)
-      bitPositions.push({ x: cx - calcOffset2 * Math.cos(effectiveRadians) * handSign, y: cy - calcOffset2 * Math.sin(effectiveRadians) });
+      // 1번 (Cut 1 - 상단 끝) + 삼각 오발 수직 보정
+      { const p = getTriPerpPx(1);
+        bitPositions.push({ x: cx + calcOffset1 * Math.cos(effectiveRadians) * handSign + p.dx, y: cy + calcOffset1 * Math.sin(effectiveRadians) + p.dy }); }
+      // 2번 (Cut 2 - 하단 끝) + 삼각 오발 수직 보정
+      { const p = getTriPerpPx(2);
+        bitPositions.push({ x: cx - calcOffset2 * Math.cos(effectiveRadians) * handSign + p.dx, y: cy - calcOffset2 * Math.sin(effectiveRadians) + p.dy }); }
 
       if (precisionMode === 'ultra') {
         // 7드릴 초정밀 모드 (#3·#4 하단 가공 ➔ #5·#6 상단 가공 순차 경로)
-        // 3번 (하단 외곽 2/3)
-        bitPositions.push({
-          x: cx - (calcOffset2 * 2 / 3) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[3]?.x || 0) * scale * flipSign,
-          y: cy - (calcOffset2 * 2 / 3) * Math.sin(effectiveRadians) + (bitCustomOffsets[3]?.y || 0) * scale * flipSign,
-        });
-        // 4번 (하단 내측 1/3)
-        bitPositions.push({
-          x: cx - (calcOffset2 * 1 / 3) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[4]?.x || 0) * scale * flipSign,
-          y: cy - (calcOffset2 * 1 / 3) * Math.sin(effectiveRadians) + (bitCustomOffsets[4]?.y || 0) * scale * flipSign,
-        });
-        // 5번 (상단 내측 1/3)
-        bitPositions.push({
-          x: cx + (calcOffset1 * 1 / 3) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[5]?.x || 0) * scale * flipSign,
-          y: cy + (calcOffset1 * 1 / 3) * Math.sin(effectiveRadians) + (bitCustomOffsets[5]?.y || 0) * scale * flipSign,
-        });
-        // 6번 (상단 외곽 2/3)
-        bitPositions.push({
-          x: cx + (calcOffset1 * 2 / 3) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[6]?.x || 0) * scale * flipSign,
-          y: cy + (calcOffset1 * 2 / 3) * Math.sin(effectiveRadians) + (bitCustomOffsets[6]?.y || 0) * scale * flipSign,
-        });
-        // 7번 ~ (totalActiveBits - 1)번: 신규 추가된 드릴비트 (원홀 중심 위치 기본)
+        { const p = getTriPerpPx(3);
+          bitPositions.push({
+            x: cx - (calcOffset2 * 2 / 3) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[3]?.x || 0) * scale * flipSign + p.dx,
+            y: cy - (calcOffset2 * 2 / 3) * Math.sin(effectiveRadians) + (bitCustomOffsets[3]?.y || 0) * scale * flipSign + p.dy,
+          }); }
+        { const p = getTriPerpPx(4);
+          bitPositions.push({
+            x: cx - (calcOffset2 * 1 / 3) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[4]?.x || 0) * scale * flipSign + p.dx,
+            y: cy - (calcOffset2 * 1 / 3) * Math.sin(effectiveRadians) + (bitCustomOffsets[4]?.y || 0) * scale * flipSign + p.dy,
+          }); }
+        { const p = getTriPerpPx(5);
+          bitPositions.push({
+            x: cx + (calcOffset1 * 1 / 3) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[5]?.x || 0) * scale * flipSign + p.dx,
+            y: cy + (calcOffset1 * 1 / 3) * Math.sin(effectiveRadians) + (bitCustomOffsets[5]?.y || 0) * scale * flipSign + p.dy,
+          }); }
+        { const p = getTriPerpPx(6);
+          bitPositions.push({
+            x: cx + (calcOffset1 * 2 / 3) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[6]?.x || 0) * scale * flipSign + p.dx,
+            y: cy + (calcOffset1 * 2 / 3) * Math.sin(effectiveRadians) + (bitCustomOffsets[6]?.y || 0) * scale * flipSign + p.dy,
+          }); }
+        // 7번 ~ (totalActiveBits - 1)번: 신규 추가 드릴비트 (원홀과 동일 크기 → 수직 이동 없음)
         for (let b = 7; b < totalActiveBits; b++) {
           bitPositions.push({
             x: cx + (bitCustomOffsets[b]?.x || 0) * scale * flipSign,
@@ -546,17 +583,17 @@ export default function Midline2DLayoutRenderer({
         }
       } else if (precisionMode === 'detailed') {
         // 5드릴 정밀 모드 (#3 하단 1/2, #4 상단 1/2)
-        // 3번 (중간비트 1 - 하단)
-        bitPositions.push({
-          x: cx - (calcOffset2 / 2) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[3]?.x || 0) * scale * flipSign,
-          y: cy - (calcOffset2 / 2) * Math.sin(effectiveRadians) + (bitCustomOffsets[3]?.y || 0) * scale * flipSign,
-        });
-        // 4번 (중간비트 2 - 상단)
-        bitPositions.push({
-          x: cx + (calcOffset1 / 2) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[4]?.x || 0) * scale * flipSign,
-          y: cy + (calcOffset1 / 2) * Math.sin(effectiveRadians) + (bitCustomOffsets[4]?.y || 0) * scale * flipSign,
-        });
-        // 5번 ~ (totalActiveBits - 1)번: 신규 추가된 드릴비트 (원홀 중심 위치 기본)
+        { const p = getTriPerpPx(3);
+          bitPositions.push({
+            x: cx - (calcOffset2 / 2) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[3]?.x || 0) * scale * flipSign + p.dx,
+            y: cy - (calcOffset2 / 2) * Math.sin(effectiveRadians) + (bitCustomOffsets[3]?.y || 0) * scale * flipSign + p.dy,
+          }); }
+        { const p = getTriPerpPx(4);
+          bitPositions.push({
+            x: cx + (calcOffset1 / 2) * Math.cos(effectiveRadians) * handSign + (bitCustomOffsets[4]?.x || 0) * scale * flipSign + p.dx,
+            y: cy + (calcOffset1 / 2) * Math.sin(effectiveRadians) + (bitCustomOffsets[4]?.y || 0) * scale * flipSign + p.dy,
+          }); }
+        // 5번 ~ (totalActiveBits - 1)번: 신규 추가 드릴비트 (원홀과 동일 크기 → 수직 이동 없음)
         for (let b = 5; b < totalActiveBits; b++) {
           bitPositions.push({
             x: cx + (bitCustomOffsets[b]?.x || 0) * scale * flipSign,
@@ -564,7 +601,7 @@ export default function Midline2DLayoutRenderer({
           });
         }
       } else {
-        // 3드릴 기본 모드: 3번 ~ (totalActiveBits - 1)번 신규 추가된 드릴비트
+        // 3드릴 기본 모드: 3번 ~ (totalActiveBits - 1)번 신규 추가 드릴비트
         for (let b = 3; b < totalActiveBits; b++) {
           bitPositions.push({
             x: cx + (bitCustomOffsets[b]?.x || 0) * scale * flipSign,
@@ -572,11 +609,12 @@ export default function Midline2DLayoutRenderer({
           });
         }
       }
-      // 마스터 원홀 비트 (마지막 인덱스 totalActiveBits)
+      // 마스터 원홀 비트 (마지막 인덱스 totalActiveBits) - 수직 이동 없음 (r_hole - r_hole = 0)
       bitPositions.push({
         x: cx + (bitCustomOffsets[totalActiveBits]?.x || 0) * scale * flipSign,
         y: cy + (bitCustomOffsets[totalActiveBits]?.y || 0) * scale * flipSign,
       });
+
 
       const getBitDiameter = (rowIdx) => {
         if (rowIdx === 1) return cutNum1;
@@ -886,127 +924,108 @@ export default function Midline2DLayoutRenderer({
       }
       ctx.restore();
 
-      // D-1) 📌 [골드 실제 오발선]: 모든 상황에서 도면 기본 베이스 가이드라인으로 상시 100% 표출 (#fbbf24)
+      // D-1) 📌 [삼각 오발 전용 윤곽선]: 1#-원홀-2#, 1#-원홀, 2#-원홀 3개 변과 3개 둥근 꼭짓점(R값) 둥근 삼각형(Rounded Triangle)
       try {
         const r1Diameter = getBitDiameter(1);
         const R1 = (r1Diameter / 2) * scale;
         const r2Diameter = getBitDiameter(2);
         const R2 = (r2Diameter / 2) * scale;
-        const holeRadiusPx = (holeNum / 2) * scale;
+        const Rh = (holeNum / 2) * scale;
 
-        const p1 = r1Pos;
-        const p2 = r2Pos;
+        const p1 = r1Pos;       // #1 중심 (수직 이동 반영됨)
+        const p2 = r2Pos;       // #2 중심 (수직 이동 반영됨)
+        const ph = { x: cx, y: cy }; // 원홀 중심 (십자선 중심)
 
-        if (p1 && p2 && Number.isFinite(p1.x) && Number.isFinite(p2.x) && Number.isFinite(p1.y) && Number.isFinite(p2.y)) {
-          const dx = p1.x - p2.x;
-          const dy = p1.y - p2.y;
-          const dist = Math.hypot(dx, dy);
+        if (
+          p1 && p2 &&
+          Number.isFinite(p1.x) && Number.isFinite(p1.y) &&
+          Number.isFinite(p2.x) && Number.isFinite(p2.y) &&
+          R1 > 0 && R2 > 0 && Rh > 0
+        ) {
+          // 두 원 사이의 외측 공통 접선 함수 (cA -> cB 방향 기준 외측 접점 반환)
+          const getOuterTangent = (cA, rA, cB, rB) => {
+            const dx = cB.x - cA.x;
+            const dy = cB.y - cA.y;
+            const d = Math.hypot(dx, dy);
+            if (d < 1e-6) return null;
+            const beta = Math.atan2(dy, dx);
+            const ratio = Math.max(-1, Math.min(1, (rA - rB) / d));
+            const alpha = Math.asin(ratio);
 
-          const theta = dist > 0.001 ? Math.atan2(dy, dx) : actualCutAngle;
-          const uX = Math.cos(theta);
-          const uY = Math.sin(theta);
-          const vX = -Math.sin(theta);
-          const vY = Math.cos(theta);
+            // cA -> cB 이동 시 바깥쪽(외측) 접선 각도
+            const aL = beta - Math.PI / 2 + alpha;
+            const tA = { x: cA.x + rA * Math.cos(aL), y: cA.y + rA * Math.sin(aL), angle: aL };
+            const tB = { x: cB.x + rB * Math.cos(aL), y: cB.y + rB * Math.sin(aL), angle: aL };
+            return { tA, tB, angle: aL };
+          };
 
-          // 허리 폭 반경 W (중심 원홀 반경)
-          const W = holeRadiusPx > 0 ? holeRadiusPx : ((R1 + R2) / 2);
-          const RwX = cx + W * vX;
-          const RwY = cy + W * vY;
-          const LwX = cx - W * vX;
-          const LwY = cy - W * vY;
+          // 3개 원 (p1, p2, ph) 정의
+          const triCircles = [
+            { id: 'p1', x: p1.x, y: p1.y, r: R1 },
+            { id: 'p2', x: p2.x, y: p2.y, r: R2 },
+            { id: 'ph', x: ph.x, y: ph.y, r: Rh },
+          ];
 
-          // #1번 원호 각도 (상단 apex 기준 +-60도)
-          const a1_end = theta + Math.PI / 3;
-          const a1_start = theta - Math.PI / 3;
-          const ArX = p1.x + R1 * Math.cos(a1_end);
-          const ArY = p1.y + R1 * Math.sin(a1_end);
-          const AlX = p1.x + R1 * Math.cos(a1_start);
-          const AlY = p1.y + R1 * Math.sin(a1_start);
+          // 삼각형 중심점(Centroid) 계산
+          const triCx = (p1.x + p2.x + ph.x) / 3;
+          const triCy = (p1.y + p2.y + ph.y) / 3;
 
-          // #2번 원호 각도 (하단 apex 기준 +-60도)
-          const a2_start = theta + (2 * Math.PI) / 3;
-          const a2_end = theta + (4 * Math.PI) / 3;
-          const BrX = p2.x + R2 * Math.cos(a2_start);
-          const BrY = p2.y + R2 * Math.sin(a2_start);
-          const BlX = p2.x + R2 * Math.cos(a2_end);
-          const BlY = p2.y + R2 * Math.sin(a2_end);
+          // 중심점 기준 시계방향(Clockwise)으로 3개 원 정렬
+          const sorted = [...triCircles].sort((a, b) => {
+            return Math.atan2(a.y - triCy, a.x - triCx) - Math.atan2(b.y - triCy, b.x - triCx);
+          });
 
-          // 접선 단위 벡터
-          const t1rX = -Math.sin(a1_end);
-          const t1rY = Math.cos(a1_end);
-          const t2rX = -Math.sin(a2_start);
-          const t2rY = Math.cos(a2_start);
-          const t2lX = -Math.sin(a2_end);
-          const t2lY = Math.cos(a2_end);
-          const t1lX = -Math.sin(a1_start);
-          const t1lY = Math.cos(a1_start);
-
-          const d1 = Math.hypot(RwX - ArX, RwY - ArY) * 0.35;
-          const d2 = Math.hypot(BrX - RwX, BrY - RwY) * 0.35;
-          const d3 = Math.hypot(LwX - BlX, LwY - BlY) * 0.35;
-          const d4 = Math.hypot(AlX - LwX, AlY - LwY) * 0.35;
+          // 3개 변의 외측 공통 접선 계산
+          const tangents = [];
+          for (let i = 0; i < 3; i++) {
+            const cA = sorted[i];
+            const cB = sorted[(i + 1) % 3];
+            const tan = getOuterTangent(cA, cA.r, cB, cB.r);
+            tangents.push({ cA, cB, tan });
+          }
 
           ctx.save();
           ctx.beginPath();
 
-          // 1. #1번 상단 원형 호 (좌측 접점 -> 상단 정점 -> 우측 접점)
-          ctx.arc(p1.x, p1.y, R1, a1_start, a1_end, false);
+          // 첫 번째 외측 접선의 시작점(tA)으로 이동
+          const firstTan = tangents[0]?.tan;
+          if (firstTan) {
+            ctx.moveTo(firstTan.tA.x, firstTan.tA.y);
 
-          // 2. 우측 상단 곡선 (#1번 우측 접점 -> 우측 허리 Rw)
-          ctx.bezierCurveTo(
-            ArX + d1 * t1rX,
-            ArY + d1 * t1rY,
-            RwX + d1 * uX,
-            RwY + d1 * uY,
-            RwX,
-            RwY
-          );
+            for (let i = 0; i < 3; i++) {
+              const currentTan = tangents[i]?.tan;
+              const nextTan = tangents[(i + 1) % 3]?.tan;
+              const circle = sorted[(i + 1) % 3]; // 현재 도착한 꼭짓점 원
 
-          // 3. 우측 하단 곡선 (우측 허리 Rw -> #2번 우측 접점)
-          ctx.bezierCurveTo(
-            RwX - d2 * uX,
-            RwY - d2 * uY,
-            BrX - d2 * t2rX,
-            BrY - d2 * t2rY,
-            BrX,
-            BrY
-          );
+              if (currentTan && nextTan) {
+                // 1) 외측 접선(변) 긋기
+                ctx.lineTo(currentTan.tB.x, currentTan.tB.y);
 
-          // 4. #2번 하단 원형 호 (우측 접점 -> 하단 정점 -> 좌측 접점)
-          ctx.arc(p2.x, p2.y, R2, a2_start, a2_end, false);
+                // 2) 꼭짓점 원호(R값) 그리기 (도착 각도 -> 다음 출발 각도, 시계방향)
+                let startAng = currentTan.angle;
+                let endAng = nextTan.angle;
+                while (endAng < startAng) {
+                  endAng += Math.PI * 2;
+                }
+                ctx.arc(circle.x, circle.y, circle.r, startAng, endAng, false);
+              }
+            }
 
-          // 5. 좌측 하단 곡선 (#2번 좌측 접점 -> 좌측 허리 Lw)
-          ctx.bezierCurveTo(
-            BlX + d3 * t2lX,
-            BlY + d3 * t2lY,
-            LwX - d3 * uX,
-            LwY - d3 * uY,
-            LwX,
-            LwY
-          );
-
-          // 6. 좌측 상단 곡선 (좌측 허리 Lw -> #1번 좌측 접점)
-          ctx.bezierCurveTo(
-            LwX + d4 * uX,
-            LwY + d4 * uY,
-            AlX - d4 * t1lX,
-            AlY - d4 * t1lY,
-            AlX,
-            AlY
-          );
-
-          ctx.closePath();
-
-          ctx.strokeStyle = '#10b981';
-          ctx.lineWidth = 1.0;
-          ctx.shadowColor = 'rgba(16, 185, 129, 0.6)';
-          ctx.shadowBlur = 4;
-          ctx.stroke();
+            ctx.closePath();
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 1.2;
+            ctx.shadowColor = 'rgba(16, 185, 129, 0.6)';
+            ctx.shadowBlur = 4;
+            ctx.stroke();
+          }
           ctx.restore();
         }
       } catch (err) {
         // Safe fallback guard
       }
+
+
+
 
       // D-2) 📌 [이론적 오발선]: GUIDE LINE 스위치가 켜졌을 때만 도면 위에 오버레이 표출 (골드/앰버 #fbbf24)
       if (showGuideLine) {

@@ -2,7 +2,7 @@ import { useI18n } from "../lib/i18n.jsx";
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import SelectField from './ui/SelectField.jsx';
-import Midline2DLayoutRenderer from './ui/Midline2DLayoutRenderer.jsx';
+import TriOval2DLayoutRenderer from './ui/TriOval2DLayoutRenderer.jsx';
 import { useModalLock } from '../hooks/useModalLock.js';
 import { parseSpanFraction } from '../lib/spanConverter.js';
 
@@ -14,7 +14,7 @@ const OVAL_CORRECTION_OPTIONS = [
   { value: '1/32', label: '1/32' },
 ];
 
-export default function OvalResultModal({
+export default function TriOvalResultModal({
   isOpen,
   onConfirm,
   isDetailedMode,
@@ -411,7 +411,7 @@ export default function OvalResultModal({
         </div>
 
         {/* 📌 [2D 지공도면 풀스크린 시뮬레이터 포털]: 피치 매트릭스 내부 인라인 도면 100% 소거 및 풀스크린 직통 연동 */}
-        <Midline2DLayoutRenderer
+        <TriOval2DLayoutRenderer
           holeSize={holeSize}
           ovalSize={ovalSize}
           ovalCut={ovalCut}

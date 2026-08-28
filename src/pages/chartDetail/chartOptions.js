@@ -27,7 +27,10 @@ export const generateFractions = (startNum, endNum, den = 64) => {
   return res;
 };
 
-export const FINGER_INSERT_OPTIONS = [];
+export const FINGER_INSERT_OPTIONS = [
+  "17/32 (0호)",
+  "9/16 (0.5호)",
+];
 for (let i = 38; i <= 58; i++) {
   FINGER_INSERT_OPTIONS.push(`${getReducedFraction(i, 64)} (${1 + (i - 38) * 0.5}호)`);
 }

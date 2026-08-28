@@ -5,19 +5,21 @@ import FractionKeypad from './FractionKeypad.jsx';
 import { calculateSphericalMidline } from '../lib/midlineCalculator.js';
 import {
   SPAN_TYPE_OPTIONS,
-  MARKING_TYPE_OPTIONS,
   BRIDGE_OPTIONS,
   MID_HOLE_CUT_OPTIONS,
   RING_HOLE_CUT_OPTIONS,
   THUMB_HOLE_CUT_OPTIONS,
   FINGER_INSERT_OPTIONS,
+  TIP_TYPE_OPTIONS,
   HOLE_OPTIONS,
   getDynamicOvalOptions,
 } from '../lib/chartOptions.js';
+import { useI18n } from '../lib/i18n.jsx';
 
 const MidlineResultModal = React.lazy(() => import('./MidlineResultModal.jsx'));
 
 function MidlineCalculatorView({ sharedState, updateSharedState }) {
+  const { t } = useI18n();
   const {
     midSpanStr,
     ringSpanStr,
@@ -34,6 +36,8 @@ function MidlineCalculatorView({ sharedState, updateSharedState }) {
     ovalSize,
     ovalCut,
     ovalAngle,
+    midTipType = '',
+    ringTipType = '',
     isLeftHanded,
   } = sharedState;
 
@@ -74,9 +78,11 @@ function MidlineCalculatorView({ sharedState, updateSharedState }) {
   const isOvalAngleMissing = isNoInsertOrOvalRequired ? false : !ovalAngle;
   const isOvalSizeMissing = isNoInsertOrOvalRequired ? false : !ovalSize;
 
+  const isActualSpanInvolved = fromType === 'Actual Span' || markingType === 'Actual Span';
+  const isMidTipMissing = isActualSpanInvolved ? !midTipType : false;
+  const isRingTipMissing = isActualSpanInvolved ? !ringTipType : false;
+
   // 📌 폼 차단 조건:
-  // - C-C / Cut-Cut 상호 모드: 5개 필수 제원만 채워지면 연산 가동
-  // - Actual Span 포함 일반 모드: 8개 기본 제원 채워지면 허용, 오발 수치 1개만 단독 입력 시 차단
   const isFormBlocked =
     isMidSpanMissing ||
     isRingSpanMissing ||
@@ -86,6 +92,8 @@ function MidlineCalculatorView({ sharedState, updateSharedState }) {
     isMidInsertMissing ||
     isRingInsertMissing ||
     isThumbMissing ||
+    isMidTipMissing ||
+    isRingTipMissing ||
     (isNoInsertOrOvalRequired ? false : hasPartialOval);
 
   // 📐 실시간 구면 미드라인 삼각법 연산
@@ -97,11 +105,14 @@ function MidlineCalculatorView({ sharedState, updateSharedState }) {
       fromType,
       markingType,
       fingerDrillDiamStr: midHoleCut,
+      ringDrillDiamStr: ringHoleCut,
       fingerInsertDiamStr: midInsert,
       thumbDrillDiamStr: thumbHoleCut,
       thumbEffectiveDiamStr: ovalSize || holeSize,
       ovalCutDiamStr: ovalCut || holeSize,
       ovalAngleDeg: ovalAngle,
+      midTipType,
+      ringTipType,
       denomMode,
     });
   }, [
@@ -119,6 +130,8 @@ function MidlineCalculatorView({ sharedState, updateSharedState }) {
     ovalSize,
     ovalCut,
     ovalAngle,
+    midTipType,
+    ringTipType,
     denomMode,
   ]);
 
@@ -128,127 +141,81 @@ function MidlineCalculatorView({ sharedState, updateSharedState }) {
     }
   };
 
-  // 🔄 미드라인 마킹 입력 수치 초기화 함수
-  const handleClearInputs = () => {
-    updateSharedState({
-      midSpanStr: '',
-      ringSpanStr: '',
-      bridgeStr: '3/16',
-      midHoleCut: '31/32',
-      midInsert: '',
-      ringHoleCut: '31/32',
-      ringInsert: '',
-      thumbHoleCut: '1 1/4',
-      holeSize: '',
-      ovalSize: '',
-      ovalCut: '',
-      ovalCut1: '',
-      ovalCut2: '',
-      ovalAngle: '',
-    });
-  };
-
   return (
-    <div className="space-y-4 animate-fade-in">
-      {/* 카드 1: [기준 스판 타입 | 손방향] 2단, [브릿지 : 중지스판 : 약지스판] 2:4:4 비율 3단 배치 */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3">
-        {/* 1열 (2단): [기준 스판 타입] | [손방향 (왼손 | 오른손)] */}
+    <div className="space-y-4 animate-fade-in p-4 sm:p-5">
+      {/* 카드 1: 스판 타입 선택 및 손방향 배치 */}
+      <div className="bg-white border border-slate-300 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
+        {/* 📌 1열 (2단): [기준 스판 타입 (From)] | [손방향 (왼손 | 오른손)] */}
         <div className="grid grid-cols-2 gap-3 items-end">
           <SelectField
             density="compact"
-            label="기준 스판 타입 (Base)"
+            label={t('fromSpanType')}
             onChange={(val) => handleStateChange('fromType', val)}
             options={SPAN_TYPE_OPTIONS}
             value={fromType}
           />
 
-          {/* 손방향 토글 스위치 & 우측 끝단 수치 초기화 버튼 */}
-          <div className="flex flex-col w-full">
-            <div className="flex items-center justify-end mb-1">
-              <button
-                type="button"
-                onClick={handleClearInputs}
-                className="text-[11px] sm:text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 px-2 py-0.5 rounded-md transition-all cursor-pointer flex items-center justify-center shadow-2xs"
-                title="미드라인 마킹 입력 수치 초기화"
-              >
-                <span>수치 초기화</span>
-              </button>
-            </div>
-            <div className="flex items-center bg-slate-100 border border-slate-200 p-0.5 rounded-md h-10 w-full shadow-2xs">
-              <button
-                type="button"
-                onClick={() => handleStateChange('isLeftHanded', true)}
-                className={`flex-1 h-full text-xs font-extrabold rounded transition-all cursor-pointer flex items-center justify-center ${
-                  isLeftHanded
-                    ? 'bg-slate-800 text-white shadow-2xs font-black'
-                    : 'text-slate-500 hover:text-slate-800 font-bold'
-                }`}
-              >
-                왼손
-              </button>
-              <button
-                type="button"
-                onClick={() => handleStateChange('isLeftHanded', false)}
-                className={`flex-1 h-full text-xs font-extrabold rounded transition-all cursor-pointer flex items-center justify-center ${
-                  !isLeftHanded
-                    ? 'bg-slate-800 text-white shadow-2xs font-black'
-                    : 'text-slate-500 hover:text-slate-800 font-bold'
-                }`}
-              >
-                오른손
-              </button>
-            </div>
+          {/* 손방향 토글 스위치 */}
+          <div className="flex items-center bg-slate-100 border border-slate-300 p-0.5 rounded-md h-10 w-full shadow-2xs">
+            <button
+              type="button"
+              onClick={() => handleStateChange('isLeftHanded', true)}
+              className={`flex-1 h-full text-xs font-extrabold rounded transition-all cursor-pointer flex items-center justify-center ${
+                isLeftHanded
+                  ? 'bg-slate-800 text-white shadow-2xs font-black'
+                  : 'text-slate-500 hover:text-slate-800 font-bold'
+              }`}
+            >
+              왼손
+            </button>
+            <button
+              type="button"
+              onClick={() => handleStateChange('isLeftHanded', false)}
+              className={`flex-1 h-full text-xs font-extrabold rounded transition-all cursor-pointer flex items-center justify-center ${
+                !isLeftHanded
+                  ? 'bg-slate-800 text-white shadow-2xs font-black'
+                  : 'text-slate-500 hover:text-slate-800 font-bold'
+              }`}
+            >
+              오른손
+            </button>
           </div>
         </div>
 
-        {/* 2열 (30:35:35 비율 3단): [브릿지(30%)] [중지 스판(35%)] [약지 스판(35%)] */}
-        <div className="grid grid-cols-[30fr_35fr_35fr] gap-2 sm:gap-3 pt-1">
-          <div>
-            <SelectField
-              density="compact"
-              label="브릿지"
-              onChange={(val) => {
-                if (val === '직접입력') {
-                  setActiveKeypad('bridge');
-                } else {
-                  handleStateChange('bridgeStr', val);
-                }
-              }}
-              options={BRIDGE_OPTIONS}
-              value={BRIDGE_OPTIONS.includes(bridgeStr) ? bridgeStr : '직접입력'}
-            />
-          </div>
-
-          <div>
-            <KeypadField
-              density="compact"
-              isRequiredMissing={isMidSpanMissing}
-              label="중지 스판"
-              onOpen={() => setActiveKeypad('mid')}
-              placeholder="입력"
-              value={midSpanStr}
-            />
-          </div>
-
-          <div>
-            <KeypadField
-              density="compact"
-              isRequiredMissing={isRingSpanMissing}
-              label="약지 스판"
-              onOpen={() => setActiveKeypad('ring')}
-              placeholder="입력"
-              value={ringSpanStr}
-            />
-          </div>
+        {/* 📌 2열 (3단 균등): [중지 스판] | [약지 스판] | [브릿지] */}
+        <div className="grid grid-cols-3 gap-2">
+          <KeypadField
+            density="compact"
+            isRequiredMissing={isMidSpanMissing}
+            label={t('middleSpan')}
+            onOpen={() => setActiveKeypad('mid')}
+            placeholder="입력"
+            value={midSpanStr}
+          />
+          <KeypadField
+            density="compact"
+            isRequiredMissing={isRingSpanMissing}
+            label={t('ringSpan')}
+            onOpen={() => setActiveKeypad('ring')}
+            placeholder="입력"
+            value={ringSpanStr}
+          />
+          <SelectField
+            density="compact"
+            label={t('bridge')}
+            onChange={(v) => handleStateChange('bridgeStr', v)}
+            options={BRIDGE_OPTIONS}
+            value={BRIDGE_OPTIONS.includes(bridgeStr) ? bridgeStr : BRIDGE_OPTIONS[1]}
+          />
         </div>
       </div>
 
-      {/* 카드 2: 세부 규격 및 하단 2단 배치 [마킹 방식 | 미드라인 마킹 버튼] */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
+      {/* 카드 2: 세부 규격 및 하단 마킹 실행 버튼 */}
+      <div className="bg-white border border-slate-300 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
         {/* 📌 단일 회색 통합 외곽 박스 */}
-        <div className="space-y-3.5 bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-200">
-          {/* 1. 손가락 제원 4개 필드 */}
-          <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-3.5 bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-300">
+          {/* 1. 중지 제원 3열 (홀컷 | 인서트 | 팁 종류) */}
+          <div className="grid grid-cols-3 gap-2">
             <SelectField
               density="compact"
               isRequiredMissing={isMidHoleCutMissing}
@@ -260,11 +227,24 @@ function MidlineCalculatorView({ sharedState, updateSharedState }) {
             <SelectField
               density="compact"
               isRequiredMissing={isMidInsertMissing}
-              label="중지 인서트"
+              label="인서트 사이즈"
               onChange={(v) => handleStateChange('midInsert', v)}
               options={FINGER_INSERT_OPTIONS}
               value={midInsert}
             />
+            <SelectField
+              density="compact"
+              isRequiredMissing={isMidTipMissing}
+              label="팁 종류"
+              onChange={(v) => handleStateChange('midTipType', v)}
+              options={TIP_TYPE_OPTIONS}
+              placeholder="선택"
+              value={midTipType}
+            />
+          </div>
+
+          {/* 2. 약지 제원 3열 (홀컷 | 인서트 | 팁 종류) */}
+          <div className="grid grid-cols-3 gap-2">
             <SelectField
               density="compact"
               isRequiredMissing={isRingHoleCutMissing}
@@ -276,15 +256,24 @@ function MidlineCalculatorView({ sharedState, updateSharedState }) {
             <SelectField
               density="compact"
               isRequiredMissing={isRingInsertMissing}
-              label="약지 인서트"
+              label="인서트 사이즈"
               onChange={(v) => handleStateChange('ringInsert', v)}
               options={FINGER_INSERT_OPTIONS}
               value={ringInsert}
             />
+            <SelectField
+              density="compact"
+              isRequiredMissing={isRingTipMissing}
+              label="팁 종류"
+              onChange={(v) => handleStateChange('ringTipType', v)}
+              options={TIP_TYPE_OPTIONS}
+              placeholder="선택"
+              value={ringTipType}
+            />
           </div>
 
-          {/* 2. 엄지 제원 4개 필드 */}
-          <div className="pt-2.5 border-t border-slate-200">
+          {/* 3. 엄지 제원 4개 필드 */}
+          <div className="pt-2.5 border-t border-slate-300">
             <div className="grid grid-cols-2 gap-3">
               <SelectField
                 density="compact"
@@ -305,7 +294,7 @@ function MidlineCalculatorView({ sharedState, updateSharedState }) {
               <SelectField
                 density="compact"
                 isRequiredMissing={isOvalSizeMissing}
-                label="오발 크기"
+                label={t('ovalSize')}
                 onChange={(v) => handleStateChange('ovalSize', v)}
                 options={dynamicOvalOptions}
                 placeholder=""
@@ -314,33 +303,25 @@ function MidlineCalculatorView({ sharedState, updateSharedState }) {
               <KeypadField
                 density="compact"
                 isRequiredMissing={isOvalAngleMissing}
-                label="오발 각도"
+                label={t('ovalAngle')}
                 onOpen={() => setActiveKeypad('angle')}
-                placeholder="오발 지공시 필수"
+                placeholder={<>각도<span className="hidden sm:inline"> 입력</span></>}
                 value={ovalAngle ? `${ovalAngle}°` : ''}
               />
             </div>
           </div>
         </div>
 
-        {/* 📌 하단 2단 배치: 앞쪽 [마킹 방식] + 뒤쪽 [미드라인 마킹] 버튼 */}
-        <div className="grid grid-cols-2 gap-3 items-end pt-1">
-          <SelectField
-            density="compact"
-            label="마킹 방식 (Marking)"
-            onChange={(val) => handleStateChange('markingType', val)}
-            options={MARKING_TYPE_OPTIONS}
-            value={markingType}
-          />
-          <div>
-            <button
-              type="button"
-              onClick={handleCalculateClick}
-              className="h-10 w-full bg-slate-800 text-white rounded-md text-sm font-black shadow-2xs hover:bg-slate-900 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center"
-            >
-              미드라인 마킹
-            </button>
-          </div>
+        {/* 📌 하단 마킹 실행 버튼 (Full Width) */}
+        <div className="pt-1">
+          <button
+            type="button"
+            onClick={handleCalculateClick}
+            disabled={isFormBlocked}
+            className="h-10 sm:h-11 w-full bg-slate-800 text-white rounded-md text-sm sm:text-base font-black shadow-2xs hover:bg-slate-900 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            마킹 계산
+          </button>
         </div>
       </div>
 
@@ -411,6 +392,7 @@ function MidlineCalculatorView({ sharedState, updateSharedState }) {
             isOpen={isModalOpen}
             isOvalMissingNotice={isOvalMissingNotice}
             midlineResult={midlineResult}
+            sharedState={sharedState}
             onChangeMarkingType={(type) => updateSharedState('markingType', type)}
             onConfirm={() => setIsModalOpen(false)}
             setDenomMode={(mode) => updateSharedState('denomMode', mode)}

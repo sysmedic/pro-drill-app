@@ -53,3 +53,98 @@ body {
 .animate-slide-in-left {
   animation: slideInLeft 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* 🗂️ 폴더 인덱스형 탭 — 좌측 각짐(Square) / 우측 라운드(Rounded) */
+.chrome-tab {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  font-weight: 800;
+  font-size: 0.8125rem;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 12px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  margin: 0;
+  padding: 0 14px;
+  z-index: 0;
+  border: 1px solid #64748b;
+  border-bottom: none;
+}
+
+@media (min-width: 640px) {
+  .chrome-tab {
+    height: 42px;
+    font-size: 0.875rem;
+    border-top-right-radius: 14px;
+    padding: 0 18px;
+  }
+}
+
+/* 밀려난 (비활성/숨겨진) 탭: 탭 형태를 온전히 유지한 채 차분한 저채도 및 은은한 외곽선 표현 */
+.chrome-tab--inactive {
+  background: #e2e8f0;
+  color: #64748b;
+  z-index: 0;
+  border-color: #94a3b8;
+  box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.03);
+}
+
+.chrome-tab--inactive:hover {
+  background: #edf2f7;
+  color: #1e293b;
+  border-color: #64748b;
+}
+
+/* 활성 탭: 순백색 본문 카드와 100% 일체화 + 우측 및 상단 3D 레이어 입체 그림자 */
+.chrome-tab--active {
+  background: #ffffff;
+  color: #0f172a;
+  z-index: 2;
+  border-color: #64748b;
+  box-shadow: 3px -2px 8px rgba(0, 0, 0, 0.08), 1px 0 3px rgba(0, 0, 0, 0.05);
+}
+
+/* 활성 탭 하단 마스크: 좌우 테두리는 100% 보존하고, 내부 영역만 2px 내려 컨테이너 상단선 융합 */
+.chrome-tab--active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #ffffff;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* 우측 구석 콤팩트 탭 ('삼각') */
+.chrome-tab--mini {
+  flex: 0 0 auto !important;
+  padding: 0 10px !important;
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  border-top-right-radius: 10px !important;
+  opacity: 0.85;
+}
+
+.chrome-tab--mini:hover {
+  opacity: 1;
+}
+
+.chrome-tab--mini.chrome-tab--active {
+  opacity: 1;
+}
+
+@media (min-width: 640px) {
+  .chrome-tab--mini {
+    padding: 0 14px !important;
+    font-size: 0.8125rem !important;
+    border-top-right-radius: 12px !important;
+  }
+}

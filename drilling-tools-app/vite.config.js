@@ -37,10 +37,16 @@ export default defineConfig({
         short_name: 'ProDrill Tools',
         description: '볼링 지공사 전용 만능 스판 변환기 & 오발 계산기 툴킷',
         lang: 'ko',
+        id: '/',
+        start_url: '/',
+        scope: '/',
         orientation: 'portrait-primary',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
+        display_override: ['standalone', 'window-controls-overlay'],
+        handle_links: 'preferred',
+        capture_links: 'existing-client-navigate',
         icons: [
           {
             src: '/icon-192-v2.png',

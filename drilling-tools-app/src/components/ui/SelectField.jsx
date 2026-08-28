@@ -2,8 +2,8 @@ import React, { useId } from 'react';
 import { cn } from './classNames.js';
 
 const controlClasses = {
-  default: 'h-[46px] w-full rounded-lg p-2.5 text-base focus:outline-none focus:border-slate-400 cursor-pointer shadow-2xs transition-all disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 disabled:border-slate-200',
-  compact: 'h-10 w-full rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-slate-400 cursor-pointer shadow-2xs transition-all disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 disabled:border-slate-200',
+  default: 'h-[46px] w-full rounded-lg p-2.5 text-base focus:outline-none focus:border-slate-400 cursor-pointer shadow-2xs transition-all disabled:cursor-not-allowed disabled:text-slate-400',
+  compact: 'h-10 w-full rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-slate-400 cursor-pointer shadow-2xs transition-all disabled:cursor-not-allowed disabled:text-slate-400',
 };
 
 const labelClasses = {
@@ -42,9 +42,11 @@ function SelectField({
   };
 
   // 📌 [삼항 분리 완전 완치]: border-slate-300와 border-amber-300의 Tailwind CSS 덮어쓰기 충돌 100% 제거
-  // 데스크탑/iOS/안드로이드 크로스플랫폼 100% 동일하게 부드럽고 선명한 은은한 파스텔 주황 피팅
-  const stateBorderAndBgStyle = isRequiredMissing && !disabled
+  // disabled 상태여도 필수 누락(isRequiredMissing)인 경우 황색 알림 배경과 테두리를 일관되게 유지
+  const stateBorderAndBgStyle = isRequiredMissing
     ? 'border border-amber-300 bg-amber-50'
+    : disabled
+    ? 'border border-slate-200 bg-slate-100'
     : 'border border-slate-300 bg-white';
 
   const isPlaceholderActive = !currentValue && Boolean(placeholder);
@@ -62,7 +64,7 @@ function SelectField({
   return (
     <div className={cn('flex flex-col w-full relative', className)}>
       {label && (
-        <label className={cn(labelClass, labelClassName, isRequiredMissing && !disabled && 'text-amber-800 font-extrabold')} htmlFor={id}>
+        <label className={cn(labelClass, labelClassName, isRequiredMissing && 'text-amber-800 font-extrabold')} htmlFor={id}>
           {label}
         </label>
       )}

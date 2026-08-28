@@ -31,19 +31,17 @@ export default function ModalShell({
     <div
       aria-modal="true"
       role="dialog"
-      onTouchStart={(e) => e.stopPropagation()}
-      onTouchEnd={(e) => e.stopPropagation()}
-      className={`fixed inset-0 ${zClassName} bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fade-in ${
+      className={`fixed inset-0 h-[100vh] h-[100dvh] ${zClassName} bg-slate-900/60 backdrop-blur-xs flex justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in ${
         isBottom ? 'items-end sm:items-center' : 'items-center'
       }`}
     >
       <div
-        className={`bg-white text-slate-900 border border-slate-200 shadow-2xl w-full ${sizeClass} overflow-hidden ${
+        className={`bg-white text-slate-900 border border-slate-200 shadow-2xl w-full ${sizeClass} overflow-hidden my-auto max-h-[92vh] max-h-[92dvh] flex flex-col ${
           isBottom ? 'rounded-t-2xl sm:rounded-2xl' : 'rounded-2xl'
         } ${className}`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50 shrink-0">
           <h3 className="text-base font-bold text-slate-800" id={titleId}>
             {title}
           </h3>
@@ -60,7 +58,7 @@ export default function ModalShell({
         </div>
 
         {/* Body */}
-        <div className={bodyClassName}>{children}</div>
+        <div className={`overflow-y-auto ${bodyClassName}`}>{children}</div>
       </div>
     </div>,
     document.body

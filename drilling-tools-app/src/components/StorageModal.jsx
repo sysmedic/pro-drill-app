@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { generateShareText, downloadTextFile } from '../lib/shareHelper.js';
+import { generateShareText, getShareUrl, downloadTextFile } from '../lib/shareHelper.js';
 
 const STORAGE_SLOTS_KEY = 'prodrill_tools_saved_slots';
 
@@ -106,7 +106,7 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
     setSlotToDelete(null);
   };
 
-  // 📤 슬롯 공유 핸들러 (모바일: 카톡/문자 텍스트 공유, 데스크탑: .txt 파일 다운로드 + 클립보드 복사)
+  // 📤 슬롯 공유 핸들러 (모바일/데스크탑 통합: Web Share API 및 클립보드 원터치 복사)
   const handleShareSlot = async (e, slot) => {
     if (e) e.stopPropagation();
     const stateToShare = slot?.data || currentSharedState;
@@ -114,39 +114,41 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
 
     try {
       const shareText = generateShareText(titleToShare, stateToShare);
-      const isMobile =
-        /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
-        ('ontouchstart' in window && navigator.maxTouchPoints > 1);
+      const shareUrl = getShareUrl(stateToShare);
 
-      if (isMobile && navigator.share) {
-        await navigator.share({
-          title: `[ProDrill Tools] ${titleToShare}`,
-          text: shareText,
-        });
-      } else {
-        // 데스크탑: 텍스트 파일(.txt) 자동 다운로드 + 클립보드 복사
-        const safeTitle = (titleToShare || '제원').replace(/[/\\?%*:|"<>]/g, '_');
-        const filename = `ProDrill_지공제원_${safeTitle}.txt`;
-        downloadTextFile(filename, shareText);
-        await navigator.clipboard.writeText(shareText);
-        setFeedbackMsg('제원 파일(.txt)이 저장되고 클립보드에 복사되었습니다!');
-        setTimeout(() => setFeedbackMsg(null), 3000);
-      }
-    } catch (err) {
-      if (err.name !== 'AbortError') {
+      if (navigator.share) {
         try {
-          const shareText = generateShareText(titleToShare, stateToShare);
-          const safeTitle = (titleToShare || '제원').replace(/[/\\?%*:|"<>]/g, '_');
-          const filename = `ProDrill_지공제원_${safeTitle}.txt`;
-          downloadTextFile(filename, shareText);
-          await navigator.clipboard.writeText(shareText);
-          setFeedbackMsg('제원 파일(.txt)이 저장되고 클립보드에 복사되었습니다!');
-          setTimeout(() => setFeedbackMsg(null), 3000);
-        } catch (copyErr) {
-          console.error('Share failed', copyErr);
-          setFeedbackMsg('공유 중 오류가 발생했습니다.');
+          await navigator.share({
+            title: titleToShare || 'ProDrill 지공 제원',
+            text: shareText,
+            url: shareUrl || undefined,
+          });
+          setFeedbackMsg('성공적으로 공유되었습니다!');
+          setTimeout(() => setFeedbackMsg(null), 2500);
+          return;
+        } catch (shareErr) {
+          if (shareErr.name === 'AbortError') return;
+          // 공유창 취소/실패 시 클립보드 복사로 자연스럽게 폴백
         }
       }
+
+      // 클립보드 복사 (데스크탑 및 브라우저 공통)
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareText);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareText;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setFeedbackMsg('공유 링크와 제원이 클립보드에 복사되었습니다! (붙여넣기 가능)');
+      setTimeout(() => setFeedbackMsg(null), 3000);
+    } catch (err) {
+      console.error('Share failed', err);
+      setFeedbackMsg('공유 중 오류가 발생했습니다.');
+      setTimeout(() => setFeedbackMsg(null), 3000);
     }
   };
 
@@ -154,17 +156,15 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
     <div
       role="dialog"
       aria-modal="true"
-      onTouchStart={(e) => e.stopPropagation()}
-      onTouchEnd={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 py-4 sm:py-6 bg-slate-950/70 backdrop-blur-xs animate-fade-in overflow-y-auto overscroll-contain"
       onClick={onClose}
     >
       <div
-        className="bg-white border border-slate-200 rounded-3xl w-full max-w-md p-5 sm:p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col"
+        className="bg-white border border-slate-200 rounded-3xl w-full max-w-md p-4 sm:p-6 shadow-2xl space-y-4 my-auto mb-10 sm:my-auto max-h-none sm:max-h-[92vh] sm:max-h-[92dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 상단 헤더 & 닫기 */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-black text-slate-900 tracking-tight font-sans">
               ARCHIVE
@@ -292,24 +292,14 @@ export default function StorageModal({ isOpen, onClose, currentSharedState, onLo
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
                         onClick={(e) => handleShareSlot(e, slot)}
-                        className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-md transition-all"
+                        className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-md transition-all cursor-pointer"
                         title="카카오톡/문자 제원표 및 원클릭 복원 링크 공유"
                       >
                         공유
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLoadSlot(slot);
-                        }}
-                        className="px-2.5 py-1.5 bg-[#1e293b] text-white text-xs font-bold rounded-md hover:bg-black transition-all"
-                      >
-                        불러오기
                       </button>
                       <button
                         type="button"

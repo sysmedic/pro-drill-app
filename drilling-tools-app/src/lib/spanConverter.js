@@ -105,6 +105,18 @@ export function formatFraction64(decimalValue) {
   return formatFractionByDenom(decimalValue, 64);
 }
 
+/**
+ * 팁 종류(Tip Type)에 따른 엑추얼 스판 보정치 오프셋 반환
+ * Semi: +3/32" (+0.09375), Tip: +1/8" (+0.125), Oval/미선택: 0
+ */
+export function getTipOffset(tipType) {
+  if (!tipType) return 0;
+  const lower = String(tipType).trim().toLowerCase();
+  if (lower === 'semi') return 3 / 32;
+  if (lower === 'tip' || lower === 'power') return 1 / 8;
+  return 0;
+}
+
 export class SpanConverter {
   constructor(
     fingerDrillRadius,
@@ -112,6 +124,11 @@ export class SpanConverter {
     thumbDrillRadius,
     thumbEffectiveRadius
   ) {
+    this.fingerDrillRadius = fingerDrillRadius;
+    this.fingerInsertRadius = fingerInsertRadius;
+    this.thumbDrillRadius = thumbDrillRadius;
+    this.thumbEffectiveRadius = thumbEffectiveRadius;
+
     this.fingerDrillArc = getArc(fingerDrillRadius);
     this.fingerInsertArc = getArc(fingerInsertRadius);
     this.thumbDrillArc = getArc(thumbDrillRadius);
@@ -136,8 +153,9 @@ export class SpanConverter {
     return { cc, ctc, actual };
   }
 
-  convert(valDecimal, fromType, toType) {
+  convert(valDecimal, fromType, toType, tipType = '') {
     if (!valDecimal || isNaN(valDecimal) || valDecimal <= 0) return 0;
+    const tipOffset = getTipOffset(tipType);
     if (fromType === toType) return valDecimal;
 
     let res;
@@ -146,12 +164,15 @@ export class SpanConverter {
     } else if (fromType === 'Center to Center') {
       res = this.fromCC(valDecimal);
     } else {
-      res = this.fromActual(valDecimal);
+      // fromType === 'Actual Span': 입력된 엑추얼 스판에서 팁 두께를 차감하여 기본 엑추얼 도출
+      const baseActual = Math.max(0, valDecimal - tipOffset);
+      res = this.fromActual(baseActual);
     }
 
     if (toType === 'Cut to Cut') return res.ctc;
     if (toType === 'Center to Center') return res.cc;
-    return res.actual;
+    // toType === 'Actual Span': 기본 엑추얼 스판에 팁 두께 가산
+    return res.actual + tipOffset;
   }
 }
 
@@ -173,6 +194,8 @@ export function convertSpanValue(options = {}) {
     ovalCutDiamStr = '',
     ovalCutStr,
     ovalAngleDeg = 0,
+    tipType = '',
+    tipTypeStr = '',
     denomMode = 32
   } = options;
 
@@ -186,6 +209,7 @@ export function convertSpanValue(options = {}) {
   const finalThumbDrill = thumbHoleCutStr || thumbDrillDiamStr || '1 1/4';
   const finalThumbEffective = thumbEffectiveStr || thumbEffectiveDiamStr || '31/32';
   const finalOvalCut = ovalCutStr || ovalCutDiamStr || '';
+  const finalTipType = tipType || tipTypeStr || '';
 
   const fingerDrillRadius = (parseSpanFraction(finalFingerDrill) || (31 / 32)) / 2;
   const fingerInsertRadius = (parseSpanFraction(finalFingerInsert) || (43 / 64)) / 2;
@@ -215,6 +239,6 @@ export function convertSpanValue(options = {}) {
     thumbEffectiveRadius
   );
 
-  const convertedDecimal = converter.convert(decimalVal, fromType, toType);
+  const convertedDecimal = converter.convert(decimalVal, fromType, toType, finalTipType);
   return formatFractionByDenom(convertedDecimal, denomMode);
 }

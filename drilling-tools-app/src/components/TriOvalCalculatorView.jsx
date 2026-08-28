@@ -11,7 +11,8 @@ import {
   getOvalCutOptions,
 } from '../lib/chartOptions.js';
 
-const OvalResultModal = React.lazy(() => import('./OvalResultModal.jsx'));
+// 📌 결과 모달: 삼각 오발 전용 모달 (TriOval2DLayoutRenderer 탑재)
+const TriOvalResultModal = React.lazy(() => import('./TriOvalResultModal.jsx'));
 
 const toFraction64 = (num) => formatFractionByDenom(num, 64);
 
@@ -21,7 +22,7 @@ const formatCalculatedValue = (num) => {
   return num.toFixed(3);
 };
 
-function OvalCalculatorView({ sharedState, updateSharedState }) {
+function TriOvalCalculatorView({ sharedState, updateSharedState }) {
   const { lang, t } = useI18n();
   const {
     holeSize,
@@ -47,7 +48,7 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
   // 키패드 및 모달 상태 ('angle' | null)
   const [activeKeypad, setActiveKeypad] = useState(null);
 
-  // 📌 오발 가공 결과 전면 모달 오픈 상태
+  // 📌 삼각 오발 결과 전면 모달 오픈 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 📌 [지공사님 핵심 지침 100% 반영]: 아카이브에서 로드 시 오발 피치 메트릭스 모달 즉시 다이렉트 오픈
@@ -159,7 +160,7 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
   const extraCount = sharedState?.extraBitCount || 0;
   const totalActiveBits = Math.min(8, baseBitsCount + extraCount);
 
-  // 📌 드릴 비트 규격 연산 (Row 1~8 동적 연산 지원 & 도면 커스텀 규격 반영)
+  // 📌 드릴 비트 규격 연산 (삼각 오발: 드릴 규격은 표준 오발과 동일, 위치만 다름)
   const getDrillBitValue = (rowIndex) => {
     if (!baseHoleSizeNum || !ovalCutNum1 || !ovalCutNum2) return '-';
 
@@ -197,7 +198,39 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
     }
   };
 
-  // 📌 수평 피치 연산 (Row 1~8 동적 연산 & 도면 D-Pad 오프셋 1:1 합성 반영)
+  // 📌 삼각 오발 전용: 각 드릴 행의 수치(인치, 숫자) 반환 - 수직 이동량 계산용
+  // 삼각 오발에서 각 드릴은 (원홀 반지름 - 드릴 반지름) 만큼 오발각도선 수직 방향으로 추가 이동한다.
+  // 이 이동으로 세 원의 중약지 방향 끝점(하양점)이 오발각도선상 동일 위치에 정렬된다.
+  const getTriDrillSizeNum = (rowIndex) => {
+    if (!baseHoleSizeNum || !ovalCutNum1 || !ovalCutNum2) return null;
+    if (rowIndex > totalActiveBits) return null;
+
+    // 도면 커스텀 규격 1순위 반영
+    const customSizes = sharedState?.bitCustomSizes || {};
+    if (customSizes[rowIndex]) return parseSpanFraction(customSizes[rowIndex]);
+
+    // 마스터 원홀 (이동 없음: r_hole - r_hole = 0)
+    if (rowIndex === totalActiveBits) return baseHoleSizeNum;
+    if (rowIndex === 1) return ovalCutNum1;
+    if (rowIndex === 2) return ovalCutNum2;
+
+    if (precisionMode === 'ultra') {
+      if (rowIndex === 3) return baseHoleSizeNum + (ovalCutNum2 - baseHoleSizeNum) * (2 / 3);
+      if (rowIndex === 4) return baseHoleSizeNum + (ovalCutNum2 - baseHoleSizeNum) * (1 / 3);
+      if (rowIndex === 5) return baseHoleSizeNum + (ovalCutNum1 - baseHoleSizeNum) * (1 / 3);
+      if (rowIndex === 6) return baseHoleSizeNum + (ovalCutNum1 - baseHoleSizeNum) * (2 / 3);
+      return ovalCutNum1;
+    } else if (precisionMode === 'detailed') {
+      if (rowIndex === 3) return (ovalCutNum2 + baseHoleSizeNum) / 2;
+      if (rowIndex === 4) return (ovalCutNum1 + baseHoleSizeNum) / 2;
+      return ovalCutNum1;
+    }
+    return ovalCutNum1;
+  };
+
+  // 📌 수평 피치 연산 - 삼각 오발 전용
+  // 표준 오발 위치에서 오발각도선 수직 방향(중약지 방향) Lat 성분을 추가 보정한다.
+  // Δlat = (r_hole - r_cut) × sin(θ) × handMultiplier
   const getHorizontalValue = (rowIndex) => {
     if (isCalculationBlocked || !oval || !ovalCutNum1 || !ovalCutNum2) return '-';
 
@@ -230,10 +263,22 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
       baseH = thumbHorizontal;
     }
 
-    return formatCalculatedValue(baseH + customOffX);
+    // 📐 삼각 오발 수직 이동 보정 (Lat 성분)
+    // 오발각도선에 수직인 방향(중약지 방향)으로 (r_hole - r_cut_i) 이동
+    // → 세 원의 하양점(중약지 방향 접선)을 오발각도선상 동일 위치에 정렬
+    const cutSizeNum = getTriDrillSizeNum(rowIndex);
+    const perpShift = (cutSizeNum != null && rowIndex !== totalActiveBits)
+      ? (baseHoleSizeNum - cutSizeNum) / 2
+      : 0;
+    // 수직방향 단위벡터 (오발각도선 기준 중약지 방향): (sinθ·hand, -cosθ) → lat 성분 = sinθ·hand
+    const perpLat = perpShift * Math.sin(radians) * handMultiplier;
+
+    return formatCalculatedValue(baseH + customOffX + perpLat);
   };
 
-  // 📌 수직 피치 연산 (Row 1~8 동적 연산 & 도면 D-Pad 오프셋 1:1 합성 반영)
+  // 📌 수직 피치 연산 - 삼각 오발 전용
+  // 표준 오발 위치에서 오발각도선 수직 방향(중약지 방향) Vert 성분을 추가 보정한다.
+  // Δvert = -(r_hole - r_cut) × cos(θ)
   const getVerticalValue = (rowIndex) => {
     if (isCalculationBlocked || !oval || !ovalCutNum1 || !ovalCutNum2) return '-';
 
@@ -266,7 +311,15 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
       baseV = thumbVertical;
     }
 
-    return formatCalculatedValue(baseV + customOffY);
+    // 📐 삼각 오발 수직 이동 보정 (Vert 성분)
+    // 수직방향 단위벡터 중 vert 성분: -cosθ (음수 = 포워드/중약지 방향)
+    const cutSizeNumV = getTriDrillSizeNum(rowIndex);
+    const perpShiftV = (cutSizeNumV != null && rowIndex !== totalActiveBits)
+      ? (baseHoleSizeNum - cutSizeNumV) / 2
+      : 0;
+    const perpVert = -perpShiftV * Math.cos(radians);
+
+    return formatCalculatedValue(baseV + customOffY + perpVert);
   };
 
   const handleCalculateClick = () => {
@@ -286,7 +339,7 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
 
   return (
     <div className="space-y-4 animate-fade-in p-4 sm:p-5">
-      {/* 카드 1: 스냅샷 1번 오발 계산기 외곽 카운터 */}
+      {/* 카드 1: 삼각 오발 계산기 외곽 컨테이너 */}
       <div className="bg-white border border-slate-300 rounded-2xl p-3.5 sm:p-5 shadow-2xs space-y-3.5 sm:space-y-4">
         {/* 📌 상단 헤더: [엄지 제원] 타이틀 + [손방향 (왼손 | 오른손)] 토글 */}
         <div className="flex items-center justify-between gap-1.5 pb-1">
@@ -448,7 +501,7 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
           </div>
         </div>
 
-        {/* 📌 하단 전폭 [오발컷 계산] 버튼 */}
+        {/* 📌 하단 전폭 [삼각 오발 계산] 버튼 */}
         <div className="pt-1">
           <button
             type="button"
@@ -456,7 +509,7 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
             disabled={isCalculationBlocked}
             className="h-11 w-full bg-slate-800 text-white rounded-lg text-sm sm:text-base font-black shadow-2xs hover:bg-slate-900 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {t('calculateOvalBtn')}
+            삼각 오발 계산
           </button>
         </div>
       </div>
@@ -476,10 +529,10 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
         />
       )}
 
-      {/* 📌 전면 결과 모달 (3D 시각화 파라미터 1:1 바인딩 - 지연 로딩) */}
+      {/* 📌 전면 결과 모달 (삼각 오발 전용 — TriOval2DLayoutRenderer 연동) */}
       {isModalOpen && (
         <Suspense fallback={null}>
-          <OvalResultModal
+          <TriOvalResultModal
             getDrillBitValue={getDrillBitValue}
             getHorizontalValue={getHorizontalValue}
             getVerticalValue={getVerticalValue}
@@ -522,4 +575,4 @@ function OvalCalculatorView({ sharedState, updateSharedState }) {
   );
 }
 
-export default React.memo(OvalCalculatorView);
+export default React.memo(TriOvalCalculatorView);
